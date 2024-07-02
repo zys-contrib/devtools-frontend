@@ -13,6 +13,7 @@ import {
   FreestylerChatUi,
   type ModelChatMessage,
   type Props as FreestylerChatUiProps,
+  Rating,
   State as FreestylerChatUiState,
 } from './components/FreestylerChatUi.js';
 import {FreestylerAgent, Step} from './FreestylerAgent.js';
@@ -137,7 +138,7 @@ export class FreestylerPanel extends UI.Panel.Panel {
       }
 
       this.#viewProps.selectedNode = ev.data;
-      this.#clearMessages();
+      this.doUpdate();
     });
     this.doUpdate();
   }
@@ -168,8 +169,17 @@ export class FreestylerPanel extends UI.Panel.Panel {
     void this.#toggleSearchElementAction.execute();
   }
 
-  #handleRateClick(): void {
-    // TODO(348145480): Handle this -- e.g. there be dragons.
+  #handleRateClick(rpcId: number, rating: Rating): void {
+    Host.InspectorFrontendHost.InspectorFrontendHostInstance.registerAidaClientEvent(JSON.stringify({
+      client: Host.AidaClient.CLIENT_NAME,
+      event_time: new Date().toISOString(),
+      corresponding_aida_rpc_global_id: rpcId,
+      do_conversation_client_event: {
+        user_feedback: {
+          sentiment: rating === Rating.POSITIVE ? 'POSITIVE' : 'NEGATIVE',
+        },
+      },
+    }));
   }
 
   #handleAcceptConsentClick(): void {
@@ -182,12 +192,12 @@ export class FreestylerPanel extends UI.Panel.Panel {
     switch (actionId) {
       case 'freestyler.element-panel-context': {
         Host.userMetrics.actionTaken(Host.UserMetrics.Action.FreestylerOpenedFromElementsPanel);
-        this.#clearMessages();
+        this.doUpdate();
         break;
       }
       case 'freestyler.style-tab-context': {
         Host.userMetrics.actionTaken(Host.UserMetrics.Action.FreestylerOpenedFromStylesTab);
-        this.#clearMessages();
+        this.doUpdate();
         break;
       }
     }
