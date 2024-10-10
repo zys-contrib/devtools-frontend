@@ -8,8 +8,8 @@ import * as Platform from '../../../core/platform/platform.js';
 import * as Trace from '../../../models/trace/trace.js';
 import * as TraceBounds from '../../../services/trace_bounds/trace_bounds.js';
 import * as ComponentHelpers from '../../../ui/components/helpers/helpers.js';
-import * as IconButton from '../../../ui/components/icon_button/icon_button.js';
-import * as Settings from '../../../ui/components/settings/settings.js';
+import type * as IconButton from '../../../ui/components/icon_button/icon_button.js';
+import type * as Settings from '../../../ui/components/settings/settings.js';
 import * as ThemeSupport from '../../../ui/legacy/theme_support/theme_support.js';
 import * as LitHtml from '../../../ui/lit-html/lit-html.js';
 import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
@@ -17,6 +17,8 @@ import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
 import {nameForEntry} from './EntryName.js';
 import {RemoveAnnotation, RevealAnnotation} from './Sidebar.js';
 import sidebarAnnotationsTabStyles from './sidebarAnnotationsTab.css.js';
+
+const {html} = LitHtml;
 
 const diagramImageUrl = new URL('../../../Images/performance-panel-diagram.svg', import.meta.url).toString();
 const entryLabelImageUrl = new URL('../../../Images/performance-panel-entry-label.svg', import.meta.url).toString();
@@ -92,7 +94,6 @@ const str_ = i18n.i18n.registerUIStrings('panels/timeline/components/SidebarAnno
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 export class SidebarAnnotationsTab extends HTMLElement {
-  static readonly litTagName = LitHtml.literal`devtools-performance-sidebar-annotations`;
   readonly #shadow = this.attachShadow({mode: 'open'});
   readonly #boundRender = this.#render.bind(this);
   #annotations: Trace.Types.File.Annotation[] = [];
@@ -202,7 +203,7 @@ export class SidebarAnnotationsTab extends HTMLElement {
         color: toTextColor,
       };
       // clang-format off
-      return LitHtml.html`
+      return html`
         <span class="annotation-identifier" style=${LitHtml.Directives.styleMap(styleForToAnnotationIdentifier)}>
           ${entryToName}
         </span>`;
@@ -232,7 +233,7 @@ export class SidebarAnnotationsTab extends HTMLElement {
           backgroundColor,
           color,
         };
-        return LitHtml.html`
+        return html`
               <span class="annotation-identifier" style=${LitHtml.Directives.styleMap(styleForAnnotationIdentifier)}>
                 ${entryName}
               </span>
@@ -247,7 +248,7 @@ export class SidebarAnnotationsTab extends HTMLElement {
         const timeRangeEndInMs =
             Math.round(Trace.Helpers.Timing.microSecondsToMilliseconds(annotation.bounds.max) - minTraceBoundsMilli);
 
-        return LitHtml.html`
+        return html`
               <span class="annotation-identifier time-range">
                 ${timeRangeStartInMs} - ${timeRangeEndInMs} ms
               </span>
@@ -262,18 +263,18 @@ export class SidebarAnnotationsTab extends HTMLElement {
           color: fromTextColor,
         };
         // clang-format off
-        return LitHtml.html`
+        return html`
           <div class="entries-link">
             <span class="annotation-identifier" style=${LitHtml.Directives.styleMap(styleForFromAnnotationIdentifier)}>
               ${entryFromName}
             </span>
-            <${IconButton.Icon.Icon.litTagName} class="inline-icon" .data=${{
+            <devtools-icon class="inline-icon" .data=${{
               iconName: 'arrow-forward',
               color: 'var(--icon-default)',
               width: '18px',
               height: '18px',
             } as IconButton.Icon.IconData}>
-            </${IconButton.Icon.Icon.litTagName}>
+            </devtools-icon>
             ${this.#renderEntryToIdentifier(annotation)}
           </div>
       `;
@@ -289,7 +290,7 @@ export class SidebarAnnotationsTab extends HTMLElement {
   }
 
   #renderTutorialCard(): LitHtml.TemplateResult {
-    return LitHtml.html`
+    return html`
       <div class="annotation-tutorial-container">
       ${i18nString(UIStrings.annotationGetStarted)}
         <div class="tutorial-card">
@@ -331,14 +332,14 @@ export class SidebarAnnotationsTab extends HTMLElement {
   #render(): void {
     // clang-format off
     LitHtml.render(
-      LitHtml.html`
+      html`
         <span class="annotations">
           ${this.#annotations.length === 0 ?
             this.#renderTutorialCard() :
-            LitHtml.html`
+            html`
               ${this.#annotations.map(annotation => {
                 const label = detailedAriaDescriptionForAnnotation(annotation);
-                return LitHtml.html`
+                return html`
                   <div class="annotation-container"
                     @click=${() => this.#revealAnnotation(annotation)}
                     aria-label=${label}
@@ -357,7 +358,7 @@ export class SidebarAnnotationsTab extends HTMLElement {
                       event.stopPropagation();
                       this.dispatchEvent(new RemoveAnnotation(annotation));
                     }} jslog=${VisualLogging.action('timeline.annotation-sidebar.delete').track({click: true})}>
-                      <${IconButton.Icon.Icon.litTagName}
+                      <devtools-icon
                         class="bin-icon"
                         .data=${{
                           iconName: 'bin',
@@ -365,15 +366,15 @@ export class SidebarAnnotationsTab extends HTMLElement {
                           width: '20px',
                           height: '20px',
                         } as IconButton.Icon.IconData}
-                      >
+                      ></devtools-icon>
                     </button>
                   </div>`;
               })}
-              <${Settings.SettingCheckbox.SettingCheckbox.litTagName} class="visibility-setting" .data=${{
+              <setting-checkbox class="visibility-setting" .data=${{
                 setting: this.#annotationsHiddenSetting,
                 textOverride: 'Hide annotations',
               } as Settings.SettingCheckbox.SettingCheckboxData}>
-              </${Settings.SettingCheckbox.SettingCheckbox.litTagName}>`
+              </setting-checkbox>`
       }
       </span>`,
     this.#shadow, {host: this});

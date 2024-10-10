@@ -137,7 +137,7 @@ export class SourceMapsResolver extends EventTarget {
 
     for (const debuggerModel of this.#debuggerModelsToListen) {
       debuggerModel.sourceMapManager().addEventListener(
-          SDK.SourceMapManager.Events.SourceMapAttached, () => this.#onAttachedSourceMap(), this);
+          SDK.SourceMapManager.Events.SourceMapAttached, this.#onAttachedSourceMap, this);
     }
 
     // Although we have added listeners for SourceMapAttached events, we also
@@ -154,12 +154,16 @@ export class SourceMapsResolver extends EventTarget {
   uninstall(): void {
     for (const debuggerModel of this.#debuggerModelsToListen) {
       debuggerModel.sourceMapManager().removeEventListener(
-          SDK.SourceMapManager.Events.SourceMapAttached, () => this.#onAttachedSourceMap(), this);
+          SDK.SourceMapManager.Events.SourceMapAttached, this.#onAttachedSourceMap, this);
     }
     this.#debuggerModelsToListen.clear();
   }
 
   async #resolveMappingsForProfileNodes(): Promise<void> {
+    // Used to track if source mappings were updated when a source map
+    // is attach. If not, we do not notify the flamechart that mappings
+    // were updated, since that would trigger a rerender.
+    let updatedMappings = false;
     for (const [pid, threadsInProcess] of this.#parsedTrace.Samples.profilesInProcess) {
       for (const [tid, threadProfile] of threadsInProcess) {
         const nodes = threadProfile.parsedProfile.nodes() ?? [];
@@ -170,6 +174,7 @@ export class SourceMapsResolver extends EventTarget {
         for (const node of nodes) {
           const resolvedFunctionName =
               await SourceMapScopes.NamesResolver.resolveProfileFrameFunctionName(node.callFrame, target);
+          updatedMappings ||= Boolean(resolvedFunctionName);
           node.setFunctionName(resolvedFunctionName);
 
           const debuggerModel = target.model(SDK.DebuggerModel.DebuggerModel);
@@ -179,11 +184,15 @@ export class SourceMapsResolver extends EventTarget {
           const uiLocation = location &&
               await Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance().rawLocationToUILocation(
                   location);
+          updatedMappings ||= Boolean(uiLocation);
 
           SourceMapsResolver.storeResolvedNodeDataForEntry(
               pid, tid, node.callFrame, {name: resolvedFunctionName, devtoolsLocation: uiLocation});
         }
       }
+    }
+    if (!updatedMappings) {
+      return;
     }
     this.dispatchEvent(new SourceMappingsUpdated());
   }

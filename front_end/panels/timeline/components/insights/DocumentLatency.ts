@@ -2,15 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import '../../../../ui/components/icon_button/icon_button.js';
+
 import * as i18n from '../../../../core/i18n/i18n.js';
 import * as Trace from '../../../../models/trace/trace.js';
-import * as IconButton from '../../../../ui/components/icon_button/icon_button.js';
 import * as LitHtml from '../../../../ui/lit-html/lit-html.js';
 import type * as Overlays from '../../overlays/overlays.js';
 
 import {BaseInsight, shouldRenderForCategory} from './Helpers.js';
-import * as SidebarInsight from './SidebarInsight.js';
+import type * as SidebarInsight from './SidebarInsight.js';
 import {Category} from './types.js';
+
+const {html} = LitHtml;
 
 const UIStrings = {
   /**
@@ -59,15 +62,15 @@ const UIStrings = {
    */
   uncompressedDownload: 'Uncompressed download',
   /**
-   *@description Text for a screen-reader label to tell the user that the icon represents a successful check
+   *@description Text for a screen-reader label to tell the user that the icon represents a successful insight check
    *@example {Server response time} PH1
    */
-  successAriaLabel: 'Success: {PH1}',
+  successAriaLabel: 'Insight check passed: {PH1}',
   /**
-   *@description Text for a screen-reader label to tell the user that the icon represents an unsuccessful check
+   *@description Text for a screen-reader label to tell the user that the icon represents an unsuccessful insight check
    *@example {Server response time} PH1
    */
-  failedAriaLabel: 'Failure: {PH1}',
+  failedAriaLabel: 'Insight check failed: {PH1}',
 };
 
 const str_ = i18n.i18n.registerUIStrings('panels/timeline/components/insights/DocumentLatency.ts', UIStrings);
@@ -85,12 +88,12 @@ export class DocumentLatency extends BaseInsight {
 
     const ariaLabel = didPass ? i18nString(UIStrings.successAriaLabel, {PH1: good}) :
                                 i18nString(UIStrings.failedAriaLabel, {PH1: bad});
-    return LitHtml.html`
-      <${IconButton.Icon.Icon.litTagName}
+    return html`
+      <devtools-icon
         aria-label=${ariaLabel}
         name=${icon}
         class=${didPass ? 'metric-value-good' : 'metric-value-bad'}
-      ></${IconButton.Icon.Icon.litTagName}>
+      ></devtools-icon>
       <span>${didPass ? good : bad}</span>
     `;
   }
@@ -159,9 +162,9 @@ export class DocumentLatency extends BaseInsight {
     }
 
     // clang-format off
-    return LitHtml.html`
+    return html`
     <div class="insights">
-      <${SidebarInsight.SidebarInsight.litTagName} .data=${{
+      <devtools-performance-sidebar-insight .data=${{
             title: this.userVisibleTitle,
             description: this.description,
             expanded: this.isActive(),
@@ -187,7 +190,7 @@ export class DocumentLatency extends BaseInsight {
             </li>
           </ul>
         </div>
-      </${SidebarInsight.SidebarInsight}>
+      </devtools-performance-sidebar-insight>
     </div>`;
     // clang-format on
   }

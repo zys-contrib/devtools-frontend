@@ -16,17 +16,11 @@ import * as EntryName from './EntryName.js';
 import * as Insights from './insights/insights.js';
 import layoutShiftDetailsStyles from './layoutShiftDetails.css.js';
 
+const {html} = LitHtml;
+
 const MAX_URL_LENGTH = 20;
 
 const UIStrings = {
-  /**
-   * @description Text indicating an insight.
-   */
-  insight: 'Insight',
-  /**
-   * @description Title indicating the Layout shift culprits insight.
-   */
-  layoutShiftCulprits: 'Layout shift culprits',
   /**
    * @description Text referring to the start time of a given event.
    */
@@ -83,7 +77,6 @@ const str_ = i18n.i18n.registerUIStrings('panels/timeline/components/LayoutShift
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 export class LayoutShiftDetails extends HTMLElement {
-  static readonly litTagName = LitHtml.literal`devtools-performance-layout-shift-details`;
   readonly #shadow = this.attachShadow({mode: 'open'});
 
   #event: Trace.Types.Events.SyntheticLayoutShift|Trace.Types.Events.SyntheticLayoutShiftCluster|null = null;
@@ -112,23 +105,10 @@ export class LayoutShiftDetails extends HTMLElement {
     this.#render();
   }
 
-  #renderInsightChip(): LitHtml.TemplateResult|null {
-    if (!this.#event) {
-      return null;
-    }
-
-    // clang-format off
-    return LitHtml.html`
-      <div class="insight-chip">
-        <div class="insight-keyword">${i18nString(UIStrings.insight)} </div>${i18nString(UIStrings.layoutShiftCulprits)}</div>
-    `;
-    // clang-format on
-  }
-
   #renderTitle(event: Trace.Types.Events.SyntheticLayoutShift|
                Trace.Types.Events.SyntheticLayoutShiftCluster): LitHtml.TemplateResult {
     const title = EntryName.nameForEntry(event);
-    return LitHtml.html`
+    return html`
       <div class="layout-shift-details-title">
         <div class="layout-shift-event-title"></div>
         ${title}
@@ -138,15 +118,15 @@ export class LayoutShiftDetails extends HTMLElement {
 
   #renderShiftedElements(elementsShifted: Trace.Types.Events.TraceImpactedNode[]|undefined): LitHtml.LitTemplate {
     // clang-format off
-    return LitHtml.html`
+    return html`
       ${elementsShifted?.map(el => {
         if (el.node_id !== undefined) {
-          return LitHtml.html`
-            <${Insights.NodeLink.NodeLink.litTagName}
+          return html`
+            <devtools-performance-node-link
               .data=${{
                 backendNodeId: el.node_id,
               } as Insights.NodeLink.NodeLinkData}>
-            </${Insights.NodeLink.NodeLink.litTagName}>`;
+            </devtools-performance-node-link>`;
         }
           return LitHtml.nothing;
       })}`;
@@ -165,7 +145,7 @@ export class LayoutShiftDetails extends HTMLElement {
     }
     const el = LegacyComponents.Linkifier.Linkifier.linkifyRevealable(domLoadingFrame, domLoadingFrame.displayName());
     // clang-format off
-    return LitHtml.html`
+    return html`
     <span class="culprit"><span class="culprit-type">${i18nString(UIStrings.injectedIframe)}: </span><span class="culprit-value">${el}</span></span>`;
     // clang-format on
   }
@@ -182,7 +162,7 @@ export class LayoutShiftDetails extends HTMLElement {
         request.args.data.url as Platform.DevToolsPath.UrlString, options);
 
     // clang-format off
-    return LitHtml.html`
+    return html`
     <span class="culprit"><span class="culprit-type">${i18nString(UIStrings.fontRequest)}: </span><span class="culprit-value">${linkifiedURL}</span></span>`;
     // clang-format on
   }
@@ -199,7 +179,7 @@ export class LayoutShiftDetails extends HTMLElement {
       return null;
     }
     // clang-format off
-    return LitHtml.html`
+    return html`
         <span class="culprit">
         <span class="culprit-type">${i18nString(UIStrings.nonCompositedAnimation)}: </span>
         <button type="button" class="culprit-value timeline-link" @click=${() => this.#clickEvent(event)}>${i18nString(UIStrings.animation)}</button>
@@ -209,7 +189,7 @@ export class LayoutShiftDetails extends HTMLElement {
 
   #renderRootCauseValues(rootCauses: Trace.Insights.InsightRunners.CumulativeLayoutShift.LayoutShiftRootCausesData|
                          undefined): LitHtml.TemplateResult|null {
-    return LitHtml.html`
+    return html`
       ${rootCauses?.fontRequests.map(fontReq => this.#renderFontRequest(fontReq))}
       ${rootCauses?.iframeIds.map(iframe => this.#renderIframe(iframe))}
       ${rootCauses?.nonCompositedAnimations.map(failure => this.#renderAnimation(failure))}
@@ -220,11 +200,11 @@ export class LayoutShiftDetails extends HTMLElement {
       LitHtml.TemplateResult|null {
     const ts = Trace.Types.Timing.MicroSeconds(shift.ts - parsedTrace.Meta.traceBounds.min);
     if (shift === this.#event) {
-      return LitHtml.html`${i18n.TimeUtilities.preciseMillisToString(Helpers.Timing.microSecondsToMilliseconds(ts))}`;
+      return html`${i18n.TimeUtilities.preciseMillisToString(Helpers.Timing.microSecondsToMilliseconds(ts))}`;
     }
     const shiftTs = i18n.TimeUtilities.formatMicroSecondsTime(ts);
     // clang-format off
-    return LitHtml.html`
+    return html`
          <button type="button" class="timeline-link" @click=${() => this.#clickEvent(shift)}>${i18nString(UIStrings.layoutShift, {PH1: shiftTs})}</button>`;
     // clang-format on
   }
@@ -243,17 +223,17 @@ export class LayoutShiftDetails extends HTMLElement {
         (rootCauses.fontRequests.length || rootCauses.iframeIds.length || rootCauses.nonCompositedAnimations.length));
 
     // clang-format off
-    return LitHtml.html`
+    return html`
       <tr class="shift-row" data-ts=${shift.ts}>
         <td>${this.#renderStartTime(shift, parsedTrace)}</td>
         <td>${(score.toFixed(4))}</td>
-        ${this.#isFreshRecording ? LitHtml.html`
+        ${this.#isFreshRecording ? html`
           <td>
             <div class="elements-shifted">
               ${this.#renderShiftedElements(elementsShifted)}
             </div>
           </td>` : LitHtml.nothing}
-        ${hasCulprits && this.#isFreshRecording ? LitHtml.html`
+        ${hasCulprits && this.#isFreshRecording ? html`
           <td class="culprits">
             ${this.#renderRootCauseValues(rootCauses)}
           </td>` : LitHtml.nothing}
@@ -271,7 +251,7 @@ export class LayoutShiftDetails extends HTMLElement {
     const clusterTs = i18n.TimeUtilities.formatMicroSecondsTime(ts);
 
     // clang-format off
-    return LitHtml.html`
+    return html`
       <span class="parent-cluster">${i18nString(UIStrings.parentCluster)}:
          <button type="button" class="timeline-link" @click=${() => this.#clickEvent(cluster)}>${i18nString(UIStrings.cluster, {PH1: clusterTs})}</button>
       </span>`;
@@ -280,7 +260,7 @@ export class LayoutShiftDetails extends HTMLElement {
 
   #renderClusterTotalRow(cluster: Trace.Types.Events.SyntheticLayoutShiftCluster): LitHtml.TemplateResult|null {
     // clang-format off
-    return LitHtml.html`
+    return html`
       <td class="total-row">${i18nString(UIStrings.total)}</td>
       <td class="total-row">${(cluster.clusterCumulativeScore.toFixed(4))}</td>`;
     // clang-format on
@@ -311,15 +291,15 @@ export class LayoutShiftDetails extends HTMLElement {
     });
 
     // clang-format off
-    return LitHtml.html`
+    return html`
       <table class="layout-shift-details-table">
         <thead class="table-title">
           <tr>
             <th>${i18nString(UIStrings.startTime)}</th>
             <th>${i18nString(UIStrings.shiftScore)}</th>
-            ${hasShiftedElements && this.#isFreshRecording ? LitHtml.html`
+            ${hasShiftedElements && this.#isFreshRecording ? html`
               <th>${i18nString(UIStrings.elementsShifted)}</th>` : LitHtml.nothing}
-            ${hasCulprits && this.#isFreshRecording ? LitHtml.html`
+            ${hasCulprits && this.#isFreshRecording ? html`
               <th>${i18nString(UIStrings.culprit)}</th> ` : LitHtml.nothing}
           </tr>
         </thead>
@@ -355,15 +335,15 @@ export class LayoutShiftDetails extends HTMLElement {
     const hasCulprits = Boolean(clusterCulprits.length);
 
     // clang-format off
-        return LitHtml.html`
+        return html`
           <table class="layout-shift-details-table">
             <thead class="table-title">
               <tr>
                 <th>${i18nString(UIStrings.startTime)}</th>
                 <th>${i18nString(UIStrings.shiftScore)}</th>
-                ${this.#isFreshRecording ? LitHtml.html`
+                ${this.#isFreshRecording ? html`
                   <th>${i18nString(UIStrings.elementsShifted)}</th>` : LitHtml.nothing}
-                ${hasCulprits && this.#isFreshRecording ? LitHtml.html`
+                ${hasCulprits && this.#isFreshRecording ? html`
                   <th>${i18nString(UIStrings.culprit)}</th> ` : LitHtml.nothing}
               </tr>
             </thead>
@@ -384,8 +364,9 @@ export class LayoutShiftDetails extends HTMLElement {
     if (!this.#event || !this.#parsedTrace) {
       return;
     }
+
     // clang-format off
-    const output = LitHtml.html`
+    const output = html`
       <div class="layout-shift-summary-details">
         <div
           class="event-details"
@@ -397,9 +378,6 @@ export class LayoutShiftDetails extends HTMLElement {
             ? this.#renderShiftDetails(this.#event, this.#traceInsightsSets, this.#parsedTrace)
             : this.#renderClusterDetails(this.#event, this.#traceInsightsSets, this.#parsedTrace)
           }
-        </div>
-        <div class="insight-categories">
-          ${this.#renderInsightChip()}
         </div>
       </div>
     `;

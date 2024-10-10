@@ -2,11 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import '../icon_button/icon_button.js';
+
 import * as LitHtml from '../../lit-html/lit-html.js';
 import * as VisualLogging from '../../visual_logging/visual_logging.js';
-import * as IconButton from '../icon_button/icon_button.js';
 
 import buttonStyles from './button.css.legacy.js';
+
+const {html, Directives: {ifDefined, ref, classMap}} = LitHtml;
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -358,22 +361,22 @@ export class Button extends HTMLElement {
         this.#props.jslogContext && VisualLogging.action().track({click: true}).context(this.#props.jslogContext);
     // clang-format off
     LitHtml.render(
-      LitHtml.html`
-        <button title=${LitHtml.Directives.ifDefined(this.#props.title)}
+      html`
+        <button title=${ifDefined(this.#props.title)}
           .disabled=${this.#props.disabled}
-          class=${LitHtml.Directives.classMap(classes)}
-          aria-pressed=${LitHtml.Directives.ifDefined(this.#props.toggled)}
-          jslog=${LitHtml.Directives.ifDefined(jslog)}
+          class=${classMap(classes)}
+          aria-pressed=${ifDefined(this.#props.toggled)}
+          jslog=${ifDefined(jslog)}
         >${hasIcon
-            ? LitHtml.html`
-                <${IconButton.Icon.Icon.litTagName} name=${this.#props.toggled ? this.#props.toggledIconName : this.#props.iconName || this.#props.iconUrl}>
-                </${IconButton.Icon.Icon.litTagName}>`
+            ? html`
+                <devtools-icon name=${ifDefined(this.#props.toggled ? this.#props.toggledIconName : this.#props.iconName || this.#props.iconUrl)}>
+                </devtools-icon>`
             : ''}
-          ${this.#props.longClickable ? LitHtml.html`<${IconButton.Icon.Icon.litTagName} name=${'triangle-bottom-right'} class="long-click"
-            ></${IconButton.Icon.Icon.litTagName}>`
+          ${this.#props.longClickable ? html`<devtools-icon name=${'triangle-bottom-right'} class="long-click"
+            ></devtools-icon>`
       : ''}
-          ${this.#props.spinner ? LitHtml.html`<span class=${LitHtml.Directives.classMap(spinnerClasses)}></span>` : ''}
-          <slot @slotchange=${this.#render} ${LitHtml.Directives.ref(this.#slotRef)}></slot>
+          ${this.#props.spinner ? html`<span class=${classMap(spinnerClasses)}></span>` : ''}
+          <slot @slotchange=${this.#render} ${ref(this.#slotRef)}></slot>
         </button>
       `, this.#shadow, {host: this});
     // clang-format on

@@ -8,9 +8,11 @@ import * as LitHtml from '../../../../ui/lit-html/lit-html.js';
 import type * as Overlays from '../../overlays/overlays.js';
 
 import {BaseInsight, shouldRenderForCategory} from './Helpers.js';
-import {NodeLink, type NodeLinkData} from './NodeLink.js';
-import * as SidebarInsight from './SidebarInsight.js';
+import {type NodeLinkData} from './NodeLink.js';
+import type * as SidebarInsight from './SidebarInsight.js';
 import {Category} from './types.js';
+
+const {html} = LitHtml;
 
 const UIStrings = {
   /** Title of an insight that provides details about if the page's viewport is optimized for mobile viewing. */
@@ -41,9 +43,9 @@ export class Viewport extends BaseInsight {
     const backendNodeId = insight.viewportEvent?.args.data.node_id;
 
     // clang-format off
-    return LitHtml.html`
+    return html`
         <div class="insights">
-            <${SidebarInsight.SidebarInsight.litTagName} .data=${{
+            <devtools-performance-sidebar-insight .data=${{
               title: this.userVisibleTitle,
               description: this.description,
               expanded: this.isActive(),
@@ -52,14 +54,14 @@ export class Viewport extends BaseInsight {
             } as SidebarInsight.InsightDetails}
             @insighttoggleclick=${this.onSidebarClick}>
                 <div slot="insight-content" class="insight-section">
-                  ${backendNodeId !== undefined ? LitHtml.html`<${NodeLink.litTagName}
+                  ${backendNodeId !== undefined ? html`<devtools-performance-node-link
                     .data=${{
                       backendNodeId,
                       options: {tooltip: insight.viewportEvent?.args.data.content},
                     } as NodeLinkData}>
-                  </${NodeLink.litTagName}>` : LitHtml.nothing}
+                  </devtools-performance-node-link>` : LitHtml.nothing}
                 </div>
-            </${SidebarInsight.SidebarInsight}>
+            </devtools-performance-sidebar-insight>
         </div>`;
     // clang-format on
   }

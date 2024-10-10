@@ -9,9 +9,11 @@ import * as LitHtml from '../../../../ui/lit-html/lit-html.js';
 import type * as Overlays from '../../overlays/overlays.js';
 
 import {BaseInsight, shouldRenderForCategory} from './Helpers.js';
-import * as SidebarInsight from './SidebarInsight.js';
-import {Table, type TableData} from './Table.js';
+import type * as SidebarInsight from './SidebarInsight.js';
+import {type TableData} from './Table.js';
 import {Category} from './types.js';
+
+const {html} = LitHtml;
 
 const UIStrings = {
   /**
@@ -67,18 +69,17 @@ export class SlowCSSSelector extends BaseInsight {
         i18n.TimeUtilities.millisToString(Platform.Timing.microSecondsToMilliSeconds(us));
 
     // clang-format off
-    return this.#slowCSSSelector ? LitHtml.html`
+    return this.#slowCSSSelector ? html`
       <div class="insights">
-        <${SidebarInsight.SidebarInsight.litTagName} .data=${{
+        <devtools-performance-sidebar-insight .data=${{
               title: this.userVisibleTitle,
               description: this.description,
               internalName: this.internalName,
               expanded: this.isActive(),
           } as SidebarInsight.InsightDetails}
-          @insighttoggleclick=${this.onSidebarClick}
-        >
+          @insighttoggleclick=${this.onSidebarClick} >
           <div slot="insight-content" class="insight-section">
-            ${LitHtml.html`<${Table.litTagName}
+            ${html`<devtools-performance-table
               .data=${{
                 insight: this,
                 headers: [i18nString(UIStrings.total), ''],
@@ -88,8 +89,8 @@ export class SlowCSSSelector extends BaseInsight {
                   {values: [i18nString(UIStrings.matchCount), this.#slowCSSSelector.totalMatchCount]},
                 ],
               } as TableData}>
-            </${Table.litTagName}>`}
-            ${LitHtml.html`<${Table.litTagName}
+            </devtools-performance-table>`}
+            ${html`<devtools-performance-table
               .data=${{
                 insight: this,
                 headers: [i18nString(UIStrings.topSelectors), i18nString(UIStrings.elapsed)],
@@ -99,8 +100,8 @@ export class SlowCSSSelector extends BaseInsight {
                   };
                 }),
               } as TableData}>
-            </${Table.litTagName}>`}
-            ${LitHtml.html`<${Table.litTagName}
+            </devtools-performance-table>`}
+            ${html`<devtools-performance-table
               .data=${{
                 insight: this,
                 headers: [i18nString(UIStrings.topSelectors), i18nString(UIStrings.matchAttempts)],
@@ -110,9 +111,9 @@ export class SlowCSSSelector extends BaseInsight {
                   };
                 }),
               } as TableData}>
-            </${Table.litTagName}>`}
+            </devtools-performance-table>`}
           </div>
-        </${SidebarInsight}>
+        </devtools-performance-sidebar-insight>
       </div>` : LitHtml.nothing;
     // clang-format on
   }

@@ -14,7 +14,9 @@ import * as Utils from '../utils/utils.js';
 import * as Insights from './insights/insights.js';
 import {type ActiveInsight} from './Sidebar.js';
 import styles from './sidebarInsightsTab.css.js';
-import {SidebarSingleInsightSet, type SidebarSingleInsightSetData} from './SidebarSingleInsightSet.js';
+import {type SidebarSingleInsightSetData} from './SidebarSingleInsightSet.js';
+
+const {html} = LitHtml;
 
 const FEEDBACK_URL = 'https://crbug.com/371170842' as Platform.DevToolsPath.UrlString;
 
@@ -33,7 +35,6 @@ const str_ = i18n.i18n.registerUIStrings('panels/timeline/components/SidebarInsi
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 export class SidebarInsightsTab extends HTMLElement {
-  static readonly litTagName = LitHtml.literal`devtools-performance-sidebar-insights`;
   readonly #boundRender = this.#render.bind(this);
   readonly #shadow = this.attachShadow({mode: 'open'});
 
@@ -51,6 +52,11 @@ export class SidebarInsightsTab extends HTMLElement {
 
   connectedCallback(): void {
     this.#shadow.adoptedStyleSheets = [styles];
+  }
+
+  disconnectedCallback(): void {
+    this.#parsedTrace = null;
+    this.#insightSetKey = null;
   }
 
   set parsedTrace(data: Trace.Handlers.Types.ParsedTrace|null) {
@@ -136,8 +142,9 @@ export class SidebarInsightsTab extends HTMLElement {
     const hasMultipleInsightSets = this.#insights.size > 1;
     const labels = Utils.Helpers.createUrlLabels([...this.#insights.values()].map(({url}) => url));
 
-    // clang-format off
-    const html = LitHtml.html`
+    const contents =
+        // clang-format off
+     html`
       <div class="insight-sets-wrapper">
         ${[...this.#insights.values()].map(({id, url}, index) => {
           const data = {
@@ -148,14 +155,14 @@ export class SidebarInsightsTab extends HTMLElement {
             activeInsight: this.#activeInsight,
           };
 
-          const contents = LitHtml.html`
-            <${SidebarSingleInsightSet.litTagName}
+          const contents = html`
+            <devtools-performance-sidebar-single-navigation
               .data=${data as SidebarSingleInsightSetData}>
-            </${SidebarSingleInsightSet.litTagName}>
+            </devtools-performance-sidebar-single-navigation>
           `;
 
           if (hasMultipleInsightSets) {
-            return LitHtml.html`<details
+            return html`<details
               ?open=${id === this.#insightSetKey}
             >
               <summary
@@ -173,9 +180,9 @@ export class SidebarInsightsTab extends HTMLElement {
       </div>
 
       <div class="feedback-wrapper">
-        <${Buttons.Button.Button.litTagName} .variant=${Buttons.Button.Variant.OUTLINED} .iconName=${'experiment'} @click=${this.#onFeedbackClick}>
+        <devtools-button .variant=${Buttons.Button.Variant.OUTLINED} .iconName=${'experiment'} @click=${this.#onFeedbackClick}>
           ${i18nString(UIStrings.feedbackButton)}
-        </${Buttons.Button.Button.litTagName}>
+        </devtools-button>
 
         <p class="tooltip">${i18nString(UIStrings.feedbackTooltip)}</p>
       </div>
@@ -185,7 +192,7 @@ export class SidebarInsightsTab extends HTMLElement {
     // Insight components contain state, so to prevent insights from previous trace loads breaking things we use the parsedTrace
     // as a render key.
     // Note: newer Lit has `keyed`, but we don't have that, so we do it manually. https://lit.dev/docs/templates/directives/#keyed
-    const result = LitHtml.Directives.repeat([html], () => this.#parsedTrace, template => template);
+    const result = LitHtml.Directives.repeat([contents], () => this.#parsedTrace, template => template);
     LitHtml.render(result, this.#shadow, {host: this});
   }
 }

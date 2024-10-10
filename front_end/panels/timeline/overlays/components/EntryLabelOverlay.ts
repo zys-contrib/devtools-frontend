@@ -8,6 +8,8 @@ import * as LitHtml from '../../../../ui/lit-html/lit-html.js';
 
 import styles from './entryLabelOverlay.css.js';
 
+const {html} = LitHtml;
+
 const UIStrings = {
   /**
    * @description Accessible label used to explain to a user that they are viewing an entry label.
@@ -51,7 +53,6 @@ export class EntryLabelOverlay extends HTMLElement {
   // Set the max label length to avoid labels that could signicantly increase the file size.
   static readonly MAX_LABEL_LENGTH = 100;
 
-  static readonly litTagName = LitHtml.literal`devtools-entry-label-overlay`;
   readonly #shadow = this.attachShadow({mode: 'open'});
   readonly #boundRender = this.#render.bind(this);
 
@@ -333,7 +334,7 @@ export class EntryLabelOverlay extends HTMLElement {
   #render(): void {
     // clang-format off
     LitHtml.render(
-        LitHtml.html`
+        html`
         <span class="label-parts-wrapper" role="region" aria-label=${i18nString(UIStrings.entryLabel)}>
           <span
             class="input-field"

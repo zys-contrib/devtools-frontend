@@ -12,6 +12,8 @@ import * as Input from '../input/input.js';
 import settingCheckboxStyles from './settingCheckbox.css.js';
 import {SettingDeprecationWarning} from './SettingDeprecationWarning.js';
 
+const {html, Directives: {ifDefined}} = LitHtml;
+
 export interface SettingCheckboxData {
   setting: Common.Settings.Setting<boolean>;
   textOverride?: string;
@@ -52,7 +54,7 @@ export class SettingCheckbox extends HTMLElement {
     }
 
     if (this.#setting.deprecation) {
-      return LitHtml.html`<${SettingDeprecationWarning.litTagName} .data=${
+      return html`<${SettingDeprecationWarning.litTagName} .data=${
           this.#setting.deprecation as Common.Settings.Deprecation}></${SettingDeprecationWarning.litTagName}>`;
     }
 
@@ -61,11 +63,10 @@ export class SettingCheckbox extends HTMLElement {
       const jslog = VisualLogging.link()
                         .track({click: true, keydown: 'Enter|Space'})
                         .context(this.#setting.name + '-documentation');
-      return LitHtml.html`<${Buttons.Button.Button.litTagName} .iconName=${'help'} .size=${
-          Buttons.Button.Size.SMALL} .variant=${Buttons.Button.Variant.ICON} .title=${learnMore.tooltip()} jslog=${
-          jslog} @click=${
+      return html`<devtools-button .iconName=${'help'} .size=${Buttons.Button.Size.SMALL} .variant=${
+          Buttons.Button.Variant.ICON} .title=${learnMore.tooltip()} jslog=${jslog} @click=${
           () => Host.InspectorFrontendHost.InspectorFrontendHostInstance.openInNewTab(
-              learnMore.url)} class="learn-more"></${Buttons.Button.Button.litTagName}>`;
+              learnMore.url)} class="learn-more"></devtools-button>`;
     }
 
     return undefined;
@@ -78,14 +79,14 @@ export class SettingCheckbox extends HTMLElement {
 
     const icon = this.icon();
     const reason = this.#setting.disabledReason() ?
-        LitHtml.html`
-      <${Buttons.Button.Button.litTagName} class="disabled-reason" .iconName=${'info'} .variant=${
-            Buttons.Button.Variant.ICON} .size=${Buttons.Button.Size.SMALL} title=${
-            this.#setting.disabledReason()} @click=${onclick}></${Buttons.Button.Button.litTagName}>
+        html`
+      <devtools-button class="disabled-reason" .iconName=${'info'} .variant=${Buttons.Button.Variant.ICON} .size=${
+            Buttons.Button.Size.SMALL} title=${ifDefined(this.#setting.disabledReason())} @click=${
+            onclick}></devtools-button>
     ` :
         LitHtml.nothing;
     LitHtml.render(
-        LitHtml.html`
+        html`
       <p>
         <label>
           <input

@@ -7,6 +7,7 @@ import * as Host from '../../../core/host/host.js';
 import * as i18n from '../../../core/i18n/i18n.js';
 import type * as Platform from '../../../core/platform/platform.js';
 import type * as SDK from '../../../core/sdk/sdk.js';
+import * as Trace from '../../../models/trace/trace.js';
 import type * as Workspace from '../../../models/workspace/workspace.js';
 import * as Marked from '../../../third_party/marked/marked.js';
 import * as Buttons from '../../../ui/components/buttons/buttons.js';
@@ -21,6 +22,8 @@ import {type ContextDetail, ErrorType} from '../AiAgent.js';
 
 import freestylerChatUiStyles from './freestylerChatUi.css.js';
 import {ProvideFeedback, type ProvideFeedbackProps} from './ProvideFeedback.js';
+
+const {html, Directives} = LitHtml;
 
 const UIStrings = {
   /**
@@ -79,6 +82,11 @@ const UIStringsNotTranslate = {
   inputDisclaimerForDrJonesFileAgent:
       'Chat messages and the selected file are sent to Google and may be seen by human reviewers to improve this feature. This is an experimental AI feature and won\'t always get it right.',
   /**
+   *@description Disclaimer text right after the chat input.
+   */
+  inputDisclaimerForDrJonesPerformanceAgent:
+      'Chat messages and the selected call stack are sent to Google and may be seen by human reviewers to improve this feature. This is an experimental AI feature and won\'t always get it right.',
+  /**
    *@description Placeholder text for the chat UI input.
    */
   inputPlaceholderForFreestylerAgent: 'Ask a question about the selected element',
@@ -90,6 +98,10 @@ const UIStringsNotTranslate = {
    *@description Placeholder text for the chat UI input.
    */
   inputPlaceholderForDrJonesFileAgent: 'Ask a question about the selected file',
+  /**
+   *@description Placeholder text for the chat UI input.
+   */
+  inputPlaceholderForDrJonesPerformanceAgent: 'Ask a question about the selected stack trace',
   /**
    *@description Title for the send icon button.
    */
@@ -163,6 +175,18 @@ const UIStringsNotTranslate = {
    *@description Heading text for the code block that shows the returned data.
    */
   dataReturned: 'Data returned',
+  /**
+   *@description Aria label for the check mark icon to be read by screen reader
+   */
+  completed: 'Completed',
+  /**
+   *@description Aria label for the loading icon to be read by screen reader
+   */
+  inProgress: 'In progress',
+  /**
+   *@description Aria label for the cancel icon to be read by screen reader
+   */
+  canceled: 'Canceled',
 };
 
 const str_ = i18n.i18n.registerUIStrings('panels/freestyler/components/FreestylerChatUi.ts', UIStrings);
@@ -184,6 +208,8 @@ function getInputPlaceholderString(
           return lockedString(UIStringsNotTranslate.inputPlaceholderForDrJonesFileAgent);
         case AgentType.DRJONES_NETWORK_REQUEST:
           return lockedString(UIStringsNotTranslate.inputPlaceholderForDrJonesNetworkAgent);
+        case AgentType.DRJONES_PERFORMANCE:
+          return lockedString(UIStringsNotTranslate.inputPlaceholderForDrJonesPerformanceAgent);
       }
     case Host.AidaClient.AidaAccessPreconditions.NO_ACCOUNT_EMAIL:
     case Host.AidaClient.AidaAccessPreconditions.SYNC_IS_PAUSED:
@@ -237,6 +263,7 @@ export const enum AgentType {
   FREESTYLER = 'freestyler',
   DRJONES_FILE = 'drjones-file',
   DRJONES_NETWORK_REQUEST = 'drjones-network-request',
+  DRJONES_PERFORMANCE = 'drjones-performance',
 }
 
 export interface Props {
@@ -252,6 +279,7 @@ export interface Props {
   selectedElement: SDK.DOMModel.DOMNode|null;
   selectedFile: Workspace.UISourceCode.UISourceCode|null;
   selectedNetworkRequest: SDK.NetworkRequest.NetworkRequest|null;
+  selectedStackTrace: Trace.Helpers.TreeHelpers.TraceEntryNodeForAI|null;
   isLoading: boolean;
   canShowFeedbackForm: boolean;
   userInfo: Pick<Host.InspectorFrontendHostAPI.SyncInformation, 'accountImage'|'accountFullName'>;
@@ -414,7 +442,7 @@ export class FreestylerChatUi extends HTMLElement {
 
   #renderRateButtons(rpcId: number): LitHtml.TemplateResult {
     // clang-format off
-    return LitHtml.html`<${ProvideFeedback.litTagName}
+    return html`<${ProvideFeedback.litTagName}
       .props=${{
         onFeedbackSubmit: (rating, feedback) => {
           this.#props.onFeedbackSubmit(rpcId, rating, feedback);
@@ -440,23 +468,22 @@ export class FreestylerChatUi extends HTMLElement {
       // The tokens were not parsed correctly or
       // one of the tokens are not supported, so we
       // continue to render this as text.
-      return LitHtml.html`${text}`;
+      return html`${text}`;
     }
 
     // clang-format off
-    return LitHtml.html`<${MarkdownView.MarkdownView.MarkdownView.litTagName}
+    return html`<${MarkdownView.MarkdownView.MarkdownView.litTagName}
       .data=${{tokens, renderer: this.#markdownRenderer} as MarkdownView.MarkdownView.MarkdownViewData}>
     </${MarkdownView.MarkdownView.MarkdownView.litTagName}>`;
     // clang-format on
   }
 
   #renderTitle(step: Step): LitHtml.LitTemplate {
-    const paused = step.sideEffect ?
-        LitHtml.html`<span class="paused">${lockedString(UIStringsNotTranslate.paused)}: </span>` :
-        LitHtml.nothing;
+    const paused = step.sideEffect ? html`<span class="paused">${lockedString(UIStringsNotTranslate.paused)}: </span>` :
+                                     LitHtml.nothing;
     const actionTitle = step.title ?? `${lockedString(UIStringsNotTranslate.investigating)}…`;
 
-    return LitHtml.html`<span class="title">${paused}${actionTitle}</span>`;
+    return html`<span class="title">${paused}${actionTitle}</span>`;
   }
 
   #renderStepCode(step: Step): LitHtml.LitTemplate {
@@ -472,7 +499,7 @@ export class FreestylerChatUi extends HTMLElement {
     // If there is output, we don't show notice on this code block and instead show
     // it in the data returned code block.
     // clang-format off
-    const code = step.code ? LitHtml.html`<div class="action-result">
+    const code = step.code ? html`<div class="action-result">
         <${MarkdownView.CodeBlock.CodeBlock.litTagName}
           .code=${step.code.trim()}
           .codeLang=${'js'}
@@ -482,7 +509,7 @@ export class FreestylerChatUi extends HTMLElement {
         ></${MarkdownView.CodeBlock.CodeBlock.litTagName}>
     </div>` :
                              LitHtml.nothing;
-    const output = step.output ? LitHtml.html`<div class="js-code-output">
+    const output = step.output ? html`<div class="js-code-output">
       <${MarkdownView.CodeBlock.CodeBlock.litTagName}
         .code=${step.output}
         .codeLang=${'js'}
@@ -493,21 +520,21 @@ export class FreestylerChatUi extends HTMLElement {
     </div>` :
                                  LitHtml.nothing;
 
-    return LitHtml.html`<div class="step-code">${code}${output}</div>`;
+    return html`<div class="step-code">${code}${output}</div>`;
     // clang-format on
   }
 
   #renderStepDetails(step: Step, options: {isLast: boolean}): LitHtml.LitTemplate {
     const sideEffects =
         options.isLast && step.sideEffect ? this.#renderSideEffectConfirmationUi(step) : LitHtml.nothing;
-    const thought = step.thought ? LitHtml.html`<p>${this.#renderTextAsMarkdown(step.thought)}</p>` : LitHtml.nothing;
+    const thought = step.thought ? html`<p>${this.#renderTextAsMarkdown(step.thought)}</p>` : LitHtml.nothing;
 
     // clang-format off
     const contextDetails = step.contextDetails ?
-    LitHtml.html`${LitHtml.Directives.repeat(
+    html`${LitHtml.Directives.repeat(
       step.contextDetails,
         contextDetail => {
-          return LitHtml.html`<div class="context-details">
+          return html`<div class="context-details">
         <${MarkdownView.CodeBlock.CodeBlock.litTagName}
           .code=${contextDetail.text}
           .codeLang=${contextDetail.codeLang}
@@ -519,7 +546,7 @@ export class FreestylerChatUi extends HTMLElement {
         },
       )}` : LitHtml.nothing;
 
-    return LitHtml.html`<div class="step-details">
+    return html`<div class="step-details">
       ${thought}
       ${this.#renderStepCode(step)}
       ${sideEffects}
@@ -530,18 +557,26 @@ export class FreestylerChatUi extends HTMLElement {
 
   #renderStepBadge(step: Step, options: {isLast: boolean}): LitHtml.LitTemplate {
     if (this.#props.isLoading && options.isLast && !step.sideEffect) {
-      return LitHtml.html`<${Spinners.Spinner.Spinner.litTagName}></${Spinners.Spinner.Spinner.litTagName}>`;
+      return html`<${Spinners.Spinner.Spinner.litTagName} role="button" aria-label=${
+          lockedString(UIStringsNotTranslate.inProgress)}></${Spinners.Spinner.Spinner.litTagName}>`;
     }
 
     let iconName: string = 'checkmark';
+    let ariaLabel: string|undefined = lockedString(UIStringsNotTranslate.completed);
+    let role: string|undefined = 'button';
     if (options.isLast && step.sideEffect) {
+      role = undefined;
+      ariaLabel = undefined;
       iconName = 'pause-circle';
     } else if (step.canceled) {
+      ariaLabel = lockedString(UIStringsNotTranslate.canceled);
       iconName = 'cross';
     }
 
-    return LitHtml.html`<${IconButton.Icon.Icon.litTagName}
+    return html`<${IconButton.Icon.Icon.litTagName}
         class="indicator"
+        role=${Directives.ifDefined(role)}
+        aria-label=${Directives.ifDefined(ariaLabel)}
         .name=${iconName}
       ></${IconButton.Icon.Icon.litTagName}>`;
   }
@@ -554,7 +589,7 @@ export class FreestylerChatUi extends HTMLElement {
       canceled: Boolean(step.canceled),
     });
     // clang-format off
-    return LitHtml.html`
+    return html`
       <details class=${stepClasses}
         jslog=${VisualLogging.section('step')}
         .open=${Boolean(step.sideEffect)}>
@@ -582,7 +617,7 @@ export class FreestylerChatUi extends HTMLElement {
     const sideEffectAction = step.sideEffect.onAnswer;
 
     // clang-format off
-    return LitHtml.html`<div
+    return html`<div
       class="side-effect-confirmation"
       jslog=${VisualLogging.section('side-effect-confirmation')}
     >
@@ -627,11 +662,11 @@ export class FreestylerChatUi extends HTMLElement {
           errorMessage = UIStringsNotTranslate.maxStepsError;
           break;
         case ErrorType.ABORT:
-          return LitHtml.html`<p class="aborted" jslog=${VisualLogging.section('aborted')}>${
+          return html`<p class="aborted" jslog=${VisualLogging.section('aborted')}>${
               lockedString(UIStringsNotTranslate.stoppedResponse)}</p>`;
       }
 
-      return LitHtml.html`<p class="error" jslog=${VisualLogging.section('error')}>${lockedString(errorMessage)}</p>`;
+      return html`<p class="error" jslog=${VisualLogging.section('error')}>${lockedString(errorMessage)}</p>`;
     }
 
     return LitHtml.nothing;
@@ -641,12 +676,12 @@ export class FreestylerChatUi extends HTMLElement {
     if (message.entity === ChatMessageEntity.USER) {
       const name = this.#props.userInfo.accountFullName || lockedString(UIStringsNotTranslate.you);
       const image = this.#props.userInfo.accountImage ?
-          LitHtml.html`<img src="data:image/png;base64, ${this.#props.userInfo.accountImage}" alt="Account avatar" />` :
-          LitHtml.html`<${IconButton.Icon.Icon.litTagName}
+          html`<img src="data:image/png;base64, ${this.#props.userInfo.accountImage}" alt="Account avatar" />` :
+          html`<${IconButton.Icon.Icon.litTagName}
             .name=${'profile'}
           ></${IconButton.Icon.Icon.litTagName}>`;
       // clang-format off
-      return LitHtml.html`<section
+      return html`<section
         class="chat-message query"
         jslog=${VisualLogging.section('question')}
       >
@@ -664,7 +699,7 @@ export class FreestylerChatUi extends HTMLElement {
     const shouldShowSuggestions =
         (isLast && !this.#props.isLoading && message.suggestions && message.suggestions?.length > 0);
     // clang-format off
-    return LitHtml.html`
+    return html`
       <section class="chat-message answer" jslog=${VisualLogging.section('answer')}>
         <div class="message-info">
           <${IconButton.Icon.Icon.litTagName}
@@ -685,7 +720,7 @@ export class FreestylerChatUi extends HTMLElement {
         )}
         ${
           message.answer
-            ? LitHtml.html`<p>${this.#renderTextAsMarkdown(message.answer)}</p>`
+            ? html`<p>${this.#renderTextAsMarkdown(message.answer)}</p>`
             : LitHtml.nothing
         }
         ${this.#renderError(message)}
@@ -696,12 +731,12 @@ export class FreestylerChatUi extends HTMLElement {
               : LitHtml.nothing
           }
           ${shouldShowSuggestions ?
-            LitHtml.html`<div class="suggestions">
-              ${message.suggestions?.map(suggestion => LitHtml.html`<${Buttons.Button.Button.litTagName}
+            html`<div class="suggestions">
+              ${message.suggestions?.map(suggestion => html`<${Buttons.Button.Button.litTagName}
                   .data=${{
                       variant: Buttons.Button.Variant.OUTLINED,
                       title: suggestion,
-                      jslogContext: 'fix-this-issue',
+                      jslogContext: 'suggestion',
                   } as Buttons.Button.ButtonData}
                   @click=${() => this.#handleSuggestionClick(suggestion)}
                 >${suggestion}</${Buttons.Button.Button.litTagName}>`)}
@@ -720,6 +755,8 @@ export class FreestylerChatUi extends HTMLElement {
         return this.#renderSelectedFileName();
       case AgentType.DRJONES_NETWORK_REQUEST:
         return this.#renderSelectedNetworkRequest();
+      case AgentType.DRJONES_PERFORMANCE:
+        return this.#renderSelectedTask();
     }
   }
 
@@ -730,12 +767,12 @@ export class FreestylerChatUi extends HTMLElement {
     });
 
     if (!this.#props.selectedFile) {
-      return LitHtml.html`${LitHtml.nothing}`;
+      return html`${LitHtml.nothing}`;
     }
 
     // TODO(b/371947238): Add icon and make the div clickable
     // clang-format off
-    return LitHtml.html`<div class="select-element">
+    return html`<div class="select-element">
     <div class=${resourceClass}>
       ${this.#props.selectedFile?.displayName()}
     </div></div>`;
@@ -749,12 +786,12 @@ export class FreestylerChatUi extends HTMLElement {
     });
 
     if (!this.#props.selectedNetworkRequest) {
-      return LitHtml.html`${LitHtml.nothing}`;
+      return html`${LitHtml.nothing}`;
     }
 
     const icon = PanelUtils.getIconForNetworkRequest(this.#props.selectedNetworkRequest);
     // clang-format off
-    return LitHtml.html`<div class="select-element">
+    return html`<div class="select-element">
     <div class=${resourceClass}
     @click=${this.#props.onSelectedNetworkRequestClick}>
       ${icon}${this.#props.selectedNetworkRequest?.name()}
@@ -769,7 +806,7 @@ export class FreestylerChatUi extends HTMLElement {
     });
 
     // clang-format off
-    return LitHtml.html`
+    return html`
       <div class="select-element">
         <${Buttons.Button.Button.litTagName}
           .data=${{
@@ -789,7 +826,7 @@ export class FreestylerChatUi extends HTMLElement {
             ? LitHtml.Directives.until(
                   Common.Linkifier.Linkifier.linkify(this.#props.selectedElement),
                 )
-            : LitHtml.html`<span>${
+            : html`<span>${
               lockedString(UIStringsNotTranslate.noElementSelected)
             }</span>`
         }</div>
@@ -797,9 +834,47 @@ export class FreestylerChatUi extends HTMLElement {
     // clang-format on
   };
 
+  #renderSelectedTask = (): LitHtml.TemplateResult => {
+    const resourceClass = LitHtml.Directives.classMap({
+      'not-selected': !this.#props.selectedStackTrace,
+      'resource-link': true,
+    });
+
+    if (!this.#props.selectedStackTrace) {
+      return html`${LitHtml.nothing}`;
+    }
+
+    const selectedNode = Trace.Helpers.TreeHelpers.TraceEntryNodeForAI.getSelectedNodeForTraceEntryTreeForAI(
+        this.#props.selectedStackTrace);
+
+    if (!selectedNode) {
+      return html`${LitHtml.nothing}`;
+    }
+
+    let displayName = selectedNode.type;
+    if (selectedNode.type === 'ProfileCall' && selectedNode.function) {
+      displayName = selectedNode.function;
+    }
+
+    const iconData = {
+      iconName: 'performance',
+      color: 'var(--sys-color-on-surface-subtle)',
+    };
+    const icon = PanelUtils.createIconElement(iconData, 'Performance');
+    icon.classList.add('icon');
+
+    // TODO(b/371118936): Make the div clickable
+    // clang-format off
+    return html`<div class="select-element">
+    <div class=${resourceClass}>
+      ${icon}${displayName}
+    </div></div>`;
+    // clang-format on
+  };
+
   #renderMessages = (): LitHtml.TemplateResult => {
     // clang-format off
-    return LitHtml.html`
+    return html`
       <div class="messages-scroll-container" @scroll=${this.#handleScroll}>
         <div class="messages-container">
           ${this.#props.messages.map((message, _, array) =>
@@ -817,7 +892,7 @@ export class FreestylerChatUi extends HTMLElement {
     const suggestions = this.#getSuggestions();
 
     // clang-format off
-    return LitHtml.html`<div class="empty-state-container messages-scroll-container">
+    return html`<div class="empty-state-container messages-scroll-container">
       <div class="header">
         <div class="icon">
           <${IconButton.Icon.Icon.litTagName}
@@ -828,7 +903,7 @@ export class FreestylerChatUi extends HTMLElement {
       </div>
       <div class="suggestions">
         ${suggestions.map(suggestion => {
-          return LitHtml.html`<${Buttons.Button.Button.litTagName}
+          return html`<${Buttons.Button.Button.litTagName}
             class="suggestion"
             @click=${() => this.#handleSuggestionClick(suggestion)}
             .data=${
@@ -863,12 +938,16 @@ export class FreestylerChatUi extends HTMLElement {
         return [
           'Why is this network request taking longer to complete?',
         ];
+      case AgentType.DRJONES_PERFORMANCE:
+        return [
+          'Is this item on the critical rendering path?',
+        ];
     }
   };
 
   #renderChatInput = (): LitHtml.TemplateResult => {
     // clang-format off
-    return LitHtml.html`
+    return html`
       <div class="chat-input-container">
         <textarea class="chat-input"
           .disabled=${this.#isTextInputDisabled()}
@@ -877,7 +956,7 @@ export class FreestylerChatUi extends HTMLElement {
           placeholder=${getInputPlaceholderString(this.#props.aidaAvailability, this.#props.agentType, this.#props.state)}
           jslog=${VisualLogging.textField('query').track({ keydown: 'Enter' })}></textarea>
           ${this.#props.isLoading
-            ? LitHtml.html`<${Buttons.Button.Button.litTagName}
+            ? html`<${Buttons.Button.Button.litTagName}
               class="chat-input-button"
               aria-label=${lockedString(UIStringsNotTranslate.cancelButtonTitle)}
               @click=${this.#handleCancel}
@@ -892,7 +971,7 @@ export class FreestylerChatUi extends HTMLElement {
                 } as Buttons.Button.ButtonData
               }
             ></${Buttons.Button.Button.litTagName}>`
-            : LitHtml.html`<${Buttons.Button.Button.litTagName}
+            : html`<${Buttons.Button.Button.litTagName}
               class="chat-input-button"
               aria-label=${lockedString(UIStringsNotTranslate.sendButtonTitle)}
               .data=${
@@ -922,6 +1001,8 @@ export class FreestylerChatUi extends HTMLElement {
         return lockedString(UIStringsNotTranslate.inputDisclaimerForDrJonesFileAgent);
       case AgentType.DRJONES_NETWORK_REQUEST:
         return lockedString(UIStringsNotTranslate.inputDisclaimerForDrJonesNetworkAgent);
+      case AgentType.DRJONES_PERFORMANCE:
+        return lockedString(UIStringsNotTranslate.inputDisclaimerForDrJonesPerformanceAgent);
     }
   };
 
@@ -937,7 +1018,7 @@ export class FreestylerChatUi extends HTMLElement {
     const config = Common.Settings.Settings.instance().getHostConfig();
 
     // clang-format off
-    return LitHtml.html`
+    return html`
       <div class="empty-state-container messages-scroll-container">
         <div class="opt-in">
           <div class="opt-in-icon-container">
@@ -946,6 +1027,7 @@ export class FreestylerChatUi extends HTMLElement {
               width: 'var(--sys-size-8)',
               height: 'var(--sys-size-8)',
             } as IconButton.Icon.IconData}>
+            </${IconButton.Icon.Icon.litTagName}>
           </div>
           <div>
             ${config.devToolsExplainThisResourceDogfood?.enabled ?
@@ -961,7 +1043,7 @@ export class FreestylerChatUi extends HTMLElement {
 
   #render(): void {
     // clang-format off
-    LitHtml.render(LitHtml.html`
+    LitHtml.render(html`
       <div class="chat-ui">
         <main>
           ${
@@ -972,7 +1054,7 @@ export class FreestylerChatUi extends HTMLElement {
               )
           }
           <form class="input-form" @submit=${this.#handleSubmit}>
-            ${this.#props.state !== State.CONSENT_VIEW ? LitHtml.html`
+            ${this.#props.state !== State.CONSENT_VIEW ? html`
               <div class="input-header">
                 <div class="header-link-container">
                   ${this.#renderSelection()}

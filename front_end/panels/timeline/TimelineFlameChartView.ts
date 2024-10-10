@@ -30,7 +30,7 @@ import {
 } from './TimelineFlameChartDataProvider.js';
 import {TimelineFlameChartNetworkDataProvider} from './TimelineFlameChartNetworkDataProvider.js';
 import timelineFlameChartViewStyles from './timelineFlameChartView.css.js';
-import {type EventToRelatedInsightsMap, type TimelineModeViewDelegate} from './TimelinePanel.js';
+import {type TimelineModeViewDelegate} from './TimelinePanel.js';
 import {TimelineSelection} from './TimelineSelection.js';
 import {AggregatedTimelineTreeView} from './TimelineTreeView.js';
 import {type TimelineMarkerStyle} from './TimelineUIUtils.js';
@@ -98,7 +98,7 @@ export class TimelineFlameChartView extends UI.Widget.VBox implements PerfUI.Fla
   private searchRegex?: RegExp;
   #parsedTrace: Trace.Handlers.Types.ParsedTrace|null;
   #traceInsightSets: Trace.Insights.Types.TraceInsightSets|null = null;
-  #eventToRelatedInsightsMap: EventToRelatedInsightsMap|null = null;
+  #eventToRelatedInsightsMap: TimelineComponents.RelatedInsightChips.EventToRelatedInsightsMap|null = null;
   #selectedGroupName: string|null = null;
   #onTraceBoundsChangeBound = this.#onTraceBoundsChange.bind(this);
   #gameKeyMatches = 0;
@@ -726,7 +726,8 @@ export class TimelineFlameChartView extends UI.Widget.VBox implements PerfUI.Fla
   }
 
   extensionDataVisibilityChanged(): void {
-    this.#reset();
+    this.reset();
+    this.setupWindowTimes();
     this.mainDataProvider.reset(true);
     this.mainDataProvider.timelineData(true);
     this.refreshMainFlameChart();
@@ -806,7 +807,8 @@ export class TimelineFlameChartView extends UI.Widget.VBox implements PerfUI.Fla
     this.#selectedEvents = null;
     this.mainDataProvider.setModel(newParsedTrace, isCpuProfile);
     this.networkDataProvider.setModel(newParsedTrace);
-    this.#reset();
+    this.reset();
+    this.setupWindowTimes();
     this.updateSearchResults(false, false);
     this.refreshMainFlameChart();
     this.#updateFlameCharts();
@@ -814,7 +816,7 @@ export class TimelineFlameChartView extends UI.Widget.VBox implements PerfUI.Fla
 
   setInsights(
       insights: Trace.Insights.Types.TraceInsightSets|null,
-      eventToRelatedInsightsMap: EventToRelatedInsightsMap): void {
+      eventToRelatedInsightsMap: TimelineComponents.RelatedInsightChips.EventToRelatedInsightsMap): void {
     if (this.#traceInsightSets === insights) {
       return;
     }
@@ -825,7 +827,7 @@ export class TimelineFlameChartView extends UI.Widget.VBox implements PerfUI.Fla
     this.#updateDetailViews();
   }
 
-  #reset(): void {
+  reset(): void {
     if (this.networkDataProvider.isEmpty()) {
       this.mainFlameChart.enableRuler(true);
       this.networkSplitWidget.hideSidebar();
@@ -838,7 +840,10 @@ export class TimelineFlameChartView extends UI.Widget.VBox implements PerfUI.Fla
     this.mainFlameChart.reset();
     this.networkFlameChart.reset();
     this.updateSearchResults(false, false);
+  }
 
+  // TODO(paulirish): It's possible this is being called more than necessary. Attempt to clean up the lifecycle.
+  setupWindowTimes(): void {
     const traceBoundsState = TraceBounds.TraceBounds.BoundsManager.instance().state();
     if (!traceBoundsState) {
       throw new Error('TimelineFlameChartView could not set the window bounds.');

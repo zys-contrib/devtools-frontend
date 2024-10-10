@@ -2,17 +2,20 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import '../../../../ui/components/icon_button/icon_button.js';
+
 import * as i18n from '../../../../core/i18n/i18n.js';
 import * as Platform from '../../../../core/platform/platform.js';
 import * as Trace from '../../../../models/trace/trace.js';
-import * as IconButton from '../../../../ui/components/icon_button/icon_button.js';
 import * as LitHtml from '../../../../ui/lit-html/lit-html.js';
 import type * as Overlays from '../../overlays/overlays.js';
 
 import {eventRef} from './EventRef.js';
 import {BaseInsight, shouldRenderForCategory} from './Helpers.js';
-import * as SidebarInsight from './SidebarInsight.js';
+import type * as SidebarInsight from './SidebarInsight.js';
 import {Category} from './types.js';
+
+const {html} = LitHtml;
 
 const UIStrings = {
   /**
@@ -42,15 +45,15 @@ const UIStrings = {
    */
   lazyLoadNotApplied: 'lazy load not applied',
   /**
-   *@description Text for a screen-reader label to tell the user that the icon represents a successful check
+   *@description Text for a screen-reader label to tell the user that the icon represents a successful insight check
    *@example {Server response time} PH1
    */
-  successAriaLabel: 'Success: {PH1}',
+  successAriaLabel: 'Insight check passed: {PH1}',
   /**
-   *@description Text for a screen-reader label to tell the user that the icon represents an unsuccessful check
+   *@description Text for a screen-reader label to tell the user that the icon represents an unsuccessful insight check
    *@example {Server response time} PH1
    */
-  failedAriaLabel: 'Failure: {PH1}',
+  failedAriaLabel: 'Insight check failed: {PH1}',
 
 };
 
@@ -116,14 +119,14 @@ export class LCPDiscovery extends BaseInsight {
   #adviceIcon(didFail: boolean, label: string): LitHtml.TemplateResult {
     const icon = didFail ? 'clear' : 'check-circle';
 
-    const ariaLabel = didFail ? i18nString(UIStrings.successAriaLabel, {PH1: label}) :
-                                i18nString(UIStrings.failedAriaLabel, {PH1: label});
-    return LitHtml.html`
-      <${IconButton.Icon.Icon.litTagName}
+    const ariaLabel = didFail ? i18nString(UIStrings.failedAriaLabel, {PH1: label}) :
+                                i18nString(UIStrings.successAriaLabel, {PH1: label});
+    return html`
+      <devtools-icon
         aria-label=${ariaLabel}
         name=${icon}
         class=${didFail ? 'metric-value-bad' : 'metric-value-good'}
-      ></${IconButton.Icon.Icon.litTagName}>
+      ></devtools-icon>
     `;
   }
 
@@ -145,7 +148,7 @@ export class LCPDiscovery extends BaseInsight {
         imageResults.request.ts,
     );
 
-    const label = LitHtml.html`<div class="discovery-delay"> ${this.#renderDiscoveryDelay(delay.range)}</div>`;
+    const label = html`<div class="discovery-delay"> ${this.#renderDiscoveryDelay(delay.range)}</div>`;
 
     return [
       {
@@ -178,10 +181,10 @@ export class LCPDiscovery extends BaseInsight {
 
   #renderImage(imageData: LCPImageDiscoveryData): LitHtml.TemplateResult {
     // clang-format off
-    return LitHtml.html`
+    return html`
       <div class="lcp-element">
         ${imageData.request.args.data.mimeType.includes('image') ?
-          LitHtml.html`
+          html`
         <img
           class="element-img"
           src=${imageData.request.args.data.url}
@@ -197,37 +200,36 @@ export class LCPDiscovery extends BaseInsight {
 
   #renderDiscovery(imageData: LCPImageDiscoveryData): LitHtml.TemplateResult {
     // clang-format off
-    return LitHtml.html`
+    return html`
         <div class="insights">
-          <${SidebarInsight.SidebarInsight.litTagName} .data=${{
+          <devtools-performance-sidebar-insight .data=${{
             title: this.userVisibleTitle,
             description: this.description,
             internalName: this.internalName,
             expanded: this.isActive(),
             estimatedSavingsTime: imageData.estimatedSavings,
           } as SidebarInsight.InsightDetails}
-          @insighttoggleclick=${this.onSidebarClick}
-        >
-          <div slot="insight-content" class="insight-section">
-            <div class="insight-results">
-              <ul class="insight-icon-results">
-                <li class="insight-entry">
-                  ${this.#adviceIcon(imageData.shouldIncreasePriorityHint, i18nString(UIStrings.fetchPriorityApplied))}
-                  <span>${i18nString(UIStrings.fetchPriorityApplied)}</span>
-                </li>
-                <li class="insight-entry">
-                  ${this.#adviceIcon(imageData.shouldPreloadImage, i18nString(UIStrings.requestDiscoverable))}
-                  <span>${i18nString(UIStrings.requestDiscoverable)}</span>
-                </li>
-                <li class="insight-entry">
-                  ${this.#adviceIcon(imageData.shouldRemoveLazyLoading, i18nString(UIStrings.lazyLoadNotApplied))}
-                  <span>${i18nString(UIStrings.lazyLoadNotApplied)}</span>
-                </li>
-              </ul>
+          @insighttoggleclick=${this.onSidebarClick}>
+            <div slot="insight-content" class="insight-section">
+              <div class="insight-results">
+                <ul class="insight-icon-results">
+                  <li class="insight-entry">
+                    ${this.#adviceIcon(imageData.shouldIncreasePriorityHint, i18nString(UIStrings.fetchPriorityApplied))}
+                    <span>${i18nString(UIStrings.fetchPriorityApplied)}</span>
+                  </li>
+                  <li class="insight-entry">
+                    ${this.#adviceIcon(imageData.shouldPreloadImage, i18nString(UIStrings.requestDiscoverable))}
+                    <span>${i18nString(UIStrings.requestDiscoverable)}</span>
+                  </li>
+                  <li class="insight-entry">
+                    ${this.#adviceIcon(imageData.shouldRemoveLazyLoading, i18nString(UIStrings.lazyLoadNotApplied))}
+                    <span>${i18nString(UIStrings.lazyLoadNotApplied)}</span>
+                  </li>
+                </ul>
+              </div>
+              ${this.#renderImage(imageData)}
             </div>
-            ${this.#renderImage(imageData)}
-          </div>
-        </${SidebarInsight.SidebarInsight}>
+          </devtools-performance-sidebar-insight>
       </div>`;
     // clang-format on
   }

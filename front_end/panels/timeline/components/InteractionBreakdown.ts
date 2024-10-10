@@ -8,6 +8,8 @@ import * as LitHtml from '../../../ui/lit-html/lit-html.js';
 
 import styles from './interactionBreakdown.css.js';
 
+const {html} = LitHtml;
+
 const UIStrings = {
   /**
    *@description Text shown next to the interaction event's input delay time in the detail view.
@@ -26,7 +28,6 @@ const str_ = i18n.i18n.registerUIStrings('panels/timeline/components/Interaction
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 export class InteractionBreakdown extends HTMLElement {
-  static readonly litTagName = LitHtml.literal`devtools-interaction-breakdown`;
   readonly #shadow = this.attachShadow({mode: 'open'});
   readonly #boundRender = this.#render.bind(this);
   #entry: Trace.Types.Events.SyntheticInteractionPair|null = null;
@@ -51,7 +52,7 @@ export class InteractionBreakdown extends HTMLElement {
     const mainThreadTime = i18n.TimeUtilities.formatMicroSecondsAsMillisFixed(this.#entry.mainThreadHandling);
     const presentationDelay = i18n.TimeUtilities.formatMicroSecondsAsMillisFixed(this.#entry.presentationDelay);
     LitHtml.render(
-        LitHtml.html`<ul class="breakdown">
+        html`<ul class="breakdown">
                      <li data-entry="input-delay">${i18nString(UIStrings.inputDelay)}<span class="value">${
             inputDelay}</span></li>
                      <li data-entry="processing-duration">${

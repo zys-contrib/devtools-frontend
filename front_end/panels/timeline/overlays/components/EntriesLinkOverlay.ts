@@ -2,9 +2,10 @@
 // Copyright 2024 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+import '../../../../ui/components/icon_button/icon_button.js';
+
 import * as i18n from '../../../../core/i18n/i18n.js';
 import * as Trace from '../../../../models/trace/trace.js';
-import * as IconButton from '../../../../ui/components/icon_button/icon_button.js';
 import * as ThemeSupport from '../../../../ui/legacy/theme_support/theme_support.js';
 import * as LitHtml from '../../../../ui/lit-html/lit-html.js';
 
@@ -19,6 +20,8 @@ const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 import styles from './entriesLinkOverlay.css.js';
 
+const {html} = LitHtml;
+
 export class EntryLinkStartCreating extends Event {
   static readonly eventName = 'entrylinkstartcreating';
 
@@ -28,7 +31,6 @@ export class EntryLinkStartCreating extends Event {
 }
 
 export class EntriesLinkOverlay extends HTMLElement {
-  static readonly litTagName = LitHtml.literal`devtools-entries-link-overlay`;
   readonly #shadow = this.attachShadow({mode: 'open'});
   #coordinateFrom: {x: number, y: number};
   #fromEntryDimentions: {width: number, height: number};
@@ -305,7 +307,7 @@ export class EntriesLinkOverlay extends HTMLElement {
     const arrowColor = ThemeSupport.ThemeSupport.instance().getComputedValue('--color-text-primary');
     // clang-format off
     LitHtml.render(
-        LitHtml.html`
+        html`
           <svg class="connectorContainer" width="100%" height="100%" role="region" aria-label=${i18nString(UIStrings.diagram)}>
             <defs>
               <linearGradient
@@ -356,11 +358,11 @@ export class EntriesLinkOverlay extends HTMLElement {
           <div class="entry-wrapper from-highlight-wrapper ${this.#fromEntryIsSource ? '' : 'entry-is-not-source'}"></div>
           <div class="entry-wrapper to-highlight-wrapper ${this.#toEntryIsSource ? '' : 'entry-is-not-source'}"></div>
           <div class="create-link-box ${this.#linkState ? 'visible' : 'hidden'}">
-            <${IconButton.Icon.Icon.litTagName}
+            <devtools-icon
               class='create-link-icon'
               @click=${this.#startCreatingConnection}
               name='arrow-right-circle'>
-            </${IconButton.Icon.Icon.litTagName}>
+            </devtools-icon>
           </div>
         `,
         this.#shadow, {host: this});

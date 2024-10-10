@@ -85,13 +85,10 @@ function launchChrome() {
     'MacWebContentsOcclusion',
     'MojoChannelAssociatedCrashesOnSendError',
     'MojoChannelAssociatedSendUsesRunOrPostTask',
-    'MojoInlineMessagePayloads',
-    'MojoPredictiveAllocation',
     'RunTasksByBatches',
     'SimpleURLLoaderUseReadAndDiscardBodyOption',
     'ThrottleUnimportantFrameTimers',
     'VerifyDidCommitParams',
-    'NetworkServiceSandbox',  // crbug.com/370653886
   ];
   const launchArgs = [
     '--remote-allow-origins=*',

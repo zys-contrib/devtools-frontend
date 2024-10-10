@@ -6,6 +6,7 @@ import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
 import type * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
+import * as Trace from '../../models/trace/trace.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import * as NetworkForward from '../../panels/network/forward/forward.js';
 import * as UI from '../../ui/legacy/legacy.js';
@@ -28,11 +29,13 @@ import {
 import {
   DrJonesNetworkAgent,
 } from './DrJonesNetworkAgent.js';
+import {DrJonesPerformanceAgent} from './DrJonesPerformanceAgent.js';
 import {FreestylerAgent} from './FreestylerAgent.js';
 import freestylerPanelStyles from './freestylerPanel.css.js';
 
-// Bug for the send feed back link
-// const AI_ASSISTANCE_SEND_FEEDBACK = 'https://crbug.com/364805393' as Platform.DevToolsPath.UrlString;
+const {html} = LitHtml;
+
+const AI_ASSISTANCE_SEND_FEEDBACK = 'https://crbug.com/364805393' as Platform.DevToolsPath.UrlString;
 const AI_ASSISTANCE_HELP = 'https://goo.gle/devtools-ai-assistance' as Platform.DevToolsPath.UrlString;
 
 /*
@@ -51,6 +54,22 @@ const UIStringsNotTranslate = {
    *@description AI assistant UI tooltip text for the settings button (gear icon).
    */
   settings: 'Settings',
+  /**
+   *@description AI assistant UI tooltip sending feedback.
+   */
+  sendFeedback: 'Send feedback',
+  /**
+   *@description Announcement text for screen readers when the messages are cleared.
+   */
+  messagesCleared: 'Messages cleared',
+  /**
+   *@description Announcement text for screen readers when the conversation starts.
+   */
+  answerLoading: 'Answer loading',
+  /**
+   *@description Announcement text for screen readers when the answer comes.
+   */
+  answerReady: 'Answer ready',
 };
 
 const lockedString = i18n.i18n.lockedString;
@@ -71,6 +90,15 @@ function createToolbar(target: HTMLElement, {onClearClick}: {onClearClick: () =>
   clearButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, onClearClick);
   leftToolbar.appendToolbarItem(clearButton);
 
+  const link = UI.XLink.XLink.create(
+      AI_ASSISTANCE_SEND_FEEDBACK, lockedString(UIStringsNotTranslate.sendFeedback), undefined, undefined,
+      'freestyler.send-feedback');
+  link.style.setProperty('display', null);
+  link.style.setProperty('text-decoration', 'none');
+  link.style.setProperty('padding', '0 var(--sys-size-3)');
+  const linkItem = new UI.Toolbar.ToolbarItem(link);
+  rightToolbar.appendToolbarItem(linkItem);
+
   rightToolbar.appendSeparator();
   const helpButton =
       new UI.Toolbar.ToolbarButton(lockedString(UIStringsNotTranslate.help), 'help', undefined, 'freestyler.help');
@@ -89,7 +117,7 @@ function createToolbar(target: HTMLElement, {onClearClick}: {onClearClick: () =>
 
 function defaultView(input: FreestylerChatUiProps, output: ViewOutput, target: HTMLElement): void {
   // clang-format off
-  LitHtml.render(LitHtml.html`
+  LitHtml.render(html`
     <${FreestylerChatUi.litTagName} .props=${input} ${LitHtml.Directives.ref((el: Element|undefined) => {
       if (!el || !(el instanceof FreestylerChatUi)) {
         return;
@@ -109,11 +137,13 @@ export class FreestylerPanel extends UI.Panel.Panel {
   #selectedElement: SDK.DOMModel.DOMNode|null;
   #selectedFile: Workspace.UISourceCode.UISourceCode|null;
   #selectedNetworkRequest: SDK.NetworkRequest.NetworkRequest|null;
+  #selectedStackTrace: Trace.Helpers.TreeHelpers.TraceEntryNodeForAI|null;
   #contentContainer: HTMLElement;
   #aidaClient: Host.AidaClient.AidaClient;
   #freestylerAgent: FreestylerAgent;
   #drJonesFileAgent: DrJonesFileAgent;
   #drJonesNetworkAgent: DrJonesNetworkAgent;
+  #drJonesPerformanceAgent: DrJonesPerformanceAgent;
   #viewProps: FreestylerChatUiProps;
   #viewOutput: ViewOutput = {};
   #serverSideLoggingEnabled = isFreestylerServerSideLoggingEnabled();
@@ -144,6 +174,7 @@ export class FreestylerPanel extends UI.Panel.Panel {
 
     this.#selectedElement = selectedElementFilter(UI.Context.Context.instance().flavor(SDK.DOMModel.DOMNode));
     this.#selectedNetworkRequest = UI.Context.Context.instance().flavor(SDK.NetworkRequest.NetworkRequest);
+    this.#selectedStackTrace = UI.Context.Context.instance().flavor(Trace.Helpers.TreeHelpers.TraceEntryNodeForAI);
     this.#selectedFile = UI.Context.Context.instance().flavor(Workspace.UISourceCode.UISourceCode);
     this.#viewProps = {
       state: this.#freestylerEnabledSetting?.getIfNotDisabled() ? FreestylerChatUiState.CHAT_VIEW :
@@ -153,6 +184,7 @@ export class FreestylerPanel extends UI.Panel.Panel {
       inspectElementToggled: this.#toggleSearchElementAction.toggled(),
       selectedElement: this.#selectedElement,
       selectedNetworkRequest: this.#selectedNetworkRequest,
+      selectedStackTrace: this.#selectedStackTrace,
       selectedFile: this.#selectedFile,
       isLoading: false,
       onTextSubmit: this.#startConversation.bind(this),
@@ -175,6 +207,7 @@ export class FreestylerPanel extends UI.Panel.Panel {
     this.#freestylerAgent = this.#createFreestylerAgent();
     this.#drJonesFileAgent = this.#createDrJonesFileAgent();
     this.#drJonesNetworkAgent = this.#createDrJonesNetworkAgent();
+    this.#drJonesPerformanceAgent = this.#createDrJonesPerformanceAgent();
 
     UI.Context.Context.instance().addFlavorChangeListener(SDK.DOMModel.DOMNode, ev => {
       if (this.#viewProps.selectedElement === ev.data) {
@@ -190,6 +223,14 @@ export class FreestylerPanel extends UI.Panel.Panel {
       }
 
       this.#viewProps.selectedNetworkRequest = Boolean(ev.data) ? ev.data : null;
+      this.doUpdate();
+    });
+    UI.Context.Context.instance().addFlavorChangeListener(Trace.Helpers.TreeHelpers.TraceEntryNodeForAI, ev => {
+      if (this.#viewProps.selectedStackTrace === ev.data) {
+        return;
+      }
+
+      this.#viewProps.selectedStackTrace = Boolean(ev.data) ? ev.data : null;
       this.doUpdate();
     });
     UI.Context.Context.instance().addFlavorChangeListener(Workspace.UISourceCode.UISourceCode, ev => {
@@ -228,6 +269,13 @@ export class FreestylerPanel extends UI.Panel.Panel {
 
   #createDrJonesNetworkAgent(): DrJonesNetworkAgent {
     return new DrJonesNetworkAgent({
+      aidaClient: this.#aidaClient,
+      serverSideLoggingEnabled: this.#serverSideLoggingEnabled,
+    });
+  }
+
+  #createDrJonesPerformanceAgent(): DrJonesPerformanceAgent {
+    return new DrJonesPerformanceAgent({
       aidaClient: this.#aidaClient,
       serverSideLoggingEnabled: this.#serverSideLoggingEnabled,
     });
@@ -321,7 +369,10 @@ export class FreestylerPanel extends UI.Panel.Panel {
         break;
       }
       case 'drjones.performance-panel-context': {
-        // TODO(samiyac): Add actions and UMA
+        // TODO(samiyac): Add UMA
+        this.#viewOutput.freestylerChatUi?.focusTextInput();
+        this.#viewProps.agentType = AgentType.DRJONES_PERFORMANCE;
+        this.doUpdate();
         break;
       }
       case 'drjones.sources-panel-context': {
@@ -342,6 +393,7 @@ export class FreestylerPanel extends UI.Panel.Panel {
     this.#drJonesNetworkAgent = this.#createDrJonesNetworkAgent();
     this.#cancel();
     this.doUpdate();
+    UI.ARIAUtils.alert(lockedString(UIStringsNotTranslate.messagesCleared));
   }
 
   #runAbortController = new AbortController();
@@ -376,6 +428,9 @@ export class FreestylerPanel extends UI.Panel.Panel {
     } else if (this.#viewProps.agentType === AgentType.DRJONES_NETWORK_REQUEST) {
       runner =
           this.#drJonesNetworkAgent.run(text, {signal, selectedNetworkRequest: this.#viewProps.selectedNetworkRequest});
+    } else if (this.#viewProps.agentType === AgentType.DRJONES_PERFORMANCE) {
+      runner =
+          this.#drJonesPerformanceAgent.run(text, {signal, selectedStackTrace: this.#viewProps.selectedStackTrace});
     }
 
     if (!runner) {
@@ -383,7 +438,7 @@ export class FreestylerPanel extends UI.Panel.Panel {
     }
 
     let step: Step = {isLoading: true};
-
+    UI.ARIAUtils.alert(lockedString(UIStringsNotTranslate.answerLoading));
     for await (const data of runner) {
       step.sideEffect = undefined;
       switch (data.type) {
@@ -466,6 +521,7 @@ export class FreestylerPanel extends UI.Panel.Panel {
       this.doUpdate();
       this.#viewOutput.freestylerChatUi?.scrollToLastMessage();
     }
+    UI.ARIAUtils.alert(lockedString(UIStringsNotTranslate.answerReady));
   }
 }
 

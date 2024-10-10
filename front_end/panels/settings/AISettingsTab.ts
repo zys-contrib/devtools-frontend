@@ -4,6 +4,7 @@
 
 import * as Common from '../../core/common/common.js';
 import * as i18n from '../../core/i18n/i18n.js';
+import type * as Platform from '../../core/platform/platform.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as IconButton from '../../ui/components/icon_button/icon_button.js';
 import * as Input from '../../ui/components/input/input.js';
@@ -14,6 +15,8 @@ import * as LitHtml from '../../ui/lit-html/lit-html.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import aiSettingsTabStyles from './aiSettingsTab.css.js';
+
+const {html, Directives: {ifDefined, classMap}} = LitHtml;
 
 const UIStrings = {
   /**
@@ -84,6 +87,10 @@ const UIStrings = {
    */
   helpUnderstandStyling: 'Get help with understanding CSS styles',
   /**
+   *@description Text describing the 'AI assistance' feature
+   */
+  helpUnderstandStylingAndNetworkRequest: 'Get help with understanding CSS styles and network requests',
+  /**
    *@description Text which is a hyperlink to more documentation
    */
   learnMore: 'Learn more',
@@ -91,6 +98,10 @@ const UIStrings = {
    *@description Description of the AI assistance feature
    */
   explainStyling: 'Understand CSS styles with AI-powered insights',
+  /**
+   *@description Description of the AI assistance feature
+   */
+  explainStylingAndNetworkRequest: 'Understand CSS styles, and network activity with AI-powered insights',
   /**
    *@description Description of the AI assistance feature
    */
@@ -153,6 +164,22 @@ export class AISettingsTab extends LegacyWrapper.LegacyWrapper.WrappableComponen
     this.#shadow.adoptedStyleSheets = [Input.checkboxStyles, aiSettingsTabStyles];
   }
 
+  #getAiAssistanceSettingDescription(): Platform.UIString.LocalizedString {
+    const config = Common.Settings.Settings.instance().getHostConfig();
+    if (config.devToolsExplainThisResourceDogfood?.enabled) {
+      return i18nString(UIStrings.helpUnderstandStylingAndNetworkRequest);
+    }
+    return i18nString(UIStrings.helpUnderstandStyling);
+  }
+
+  #getAiAssistanceSettingInfo(): Platform.UIString.LocalizedString {
+    const config = Common.Settings.Settings.instance().getHostConfig();
+    if (config.devToolsExplainThisResourceDogfood?.enabled) {
+      return i18nString(UIStrings.explainStylingAndNetworkRequest);
+    }
+    return i18nString(UIStrings.explainStyling);
+  }
+
   #expandConsoleInsightsSetting(): void {
     this.#isConsoleInsightsSettingExpanded = !this.#isConsoleInsightsSettingExpanded;
     void this.render();
@@ -207,7 +234,7 @@ export class AISettingsTab extends LegacyWrapper.LegacyWrapper.WrappableComponen
       LitHtml.TemplateResult {
     // Disabled until https://crbug.com/1079231 is fixed.
     // clang-format off
-    return LitHtml.html`
+    return html`
       <div>
         <${IconButton.Icon.Icon.litTagName} .data=${{
           iconName: icon,
@@ -237,13 +264,13 @@ export class AISettingsTab extends LegacyWrapper.LegacyWrapper.WrappableComponen
       {icon: 'corporate-fare', text: i18nString(UIStrings.adminSettings)},
       {
         icon: 'policy',
-        text: LitHtml.html`${i18n.i18n.getFormatLocalizedString(str_, UIStrings.termsOfServicePrivacyNotice, {
+        text: html`${i18n.i18n.getFormatLocalizedString(str_, UIStrings.termsOfServicePrivacyNotice, {
           PH1: tosLink,
           PH2: privacyNoticeLink,
         })}`,
       },
     ];
-    return LitHtml.html`
+    return html`
       <div class="shared-disclaimer">
         <h2>${i18nString(UIStrings.boostYourProductivity)}</h2>
         <h3 class="disclaimer-list-header">${i18nString(UIStrings.thingsToConsider)}</h3>
@@ -257,7 +284,7 @@ export class AISettingsTab extends LegacyWrapper.LegacyWrapper.WrappableComponen
   #renderSettingItem(icon: string, text: Common.UIString.LocalizedString): LitHtml.TemplateResult {
     // Disabled until https://crbug.com/1079231 is fixed.
     // clang-format off
-    return LitHtml.html`
+    return html`
       <div>
         <${IconButton.Icon.Icon.litTagName} .data=${{
           iconName: icon,
@@ -280,7 +307,7 @@ export class AISettingsTab extends LegacyWrapper.LegacyWrapper.WrappableComponen
 
     // Disabled until https://crbug.com/1079231 is fixed.
     // clang-format off
-    return LitHtml.html`
+    return html`
       <div class="accordion-header" @click=${this.#expandConsoleInsightsSetting}>
         <div class="icon-container centered">
           <${IconButton.Icon.Icon.litTagName} name="lightbulb-spark"></${IconButton.Icon.Icon.litTagName}>
@@ -303,18 +330,18 @@ export class AISettingsTab extends LegacyWrapper.LegacyWrapper.WrappableComponen
       </div>
       <div class="divider"></div>
       <div class="toggle-container centered"
-        title=${LitHtml.Directives.ifDefined(this.#consoleInsightsSetting?.disabledReason())}
+        title=${ifDefined(this.#consoleInsightsSetting?.disabledReason())}
         @click=${this.#toggleConsoleInsightsSetting.bind(this)}
       >
         <${Switch.Switch.Switch.litTagName}
-          .checked=${this.#consoleInsightsSetting?.get() && !this.#consoleInsightsSetting?.disabled()}
-          .jslogContext=${this.#consoleInsightsSetting?.name}
-          .disabled=${this.#consoleInsightsSetting?.disabled()}
+          .checked=${Boolean(this.#consoleInsightsSetting?.get() && !this.#consoleInsightsSetting?.disabled())}
+          .jslogContext=${this.#consoleInsightsSetting?.name || ''}
+          .disabled=${Boolean(this.#consoleInsightsSetting?.disabled())}
           @switchchange=${this.#toggleConsoleInsightsSetting.bind(this)}
           aria-label=${this.#consoleInsightsSetting?.disabledReason() || i18nString(UIStrings.enableConsoleInsights)}
         ></${Switch.Switch.Switch.litTagName}>
       </div>
-      <div class=${LitHtml.Directives.classMap(detailsClasses)}>
+      <div class=${classMap(detailsClasses)}>
         <div class="overflow-hidden">
           <div class="expansion-grid">
             <h3 class="expansion-grid-whole-row">${i18nString(UIStrings.whenOn)}</h3>
@@ -348,14 +375,14 @@ export class AISettingsTab extends LegacyWrapper.LegacyWrapper.WrappableComponen
 
     // Disabled until https://crbug.com/1079231 is fixed.
     // clang-format off
-    return LitHtml.html`
+    return html`
       <div class="accordion-header" @click=${this.#expandAiAssistanceSetting}>
         <div class="icon-container centered">
           <${IconButton.Icon.Icon.litTagName} name="smart-assistant"></${IconButton.Icon.Icon.litTagName}>
         </div>
         <div class="setting-card">
           <h2>${i18n.i18n.lockedString('AI assistance')}</h2>
-          <div class="setting-description">${i18nString(UIStrings.helpUnderstandStyling)}</div>
+          <div class="setting-description">${this.#getAiAssistanceSettingDescription()}</div>
         </div>
         <div class="dropdown centered">
           <${Buttons.Button.Button.litTagName}
@@ -371,22 +398,22 @@ export class AISettingsTab extends LegacyWrapper.LegacyWrapper.WrappableComponen
       </div>
       <div class="divider"></div>
       <div class="toggle-container centered"
-        title=${LitHtml.Directives.ifDefined(this.#aiAssistanceSetting?.disabledReason())}
+        title=${ifDefined(this.#aiAssistanceSetting?.disabledReason())}
         @click=${this.#toggleAiAssistanceSetting.bind(this)}
       >
         <${Switch.Switch.Switch.litTagName}
-          .checked=${this.#aiAssistanceSetting?.get() && !this.#aiAssistanceSetting?.disabled()}
+          .checked=${Boolean(this.#aiAssistanceSetting?.get() && !this.#aiAssistanceSetting?.disabled())}
           .jslogContext=${this.#aiAssistanceSetting?.name}
-          .disabled=${this.#aiAssistanceSetting?.disabled()}
+          .disabled=${Boolean(this.#aiAssistanceSetting?.disabled())}
           @switchchange=${this.#toggleAiAssistanceSetting.bind(this)}
           aria-label=${this.#aiAssistanceSetting?.disabledReason() || i18nString(UIStrings.enableAiAssistance)}
         ></${Switch.Switch.Switch.litTagName}>
       </div>
-      <div class=${LitHtml.Directives.classMap(detailsClasses)}>
+      <div class=${classMap(detailsClasses)}>
         <div class="overflow-hidden">
           <div class="expansion-grid">
             <h3 class="expansion-grid-whole-row">${i18nString(UIStrings.whenOn)}</h3>
-            ${this.#renderSettingItem('info', i18nString(UIStrings.explainStyling))}
+            ${this.#renderSettingItem('info', this.#getAiAssistanceSettingInfo())}
             ${this.#renderSettingItem('pen-spark', i18nString(UIStrings.receiveStylingSuggestions))}
             <h3 class="expansion-grid-whole-row">${i18nString(UIStrings.thingsToConsider)}</h3>
             ${this.#renderSettingItem('google', i18nString(UIStrings.freestylerSendsData))}
@@ -410,13 +437,13 @@ export class AISettingsTab extends LegacyWrapper.LegacyWrapper.WrappableComponen
   override async render(): Promise<void> {
     // Disabled until https://crbug.com/1079231 is fixed.
     // clang-format off
-    LitHtml.render(LitHtml.html`
+    LitHtml.render(html`
       <header>
         <h1>${i18nString(UIStrings.aiInnovations)}</h1>
       </header>
       <div class="settings-container-wrapper" jslog=${VisualLogging.pane('chrome-ai')}>
         ${this.#renderSharedDisclaimer()}
-        ${this.#consoleInsightsSetting || this.#aiAssistanceSetting ? LitHtml.html`
+        ${this.#consoleInsightsSetting || this.#aiAssistanceSetting ? html`
           <div class="settings-container">
             ${this.#consoleInsightsSetting ? this.#renderConsoleInsightsSetting() : LitHtml.nothing}
             ${this.#aiAssistanceSetting ? this.#renderAiAssistanceSetting() : LitHtml.nothing}
