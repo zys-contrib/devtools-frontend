@@ -208,12 +208,12 @@ export class FreestylerAgent extends AiAgent<SDK.DOMModel.DOMNode> {
 
   get options(): AidaRequestOptions {
     const config = Common.Settings.Settings.instance().getHostConfig();
-    const temperature = AiAgent.validTemperature(config.devToolsFreestyler?.temperature);
+    const temperature = config.devToolsFreestyler?.temperature;
     const modelId = config.devToolsFreestyler?.modelId;
 
     return {
       temperature,
-      model_id: modelId,
+      modelId,
     };
   }
 
@@ -602,15 +602,7 @@ export class FreestylerAgent extends AiAgent<SDK.DOMModel.DOMNode> {
     return `${elementEnchantmentQuery}QUERY: ${query}`;
   }
 
-  override addToHistory(options: {id: number, query: string, response: ParsedResponse}): void {
-    const response = options.response;
-    if ('answer' in response) {
-      const answer = `ANSWER: ${response.answer}`;
-      return super.addToHistory({
-        ...options,
-        response: {answer},
-      });
-    }
-    return super.addToHistory(options);
+  override formatHistoryChunkAnswer(text: string): string {
+    return `ANSWER: ${text}`;
   }
 }

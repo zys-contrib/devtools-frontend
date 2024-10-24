@@ -29,7 +29,6 @@
  */
 
 import * as Common from '../../core/common/common.js';
-import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
 import * as Root from '../../core/root/root.js';
 import * as Bindings from '../../models/bindings/bindings.js';
@@ -214,11 +213,8 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
       return;
     }
 
-    // Differentiate between Mac and other platforms to use SoftContextMenu or native menus
-    // while we are gradually landing CLs to enable accelerators for native menus on Mac.
-    // We will use native menus disregarding of the platform once all CLs are in.
-    const useSoftMenu = Host.Platform.isMac();
-    const contextMenu = new UI.ContextMenu.ContextMenu(event, {useSoftMenu});
+    // TODO(crbug.com/368240754): Temporarily use soft menu for the shortcuts to show, till the accelerators backend CLs land.
+    const contextMenu = new UI.ContextMenu.ContextMenu(event, {useSoftMenu: true});
 
     if (UI.ActionRegistry.ActionRegistry.instance().hasAction('drjones.performance-panel-context')) {
       const aiNode = this.getAIEventNodeTreeFromEntryIndex(entryIndex);
@@ -236,6 +232,7 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
     });
     hideEntryOption.setShortcut('H');
     hideEntryOption.setAccelerator(UI.KeyboardShortcut.Keys.H, [UI.KeyboardShortcut.Modifiers.None]);
+    hideEntryOption.setIsDevToolsPerformanceMenuItem(true);
 
     const hideChildrenOption = contextMenu.defaultSection().appendItem(i18nString(UIStrings.hideChildren), () => {
       this.modifyTree(PerfUI.FlameChart.FilterAction.COLLAPSE_FUNCTION, entryIndex);
@@ -245,6 +242,7 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
     });
     hideChildrenOption.setShortcut('C');
     hideChildrenOption.setAccelerator(UI.KeyboardShortcut.Keys.C, [UI.KeyboardShortcut.Modifiers.None]);
+    hideChildrenOption.setIsDevToolsPerformanceMenuItem(true);
 
     const hideRepeatingChildrenOption =
         contextMenu.defaultSection().appendItem(i18nString(UIStrings.hideRepeatingChildren), () => {
@@ -255,6 +253,7 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
         });
     hideRepeatingChildrenOption.setShortcut('R');
     hideRepeatingChildrenOption.setAccelerator(UI.KeyboardShortcut.Keys.R, [UI.KeyboardShortcut.Modifiers.None]);
+    hideRepeatingChildrenOption.setIsDevToolsPerformanceMenuItem(true);
 
     const resetChildrenOption = contextMenu.defaultSection().appendItem(i18nString(UIStrings.resetChildren), () => {
       this.modifyTree(PerfUI.FlameChart.FilterAction.RESET_CHILDREN, entryIndex);
@@ -264,6 +263,7 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
     });
     resetChildrenOption.setShortcut('U');
     resetChildrenOption.setAccelerator(UI.KeyboardShortcut.Keys.U, [UI.KeyboardShortcut.Modifiers.None]);
+    resetChildrenOption.setIsDevToolsPerformanceMenuItem(true);
 
     contextMenu.defaultSection().appendItem(i18nString(UIStrings.resetTrace), () => {
       this.modifyTree(PerfUI.FlameChart.FilterAction.UNDO_ALL_ACTIONS, entryIndex);
@@ -644,7 +644,7 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
 
   search(
       visibleWindow: Trace.Types.Timing.TraceWindowMicroSeconds,
-      filter: TimelineModel.TimelineModelFilter.TimelineModelFilter): PerfUI.FlameChart.DataProviderSearchResult[] {
+      filter?: TimelineModel.TimelineModelFilter.TimelineModelFilter): PerfUI.FlameChart.DataProviderSearchResult[] {
     const results: PerfUI.FlameChart.DataProviderSearchResult[] = [];
     this.timelineData();
     for (let i = 0; i < this.entryData.length; ++i) {
@@ -665,7 +665,7 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
       if (!Trace.Helpers.Timing.eventIsInBounds(entry, visibleWindow)) {
         continue;
       }
-      if (filter.accept(entry, this.parsedTrace || undefined)) {
+      if (!filter || filter.accept(entry, this.parsedTrace || undefined)) {
         const startTimeMilli = Trace.Helpers.Timing.microSecondsToMilliseconds(entry.ts);
         results.push({index: i, startTimeMilli, provider: 'main'});
       }
@@ -1145,10 +1145,6 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
     }
     if (timelineSelection) {
       this.lastSelection = new Selection(timelineSelection, entryIndex);
-    }
-    if (UI.ActionRegistry.ActionRegistry.instance().hasAction('drjones.performance-panel-context')) {
-      const aiNode = this.getAIEventNodeTreeFromEntryIndex(entryIndex);
-      UI.Context.Context.instance().setFlavor(Trace.Helpers.TreeHelpers.AINode, aiNode);
     }
     return timelineSelection;
   }

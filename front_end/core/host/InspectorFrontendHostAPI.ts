@@ -392,6 +392,7 @@ export interface ContextMenuDescriptor {
   isExperimentalFeature?: boolean;
   enabled?: boolean;
   checked?: boolean;
+  isDevToolsPerformanceMenuItem?: boolean;
   subItems?: ContextMenuDescriptor[];
   shortcut?: string;
   jslogContext?: string;
@@ -482,7 +483,6 @@ export const enum EnumeratedHistogram {
   CSSHintShown = 'DevTools.CSSHintShown',
   LighthouseModeRun = 'DevTools.LighthouseModeRun',
   LighthouseCategoryUsed = 'DevTools.LighthouseCategoryUsed',
-  ColorPickerOpenedFrom = 'DevTools.ColorPickerOpenedFrom',
   CSSPropertyDocumentation = 'DevTools.CSSPropertyDocumentation',
   SwatchActivated = 'DevTools.SwatchActivated',
   AnimationPlaybackRateChanged = 'DevTools.AnimationPlaybackRateChanged',

@@ -2,24 +2,29 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as Host from '../../core/host/host.js';
+import type * as Host from '../../core/host/host.js';
 import {
   describeWithEnvironment,
 } from '../../testing/EnvironmentHelpers.js';
 
 import * as Freestyler from './freestyler.js';
 
-const {AiAgent} = Freestyler;
+const {AiAgent, ResponseType} = Freestyler;
 
 class AiAgentMock extends AiAgent<unknown> {
   override preamble = 'preamble';
+
+  // eslint-disable-next-line require-yield
+  override async * handleContextDetails(): AsyncGenerator<Freestyler.ContextResponse, void, void> {
+    return;
+  }
 
   clientFeature: Host.AidaClient.ClientFeature = 0;
   userTier: undefined;
 
   options: Freestyler.AidaRequestOptions = {
     temperature: 1,
-    model_id: 'test model',
+    modelId: 'test model',
   };
 }
 
@@ -105,7 +110,7 @@ describeWithEnvironment('AiAgent', () => {
         aidaClient: {} as Host.AidaClient.AidaClient,
       });
       const request = agent.buildRequest({input: 'test input'});
-      assert.strictEqual(request.metadata?.string_session_id, 'session_id');
+      assert.strictEqual(request.metadata?.string_session_id, 'sessionId');
     });
 
     it('builds a request with preamble', async () => {
@@ -122,15 +127,17 @@ describeWithEnvironment('AiAgent', () => {
       const agent = new AiAgentMock({
         aidaClient: {} as Host.AidaClient.AidaClient,
       });
-      agent.chatHistoryForTesting = new Map([[
-        0,
+      agent.chatNewHistoryForTesting = new Map([
         [
-          {
-            text: 'test',
-            entity: Host.AidaClient.Entity.USER,
-          },
+          0,
+          [
+            {
+              type: ResponseType.QUERYING,
+              query: 'test',
+            },
+          ],
         ],
-      ]]);
+      ]);
 
       const request = agent.buildRequest({
         input: 'test input',

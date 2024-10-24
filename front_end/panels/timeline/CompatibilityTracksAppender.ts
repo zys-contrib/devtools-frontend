@@ -32,6 +32,17 @@ export type HighlightedEntryInfo = {
   additionalElement?: HTMLElement,
 };
 
+let showPostMessageEvents: boolean|undefined;
+function isShowPostMessageEventsEnabled(): boolean {
+  // Everytime the experiment is toggled devtools is reloaded so the
+  // cache is updated automatically.
+  if (showPostMessageEvents === undefined) {
+    showPostMessageEvents =
+        Root.Runtime.experiments.isEnabled(Root.Runtime.ExperimentName.TIMELINE_SHOW_POST_MESSAGE_EVENTS);
+  }
+  return showPostMessageEvents;
+}
+
 export function entryIsVisibleInTimeline(
     entry: Trace.Types.Events.Event, parsedTrace?: Trace.Handlers.Types.ParsedTrace): boolean {
   if (parsedTrace && parsedTrace.Meta.traceIsGeneric) {
@@ -49,9 +60,10 @@ export function entryIsVisibleInTimeline(
     return true;
   }
 
-  // Gate the visibility of post message events behind the experiement flag
-  if (Trace.Types.Events.isSchedulePostMessage(entry) || Trace.Types.Events.isHandlePostMessage(entry)) {
-    return Root.Runtime.experiments.isEnabled(Root.Runtime.ExperimentName.TIMELINE_SHOW_POST_MESSAGE_EVENTS);
+  if (isShowPostMessageEventsEnabled()) {
+    if (Trace.Types.Events.isSchedulePostMessage(entry) || Trace.Types.Events.isHandlePostMessage(entry)) {
+      return true;
+    }
   }
 
   if (Trace.Types.Extensions.isSyntheticExtensionEntry(entry) || Trace.Types.Events.isSyntheticServerTiming(entry)) {

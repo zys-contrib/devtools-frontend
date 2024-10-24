@@ -312,11 +312,6 @@ export class UserMetrics {
         EnumeratedHistogram.LighthouseCategoryUsed, type, LighthouseCategoryUsed.MAX_VALUE);
   }
 
-  colorPickerOpenedFrom(type: ColorPickerOpenedFrom): void {
-    InspectorFrontendHostInstance.recordEnumeratedHistogram(
-        EnumeratedHistogram.ColorPickerOpenedFrom, type, ColorPickerOpenedFrom.MAX_VALUE);
-  }
-
   cssPropertyDocumentation(type: CSSPropertyDocumentation): void {
     InspectorFrontendHostInstance.recordEnumeratedHistogram(
         EnumeratedHistogram.CSSPropertyDocumentation, type, CSSPropertyDocumentation.MAX_VALUE);
@@ -1025,16 +1020,11 @@ export enum DevtoolsExperiments {
   'extension-storage-viewer' = 100,
   'floating-entry-points-for-ai-assistance' = 101,
   'timeline-experimental-insights' = 102,
+  'timeline-dim-unrelated-events' = 103,
   /* eslint-enable @typescript-eslint/naming-convention */
 
   // Increment this when new experiments are added.
-  MAX_VALUE = 103,
-}
-
-export const enum ColorPickerOpenedFrom {
-  SOURCES_PANEL = 0,
-  STYLES_TAB = 1,
-  MAX_VALUE = 2,
+  MAX_VALUE = 104,
 }
 
 export const enum CSSPropertyDocumentation {

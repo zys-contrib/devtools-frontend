@@ -497,7 +497,7 @@ export class TimelinePanel extends UI.Panel.Panel implements Client, TimelineMod
 
     this.showMemorySetting = Common.Settings.Settings.instance().createSetting('timeline-show-memory', false);
     this.showMemorySetting.setTitle(i18nString(UIStrings.memory));
-    this.showMemorySetting.addChangeListener(this.onModeChanged, this);
+    this.showMemorySetting.addChangeListener(this.onMemoryModeChanged, this);
 
     this.#thirdPartyTracksSetting = TimelinePanel.extensionDataVisibilitySetting();
     this.#thirdPartyTracksSetting.addChangeListener(this.#extensionDataVisibilityChanged, this);
@@ -535,7 +535,6 @@ export class TimelinePanel extends UI.Panel.Panel implements Client, TimelineMod
 
     this.searchableViewInternal = new UI.SearchableView.SearchableView(this.flameChart, null);
     this.searchableViewInternal.setMinimumSize(0, 100);
-    this.searchableViewInternal.setMinimalSearchQuerySize(0);
     this.searchableViewInternal.element.classList.add('searchable-view');
     this.searchableViewInternal.show(this.timelinePane.element);
     this.flameChart.show(this.searchableViewInternal.element);
@@ -555,8 +554,8 @@ export class TimelinePanel extends UI.Panel.Panel implements Client, TimelineMod
     // is not on the DOM. That only happens when the sidebar tabbed pane component is set to Annotations.
     // In that case, clicking on the insight chip will do nothing.
     this.#sideBar.element.addEventListener(TimelineInsights.SidebarInsight.InsightActivated.eventName, event => {
-      const {name, insightSetKey, overlays} = event;
-      this.#setActiveInsight({name, insightSetKey, overlays});
+      const {name, insightSetKey, overlays, relatedEvents} = event;
+      this.#setActiveInsight({name, insightSetKey, overlays, relatedEvents});
     });
 
     this.#sideBar.element.addEventListener(TimelineInsights.SidebarInsight.InsightProvideOverlays.eventName, event => {
@@ -616,7 +615,7 @@ export class TimelinePanel extends UI.Panel.Panel implements Client, TimelineMod
           event.bounds, {ignoreMiniMapBounds: true, shouldAnimate: true});
     });
 
-    this.onModeChanged();
+    this.onMemoryModeChanged();
     this.populateToolbar();
     // The viewMode is set by default to the landing page, so we don't call
     // `#changeView` here and can instead directly call showLandingPage();
@@ -1312,7 +1311,7 @@ export class TimelinePanel extends UI.Panel.Panel implements Client, TimelineMod
     });
   }
 
-  private onModeChanged(): void {
+  private onMemoryModeChanged(): void {
     this.flameChart.updateCountersGraphToggle(this.showMemorySetting.get());
     this.updateMiniMap();
     this.doResize();

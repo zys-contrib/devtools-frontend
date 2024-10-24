@@ -103,7 +103,9 @@ export class Runtime {
   }
 
   loadLegacyModule(modulePath: string): Promise<void> {
-    return import(`../../${modulePath}`);
+    const importPath =
+        `../../${modulePath}`;  // Extracted as a variable so esbuild doesn't attempt to bundle all the things.
+    return import(importPath);
   }
 }
 
@@ -300,6 +302,8 @@ export const enum ExperimentName {
   EXTENSION_STORAGE_VIEWER = 'extension-storage-viewer',
   FLOATING_ENTRY_POINTS_FOR_AI_ASSISTANCE = 'floating-entry-points-for-ai-assistance',
   TIMELINE_EXPERIMENTAL_INSIGHTS = 'timeline-experimental-insights',
+  TIMELINE_DIM_UNRELATED_EVENTS = 'timeline-dim-unrelated-events',
+  // when adding to this enum, you'll need to also add to REGISTERED_EXPERIMENTS in EnvironmentHelpers.ts
 }
 
 export interface AidaAvailability {
