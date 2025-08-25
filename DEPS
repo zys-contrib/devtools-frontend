@@ -12,7 +12,7 @@ vars = {
   'build_with_chromium': False,
 
   'build_url': 'https://chromium.googlesource.com/chromium/src/build.git',
-  'build_revision': 'df7c97509920672a614be6b72ad4e2fdd655f213',
+  'build_revision': '77e3784d7769ca3195f5221871c2f2010fee0f4f',
 
   'buildtools_url': 'https://chromium.googlesource.com/chromium/src/buildtools.git',
   'buildtools_revision': 'e10f12d548b18285ad3578cc7641dcb253ad7acf',
@@ -49,7 +49,7 @@ vars = {
   # Chrome version used for tests. It should be regularly updated to
   # match the Canary version listed here:
   # https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json
-  'chrome': '141.0.7372.0',
+  'chrome': '141.0.7374.0',
 
   # 'magic' text to tell depot_tools that git submodules should be accepted but
   # but parity with DEPS file is expected.
@@ -59,7 +59,7 @@ vars = {
   'non_git_source': 'True',
 
   # siso CIPD package version
-  'siso_version': 'git_revision:7e3433bde6dcf9d760b0423c5f47c51e65c7c0fa',
+  'siso_version': 'git_revision:15568691576f74b11a3c73c85a3c8dd5efb72f05',
 }
 
 # Only these hosts are allowed for dependencies in this DEPS file.
@@ -148,7 +148,7 @@ deps = {
   'third_party/siso': {
     'packages': [
       {
-        'package': 'infra/build/siso/${{platform}}',
+        'package': 'build/siso/${{platform}}',
         'version': Var('siso_version'),
       }
     ],
