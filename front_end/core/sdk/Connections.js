@@ -166,49 +166,12 @@ export class StubConnection {
         const messageObject = JSON.parse(message);
         const error = {
             message: 'This is a stub connection, can\'t dispatch message.',
-            code: ProtocolClient.InspectorBackend.DevToolsStubErrorCode,
+            code: ProtocolClient.CDPConnection.CDPErrorStatus.DEVTOOLS_STUB_ERROR,
             data: messageObject,
         };
         if (this.onMessage) {
             this.onMessage.call(null, { id: messageObject.id, error });
         }
-    }
-    async disconnect() {
-        if (this.#onDisconnect) {
-            this.#onDisconnect.call(null, 'force disconnect');
-        }
-        this.#onDisconnect = null;
-        this.onMessage = null;
-    }
-}
-export class ParallelConnection {
-    #connection;
-    #sessionId;
-    onMessage = null;
-    #onDisconnect = null;
-    constructor(connection, sessionId) {
-        this.#connection = connection;
-        this.#sessionId = sessionId;
-    }
-    setOnMessage(onMessage) {
-        this.onMessage = onMessage;
-    }
-    setOnDisconnect(onDisconnect) {
-        this.#onDisconnect = onDisconnect;
-    }
-    getOnDisconnect() {
-        return this.#onDisconnect;
-    }
-    sendRawMessage(message) {
-        const messageObject = JSON.parse(message);
-        // If the message isn't for a specific session, it must be for the root session.
-        if (!messageObject.sessionId) {
-            messageObject.sessionId = this.#sessionId;
-        }
-        this.#connection.sendRawMessage(JSON.stringify(messageObject));
-    }
-    getSessionId() {
-        return this.#sessionId;
     }
     async disconnect() {
         if (this.#onDisconnect) {

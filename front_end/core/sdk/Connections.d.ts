@@ -33,19 +33,4 @@ export declare class StubConnection implements ProtocolClient.ConnectionTranspor
     private respondWithError;
     disconnect(): Promise<void>;
 }
-export interface ParallelConnectionInterface extends ProtocolClient.ConnectionTransport.ConnectionTransport {
-    getSessionId: () => string;
-    getOnDisconnect: () => ((arg0: string) => void) | null;
-}
-export declare class ParallelConnection implements ParallelConnectionInterface {
-    #private;
-    onMessage: ((arg0: Object) => void) | null;
-    constructor(connection: ProtocolClient.ConnectionTransport.ConnectionTransport, sessionId: string);
-    setOnMessage(onMessage: (arg0: Object) => void): void;
-    setOnDisconnect(onDisconnect: (arg0: string) => void): void;
-    getOnDisconnect(): ((arg0: string) => void) | null;
-    sendRawMessage(message: string): void;
-    getSessionId(): string;
-    disconnect(): Promise<void>;
-}
 export declare function initMainConnection(createRootTarget: () => Promise<void>, onConnectionLost: (message: Platform.UIString.LocalizedString) => void): Promise<void>;
