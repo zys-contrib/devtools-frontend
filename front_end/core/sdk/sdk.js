@@ -30910,8 +30910,8 @@ var CompilerSourceMappingContentProvider = class {
 var Connections_exports = {};
 __export(Connections_exports, {
   MainConnection: () => MainConnection,
-  StubConnection: () => StubConnection,
-  WebSocketConnection: () => WebSocketConnection,
+  StubTransport: () => StubTransport,
+  WebSocketTransport: () => WebSocketTransport,
   initMainConnection: () => initMainConnection
 });
 import * as i18n29 from "./../i18n/i18n.js";
@@ -30923,7 +30923,7 @@ import * as Root11 from "./../root/root.js";
 // gen/front_end/core/sdk/RehydratingConnection.js
 var RehydratingConnection_exports = {};
 __export(RehydratingConnection_exports, {
-  RehydratingConnection: () => RehydratingConnection,
+  RehydratingConnectionTransport: () => RehydratingConnectionTransport,
   RehydratingSession: () => RehydratingSession
 });
 import * as Common33 from "./../common/common.js";
@@ -31311,7 +31311,7 @@ var UIStrings12 = {
 };
 var str_12 = i18n27.i18n.registerUIStrings("core/sdk/RehydratingConnection.ts", UIStrings12);
 var i18nString12 = i18n27.i18n.getLocalizedString.bind(void 0, str_12);
-var RehydratingConnection = class {
+var RehydratingConnectionTransport = class {
   rehydratingConnectionState = 1;
   onDisconnect = null;
   onMessage = null;
@@ -31741,7 +31741,7 @@ var MainConnection = class {
     }
   }
 };
-var WebSocketConnection = class {
+var WebSocketTransport = class {
   #socket;
   onMessage = null;
   #onDisconnect = null;
@@ -31823,7 +31823,7 @@ var WebSocketConnection = class {
     });
   }
 };
-var StubConnection = class {
+var StubTransport = class {
   onMessage = null;
   #onDisconnect = null;
   setOnMessage(onMessage) {
@@ -31855,23 +31855,23 @@ var StubConnection = class {
   }
 };
 async function initMainConnection(createRootTarget, onConnectionLost) {
-  ProtocolClient2.ConnectionTransport.ConnectionTransport.setFactory(createMainConnection.bind(null, onConnectionLost));
+  ProtocolClient2.ConnectionTransport.ConnectionTransport.setFactory(createMainTransport.bind(null, onConnectionLost));
   await createRootTarget();
   Host9.InspectorFrontendHost.InspectorFrontendHostInstance.connectionReady();
 }
-function createMainConnection(onConnectionLost) {
+function createMainTransport(onConnectionLost) {
   if (Root11.Runtime.Runtime.isTraceApp()) {
-    return new RehydratingConnection(onConnectionLost);
+    return new RehydratingConnectionTransport(onConnectionLost);
   }
   const wsParam = Root11.Runtime.Runtime.queryParam("ws");
   const wssParam = Root11.Runtime.Runtime.queryParam("wss");
   if (wsParam || wssParam) {
     const ws = wsParam ? `ws://${wsParam}` : `wss://${wssParam}`;
-    return new WebSocketConnection(ws, onConnectionLost);
+    return new WebSocketTransport(ws, onConnectionLost);
   }
   const notEmbeddedOrWs = Host9.InspectorFrontendHost.InspectorFrontendHostInstance.isHostedMode();
   if (notEmbeddedOrWs) {
-    return new StubConnection();
+    return new StubTransport();
   }
   return new MainConnection();
 }

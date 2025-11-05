@@ -6,7 +6,7 @@ import * as Common from '../common/common.js';
 import * as Host from '../host/host.js';
 import * as ProtocolClient from '../protocol_client/protocol_client.js';
 import * as Root from '../root/root.js';
-import { RehydratingConnection } from './RehydratingConnection.js';
+import { RehydratingConnectionTransport } from './RehydratingConnection.js';
 const UIStrings = {
     /**
      * @description Text on the remote debugging window to indicate the connection is lost
@@ -66,7 +66,7 @@ export class MainConnection {
         }
     }
 }
-export class WebSocketConnection {
+export class WebSocketTransport {
     #socket;
     onMessage = null;
     #onDisconnect = null;
@@ -150,7 +150,7 @@ export class WebSocketConnection {
         });
     }
 }
-export class StubConnection {
+export class StubTransport {
     onMessage = null;
     #onDisconnect = null;
     setOnMessage(onMessage) {
@@ -182,24 +182,24 @@ export class StubConnection {
     }
 }
 export async function initMainConnection(createRootTarget, onConnectionLost) {
-    ProtocolClient.ConnectionTransport.ConnectionTransport.setFactory(createMainConnection.bind(null, onConnectionLost));
+    ProtocolClient.ConnectionTransport.ConnectionTransport.setFactory(createMainTransport.bind(null, onConnectionLost));
     await createRootTarget();
     Host.InspectorFrontendHost.InspectorFrontendHostInstance.connectionReady();
 }
-function createMainConnection(onConnectionLost) {
+function createMainTransport(onConnectionLost) {
     if (Root.Runtime.Runtime.isTraceApp()) {
-        return new RehydratingConnection(onConnectionLost);
+        return new RehydratingConnectionTransport(onConnectionLost);
     }
     const wsParam = Root.Runtime.Runtime.queryParam('ws');
     const wssParam = Root.Runtime.Runtime.queryParam('wss');
     if (wsParam || wssParam) {
         const ws = (wsParam ? `ws://${wsParam}` : `wss://${wssParam}`);
-        return new WebSocketConnection(ws, onConnectionLost);
+        return new WebSocketTransport(ws, onConnectionLost);
     }
     const notEmbeddedOrWs = Host.InspectorFrontendHost.InspectorFrontendHostInstance.isHostedMode();
     if (notEmbeddedOrWs) {
         // eg., hosted mode (e.g. `http://localhost:9222/devtools/inspector.html`) without a WebSocket URL,
-        return new StubConnection();
+        return new StubTransport();
     }
     return new MainConnection();
 }
