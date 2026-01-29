@@ -1194,6 +1194,7 @@ var knownContextValues = /* @__PURE__ */ new Set([
   "dblclick",
   "de",
   "debug",
+  "debug-with-ai",
   "debugger",
   "debugger-paused",
   "debugger.breakpoint-input-window",
@@ -1391,6 +1392,7 @@ var knownContextValues = /* @__PURE__ */ new Set([
   "elements.capture-area-screenshot",
   "elements.color-mix-popover",
   "elements.copy-styles",
+  "elements.css-animation-hint",
   "elements.css-color-mix",
   "elements.css-hint",
   "elements.css-property-doc",
@@ -1430,6 +1432,7 @@ var knownContextValues = /* @__PURE__ */ new Set([
   "em",
   "emoji",
   "emptied",
+  "empty",
   "empty-cells",
   "empty-view",
   "emulate-auto-dark-mode",
@@ -1891,6 +1894,7 @@ var knownContextValues = /* @__PURE__ */ new Set([
   "identity",
   "ignore-this-retainer",
   "image",
+  "image-animation",
   "image-orientation",
   "image-rendering",
   "image-url",
@@ -5749,21 +5753,23 @@ async function onResizeOrIntersection(entries) {
     if (!loggingState?.size) {
       continue;
     }
-    let hasPendingParent = false;
-    for (const pendingElement of pendingResize.keys()) {
+    const resizeToOrFromZero = overlap.width * overlap.height * loggingState.size.width * loggingState.size.height === 0;
+    let suppressedByParentResize = false;
+    for (const [pendingElement, overlap2] of pendingResize.entries()) {
       if (pendingElement === element) {
         continue;
       }
       const pendingState = getLoggingState(pendingElement);
-      if (isAncestorOf(pendingState, loggingState)) {
-        hasPendingParent = true;
+      const pendingResizeToOrFromZero = overlap2.width * overlap2.height * (pendingState?.size?.width || 0) * (pendingState?.size?.height || 0) === 0;
+      if (isAncestorOf(pendingState, loggingState) && resizeToOrFromZero && pendingResizeToOrFromZero) {
+        suppressedByParentResize = true;
         break;
       }
-      if (isAncestorOf(loggingState, pendingState)) {
+      if (isAncestorOf(loggingState, pendingState) && resizeToOrFromZero && pendingResizeToOrFromZero) {
         pendingResize.delete(pendingElement);
       }
     }
-    if (hasPendingParent) {
+    if (suppressedByParentResize) {
       continue;
     }
     pendingResize.set(element, overlap);
