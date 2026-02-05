@@ -110,9 +110,6 @@
   "core/common/Revealer.ts | requestConditionsDrawer": {
     "message": "Request conditions drawer"
   },
-  "core/common/Revealer.ts | securityPanel": {
-    "message": "Security panel"
-  },
   "core/common/Revealer.ts | sourcesPanel": {
     "message": "Sources panel"
   },
@@ -6877,9 +6874,6 @@
   },
   "panels/console/ConsoleViewMessage.ts | repeatS": {
     "message": "{n, plural, =1 {Repeated # time} other {Repeated # times}}"
-  },
-  "panels/console/ConsoleViewMessage.ts | SeeIssueInCookieReport": {
-    "message": "Click to open privacy and security panel and show third-party cookie report"
   },
   "panels/console/ConsoleViewMessage.ts | someEvent": {
     "message": "<some> event"
