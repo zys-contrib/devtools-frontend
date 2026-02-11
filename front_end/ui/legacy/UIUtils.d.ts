@@ -286,7 +286,7 @@ export declare class InterceptBindingDirective extends Lit.Directive.Directive {
     #private;
     update(part: Lit.Directive.Part, [listener]: [BindingEventListener]): unknown;
     render(_listener: Function): undefined;
-    static attachEventListeners(templateElement: Element, renderedElement: Element): void;
+    static setEventListeners(templateElement: Element, renderedElement: Element): void;
 }
 export declare const cloneCustomElement: <T extends HTMLElement>(element: T, deep?: boolean) => T;
 export declare class HTMLElementWithLightDOMTemplate extends HTMLElement {

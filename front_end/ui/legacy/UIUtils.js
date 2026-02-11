@@ -1667,6 +1667,7 @@ export function bindToAction(actionName) {
 }
 export class InterceptBindingDirective extends Lit.Directive.Directive {
     static #interceptedBindings = new WeakMap();
+    static #attachedBindings = new WeakMap();
     update(part, [listener]) {
         if (part.type !== Lit.Directive.PartType.EVENT) {
             return listener;
@@ -1683,13 +1684,22 @@ export class InterceptBindingDirective extends Lit.Directive.Directive {
     render(_listener) {
         return undefined;
     }
-    static attachEventListeners(templateElement, renderedElement) {
-        const eventListeners = InterceptBindingDirective.#interceptedBindings.get(templateElement);
-        if (!eventListeners) {
-            return;
+    static setEventListeners(templateElement, renderedElement) {
+        const attachedListeners = InterceptBindingDirective.#attachedBindings.get(renderedElement);
+        if (attachedListeners) {
+            for (const [name, listener] of attachedListeners) {
+                renderedElement.removeEventListener(name, listener);
+            }
         }
-        for (const [name, listener] of eventListeners) {
-            renderedElement.addEventListener(name, listener);
+        const newListeners = InterceptBindingDirective.#interceptedBindings.get(templateElement);
+        if (newListeners?.size) {
+            for (const [name, listener] of newListeners) {
+                renderedElement.addEventListener(name, listener);
+            }
+            InterceptBindingDirective.#attachedBindings.set(renderedElement, new Map(newListeners));
+        }
+        else {
+            InterceptBindingDirective.#attachedBindings.delete(renderedElement);
         }
     }
 }
@@ -1718,7 +1728,7 @@ export class HTMLElementWithLightDOMTemplate extends HTMLElement {
             clone.appendChild(HTMLElementWithLightDOMTemplate.cloneNode(child));
         }
         if (node instanceof Element && clone instanceof Element) {
-            InterceptBindingDirective.attachEventListeners(node, clone);
+            InterceptBindingDirective.setEventListeners(node, clone);
         }
         return clone;
     }
