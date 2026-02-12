@@ -143,7 +143,7 @@ export declare class CheckboxLabel extends HTMLElement {
     #private;
     static readonly observedAttributes: string[];
     constructor();
-    static create(title?: Platform.UIString.LocalizedString, checked?: boolean, subtitle?: Platform.UIString.LocalizedString, jslogContext?: string, small?: boolean): CheckboxLabel;
+    static create(title?: Platform.UIString.LocalizedString, checked?: boolean, subtitle?: Platform.UIString.LocalizedString, jslogContext?: string, small?: boolean, tooltip?: Platform.UIString.LocalizedString): CheckboxLabel;
     attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void;
     getLabelText(): string | null;
     setLabelText(content: string): void;

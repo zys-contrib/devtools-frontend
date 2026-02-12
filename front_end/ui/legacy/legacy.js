@@ -12729,11 +12729,8 @@ var ToolbarSettingComboBox = class extends ToolbarComboBox {
 var ToolbarCheckbox = class extends ToolbarItem {
   #checkboxLabel;
   constructor(text, tooltip, listener, jslogContext) {
-    const checkboxLabel = CheckboxLabel.create(text, void 0, void 0, jslogContext);
+    const checkboxLabel = CheckboxLabel.create(text, void 0, void 0, jslogContext, void 0, tooltip);
     super(checkboxLabel);
-    if (tooltip) {
-      Tooltip.install(this.element, tooltip);
-    }
     if (listener) {
       this.element.addEventListener("click", listener, false);
     }
@@ -15160,7 +15157,7 @@ var CheckboxLabel = class _CheckboxLabel extends HTMLElement {
     this.#textElement.addEventListener("click", (e) => e.stopPropagation());
     this.#textElement.createChild("slot");
   }
-  static create(title, checked, subtitle, jslogContext, small) {
+  static create(title, checked, subtitle, jslogContext, small, tooltip) {
     const element = document.createElement("devtools-checkbox");
     element.#checkboxElement.checked = Boolean(checked);
     if (jslogContext) {
@@ -15168,10 +15165,14 @@ var CheckboxLabel = class _CheckboxLabel extends HTMLElement {
     }
     if (title !== void 0) {
       element.#textElement.textContent = title;
-      element.#checkboxElement.title = title;
       if (subtitle !== void 0) {
         element.#textElement.createChild("div", "devtools-checkbox-subtitle").textContent = subtitle;
       }
+    }
+    const inputTooltip = tooltip ?? title;
+    if (inputTooltip) {
+      element.#checkboxElement.title = inputTooltip;
+      element.#checkboxElement.setAttribute("aria-description", inputTooltip);
     }
     element.#checkboxElement.classList.toggle("small", small);
     return element;
@@ -15886,7 +15887,7 @@ var HTMLElementWithLightDOMTemplate = class _HTMLElementWithLightDOMTemplate ext
         _HTMLElementWithLightDOMTemplate.patchLitTemplate(value);
         return value;
       }
-      if (Array.isArray(value)) {
+      if (Array.isArray(value) || value instanceof Iterator) {
         return value.map(patchValue);
       }
       return value;
@@ -22539,7 +22540,7 @@ var TreeViewElement = class _TreeViewElement extends HTMLElementWithLightDOMTemp
     super();
     this.#treeOutline.addEventListener(Events2.ElementSelected, (event) => {
       if (event.data instanceof TreeViewTreeElement) {
-        this.dispatchEvent(new _TreeViewElement.SelectEvent(event.data.configElement));
+        event.data.listItemElement.dispatchEvent(new _TreeViewElement.SelectEvent());
       }
     });
     this.#treeOutline.addEventListener(Events2.ElementExpanded, (event) => {
@@ -22685,8 +22686,8 @@ var TreeViewElement = class _TreeViewElement extends HTMLElementWithLightDOMTemp
 };
 (function(TreeViewElement2) {
   class SelectEvent extends CustomEvent {
-    constructor(detail) {
-      super("select", { detail });
+    constructor() {
+      super("select");
     }
   }
   TreeViewElement2.SelectEvent = SelectEvent;

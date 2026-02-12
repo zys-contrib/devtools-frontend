@@ -124,7 +124,10 @@ var AnimationsTrackAppender = class {
     return this.#compatibilityBuilder.appendEventsAtLevel(animations, trackStartLevel, this, this.#eventAppendedCallback);
   }
   #appendTrackHeaderAtLevel(currentLevel, expanded) {
-    const style = buildGroupStyle({ useFirstLineForOverview: false });
+    const style = buildGroupStyle({
+      useFirstLineForOverview: false,
+      collapsible: 2
+    });
     const group = buildTrackHeader(
       "animations",
       currentLevel,
@@ -635,7 +638,7 @@ var InteractionsTrackAppender = class {
   #appendTrackHeaderAtLevel(currentLevel, expanded) {
     const trackIsCollapsible = this.#parsedTrace.data.UserInteractions.interactionEvents.length > 0;
     const style = buildGroupStyle({
-      collapsible: trackIsCollapsible ? 0 : 1,
+      collapsible: trackIsCollapsible ? 2 : 1,
       useDecoratorsForOverview: true
     });
     const group = buildTrackHeader(
@@ -12543,14 +12546,14 @@ var TimelineDetailsContentHelper = class {
     if (!this.#linkifier) {
       return null;
     }
-    let callFrameContents;
-    if (this.target) {
-      const stackTrace = await Bindings2.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance().createStackTraceFromProtocolRuntime(runtimeStackTrace, this.target);
-      callFrameContents = new LegacyComponents.JSPresentationUtils.StackTracePreviewContent(void 0, this.target ?? void 0, this.#linkifier, { tabStops: true, showColumnNumber: true });
-      callFrameContents.stackTrace = stackTrace;
-    } else {
-      callFrameContents = new LegacyComponents.JSPresentationUtils.StackTracePreviewContent(void 0, this.target ?? void 0, this.#linkifier, { runtimeStackTrace, tabStops: true, showColumnNumber: true });
+    const targetManager = SDK8.TargetManager.TargetManager.instance();
+    const target = this.target ?? targetManager.primaryPageTarget() ?? targetManager.rootTarget();
+    if (!target) {
+      return null;
     }
+    const stackTrace = await Bindings2.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance().createStackTraceFromProtocolRuntime(runtimeStackTrace, target);
+    const callFrameContents = new LegacyComponents.JSPresentationUtils.StackTracePreviewContent(void 0, target, this.#linkifier, { tabStops: true, showColumnNumber: true });
+    callFrameContents.stackTrace = stackTrace;
     await callFrameContents.updateComplete;
     if (!callFrameContents.hasContent()) {
       return null;
