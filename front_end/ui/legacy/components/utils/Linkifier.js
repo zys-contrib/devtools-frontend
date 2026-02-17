@@ -12,9 +12,10 @@ import * as Breakpoints from '../../../../models/breakpoints/breakpoints.js';
 import * as TextUtils from '../../../../models/text_utils/text_utils.js';
 import * as Workspace from '../../../../models/workspace/workspace.js';
 import * as UIHelpers from '../../../helpers/helpers.js';
-import { html, render } from '../../../lit/lit.js';
+import { Directives, html, render } from '../../../lit/lit.js';
 import * as VisualLogging from '../../../visual_logging/visual_logging.js';
 import * as UI from '../../legacy.js';
+const { ref, ifDefined, classMap } = Directives;
 const UIStrings = {
     /**
      * @description Text in Linkifier
@@ -472,7 +473,7 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper {
         }
         info.icon = icon;
     }
-    static linkifyURL(url, options) {
+    static renderLinkifiedUrl(url, options) {
         options = options || {
             showColumnNumber: false,
             inlineFrameIndex: 0,
@@ -487,13 +488,11 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper {
         const bypassURLTrimming = options.bypassURLTrimming;
         const omitOrigin = options.omitOrigin;
         if (!url || Common.ParsedURL.schemeIs(url, 'javascript:')) {
-            const element = document.createElement('span');
-            if (className) {
-                element.className = className;
-            }
-            element.textContent = text || url || i18nString(UIStrings.unknown);
-            return element;
+            // clang-format off
+            return html `<span class=${className}>${text || url || i18nString(UIStrings.unknown)}</span>`;
+            // clang-format on
         }
+        // FIXME: Bindings.ResourceUtils.displayNameForURL should be called in presenters.
         let linkText = text || Bindings.ResourceUtils.displayNameForURL(url);
         if (omitOrigin) {
             const parsedUrl = URL.parse(url);
@@ -516,16 +515,19 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper {
             tabStop: options.tabStop,
             bypassURLTrimming,
             jslogContext: options.jslogContext || 'url',
+            lineNumber,
+            columnNumber,
+            userMetric: options?.userMetric
         };
-        const { link, linkInfo } = Linkifier.createLink(linkText, className, linkOptions);
-        if (lineNumber) {
-            linkInfo.lineNumber = lineNumber;
-        }
-        if (columnNumber) {
-            linkInfo.columnNumber = columnNumber;
-        }
-        linkInfo.userMetric = options?.userMetric;
-        return link;
+        return Linkifier.renderLink(linkText, className, linkOptions);
+    }
+    /**
+     * @deprecated use renderLinkifiedUrl.
+     */
+    static linkifyURL(url, options) {
+        const container = document.createDocumentFragment();
+        render(Linkifier.renderLinkifiedUrl(url, options), container);
+        return container.firstElementChild;
     }
     static linkifyRevealable(revealable, text, fallbackHref, title, className, jslogContext) {
         const createLinkOptions = {
@@ -538,64 +540,88 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper {
         linkInfo.revealable = revealable;
         return link;
     }
-    static createLink(text, className, options = {}) {
+    static renderLink(text, className, options = {}) {
         const { maxLength, title, href, preventClick, tabStop, bypassURLTrimming, jslogContext } = options;
-        const link = document.createElement(options.preventClick ? 'span' : 'button');
-        if (className) {
-            link.className = className;
-        }
-        link.classList.add('devtools-link');
-        if (!options.preventClick) {
-            link.classList.add('text-button', 'link-style');
-        }
-        if (title) {
-            UI.Tooltip.Tooltip.install(link, title);
-        }
-        if (href) {
-            // @ts-expect-error
-            link.href = href;
-        }
-        link.setAttribute('jslog', `${VisualLogging.link(jslogContext).track({ click: true })}`);
-        if (text instanceof HTMLElement) {
-            link.appendChild(text);
-        }
-        else if (bypassURLTrimming) {
-            link.classList.add('devtools-link-styled-trim');
-            Linkifier.appendTextWithoutHashes(link, text);
-        }
-        else {
-            Linkifier.setTrimmedText(link, text, maxLength);
-        }
-        const linkInfo = {
-            icon: null,
-            enableDecorator: false,
-            uiLocation: null,
-            liveLocation: null,
-            url: href || null,
-            lineNumber: null,
-            columnNumber: null,
-            inlineFrameIndex: 0,
-            revealable: null,
-            fallback: null,
+        const classes = {
+            'devtools-link': true,
+            'text-button': !preventClick,
+            'link-style': !preventClick,
+            'devtools-link-prevent-click': !!preventClick,
         };
-        infoByAnchor.set(link, linkInfo);
-        if (!preventClick) {
-            const handler = (event) => {
-                if (event instanceof KeyboardEvent && event.key !== Platform.KeyboardUtilities.ENTER_KEY && event.key !== ' ') {
+        // More than one class name may be passed.
+        for (const cls of className.split(' ')) {
+            if (cls) {
+                classes[cls] = true;
+            }
+        }
+        const handler = (event) => {
+            if (event instanceof KeyboardEvent && event.key !== Platform.KeyboardUtilities.ENTER_KEY && event.key !== ' ') {
+                return;
+            }
+            if (Linkifier.handleClick(event)) {
+                event.consume(true);
+            }
+        };
+        const createRef = () => {
+            return ref(link => {
+                if (!link) {
                     return;
                 }
-                if (Linkifier.handleClick(event)) {
-                    event.consume(true);
+                if (text instanceof HTMLElement) {
+                    link.appendChild(text);
                 }
-            };
-            link.onclick = handler;
-            link.onkeydown = handler;
-        }
-        else {
-            link.classList.add('devtools-link-prevent-click');
-        }
-        UI.ARIAUtils.markAsLink(link);
-        link.tabIndex = tabStop ? 0 : -1;
+                else if (bypassURLTrimming) {
+                    link.classList.add('devtools-link-styled-trim');
+                    Linkifier.appendTextWithoutHashes(link, text);
+                }
+                else {
+                    Linkifier.setTrimmedText(link, text, maxLength);
+                }
+                const linkInfo = {
+                    icon: null,
+                    enableDecorator: false,
+                    uiLocation: null,
+                    liveLocation: null,
+                    url: options.href || null,
+                    lineNumber: options.lineNumber ?? null,
+                    columnNumber: options.columnNumber ?? null,
+                    inlineFrameIndex: 0,
+                    revealable: null,
+                    fallback: null,
+                    userMetric: options.userMetric,
+                };
+                infoByAnchor.set(link, linkInfo);
+            });
+        };
+        const jslog = VisualLogging.link(jslogContext).track({ click: true });
+        // clang-format off
+        return preventClick ? html `<span
+      class=${classMap(classes)}
+      .href=${href}
+      title=${ifDefined(title ? title : undefined)}
+      jslog=${jslog}
+      .tabIndex=${tabStop ? 0 : -1}
+      role="link"
+      ${createRef()}></span>` : html `<button
+        @click=${handler}
+        @keydown=${handler}
+        class=${classMap(classes)}
+        .href=${href}
+        title=${ifDefined(title ? title : undefined)}
+        jslog=${jslog}
+        .tabIndex=${tabStop ? 0 : -1}
+        role="link"
+        ${createRef()}></button>`;
+        // clang-format on
+    }
+    /**
+     * @deprecated use renderLink.
+     */
+    static createLink(text, className, options = {}) {
+        const container = document.createDocumentFragment();
+        render(Linkifier.renderLink(text, className, options), container);
+        const link = container.firstElementChild;
+        const linkInfo = infoByAnchor.get(link);
         return { link, linkInfo };
     }
     static setTrimmedText(link, text, maxLength) {

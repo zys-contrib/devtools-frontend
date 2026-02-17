@@ -46,8 +46,16 @@ export declare class Linkifier extends Common.ObjectWrapper.ObjectWrapper<EventT
     private updateAnchor;
     private static updateAnchorFromUILocation;
     private static updateLinkDecorations;
+    static renderLinkifiedUrl(url: Platform.DevToolsPath.UrlString, options?: LinkifyURLOptions): LitTemplate;
+    /**
+     * @deprecated use renderLinkifiedUrl.
+     */
     static linkifyURL(url: Platform.DevToolsPath.UrlString, options?: LinkifyURLOptions): HTMLElement;
     static linkifyRevealable(revealable: Object, text: string | HTMLElement, fallbackHref?: Platform.DevToolsPath.UrlString, title?: string, className?: string, jslogContext?: string): HTMLElement;
+    private static renderLink;
+    /**
+     * @deprecated use renderLink.
+     */
     private static createLink;
     private static setTrimmedText;
     private static appendTextWithoutHashes;
