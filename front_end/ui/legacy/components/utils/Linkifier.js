@@ -288,11 +288,10 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper {
         };
         return this.maybeLinkifyScriptLocation(target, String(callFrame.scriptId), callFrame.url, callFrame.lineNumber, linkifyOptions);
     }
-    maybeLinkifyStackTraceFrame(target, frame, options) {
+    static linkifyStackTraceFrame(frame, options) {
         const linkifyURLOptions = {
             ...options,
             lineNumber: frame.line,
-            maxLength: this.maxLength,
             columnNumber: frame.column,
             showColumnNumber: Boolean(options?.showColumnNumber),
             className: options?.className,
@@ -304,7 +303,7 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper {
         };
         const { className = '' } = linkifyURLOptions;
         const fallbackAnchor = Linkifier.linkifyURL(frame.url, linkifyURLOptions);
-        if (!target || target.isDisposed() || !frame.uiSourceCode) {
+        if (!frame.uiSourceCode) {
             return fallbackAnchor;
         }
         const createLinkOptions = {
@@ -312,18 +311,15 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper {
             jslogContext: 'script-location',
         };
         const { link, linkInfo } = Linkifier.createLink(fallbackAnchor?.textContent ? fallbackAnchor.textContent : '', className, createLinkOptions);
-        linkInfo.enableDecorator = this.useLinkDecorator;
         linkInfo.fallback = fallbackAnchor;
         linkInfo.userMetric = options?.userMetric;
         const linkDisplayOptions = {
             showColumnNumber: linkifyURLOptions.showColumnNumber ?? false,
-            maxLength: linkifyURLOptions.maxLength,
+            maxLength: linkifyURLOptions.maxLength ?? UI.UIUtils.MaxLengthForDisplayedURLs,
             revealBreakpoint: options?.revealBreakpoint,
         };
         const uiLocation = frame.uiSourceCode.uiLocation(frame.line, frame.column) ?? null;
         Linkifier.updateAnchorFromUILocation(link, linkDisplayOptions, uiLocation);
-        const anchors = this.anchorsByTarget.get(target);
-        anchors.push(link);
         return link;
     }
     linkifyStackTraceTopFrame(target, stackTrace) {

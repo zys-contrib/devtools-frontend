@@ -1857,6 +1857,7 @@ var generatedProperties = [
     "inherited": false,
     "keywords": [
       "all",
+      "auto",
       "around",
       "between"
     ],
@@ -3903,6 +3904,7 @@ var generatedProperties = [
     "inherited": false,
     "keywords": [
       "all",
+      "auto",
       "around",
       "between"
     ],
@@ -4610,12 +4612,12 @@ var generatedProperties = [
   {
     "inherited": true,
     "keywords": [
+      "none",
       "capitalize",
       "uppercase",
       "lowercase",
       "full-width",
       "full-size-kana",
-      "none",
       "math-auto"
     ],
     "name": "text-transform"
@@ -5621,6 +5623,7 @@ var generatedPropertyValues = {
   "column-rule-visibility-items": {
     "values": [
       "all",
+      "auto",
       "around",
       "between"
     ]
@@ -6754,6 +6757,7 @@ var generatedPropertyValues = {
   "row-rule-visibility-items": {
     "values": [
       "all",
+      "auto",
       "around",
       "between"
     ]
@@ -7107,12 +7111,12 @@ var generatedPropertyValues = {
   },
   "text-transform": {
     "values": [
+      "none",
       "capitalize",
       "uppercase",
       "lowercase",
       "full-width",
       "full-size-kana",
-      "none",
       "math-auto"
     ]
   },

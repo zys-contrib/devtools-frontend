@@ -145,11 +145,12 @@ function buildStackTraceRows(stackTrace, target, linkifier, tabStops, showColumn
         let previousStackFrameWasBreakpointCondition = false;
         for (const frame of fragment.frames) {
             const functionName = UI.UIUtils.beautifyFunctionName(frame.name ?? '');
-            const link = linkifier.maybeLinkifyStackTraceFrame(target, frame, {
+            const link = Linkifier.linkifyStackTraceFrame(frame, {
                 showColumnNumber,
                 tabStop: Boolean(tabStops),
                 inlineFrameIndex: 0,
                 revealBreakpoint: previousStackFrameWasBreakpointCondition,
+                maxLength: UI.UIUtils.MaxLengthForDisplayedURLsInConsole,
             });
             link.setAttribute('jslog', `${VisualLogging.link('stack-trace').track({ click: true })}`);
             link.addEventListener('contextmenu', populateContextMenu.bind(null, link));

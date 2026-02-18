@@ -685,11 +685,10 @@ var Linkifier = class _Linkifier extends Common2.ObjectWrapper.ObjectWrapper {
     };
     return this.maybeLinkifyScriptLocation(target, String(callFrame.scriptId), callFrame.url, callFrame.lineNumber, linkifyOptions);
   }
-  maybeLinkifyStackTraceFrame(target, frame, options) {
+  static linkifyStackTraceFrame(frame, options) {
     const linkifyURLOptions = {
       ...options,
       lineNumber: frame.line,
-      maxLength: this.maxLength,
       columnNumber: frame.column,
       showColumnNumber: Boolean(options?.showColumnNumber),
       className: options?.className,
@@ -701,7 +700,7 @@ var Linkifier = class _Linkifier extends Common2.ObjectWrapper.ObjectWrapper {
     };
     const { className = "" } = linkifyURLOptions;
     const fallbackAnchor = _Linkifier.linkifyURL(frame.url, linkifyURLOptions);
-    if (!target || target.isDisposed() || !frame.uiSourceCode) {
+    if (!frame.uiSourceCode) {
       return fallbackAnchor;
     }
     const createLinkOptions = {
@@ -709,18 +708,15 @@ var Linkifier = class _Linkifier extends Common2.ObjectWrapper.ObjectWrapper {
       jslogContext: "script-location"
     };
     const { link: link3, linkInfo } = _Linkifier.createLink(fallbackAnchor?.textContent ? fallbackAnchor.textContent : "", className, createLinkOptions);
-    linkInfo.enableDecorator = this.useLinkDecorator;
     linkInfo.fallback = fallbackAnchor;
     linkInfo.userMetric = options?.userMetric;
     const linkDisplayOptions = {
       showColumnNumber: linkifyURLOptions.showColumnNumber ?? false,
-      maxLength: linkifyURLOptions.maxLength,
+      maxLength: linkifyURLOptions.maxLength ?? UI.UIUtils.MaxLengthForDisplayedURLs,
       revealBreakpoint: options?.revealBreakpoint
     };
     const uiLocation = frame.uiSourceCode.uiLocation(frame.line, frame.column) ?? null;
     _Linkifier.updateAnchorFromUILocation(link3, linkDisplayOptions, uiLocation);
-    const anchors = this.anchorsByTarget.get(target);
-    anchors.push(link3);
     return link3;
   }
   linkifyStackTraceTopFrame(target, stackTrace) {
@@ -1414,11 +1410,12 @@ function buildStackTraceRows(stackTrace, target, linkifier, tabStops, showColumn
     let previousStackFrameWasBreakpointCondition = false;
     for (const frame of fragment.frames) {
       const functionName = UI2.UIUtils.beautifyFunctionName(frame.name ?? "");
-      const link3 = linkifier.maybeLinkifyStackTraceFrame(target, frame, {
+      const link3 = Linkifier.linkifyStackTraceFrame(frame, {
         showColumnNumber,
         tabStop: Boolean(tabStops),
         inlineFrameIndex: 0,
-        revealBreakpoint: previousStackFrameWasBreakpointCondition
+        revealBreakpoint: previousStackFrameWasBreakpointCondition,
+        maxLength: UI2.UIUtils.MaxLengthForDisplayedURLsInConsole
       });
       link3.setAttribute("jslog", `${VisualLogging2.link("stack-trace").track({ click: true })}`);
       link3.addEventListener("contextmenu", populateContextMenu.bind(null, link3));
