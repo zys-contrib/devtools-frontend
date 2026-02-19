@@ -4488,7 +4488,8 @@ var generatedProperties = [
     "inherited": true,
     "keywords": [
       "none",
-      "auto"
+      "auto",
+      "all"
     ],
     "name": "text-decoration-skip-ink"
   },
@@ -7038,7 +7039,8 @@ var generatedPropertyValues = {
   "text-decoration-skip-ink": {
     "values": [
       "none",
-      "auto"
+      "auto",
+      "all"
     ]
   },
   "text-decoration-style": {

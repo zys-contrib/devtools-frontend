@@ -247,7 +247,6 @@ var JSPresentationUtils_exports = {};
 __export(JSPresentationUtils_exports, {
   StackTracePreviewContent: () => StackTracePreviewContent
 });
-import * as Common3 from "./../../../../core/common/common.js";
 import * as i18n5 from "./../../../../core/i18n/i18n.js";
 import * as SDK3 from "./../../../../core/sdk/sdk.js";
 import * as StackTrace from "./../../../../models/stack_trace/stack_trace.js";
@@ -261,15 +260,6 @@ var jsUtils_css_default = `/*
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
-:host {
-  display: inline;
-}
-
-:host(.width-constrained) {
-  display: inline-block;
-  width: 100%;
-}
 
 .stack-preview-async-description {
   padding: 3px 0 1px;
@@ -942,6 +932,7 @@ var Linkifier = class _Linkifier extends Common2.ObjectWrapper.ObjectWrapper {
         if (!link3) {
           return;
         }
+        options.onRef?.(link3);
         if (text instanceof HTMLElement) {
           link3.appendChild(text);
         } else if (bypassURLTrimming) {
@@ -1325,11 +1316,7 @@ var UIStrings3 = {
   /**
    * @description A link to rehide frames that are by default hidden.
    */
-  showLess: "Show less",
-  /**
-   * @description Text indicating that source url of a link is currently unknown
-   */
-  unknownSource: "unknown"
+  showLess: "Show less"
 };
 var str_3 = i18n5.i18n.registerUIStrings("ui/legacy/components/utils/JSPresentationUtils.ts", UIStrings3);
 var i18nString3 = i18n5.i18n.getLocalizedString.bind(void 0, str_3);
@@ -1347,56 +1334,7 @@ function populateContextMenu(link3, event) {
   contextMenu.appendApplicableItems(event);
   void contextMenu.show();
 }
-function buildStackTraceRowsForLegacyRuntimeStackTrace(stackTrace, target, linkifier, tabStops, updateCallback, showColumnNumber) {
-  const stackTraceRows = [];
-  if (updateCallback) {
-    const throttler = new Common3.Throttler.Throttler(100);
-    linkifier.addEventListener("liveLocationUpdated", () => {
-      void throttler.schedule(async () => updateCallback(stackTraceRows));
-    });
-  }
-  function buildStackTraceRowsHelper(stackTrace2, previousCallFrames2 = void 0) {
-    let asyncRow = null;
-    if (previousCallFrames2) {
-      asyncRow = {
-        asyncDescription: UI2.UIUtils.asyncStackTraceLabel(stackTrace2.description, previousCallFrames2)
-      };
-      stackTraceRows.push(asyncRow);
-    }
-    let previousStackFrameWasBreakpointCondition = false;
-    for (const stackFrame of stackTrace2.callFrames) {
-      const functionName = UI2.UIUtils.beautifyFunctionName(stackFrame.functionName);
-      const link3 = linkifier.maybeLinkifyConsoleCallFrame(target, stackFrame, {
-        showColumnNumber,
-        tabStop: Boolean(tabStops),
-        inlineFrameIndex: 0,
-        revealBreakpoint: previousStackFrameWasBreakpointCondition
-      });
-      if (link3) {
-        link3.setAttribute("jslog", `${VisualLogging2.link("stack-trace").track({ click: true })}`);
-        link3.addEventListener("contextmenu", populateContextMenu.bind(null, link3));
-        if (!link3.textContent) {
-          link3.textContent = i18nString3(UIStrings3.unknownSource);
-        }
-      }
-      stackTraceRows.push({ functionName, link: link3 });
-      previousStackFrameWasBreakpointCondition = [
-        SDK3.DebuggerModel.COND_BREAKPOINT_SOURCE_URL,
-        SDK3.DebuggerModel.LOGPOINT_SOURCE_URL
-      ].includes(stackFrame.url);
-    }
-  }
-  buildStackTraceRowsHelper(stackTrace);
-  let previousCallFrames = stackTrace.callFrames;
-  for (let asyncStackTrace = stackTrace.parent; asyncStackTrace; asyncStackTrace = asyncStackTrace.parent) {
-    if (asyncStackTrace.callFrames.length) {
-      buildStackTraceRowsHelper(asyncStackTrace, previousCallFrames);
-    }
-    previousCallFrames = asyncStackTrace.callFrames;
-  }
-  return stackTraceRows;
-}
-function buildStackTraceRows(stackTrace, target, linkifier, tabStops, showColumnNumber) {
+function buildStackTraceRows(stackTrace, tabStops, showColumnNumber) {
   const stackTraceRows = [];
   function buildStackTraceRowsHelper(fragment, previousFragment2 = void 0) {
     let asyncRow = null;
@@ -1438,7 +1376,6 @@ function buildStackTraceRows(stackTrace, target, linkifier, tabStops, showColumn
 }
 function renderStackTraceTable(container, parent, expandable, stackTraceRows) {
   container.removeChildren();
-  const links = [];
   let tableSection = null;
   let firstRow = true;
   for (const item of stackTraceRows) {
@@ -1468,10 +1405,7 @@ function renderStackTraceTable(container, parent, expandable, stackTraceRows) {
     } else {
       row.createChild("td", "function-name").textContent = item.functionName;
       row.createChild("td").textContent = " @ ";
-      if (item.link) {
-        row.createChild("td", "link").appendChild(item.link);
-        links.push(item.link);
-      }
+      row.createChild("td", "link").appendChild(item.link);
     }
   }
   tableSection = container.createChild("tfoot");
@@ -1497,75 +1431,36 @@ function renderStackTraceTable(container, parent, expandable, stackTraceRows) {
     parent.classList.remove("show-hidden-rows");
     UI2.GlassPane.GlassPane.containerMoved(container);
   }, false);
-  return links;
 }
 var StackTracePreviewContent = class extends UI2.Widget.Widget {
   #stackTrace;
-  #target;
-  #linkifier;
-  #ownedLinkifier;
-  #options;
-  #links = [];
+  #options = {};
   #table;
-  /**
-   * Updated when we update to define if we have any rows for the StackTrace;
-   * allowing the caller to know if this element is empty or not.
-   */
-  #hasRows = false;
-  constructor(element, target, linkifier, options) {
-    super(element, { useShadowDom: true });
-    this.#target = target;
-    this.#linkifier = linkifier;
-    if (!this.#linkifier) {
-      this.#ownedLinkifier = new Linkifier();
-      this.#linkifier = this.#ownedLinkifier;
-    }
-    this.#options = options || {
-      widthConstrained: false
-    };
-    this.element.classList.add("monospace");
-    this.element.classList.add("stack-preview-container");
-    this.element.classList.toggle("width-constrained", this.#options.widthConstrained ?? false);
-    this.element.style.display = "inline-block";
+  constructor(element) {
+    super(element, { useShadowDom: true, classes: ["monospace", "stack-preview-container"] });
     UI2.DOMUtilities.appendStyle(this.element.shadowRoot, jsUtils_css_default);
     this.#table = this.contentElement.createChild("table", "stack-preview-container");
-    this.#table.classList.toggle("width-constrained", this.#options.widthConstrained ?? false);
-    this.performUpdate();
   }
   hasContent() {
-    return this.#hasRows;
+    if (!this.#stackTrace) {
+      return false;
+    }
+    const { syncFragment, asyncFragments } = this.#stackTrace;
+    return syncFragment.frames.length > 0 || asyncFragments.some((f) => f.frames.length > 0);
   }
   performUpdate() {
-    if (!this.#linkifier) {
+    if (!this.#stackTrace) {
       return;
     }
-    const { runtimeStackTrace, tabStops } = this.#options;
-    if (this.#stackTrace) {
-      const stackTraceRows = buildStackTraceRows(this.#stackTrace, this.#target ?? null, this.#linkifier, tabStops, this.#options.showColumnNumber);
-      this.#hasRows = stackTraceRows.length > 0;
-      this.#links = renderStackTraceTable(this.#table, this.element, this.#options.expandable ?? false, stackTraceRows);
-      return;
-    }
-    if (runtimeStackTrace) {
-      const updateCallback = renderStackTraceTable.bind(null, this.#table, this.element, this.#options.expandable ?? false);
-      const stackTraceRows = buildStackTraceRowsForLegacyRuntimeStackTrace(runtimeStackTrace ?? { callFrames: [] }, this.#target ?? null, this.#linkifier, tabStops, updateCallback, this.#options.showColumnNumber);
-      this.#hasRows = stackTraceRows.length > 0;
-      this.#links = renderStackTraceTable(this.#table, this.element, this.#options.expandable ?? false, stackTraceRows);
-    }
+    const stackTraceRows = buildStackTraceRows(this.#stackTrace, this.#options.tabStops, this.#options.showColumnNumber);
+    renderStackTraceTable(this.#table, this.element, this.#options.expandable ?? false, stackTraceRows);
   }
   get linkElements() {
-    return this.#links;
-  }
-  set target(target) {
-    this.#target = target;
-    this.requestUpdate();
-  }
-  set linkifier(linkifier) {
-    this.#linkifier = linkifier;
-    this.requestUpdate();
+    return [...this.contentElement.querySelectorAll("td.link > .devtools-link")];
   }
   set options(options) {
     this.#options = options;
+    this.#table.classList.toggle("width-constrained", this.#options.widthConstrained ?? false);
     this.requestUpdate();
   }
   set stackTrace(stackTrace) {
@@ -1575,9 +1470,6 @@ var StackTracePreviewContent = class extends UI2.Widget.Widget {
     this.#stackTrace = stackTrace;
     this.#stackTrace.addEventListener("UPDATED", this.requestUpdate, this);
     this.requestUpdate();
-  }
-  onDetach() {
-    this.#ownedLinkifier?.dispose();
   }
 };
 

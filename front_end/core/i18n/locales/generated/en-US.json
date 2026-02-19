@@ -17693,9 +17693,6 @@
   "ui/legacy/components/utils/JSPresentationUtils.ts | showMoreFrames": {
     "message": "Show ignore-listed frames"
   },
-  "ui/legacy/components/utils/JSPresentationUtils.ts | unknownSource": {
-    "message": "unknown"
-  },
   "ui/legacy/components/utils/Linkifier.ts | auto": {
     "message": "auto"
   },
