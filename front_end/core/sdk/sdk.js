@@ -10021,6 +10021,9 @@ var TargetManager = class _TargetManager extends Common4.ObjectWrapper.ObjectWra
   context;
   #targets;
   #observers;
+  get settings() {
+    return this.context.get(Common4.Settings.Settings);
+  }
   /* eslint-disable @typescript-eslint/no-explicit-any */
   #modelListeners;
   #modelObservers;
@@ -21597,10 +21600,11 @@ var RuntimeModel = class extends SDKModel {
     this.agent = target.runtimeAgent();
     this.target().registerRuntimeDispatcher(new RuntimeDispatcher(this));
     void this.agent.invoke_enable();
-    if (Common15.Settings.Settings.instance().moduleSetting("custom-formatters").get()) {
+    const settings = this.target().targetManager().context.get(Common15.Settings.Settings);
+    if (settings.moduleSetting("custom-formatters").get()) {
       void this.agent.invoke_setCustomObjectFormatterEnabled({ enabled: true });
     }
-    Common15.Settings.Settings.instance().moduleSetting("custom-formatters").addChangeListener(this.customFormattersStateChanged.bind(this));
+    settings.moduleSetting("custom-formatters").addChangeListener(this.customFormattersStateChanged.bind(this));
   }
   static isSideEffectFailure(response) {
     const exceptionDetails = "exceptionDetails" in response && response.exceptionDetails;
@@ -21803,7 +21807,7 @@ var RuntimeModel = class extends SDKModel {
       Host4.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(object.unserializableValue() || object.value);
       return;
     }
-    const indent = Common15.Settings.Settings.instance().moduleSetting("text-editor-indent").get();
+    const indent = this.target().targetManager().context.get(Common15.Settings.Settings).moduleSetting("text-editor-indent").get();
     void object.callFunctionJSON(toStringForClipboard, [{
       value: {
         subtype: object.subtype,
@@ -36856,7 +36860,7 @@ var ServiceWorkerManager = class extends SDKModel {
     target.registerServiceWorkerDispatcher(new ServiceWorkerDispatcher(this));
     this.#agent = target.serviceWorkerAgent();
     void this.enable();
-    this.#forceUpdateSetting = Common41.Settings.Settings.instance().createSetting("service-worker-update-on-reload", false);
+    this.#forceUpdateSetting = this.target().targetManager().context.get(Common41.Settings.Settings).createSetting("service-worker-update-on-reload", false);
     if (this.#forceUpdateSetting.get()) {
       this.forceUpdateSettingChanged();
     }
@@ -37447,6 +37451,10 @@ var WebMCPDispatcher = class {
   }
   toolsRemoved(params) {
     this.#model.onToolsRemoved(params.tools);
+  }
+  toolInvoked() {
+  }
+  toolResponded() {
   }
 };
 SDKModel.register(WebMCPModel, { capabilities: 2097152, autostart: true });
