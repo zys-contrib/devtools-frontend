@@ -2225,6 +2225,7 @@ import * as SDK2 from "./../../core/sdk/sdk.js";
 import * as AiAssistanceModel3 from "./../../models/ai_assistance/ai_assistance.js";
 import * as ComputedStyle from "./../../models/computed_style/computed_style.js";
 import * as Trace from "./../../models/trace/trace.js";
+import * as PanelsCommon2 from "./../common/common.js";
 import * as Marked from "./../../third_party/marked/marked.js";
 import * as Buttons5 from "./../../ui/components/buttons/buttons.js";
 import * as Input3 from "./../../ui/components/input/input.js";
@@ -2759,6 +2760,7 @@ var WalkthroughView_exports = {};
 __export(WalkthroughView_exports, {
   DEFAULT_VIEW: () => DEFAULT_VIEW3,
   WalkthroughView: () => WalkthroughView,
+  walkthroughCloseTitle: () => walkthroughCloseTitle,
   walkthroughTitle: () => walkthroughTitle
 });
 import * as i18n7 from "./../../core/i18n/i18n.js";
@@ -2971,7 +2973,15 @@ var UIStrings2 = {
   /**
    * @description Title for the button that shows the walkthrough when there are widgets in the walkthrough.
    */
-  showAgentWalkthrough: "Show agent walkthrough"
+  showAgentWalkthrough: "Show agent walkthrough",
+  /**
+   * @description Title for the button that hides the walkthrough when there are no widgets in the walkthrough.
+   */
+  hideThinking: "Hide thinking",
+  /**
+   * @description Title for the button that hides the walkthrough when there are widgets in the walkthrough.
+   */
+  hideAgentWalkthrough: "Hide agent walkthrough"
 };
 var str_2 = i18n7.i18n.registerUIStrings("panels/ai_assistance/components/WalkthroughView.ts", UIStrings2);
 var i18nString2 = i18n7.i18n.getLocalizedString.bind(void 0, str_2);
@@ -2984,6 +2994,15 @@ function walkthroughTitle(input) {
   }
   return lockedString4(UIStrings2.showThinking);
 }
+function walkthroughCloseTitle(input) {
+  if (input.isInlined) {
+    return i18nString2(UIStrings2.title);
+  }
+  if (input.hasWidgets) {
+    return lockedString4(UIStrings2.hideAgentWalkthrough);
+  }
+  return lockedString4(UIStrings2.hideThinking);
+}
 function renderInlineWalkthrough(input, stepsOutput, steps) {
   const lastStep = steps.at(-1);
   if (!input.isInlined || !lastStep) {
@@ -2991,10 +3010,13 @@ function renderInlineWalkthrough(input, stepsOutput, steps) {
   }
   function onToggle(event) {
     const isOpen = event.target.open;
-    if (isOpen && input.message) {
+    if (!input.message) {
+      return;
+    }
+    if (isOpen) {
       input.onOpen(input.message);
     } else {
-      input.onToggle(isOpen);
+      input.onToggle(isOpen, input.message);
     }
   }
   const hasWidgets = steps.some((s) => s.widgets?.length);
@@ -3002,7 +3024,7 @@ function renderInlineWalkthrough(input, stepsOutput, steps) {
     <details class="walkthrough-inline" ?open=${input.isExpanded} @toggle=${onToggle}>
       <summary ?data-has-widgets=${!input.isLoading && hasWidgets}>
         ${input.isLoading ? html4`<devtools-spinner></devtools-spinner>` : Lit2.nothing}
-        ${walkthroughTitle({ isLoading: input.isLoading, lastStep, hasWidgets })}
+        ${input.isExpanded ? walkthroughCloseTitle({ hasWidgets, isInlined: true }) : walkthroughTitle({ isLoading: input.isLoading, lastStep, hasWidgets })}
         <devtools-icon name="chevron-right"></devtools-icon>
       </summary>
       ${stepsOutput}
@@ -3024,7 +3046,11 @@ function renderSidebarWalkthrough(input, stepsOutput, stepsCount) {
     title: i18nString2(UIStrings2.close),
     jslogContext: "close-walkthrough"
   }}
-          @click=${() => input.onToggle(false)}
+          @click=${() => {
+    if (input.message) {
+      input.onToggle(false, input.message);
+    }
+  }}
         ></devtools-button>
       </div>
       ${stepsOutput}
@@ -3210,10 +3236,6 @@ var REPORT_URL = "https://crbug.com/364805393";
 var SCROLL_ROUNDING_OFFSET = 1;
 var UIStringsNotTranslate4 = {
   /**
-   * @description Text used in the button to close an open walkthrough
-   */
-  closeAgentWalkthrough: "Close agent walkthrough",
-  /**
    * @description The title of the button that allows submitting positive
    * feedback about the response for AI assistance.
    */
@@ -3334,10 +3356,6 @@ var UIStringsNotTranslate4 = {
    */
   imageUnavailable: "Image unavailable",
   /**
-   * @description Title for the button that shows the thinking process (walkthrough).
-   */
-  showThinking: "Show thinking",
-  /**
    * @description Title for the button that takes the user into other DevTools panels to reveal items the AI references.
    */
   reveal: "Reveal",
@@ -3346,17 +3364,9 @@ var UIStringsNotTranslate4 = {
    */
   revealTrace: "Reveal trace",
   /**
-   * @description Title for the computed styles widget.
-   */
-  computedStyles: "Computed styles",
-  /**
    * @description Title for the core web vitals widget.
    */
   coreVitals: "Core Web Vitals",
-  /**
-   * @description Title for the styles widget.
-   */
-  styles: "Styles",
   /**
    * @description Title for the LCP breakdown widget.
    */
@@ -3502,8 +3512,8 @@ function renderWalkthroughSidebarButton(input, steps) {
     return Lit3.nothing;
   }
   const hasOneStepWithWidget = steps.some((step) => step.widgets?.length);
-  const isOpen = input.message === input.walkthrough.activeMessage;
-  const title = isOpen ? lockedString5(UIStringsNotTranslate4.closeAgentWalkthrough) : walkthroughTitle({
+  const isExpanded = walkthrough.isExpanded && input.message === input.walkthrough.activeSidebarMessage;
+  const title = isExpanded ? walkthroughCloseTitle({ hasWidgets: hasOneStepWithWidget }) : walkthroughTitle({
     isLoading: input.isLoading,
     hasWidgets: hasOneStepWithWidget,
     lastStep
@@ -3515,12 +3525,12 @@ function renderWalkthroughSidebarButton(input, steps) {
       <devtools-button
         .variant=${variant}
         .size=${"SMALL"}
-        .title=${lastStep.isLoading ? titleForStep(lastStep) : lockedString5(UIStringsNotTranslate4.showThinking)}
+        .title=${lastStep.isLoading ? titleForStep(lastStep) : title}
         .jslogContext=${walkthrough.isExpanded ? "ai-hide-walkthrough-sidebar" : "ai-show-walkthrough-sidebar"}
         data-show-walkthrough
         @click=${() => {
-    if (walkthrough.activeMessage === input.message && walkthrough.isExpanded) {
-      walkthrough.onToggle(false);
+    if (walkthrough.activeSidebarMessage === input.message && walkthrough.isExpanded) {
+      walkthrough.onToggle(false, message);
     } else {
       walkthrough.onOpen(message);
     }
@@ -3538,7 +3548,7 @@ function renderWalkthroughUI(input, steps) {
   }
   const sideEffectSteps = steps.filter((s) => s.requestApproval);
   const openWalkThroughSidebarButton = !input.walkthrough.isInlined ? renderWalkthroughSidebarButton(input, steps) : Lit3.nothing;
-  const isExpanded = input.walkthrough.isExpanded && input.walkthrough.activeMessage === input.message;
+  const isExpanded = input.walkthrough.isInlined ? input.walkthrough.inlineExpandedMessages.includes(input.message) : input.walkthrough.isExpanded && input.walkthrough.activeSidebarMessage === input.message;
   const sideEffectStepsUI = !isExpanded && sideEffectSteps.length > 0 ? sideEffectSteps.map((step) => html5`
     <div class="side-effect-container">
       ${renderStep({
@@ -3651,7 +3661,11 @@ async function makeComputedStyleWidget(widgetData) {
   return {
     renderedWidget,
     revealable: new Elements.ElementsPanel.NodeComputedStyles(domNodeForId),
-    title: lockedString5(UIStringsNotTranslate4.computedStyles)
+    title: html5`<devtools-widget
+      ${widget3(PanelsCommon2.DOMLinkifier.DOMNodeLink, {
+      node: domNodeForId
+    })}
+    ></devtools-widget>`
   };
 }
 async function makeCoreVitalsWidget(widgetData) {
@@ -3679,7 +3693,11 @@ async function makeStylePropertiesWidget(widgetData) {
   return {
     renderedWidget,
     revealable: domNodeForId,
-    title: lockedString5(UIStringsNotTranslate4.styles)
+    title: html5`<devtools-widget
+      ${widget3(PanelsCommon2.DOMLinkifier.DOMNodeLink, {
+      node: domNodeForId
+    })}
+    ></devtools-widget>`
   };
 }
 async function makeLcpBreakdownWidget(widgetData) {
@@ -4069,7 +4087,8 @@ var ChatMessage = class extends UI5.Widget.Widget {
     },
     isInlined: false,
     isExpanded: false,
-    activeMessage: null
+    activeSidebarMessage: null,
+    inlineExpandedMessages: []
   };
   #suggestionsResizeObserver = new ResizeObserver(() => this.#handleSuggestionsScrollOrResize());
   #suggestionsEvaluateLayoutThrottler = new Common3.Throttler.Throttler(50);
@@ -5732,7 +5751,7 @@ import * as Common5 from "./../../core/common/common.js";
 import * as SDK3 from "./../../core/sdk/sdk.js";
 import * as Trace2 from "./../../models/trace/trace.js";
 import * as Lit6 from "./../../ui/lit/lit.js";
-import * as PanelsCommon2 from "./../common/common.js";
+import * as PanelsCommon3 from "./../common/common.js";
 var { html: html11 } = Lit6.StaticHtml;
 var { until } = Lit6.Directives;
 var PerformanceAgentMarkdownRenderer = class extends MarkdownRendererWithCodeBlock {
@@ -5787,7 +5806,7 @@ var PerformanceAgentMarkdownRenderer = class extends MarkdownRendererWithCodeBlo
     if (node.frameId() !== this.mainFrameId) {
       return;
     }
-    const linkedNode = PanelsCommon2.DOMLinkifier.Linkifier.instance().linkify(node, { textContent: label });
+    const linkedNode = PanelsCommon3.DOMLinkifier.Linkifier.instance().linkify(node, { textContent: label });
     return linkedNode;
   }
 };
@@ -5796,7 +5815,7 @@ var PerformanceAgentMarkdownRenderer = class extends MarkdownRendererWithCodeBlo
 import * as SDK4 from "./../../core/sdk/sdk.js";
 import * as Marked3 from "./../../third_party/marked/marked.js";
 import * as Lit7 from "./../../ui/lit/lit.js";
-import * as PanelsCommon3 from "./../common/common.js";
+import * as PanelsCommon4 from "./../common/common.js";
 var { html: html12 } = Lit7.StaticHtml;
 var { until: until2 } = Lit7.Directives;
 var StylingAgentMarkdownRenderer = class _StylingAgentMarkdownRenderer extends MarkdownRendererWithCodeBlock {
@@ -5935,7 +5954,7 @@ var StylingAgentMarkdownRenderer = class _StylingAgentMarkdownRenderer extends M
     if (node.frameId() !== this.mainFrameId) {
       return;
     }
-    const linkedNode = PanelsCommon3.DOMLinkifier.Linkifier.instance().linkify(node, { textContent: label });
+    const linkedNode = PanelsCommon4.DOMLinkifier.Linkifier.instance().linkify(node, { textContent: label });
     return linkedNode;
   }
 };
@@ -6332,7 +6351,7 @@ function defaultView(input, output, target) {
     let walkthroughIsForLastMessage = false;
     if (input.state === "chat-view") {
       const lastMessage = input.props.messages.at(-1);
-      if (lastMessage && input.props.walkthrough.activeMessage === lastMessage) {
+      if (lastMessage && input.props.walkthrough.activeSidebarMessage === lastMessage) {
         walkthroughIsForLastMessage = true;
       }
     }
@@ -6352,7 +6371,7 @@ function defaultView(input, output, target) {
           <div slot="sidebar" class="sidebar-view">
             ${shouldShowWalkthrough ? html13`
               <devtools-widget ${widget5(WalkthroughView, {
-      message: input.props.walkthrough.activeMessage,
+      message: input.props.walkthrough.activeSidebarMessage,
       isLoading: input.props.isLoading && walkthroughIsForLastMessage,
       markdownRenderer: input.props.markdownRenderer,
       onToggle: input.props.walkthrough.onToggle
@@ -6436,7 +6455,8 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
   #walkthrough = {
     isInlined: false,
     isExpanded: false,
-    activeMessage: null
+    activeSidebarMessage: null,
+    inlineExpandedMessages: []
   };
   constructor(view = defaultView, { aidaClient, aidaAvailability }) {
     super(_AiAssistancePanel.panelName);
@@ -6468,7 +6488,9 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
       walkthrough: {
         isExpanded: this.#walkthrough.isExpanded,
         isInlined: this.#walkthrough.isInlined,
-        onToggle: this.#toggleWalkthrough.bind(this)
+        onToggle: this.#toggleWalkthrough.bind(this),
+        activeSidebarMessage: this.#walkthrough.activeSidebarMessage,
+        inlineExpandedMessages: this.#walkthrough.inlineExpandedMessages
       }
     };
   }
@@ -6545,7 +6567,8 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
             onOpen: this.#openWalkthrough.bind(this),
             isExpanded: this.#walkthrough.isExpanded,
             isInlined: this.#walkthrough.isInlined,
-            activeMessage: this.#walkthrough.activeMessage
+            activeSidebarMessage: this.#walkthrough.activeSidebarMessage,
+            inlineExpandedMessages: this.#walkthrough.inlineExpandedMessages
           }
         }
       };
@@ -6566,17 +6589,54 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
     if (isNarrow === this.#walkthrough.isInlined) {
       return;
     }
-    this.#resetWalkthrough();
     this.#walkthrough.isInlined = isNarrow;
+    if (!this.#walkthrough.isExpanded) {
+      this.#walkthrough.activeSidebarMessage = null;
+      this.#walkthrough.inlineExpandedMessages = [];
+      this.requestUpdate();
+      return;
+    }
+    if (isNarrow) {
+      this.#walkthrough.inlineExpandedMessages = this.#walkthrough.activeSidebarMessage ? [this.#walkthrough.activeSidebarMessage] : [];
+    } else {
+      this.#walkthrough.activeSidebarMessage = this.#walkthrough.inlineExpandedMessages.at(-1) ?? null;
+    }
     this.requestUpdate();
   }
   #openWalkthrough(message) {
-    this.#walkthrough.activeMessage = message;
+    if (!this.#walkthrough.inlineExpandedMessages.includes(message)) {
+      this.#walkthrough.inlineExpandedMessages.push(message);
+    }
+    this.#walkthrough.activeSidebarMessage = message;
     this.#walkthrough.isExpanded = true;
     this.requestUpdate();
   }
-  #toggleWalkthrough(isOpen) {
-    this.#walkthrough.isExpanded = isOpen;
+  /**
+   * Toggles the expanded state of a walkthrough.
+   *
+   * In Wide (sidebar) mode:
+   * - Opening a message's walkthrough shows the sidebar for that message.
+   * - Closing the sidebar hides the walkthrough for the currently active message.
+   *
+   * In Narrow (inline) mode:
+   * - Any number of walkthroughs can be open at once.
+   * - Opening/closing a message's walkthrough only affects that message's inline display.
+   */
+  #toggleWalkthrough(isOpen, message) {
+    if (isOpen) {
+      this.#openWalkthrough(message);
+      return;
+    }
+    this.#walkthrough.inlineExpandedMessages = this.#walkthrough.inlineExpandedMessages.filter((m) => m !== message);
+    if (this.#walkthrough.isInlined) {
+      this.#walkthrough.isExpanded = this.#walkthrough.inlineExpandedMessages.length > 0;
+      if (this.#walkthrough.activeSidebarMessage === message) {
+        this.#walkthrough.activeSidebarMessage = this.#walkthrough.inlineExpandedMessages.at(-1) ?? null;
+      }
+    } else {
+      this.#walkthrough.isExpanded = false;
+      this.#walkthrough.activeSidebarMessage = null;
+    }
     this.requestUpdate();
   }
   #getAiAssistanceEnabledSetting() {
@@ -7141,7 +7201,8 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
   }
   #resetWalkthrough() {
     this.#walkthrough.isExpanded = false;
-    this.#walkthrough.activeMessage = null;
+    this.#walkthrough.activeSidebarMessage = null;
+    this.#walkthrough.inlineExpandedMessages = [];
   }
   #onDeleteClicked() {
     if (!this.#conversation) {

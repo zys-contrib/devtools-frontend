@@ -726,7 +726,6 @@ import * as UI15 from "./../../ui/legacy/legacy.js";
 var ProfilesPanel_exports = {};
 __export(ProfilesPanel_exports, {
   ActionDelegate: () => ActionDelegate,
-  ProfileGroup: () => ProfileGroup,
   ProfileGroupSidebarTreeElement: () => ProfileGroupSidebarTreeElement,
   ProfileTypeSidebarSection: () => ProfileTypeSidebarSection,
   ProfilesPanel: () => ProfilesPanel,
@@ -2795,7 +2794,10 @@ var ProfileTypeSidebarSection = class extends UI5.TreeOutline.TreeElement {
       const profileTitle = profile.title;
       let group = this.profileGroups[profileTitle];
       if (!group) {
-        group = new ProfileGroup();
+        group = {
+          profileSidebarTreeElements: [],
+          sidebarTreeElement: null
+        };
         this.profileGroups[profileTitle] = group;
       }
       group.profileSidebarTreeElements.push(profileTreeElement);
@@ -2882,18 +2884,9 @@ var ProfileTypeSidebarSection = class extends UI5.TreeOutline.TreeElement {
     this.listItemElement.classList.add("profiles-tree-section");
   }
 };
-var ProfileGroup = class {
-  profileSidebarTreeElements;
-  sidebarTreeElement;
-  constructor() {
-    this.profileSidebarTreeElements = [];
-    this.sidebarTreeElement = null;
-  }
-};
 var ProfileGroupSidebarTreeElement = class extends UI5.TreeOutline.TreeElement {
   dataDisplayDelegate;
   profileTitle;
-  toggleOnClick;
   constructor(dataDisplayDelegate, title) {
     super("", true);
     this.selectable = false;
@@ -6417,20 +6410,18 @@ var adjacencyMap = /* @__PURE__ */ new WeakMap();
 var HeapSnapshotSortableDataGridBase = class extends DataGrid9.DataGrid.DataGridImpl {
 };
 var HeapSnapshotSortableDataGrid = class extends Common11.ObjectWrapper.eventMixin(HeapSnapshotSortableDataGridBase) {
-  snapshot;
-  selectedNode;
+  snapshot = null;
+  selectedNode = null;
   heapProfilerModelInternal;
   dataDisplayDelegateInternal;
-  recursiveSortingDepth;
-  populatedAndSorted;
-  nameFilter;
+  recursiveSortingDepth = 0;
+  populatedAndSorted = false;
+  nameFilter = null;
   nodeFilterInternal;
   lastSortColumnId;
   lastSortAscending;
   constructor(heapProfilerModel, dataDisplayDelegate, dataGridParameters) {
     super(dataGridParameters);
-    this.snapshot = null;
-    this.selectedNode = null;
     this.heapProfilerModelInternal = heapProfilerModel;
     this.dataDisplayDelegateInternal = dataDisplayDelegate;
     const tooltips = [
@@ -6911,9 +6902,9 @@ var HeapSnapshotRetainmentDataGridEvents;
   HeapSnapshotRetainmentDataGridEvents2["ExpandRetainersComplete"] = "ExpandRetainersComplete";
 })(HeapSnapshotRetainmentDataGridEvents || (HeapSnapshotRetainmentDataGridEvents = {}));
 var HeapSnapshotConstructorsDataGrid = class extends HeapSnapshotViewportDataGrid {
-  profileIndex;
-  objectIdToSelect;
-  nextRequestedFilter;
+  profileIndex = -1;
+  objectIdToSelect = null;
+  nextRequestedFilter = null;
   lastFilter;
   filterInProgress;
   constructor(heapProfilerModel, dataDisplayDelegate) {
@@ -6936,10 +6927,10 @@ var HeapSnapshotConstructorsDataGrid = class extends HeapSnapshotViewportDataGri
         fixedWidth: true
       }
     ];
-    super(heapProfilerModel, dataDisplayDelegate, { displayName: i18nString11(UIStrings11.heapSnapshotConstructors).toString(), columns });
-    this.profileIndex = -1;
-    this.objectIdToSelect = null;
-    this.nextRequestedFilter = null;
+    super(heapProfilerModel, dataDisplayDelegate, {
+      displayName: i18nString11(UIStrings11.heapSnapshotConstructors).toString(),
+      columns
+    });
   }
   sortFields(sortColumn, sortAscending) {
     switch (sortColumn) {
@@ -7197,26 +7188,18 @@ var UIStrings12 = {
 var str_12 = i18n25.i18n.registerUIStrings("panels/profiler/HeapSnapshotProxy.ts", UIStrings12);
 var i18nString12 = i18n25.i18n.getLocalizedString.bind(void 0, str_12);
 var HeapSnapshotWorkerProxy = class extends Common12.ObjectWrapper.ObjectWrapper {
-  // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   eventHandler;
-  nextObjectId;
-  nextCallId;
+  nextObjectId = 1;
+  nextCallId = 1;
   // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  callbacks;
-  previousCallbacks;
+  callbacks = /* @__PURE__ */ new Map();
+  previousCallbacks = /* @__PURE__ */ new Set();
   worker;
   interval;
-  // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(eventHandler) {
     super();
     this.eventHandler = eventHandler;
-    this.nextObjectId = 1;
-    this.nextCallId = 1;
-    this.callbacks = /* @__PURE__ */ new Map();
-    this.previousCallbacks = /* @__PURE__ */ new Set();
     this.worker = Platform8.HostRuntime.HOST_RUNTIME.createWorker(new URL("../../entrypoints/heap_snapshot_worker/heap_snapshot_worker-entrypoint.js", import.meta.url).toString());
     this.worker.onmessage = this.messageReceived.bind(this);
   }
@@ -8861,7 +8844,6 @@ var TrackingHeapSnapshotProfileType = class _TrackingHeapSnapshotProfileType ext
     }
     this.setProfileBeingRecorded(new HeapProfileHeader(heapProfilerModel, this, void 0));
     this.profileSamples = new Samples();
-    this.profileBeingRecorded()._profileSamples = this.profileSamples;
     this.recording = true;
     this.addProfile(this.profileBeingRecorded());
     this.profileBeingRecorded().updateStatus(i18nString13(UIStrings14.recording));
@@ -9004,19 +8986,15 @@ var HeapProfileHeader = class extends ProfileHeader {
     }, this);
     this.receiver = this.workerProxy.createLoader(this.uid, this.snapshotReceived.bind(this));
   }
-  // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleWorkerEvent(eventName, data) {
     if (HeapSnapshotModel5.HeapSnapshotModel.HeapSnapshotProgressEvent.BrokenSnapshot === eventName) {
-      const error = data;
-      Common13.Console.Console.instance().error(error);
+      Common13.Console.Console.instance().error(data);
       return;
     }
     if (HeapSnapshotModel5.HeapSnapshotModel.HeapSnapshotProgressEvent.Update !== eventName) {
       return;
     }
-    const serializedMessage = data;
-    const messageObject = i18n27.i18n.deserializeUIString(serializedMessage);
+    const messageObject = i18n27.i18n.deserializeUIString(data);
     this.updateStatus(moduleI18nString(messageObject.string, messageObject.values));
   }
   dispose() {

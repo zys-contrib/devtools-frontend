@@ -12,6 +12,7 @@ import * as SDK from '../../../core/sdk/sdk.js';
 import * as AiAssistanceModel from '../../../models/ai_assistance/ai_assistance.js';
 import * as ComputedStyle from '../../../models/computed_style/computed_style.js';
 import * as Trace from '../../../models/trace/trace.js';
+import * as PanelsCommon from '../../../panels/common/common.js';
 import * as Marked from '../../../third_party/marked/marked.js';
 import * as Buttons from '../../../ui/components/buttons/buttons.js';
 import * as Input from '../../../ui/components/input/input.js';
@@ -26,7 +27,7 @@ import * as Timeline from '../../timeline/timeline.js';
 import * as TimelineUtils from '../../timeline/utils/utils.js';
 import { PanelUtils } from '../../utils/utils.js';
 import chatMessageStyles from './chatMessage.css.js';
-import { walkthroughTitle, WalkthroughView } from './WalkthroughView.js';
+import { walkthroughCloseTitle, walkthroughTitle, WalkthroughView } from './WalkthroughView.js';
 const { html, Directives: { ref, ifDefined } } = Lit;
 const lockedString = i18n.i18n.lockedString;
 const { widget } = UI.Widget;
@@ -36,10 +37,6 @@ const SCROLL_ROUNDING_OFFSET = 1;
 * Strings that don't need to be translated at this time.
 */
 const UIStringsNotTranslate = {
-    /**
-     * @description Text used in the button to close an open walkthrough
-     */
-    closeAgentWalkthrough: 'Close agent walkthrough',
     /**
      * @description The title of the button that allows submitting positive
      * feedback about the response for AI assistance.
@@ -161,10 +158,6 @@ const UIStringsNotTranslate = {
      */
     imageUnavailable: 'Image unavailable',
     /**
-     * @description Title for the button that shows the thinking process (walkthrough).
-     */
-    showThinking: 'Show thinking',
-    /**
      * @description Title for the button that takes the user into other DevTools panels to reveal items the AI references.
      */
     reveal: 'Reveal',
@@ -173,17 +166,9 @@ const UIStringsNotTranslate = {
      */
     revealTrace: 'Reveal trace',
     /**
-     * @description Title for the computed styles widget.
-     */
-    computedStyles: 'Computed styles',
-    /**
      * @description Title for the core web vitals widget.
      */
     coreVitals: 'Core Web Vitals',
-    /**
-     * @description Title for the styles widget.
-     */
-    styles: 'Styles',
     /**
      * @description Title for the LCP breakdown widget.
      */
@@ -359,8 +344,8 @@ function renderWalkthroughSidebarButton(input, steps) {
         return Lit.nothing;
     }
     const hasOneStepWithWidget = steps.some(step => step.widgets?.length);
-    const isOpen = input.message === input.walkthrough.activeMessage;
-    const title = isOpen ? lockedString(UIStringsNotTranslate.closeAgentWalkthrough) : walkthroughTitle({
+    const isExpanded = walkthrough.isExpanded && input.message === input.walkthrough.activeSidebarMessage;
+    const title = isExpanded ? walkthroughCloseTitle({ hasWidgets: hasOneStepWithWidget }) : walkthroughTitle({
         isLoading: input.isLoading,
         hasWidgets: hasOneStepWithWidget,
         lastStep,
@@ -376,12 +361,12 @@ function renderWalkthroughSidebarButton(input, steps) {
       <devtools-button
         .variant=${variant}
         .size=${"SMALL" /* Buttons.Button.Size.SMALL */}
-        .title=${lastStep.isLoading ? titleForStep(lastStep) : lockedString(UIStringsNotTranslate.showThinking)}
+        .title=${lastStep.isLoading ? titleForStep(lastStep) : title}
         .jslogContext=${walkthrough.isExpanded ? 'ai-hide-walkthrough-sidebar' : 'ai-show-walkthrough-sidebar'}
         data-show-walkthrough
         @click=${() => {
-        if (walkthrough.activeMessage === input.message && walkthrough.isExpanded) {
-            walkthrough.onToggle(false);
+        if (walkthrough.activeSidebarMessage === input.message && walkthrough.isExpanded) {
+            walkthrough.onToggle(false, message);
         }
         else {
             // Can't just toggle the visibility here; we need to ensure we
@@ -416,7 +401,9 @@ function renderWalkthroughUI(input, steps) {
     // A message's walkthrough is considered expanded if the walkthrough is
     // open and it is specifically targeting this message. This is necessary
     // because the walkthrough state is shared across all messages in the chat.
-    const isExpanded = (input.walkthrough.isExpanded && input.walkthrough.activeMessage === input.message);
+    const isExpanded = input.walkthrough.isInlined ?
+        input.walkthrough.inlineExpandedMessages.includes(input.message) :
+        (input.walkthrough.isExpanded && input.walkthrough.activeSidebarMessage === input.message);
     // When a side-effect step is present, it's shown in the main chat UI if the
     // walkthrough is closed, allowing the user to approve it without opening
     // the walkthrough. If the walkthrough is already open, the side-effect
@@ -542,7 +529,11 @@ async function makeComputedStyleWidget(widgetData) {
     return {
         renderedWidget,
         revealable: new Elements.ElementsPanel.NodeComputedStyles(domNodeForId),
-        title: lockedString(UIStringsNotTranslate.computedStyles),
+        title: html `<devtools-widget
+      ${widget(PanelsCommon.DOMLinkifier.DOMNodeLink, {
+            node: domNodeForId,
+        })}
+    ></devtools-widget>`,
     };
 }
 async function makeCoreVitalsWidget(widgetData) {
@@ -574,7 +565,11 @@ async function makeStylePropertiesWidget(widgetData) {
     return {
         renderedWidget,
         revealable: domNodeForId,
-        title: lockedString(UIStringsNotTranslate.styles),
+        title: html `<devtools-widget
+      ${widget(PanelsCommon.DOMLinkifier.DOMNodeLink, {
+            node: domNodeForId,
+        })}
+    ></devtools-widget>`,
     };
 }
 async function makeLcpBreakdownWidget(widgetData) {
@@ -979,7 +974,8 @@ export class ChatMessage extends UI.Widget.Widget {
         onToggle: () => { },
         isInlined: false,
         isExpanded: false,
-        activeMessage: null,
+        activeSidebarMessage: null,
+        inlineExpandedMessages: [],
     };
     #suggestionsResizeObserver = new ResizeObserver(() => this.#handleSuggestionsScrollOrResize());
     #suggestionsEvaluateLayoutThrottler = new Common.Throttler.Throttler(50);
