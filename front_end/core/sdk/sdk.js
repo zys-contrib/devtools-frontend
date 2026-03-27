@@ -14775,7 +14775,7 @@ var CSSProperty = class _CSSProperty extends Common7.ObjectWrapper.ObjectWrapper
       return true;
     }
     const range = this.range.relativeTo(this.ownerStyle.range.startLine, this.ownerStyle.range.startColumn);
-    const indentation = this.ownerStyle.cssText ? this.detectIndentation(this.ownerStyle.cssText) : Common7.Settings.Settings.instance().moduleSetting("text-editor-indent").get();
+    const indentation = this.ownerStyle.cssText ? this.detectIndentation(this.ownerStyle.cssText) : this.ownerStyle.cssModel().target().targetManager().settings.moduleSetting("text-editor-indent").get();
     const endIndentation = this.ownerStyle.cssText ? indentation.substring(0, this.ownerStyle.range.endColumn) : "";
     const text = new TextUtils3.Text.Text(this.ownerStyle.cssText || "");
     const newStyleText = text.replaceRange(range, Platform4.StringUtilities.sprintf(";%s;", propertyText));
@@ -20480,8 +20480,9 @@ var CSSModel = class _CSSModel extends SDKModel {
     if (!target.suspended()) {
       void this.enable();
     }
-    this.#sourceMapManager.setEnabled(Common13.Settings.Settings.instance().moduleSetting("css-source-maps-enabled").get());
-    Common13.Settings.Settings.instance().moduleSetting("css-source-maps-enabled").addChangeListener((event) => this.#sourceMapManager.setEnabled(event.data));
+    const settings = this.target().targetManager().settings;
+    this.#sourceMapManager.setEnabled(settings.moduleSetting("css-source-maps-enabled").get());
+    settings.moduleSetting("css-source-maps-enabled").addChangeListener((event) => this.#sourceMapManager.setEnabled(event.data));
   }
   async colorScheme() {
     if (!this.#colorScheme) {
@@ -22726,16 +22727,17 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
     this.agent = target.debuggerAgent();
     this.#runtimeModel = target.model(RuntimeModel);
     this.#sourceMapManager = new SourceMapManager(target, (compiledURL, sourceMappingURL, payload, script) => new SourceMap(compiledURL, sourceMappingURL, payload, script));
-    Common17.Settings.Settings.instance().moduleSetting("pause-on-exception-enabled").addChangeListener(this.pauseOnExceptionStateChanged, this);
-    Common17.Settings.Settings.instance().moduleSetting("pause-on-caught-exception").addChangeListener(this.pauseOnExceptionStateChanged, this);
-    Common17.Settings.Settings.instance().moduleSetting("pause-on-uncaught-exception").addChangeListener(this.pauseOnExceptionStateChanged, this);
-    Common17.Settings.Settings.instance().moduleSetting("disable-async-stack-traces").addChangeListener(this.asyncStackTracesStateChanged, this);
-    Common17.Settings.Settings.instance().moduleSetting("breakpoints-active").addChangeListener(this.breakpointsActiveChanged, this);
+    const settings = this.target().targetManager().settings;
+    settings.moduleSetting("pause-on-exception-enabled").addChangeListener(this.pauseOnExceptionStateChanged, this);
+    settings.moduleSetting("pause-on-caught-exception").addChangeListener(this.pauseOnExceptionStateChanged, this);
+    settings.moduleSetting("pause-on-uncaught-exception").addChangeListener(this.pauseOnExceptionStateChanged, this);
+    settings.moduleSetting("disable-async-stack-traces").addChangeListener(this.asyncStackTracesStateChanged, this);
+    settings.moduleSetting("breakpoints-active").addChangeListener(this.breakpointsActiveChanged, this);
     if (!target.suspended()) {
       void this.enableDebugger();
     }
-    this.#sourceMapManager.setEnabled(Common17.Settings.Settings.instance().moduleSetting("js-source-maps-enabled").get());
-    Common17.Settings.Settings.instance().moduleSetting("js-source-maps-enabled").addChangeListener((event) => this.#sourceMapManager.setEnabled(event.data));
+    this.#sourceMapManager.setEnabled(settings.moduleSetting("js-source-maps-enabled").get());
+    settings.moduleSetting("js-source-maps-enabled").addChangeListener((event) => this.#sourceMapManager.setEnabled(event.data));
     const resourceTreeModel = target.model(ResourceTreeModel);
     if (resourceTreeModel) {
       resourceTreeModel.addEventListener(Events3.FrameNavigated, this.onFrameNavigated, this);
@@ -22793,7 +22795,8 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
     }
     this.pauseOnExceptionStateChanged();
     void this.asyncStackTracesStateChanged();
-    if (!Common17.Settings.Settings.instance().moduleSetting("breakpoints-active").get()) {
+    const settings = this.target().targetManager().settings;
+    if (!settings.moduleSetting("breakpoints-active").get()) {
       this.breakpointsActiveChanged();
     }
     this.dispatchEventToListeners(Events7.DebuggerWasEnabled, this);
@@ -22871,9 +22874,10 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
     this.#skipAllPausesTimeout = window.setTimeout(this.skipAllPauses.bind(this, false), timeout);
   }
   pauseOnExceptionStateChanged() {
-    const pauseOnCaughtEnabled = Common17.Settings.Settings.instance().moduleSetting("pause-on-caught-exception").get();
+    const settings = this.target().targetManager().settings;
+    const pauseOnCaughtEnabled = settings.moduleSetting("pause-on-caught-exception").get();
     let state;
-    const pauseOnUncaughtEnabled = Common17.Settings.Settings.instance().moduleSetting("pause-on-uncaught-exception").get();
+    const pauseOnUncaughtEnabled = settings.moduleSetting("pause-on-uncaught-exception").get();
     if (pauseOnCaughtEnabled && pauseOnUncaughtEnabled) {
       state = "all";
     } else if (pauseOnCaughtEnabled) {
@@ -22887,12 +22891,14 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
   }
   asyncStackTracesStateChanged() {
     const maxAsyncStackChainDepth = 32;
-    const enabled = !Common17.Settings.Settings.instance().moduleSetting("disable-async-stack-traces").get() && this.#debuggerEnabled;
+    const settings = this.target().targetManager().settings;
+    const enabled = !settings.moduleSetting("disable-async-stack-traces").get() && this.#debuggerEnabled;
     const maxDepth = enabled ? maxAsyncStackChainDepth : 0;
     return this.agent.invoke_setAsyncCallStackDepth({ maxDepth });
   }
   breakpointsActiveChanged() {
-    void this.agent.invoke_setBreakpointsActive({ active: Common17.Settings.Settings.instance().moduleSetting("breakpoints-active").get() });
+    const settings = this.target().targetManager().settings;
+    void this.agent.invoke_setBreakpointsActive({ active: settings.moduleSetting("breakpoints-active").get() });
   }
   setComputeAutoStepRangesCallback(callback) {
     this.#computeAutoStepRangesCallback = callback;
@@ -23282,9 +23288,10 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
     if (this.#debuggerId) {
       debuggerIdToModel.delete(this.#debuggerId);
     }
-    Common17.Settings.Settings.instance().moduleSetting("pause-on-exception-enabled").removeChangeListener(this.pauseOnExceptionStateChanged, this);
-    Common17.Settings.Settings.instance().moduleSetting("pause-on-caught-exception").removeChangeListener(this.pauseOnExceptionStateChanged, this);
-    Common17.Settings.Settings.instance().moduleSetting("disable-async-stack-traces").removeChangeListener(this.asyncStackTracesStateChanged, this);
+    const settings = this.target().targetManager().settings;
+    settings.moduleSetting("pause-on-exception-enabled").removeChangeListener(this.pauseOnExceptionStateChanged, this);
+    settings.moduleSetting("pause-on-caught-exception").removeChangeListener(this.pauseOnExceptionStateChanged, this);
+    settings.moduleSetting("disable-async-stack-traces").removeChangeListener(this.asyncStackTracesStateChanged, this);
   }
   async suspendModel() {
     await this.disableDebugger();
@@ -28161,7 +28168,8 @@ var CookieModel = class extends SDKModel {
     if (cookie.expires()) {
       expires = Math.floor(Date.parse(`${cookie.expires()}`) / 1e3);
     }
-    const enabled = Root12.Runtime.experiments.isEnabled(Root12.ExperimentNames.ExperimentName.EXPERIMENTAL_COOKIE_FEATURES);
+    const schemeBindingEnabled = Boolean(Root12.Runtime.hostConfig.devToolsEnableOriginBoundCookies?.schemeBindingEnabled);
+    const portBindingEnabled = Boolean(Root12.Runtime.hostConfig.devToolsEnableOriginBoundCookies?.portBindingEnabled);
     const preserveUnset = (scheme) => scheme === "Unset" ? scheme : void 0;
     const protocolCookie = {
       name: cookie.name(),
@@ -28175,8 +28183,8 @@ var CookieModel = class extends SDKModel {
       expires,
       priority: cookie.priority(),
       partitionKey: cookie.partitionKey(),
-      sourceScheme: enabled ? cookie.sourceScheme() : preserveUnset(cookie.sourceScheme()),
-      sourcePort: enabled ? cookie.sourcePort() : void 0
+      sourceScheme: schemeBindingEnabled ? cookie.sourceScheme() : preserveUnset(cookie.sourceScheme()),
+      sourcePort: portBindingEnabled ? cookie.sourcePort() : void 0
     };
     const response = await this.target().networkAgent().invoke_setCookie(protocolCookie);
     const error = response.getError();
@@ -31512,7 +31520,6 @@ var AutofillModel_exports = {};
 __export(AutofillModel_exports, {
   AutofillModel: () => AutofillModel
 });
-import * as Common29 from "./../common/common.js";
 import * as Host5 from "./../host/host.js";
 var AutofillModel = class extends SDKModel {
   agent;
@@ -31521,7 +31528,8 @@ var AutofillModel = class extends SDKModel {
   constructor(target) {
     super(target);
     this.agent = target.autofillAgent();
-    this.#showTestAddressesInAutofillMenu = Common29.Settings.Settings.instance().createSetting("show-test-addresses-in-autofill-menu-on-event", false);
+    const settings = this.target().targetManager().settings;
+    this.#showTestAddressesInAutofillMenu = settings.createSetting("show-test-addresses-in-autofill-menu-on-event", false);
     this.#showTestAddressesInAutofillMenu.addChangeListener(this.#setTestAddresses, this);
     target.registerAutofillDispatcher(this);
     this.enable();
@@ -31699,7 +31707,7 @@ __export(ChildTargetManager_exports, {
   ChildTargetManager: () => ChildTargetManager
 });
 import * as i18n23 from "./../i18n/i18n.js";
-import * as Common30 from "./../common/common.js";
+import * as Common29 from "./../common/common.js";
 import * as Host6 from "./../host/host.js";
 var UIStrings10 = {
   /**
@@ -31830,7 +31838,7 @@ var ChildTargetManager = class _ChildTargetManager extends SDKModel {
       if (KNOWN_FRAME_PATTERNS.some((p) => targetInfo.url.match(p))) {
         type = Type.FRAME;
       } else {
-        const parsedURL = Common30.ParsedURL.ParsedURL.fromString(targetInfo.url);
+        const parsedURL = Common29.ParsedURL.ParsedURL.fromString(targetInfo.url);
         targetName = parsedURL ? parsedURL.lastPathComponentWithFragment() : "#" + ++_ChildTargetManager.lastAnonymousTargetId;
       }
     }
@@ -31972,7 +31980,7 @@ __export(Connections_exports, {
   initMainConnection: () => initMainConnection
 });
 import * as i18n29 from "./../i18n/i18n.js";
-import * as Common34 from "./../common/common.js";
+import * as Common33 from "./../common/common.js";
 import * as Host7 from "./../host/host.js";
 import * as ProtocolClient3 from "./../protocol_client/protocol_client.js";
 import * as Root14 from "./../root/root.js";
@@ -31983,7 +31991,7 @@ __export(RehydratingConnection_exports, {
   RehydratingConnectionTransport: () => RehydratingConnectionTransport,
   RehydratingSession: () => RehydratingSession
 });
-import * as Common33 from "./../common/common.js";
+import * as Common32 from "./../common/common.js";
 import * as i18n27 from "./../i18n/i18n.js";
 import * as ProtocolClient2 from "./../protocol_client/protocol_client.js";
 import * as Root13 from "./../root/root.js";
@@ -31993,7 +32001,7 @@ var EnhancedTracesParser_exports = {};
 __export(EnhancedTracesParser_exports, {
   EnhancedTracesParser: () => EnhancedTracesParser
 });
-import * as Common31 from "./../common/common.js";
+import * as Common30 from "./../common/common.js";
 import { UserVisibleError } from "./../platform/platform.js";
 var EnhancedTracesParser = class {
   #trace;
@@ -32186,9 +32194,9 @@ var EnhancedTracesParser = class {
     let resolvedSourceUrl = url;
     if (hasSourceURL && sourceURL) {
       const targetUrl = target.url;
-      resolvedSourceUrl = Common31.ParsedURL.ParsedURL.completeURL(targetUrl, sourceURL) ?? sourceURL;
+      resolvedSourceUrl = Common30.ParsedURL.ParsedURL.completeURL(targetUrl, sourceURL) ?? sourceURL;
     }
-    const resolvedSourceMapUrl = Common31.ParsedURL.ParsedURL.completeURL(resolvedSourceUrl, sourceMapURL);
+    const resolvedSourceMapUrl = Common30.ParsedURL.ParsedURL.completeURL(resolvedSourceUrl, sourceMapURL);
     if (!resolvedSourceMapUrl) {
       return;
     }
@@ -32314,7 +32322,7 @@ __export(TraceObject_exports, {
   RevealableNetworkRequest: () => RevealableNetworkRequest,
   TraceObject: () => TraceObject
 });
-import * as Common32 from "./../common/common.js";
+import * as Common31 from "./../common/common.js";
 var TraceObject = class {
   traceEvents;
   metadata;
@@ -32345,7 +32353,7 @@ var RevealableNetworkRequest = class _RevealableNetworkRequest {
   static create(event) {
     const syntheticNetworkRequest = event;
     const url = syntheticNetworkRequest.args.data.url;
-    const urlWithoutHash = Common32.ParsedURL.ParsedURL.urlWithoutHash(url);
+    const urlWithoutHash = Common31.ParsedURL.ParsedURL.urlWithoutHash(url);
     const resource = ResourceTreeModel.resourceForURL(url) ?? ResourceTreeModel.resourceForURL(urlWithoutHash);
     const sdkNetworkRequest = resource?.request;
     return sdkNetworkRequest ? new _RevealableNetworkRequest(sdkNetworkRequest) : null;
@@ -32394,7 +32402,7 @@ var RehydratingConnectionTransport = class {
       }
     }
     if (traceUrl) {
-      void fetch(traceUrl).then((r) => r.arrayBuffer()).then((b) => Common33.Gzip.arrayBufferToString(b)).then((traceJson) => {
+      void fetch(traceUrl).then((r) => r.arrayBuffer()).then((b) => Common32.Gzip.arrayBufferToString(b)).then((traceJson) => {
         const trace = new TraceObject(JSON.parse(traceJson));
         void this.startHydration(trace);
       });
@@ -32474,7 +32482,7 @@ var RehydratingConnectionTransport = class {
       return;
     }
     this.rehydratingConnectionState = 3;
-    await Common33.Revealer.reveal(this.trace);
+    await Common32.Revealer.reveal(this.trace);
   }
   setOnMessage(onMessage) {
     this.onMessage = onMessage;
@@ -32794,7 +32802,7 @@ var MainConnection = class {
   }
   async disconnect() {
     const onDisconnect = this.#onDisconnect;
-    Common34.EventTarget.removeEventListeners(this.#eventListeners);
+    Common33.EventTarget.removeEventListeners(this.#eventListeners);
     this.#onDisconnect = null;
     this.onMessage = null;
     if (onDisconnect) {
@@ -32946,7 +32954,7 @@ __export(ConsoleModel_exports, {
   FrontendMessageType: () => FrontendMessageType,
   MessageSourceDisplayName: () => MessageSourceDisplayName
 });
-import * as Common35 from "./../common/common.js";
+import * as Common34 from "./../common/common.js";
 import * as Host9 from "./../host/host.js";
 import * as i18n33 from "./../i18n/i18n.js";
 import * as Platform18 from "./../platform/platform.js";
@@ -33143,7 +33151,7 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
       return;
     }
     const eventListener = resourceTreeModel.addEventListener(Events3.CachedResourcesLoaded, () => {
-      Common35.EventTarget.removeEventListeners([eventListener]);
+      Common34.EventTarget.removeEventListeners([eventListener]);
       this.initTarget(target);
     });
   }
@@ -33175,7 +33183,7 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
     if (runtimeModel) {
       this.#messageByExceptionId.delete(runtimeModel);
     }
-    Common35.EventTarget.removeEventListeners(this.#targetListeners.get(target) || []);
+    Common34.EventTarget.removeEventListeners(this.#targetListeners.get(target) || []);
   }
   async evaluateCommandInConsole(executionContext, originatingMessage, expression, useCommandLineAPI) {
     const result = await executionContext.evaluate(
@@ -33189,7 +33197,7 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
         replMode: true,
         allowUnsafeEvalBlockedByCSP: false
       },
-      Common35.Settings.Settings.instance().moduleSetting("console-user-activation-eval").get(),
+      this.target().targetManager().settings.moduleSetting("console-user-activation-eval").get(),
       /* awaitPromise */
       false
     );
@@ -33197,7 +33205,7 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
     if ("error" in result) {
       return;
     }
-    await Common35.Console.Console.instance().showPromise();
+    await Common34.Console.Console.instance().showPromise();
     this.dispatchEventToListeners(Events11.CommandEvaluated, { result: result.object, commandMessage: originatingMessage, exceptionDetails: result.exceptionDetails });
   }
   addCommandMessage(executionContext, text) {
@@ -33208,7 +33216,7 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
   }
   addMessage(msg) {
     msg.setPageLoadSequenceNumber(this.#pageLoadSequenceNumber);
-    if (msg.source === Common35.Console.FrontendMessageSource.ConsoleAPI && msg.type === "clear") {
+    if (msg.source === Common34.Console.FrontendMessageSource.ConsoleAPI && msg.type === "clear") {
       this.clearIfNecessary();
     }
     this.#messages.push(msg);
@@ -33276,7 +33284,7 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
       executionContextId: call.executionContextId,
       context: call.context
     };
-    const consoleMessage = new ConsoleMessage(runtimeModel, Common35.Console.FrontendMessageSource.ConsoleAPI, level, message, details);
+    const consoleMessage = new ConsoleMessage(runtimeModel, Common34.Console.FrontendMessageSource.ConsoleAPI, level, message, details);
     for (const msg of this.#messagesByTimestamp.get(consoleMessage.timestamp).values()) {
       if (consoleMessage.isEqual(msg)) {
         return;
@@ -33291,22 +33299,24 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
       parameters: [objects],
       executionContextId
     };
-    const consoleMessage = new ConsoleMessage(runtimeModel, Common35.Console.FrontendMessageSource.ConsoleAPI, "info", "", details);
+    const consoleMessage = new ConsoleMessage(runtimeModel, Common34.Console.FrontendMessageSource.ConsoleAPI, "info", "", details);
     this.addMessage(consoleMessage);
   }
   clearIfNecessary() {
-    if (!Common35.Settings.Settings.instance().moduleSetting("preserve-console-log").get()) {
+    const settings = this.target().targetManager().settings;
+    if (!settings.moduleSetting("preserve-console-log").get()) {
       this.clear();
     }
     ++this.#pageLoadSequenceNumber;
   }
   primaryPageChanged(event) {
-    if (Common35.Settings.Settings.instance().moduleSetting("preserve-console-log").get()) {
+    const settings = this.target().targetManager().settings;
+    if (settings.moduleSetting("preserve-console-log").get()) {
       const { frame } = event.data;
       if (frame.backForwardCacheDetails.restoredFromCache) {
-        Common35.Console.Console.instance().log(i18nString15(UIStrings15.bfcacheNavigation, { PH1: frame.url }));
+        Common34.Console.Console.instance().log(i18nString15(UIStrings15.bfcacheNavigation, { PH1: frame.url }));
       } else {
-        Common35.Console.Console.instance().log(i18nString15(UIStrings15.navigatedToS, { PH1: frame.url }));
+        Common34.Console.Console.instance().log(i18nString15(UIStrings15.navigatedToS, { PH1: frame.url }));
       }
     }
   }
@@ -33327,7 +33337,7 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
       lineNumber: scriptLocation.lineNumber,
       columnNumber: scriptLocation.columnNumber || 0
     }];
-    this.addMessage(new ConsoleMessage(cpuProfilerModel.runtimeModel(), Common35.Console.FrontendMessageSource.ConsoleAPI, "info", messageText, { type, stackTrace: { callFrames } }));
+    this.addMessage(new ConsoleMessage(cpuProfilerModel.runtimeModel(), Common34.Console.FrontendMessageSource.ConsoleAPI, "info", messageText, { type, stackTrace: { callFrames } }));
   }
   incrementErrorWarningCount(msg) {
     if (msg.source === "violation") {
@@ -33347,23 +33357,23 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
     return this.#messages;
   }
   // messages[] are not ordered by timestamp.
-  static allMessagesUnordered() {
+  static allMessagesUnordered(targetManager = TargetManager.instance()) {
     const messages = [];
-    for (const target of TargetManager.instance().targets()) {
+    for (const target of targetManager.targets()) {
       const targetMessages = target.model(_ConsoleModel)?.messages() || [];
       messages.push(...targetMessages);
     }
     return messages;
   }
-  static requestClearMessages() {
-    for (const logModel of TargetManager.instance().models(LogModel)) {
+  static requestClearMessages(targetManager = TargetManager.instance()) {
+    for (const logModel of targetManager.models(LogModel)) {
       logModel.requestClear();
     }
-    for (const runtimeModel of TargetManager.instance().models(RuntimeModel)) {
+    for (const runtimeModel of targetManager.models(RuntimeModel)) {
       runtimeModel.discardConsoleEntries();
       runtimeModel.releaseObjectGroup("live-expression");
     }
-    for (const target of TargetManager.instance().targets()) {
+    for (const target of targetManager.targets()) {
       target.model(_ConsoleModel)?.clear();
     }
   }
@@ -33379,9 +33389,9 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
   errors() {
     return this.#errors;
   }
-  static allErrors() {
+  static allErrors(targetManager = TargetManager.instance()) {
     let errors = 0;
-    for (const target of TargetManager.instance().targets()) {
+    for (const target of targetManager.targets()) {
       errors += target.model(_ConsoleModel)?.errors() || 0;
     }
     return errors;
@@ -33389,9 +33399,9 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
   warnings() {
     return this.#warnings;
   }
-  static allWarnings() {
+  static allWarnings(targetManager = TargetManager.instance()) {
     let warnings = 0;
-    for (const target of TargetManager.instance().targets()) {
+    for (const target of targetManager.targets()) {
       warnings += target.model(_ConsoleModel)?.warnings() || 0;
     }
     return warnings;
@@ -33449,7 +33459,7 @@ var ConsoleModel = class _ConsoleModel extends SDKModel {
       if (result2) {
         message = message + " " + result2.description;
       }
-      Common35.Console.Console.instance().error(message);
+      Common34.Console.Console.instance().error(message);
     }
   }
 };
@@ -33609,7 +33619,7 @@ var ConsoleMessage = class _ConsoleMessage {
   }
   isGroupable() {
     const isUngroupableError = this.level === "error" && (this.source === "javascript" || this.source === "network");
-    return this.source !== Common35.Console.FrontendMessageSource.ConsoleAPI && this.type !== FrontendMessageType.Command && this.type !== FrontendMessageType.Result && this.type !== FrontendMessageType.System && !isUngroupableError;
+    return this.source !== Common34.Console.FrontendMessageSource.ConsoleAPI && this.type !== FrontendMessageType.Command && this.type !== FrontendMessageType.Result && this.type !== FrontendMessageType.System && !isUngroupableError;
   }
   groupCategoryKey() {
     return [this.source, this.level, this.type, this.#pageLoadSequenceNumber].join(":");
@@ -33662,11 +33672,11 @@ var MessageSourceDisplayName = /* @__PURE__ */ new Map([
   ["xml", "xml"],
   ["javascript", "javascript"],
   ["network", "network"],
-  [Common35.Console.FrontendMessageSource.ConsoleAPI, "console-api"],
+  [Common34.Console.FrontendMessageSource.ConsoleAPI, "console-api"],
   ["storage", "storage"],
   ["appcache", "appcache"],
   ["rendering", "rendering"],
-  [Common35.Console.FrontendMessageSource.CSS, "css"],
+  [Common34.Console.FrontendMessageSource.CSS, "css"],
   ["security", "security"],
   ["deprecation", "deprecation"],
   ["worker", "worker"],
@@ -33674,7 +33684,7 @@ var MessageSourceDisplayName = /* @__PURE__ */ new Map([
   ["intervention", "intervention"],
   ["recommendation", "recommendation"],
   ["other", "other"],
-  [Common35.Console.FrontendMessageSource.ISSUE_PANEL, "issue-panel"]
+  [Common34.Console.FrontendMessageSource.ISSUE_PANEL, "issue-panel"]
 ]);
 
 // gen/front_end/core/sdk/CPUThrottlingManager.js
@@ -33691,7 +33701,7 @@ __export(CPUThrottlingManager_exports, {
   NoThrottlingOption: () => NoThrottlingOption,
   calibrationErrorToString: () => calibrationErrorToString
 });
-import * as Common36 from "./../common/common.js";
+import * as Common35 from "./../common/common.js";
 import * as i18n35 from "./../i18n/i18n.js";
 
 // gen/front_end/core/sdk/EmulationModel.js
@@ -34244,7 +34254,7 @@ var str_16 = i18n35.i18n.registerUIStrings("core/sdk/CPUThrottlingManager.ts", U
 var i18nString16 = i18n35.i18n.getLocalizedString.bind(void 0, str_16);
 var i18nLazyString2 = i18n35.i18n.getLazilyComputedLocalizedString.bind(void 0, str_16);
 var throttlingManagerInstance;
-var CPUThrottlingManager = class _CPUThrottlingManager extends Common36.ObjectWrapper.ObjectWrapper {
+var CPUThrottlingManager = class _CPUThrottlingManager extends Common35.ObjectWrapper.ObjectWrapper {
   #targetManager;
   #cpuThrottlingOption;
   #calibratedThrottlingSetting;
@@ -34266,7 +34276,7 @@ var CPUThrottlingManager = class _CPUThrottlingManager extends Common36.ObjectWr
   static instance(opts = { forceNew: null }) {
     const { forceNew } = opts;
     if (!throttlingManagerInstance || forceNew) {
-      throttlingManagerInstance = new _CPUThrottlingManager(Common36.Settings.Settings.instance(), TargetManager.instance());
+      throttlingManagerInstance = new _CPUThrottlingManager(Common35.Settings.Settings.instance(), TargetManager.instance());
     }
     return throttlingManagerInstance;
   }
@@ -34383,7 +34393,7 @@ var LowTierThrottlingOption = makeFixedPresetThrottlingOption(CPUThrottlingRates
 var ExtraSlowThrottlingOption = makeFixedPresetThrottlingOption(CPUThrottlingRates.EXTRA_SLOW);
 function makeCalibratedThrottlingOption(calibratedDeviceType) {
   const getSettingValue = () => {
-    const setting = Common36.Settings.Settings.instance().createSetting(
+    const setting = Common35.Settings.Settings.instance().createSetting(
       "calibrated-cpu-throttling",
       {},
       "Global"
@@ -34441,7 +34451,6 @@ __export(DOMDebuggerModel_exports, {
   DOMEventListenerBreakpoint: () => DOMEventListenerBreakpoint,
   EventListener: () => EventListener
 });
-import * as Common37 from "./../common/common.js";
 import * as Platform19 from "./../platform/platform.js";
 var DOMDebuggerModel = class extends SDKModel {
   agent;
@@ -34458,7 +34467,7 @@ var DOMDebuggerModel = class extends SDKModel {
     this.#domModel.addEventListener(Events8.DocumentUpdated, this.documentUpdated, this);
     this.#domModel.addEventListener(Events8.NodeRemoved, this.nodeRemoved, this);
     this.#domBreakpoints = [];
-    this.#domBreakpointsSetting = Common37.Settings.Settings.instance().createLocalSetting("dom-breakpoints", []);
+    this.#domBreakpointsSetting = this.target().targetManager().settings.createLocalSetting("dom-breakpoints", []);
     if (this.#domModel.existingDocument()) {
       void this.documentUpdated();
     }
@@ -34811,7 +34820,7 @@ var DOMDebuggerManager = class _DOMDebuggerManager {
   #targetManager;
   constructor(targetManager = TargetManager.instance()) {
     this.#targetManager = targetManager;
-    this.#xhrBreakpointsSetting = Common37.Settings.Settings.instance().createLocalSetting("xhr-breakpoints", []);
+    this.#xhrBreakpointsSetting = this.#targetManager.settings.createLocalSetting("xhr-breakpoints", []);
     for (const breakpoint of this.#xhrBreakpointsSetting.get()) {
       this.#xhrBreakpoints.set(breakpoint.url, breakpoint.enabled);
     }
@@ -35179,9 +35188,9 @@ __export(IsolateManager_exports, {
   MemoryTrend: () => MemoryTrend,
   MemoryTrendWindowMs: () => MemoryTrendWindowMs
 });
-import * as Common38 from "./../common/common.js";
+import * as Common36 from "./../common/common.js";
 var isolateManagerInstance;
-var IsolateManager = class _IsolateManager extends Common38.ObjectWrapper.ObjectWrapper {
+var IsolateManager = class _IsolateManager extends Common36.ObjectWrapper.ObjectWrapper {
   #isolates = /* @__PURE__ */ new Map();
   /**
    * Contains null while the isolateId is being retrieved.
@@ -35189,13 +35198,15 @@ var IsolateManager = class _IsolateManager extends Common38.ObjectWrapper.Object
   #isolateIdByModel = /* @__PURE__ */ new Map();
   #observers = /* @__PURE__ */ new Set();
   #pollId = 0;
-  constructor() {
+  #targetManager;
+  constructor(targetManager = TargetManager.instance()) {
     super();
-    TargetManager.instance().observeModels(RuntimeModel, this);
+    this.#targetManager = targetManager;
+    this.#targetManager.observeModels(RuntimeModel, this);
   }
-  static instance({ forceNew } = { forceNew: false }) {
+  static instance({ forceNew, targetManager } = { forceNew: false }) {
     if (!isolateManagerInstance || forceNew) {
-      isolateManagerInstance = new _IsolateManager();
+      isolateManagerInstance = new _IsolateManager(targetManager);
     }
     return isolateManagerInstance;
   }
@@ -35227,7 +35238,7 @@ var IsolateManager = class _IsolateManager extends Common38.ObjectWrapper.Object
     this.#isolateIdByModel.set(model, isolateId);
     let isolate = this.#isolates.get(isolateId);
     if (!isolate) {
-      isolate = new Isolate(isolateId);
+      isolate = new Isolate(isolateId, this);
       this.#isolates.set(isolateId, isolate);
     }
     isolate.models().add(model);
@@ -35284,8 +35295,10 @@ var Isolate = class {
   #models;
   #usedHeapSize;
   #memoryTrend;
-  constructor(id) {
+  #manager;
+  constructor(id, manager) {
     this.#id = id;
+    this.#manager = manager;
     this.#models = /* @__PURE__ */ new Set();
     this.#usedHeapSize = 0;
     const count = MemoryTrendWindowMs / PollIntervalMs;
@@ -35312,7 +35325,7 @@ var Isolate = class {
     }
     this.#usedHeapSize = usage.usedSize + (usage.embedderHeapUsedSize ?? 0) + (usage.backingStorageSize ?? 0);
     this.#memoryTrend.add(this.#usedHeapSize);
-    IsolateManager.instance().dispatchEventToListeners("MemoryChanged", this);
+    this.#manager.dispatchEventToListeners("MemoryChanged", this);
   }
   samplesCount() {
     return this.#memoryTrend.count();
@@ -36493,7 +36506,7 @@ __export(ServiceWorkerCacheModel_exports, {
   Cache: () => Cache,
   ServiceWorkerCacheModel: () => ServiceWorkerCacheModel
 });
-import * as Common39 from "./../common/common.js";
+import * as Common37 from "./../common/common.js";
 import * as i18n37 from "./../i18n/i18n.js";
 
 // gen/front_end/core/sdk/StorageBucketsModel.js
@@ -36653,7 +36666,7 @@ var ServiceWorkerCacheModel = class extends SDKModel {
   #caches = /* @__PURE__ */ new Map();
   #storageKeysTracked = /* @__PURE__ */ new Set();
   #storageBucketsUpdated = /* @__PURE__ */ new Set();
-  #throttler = new Common39.Throttler.Throttler(2e3);
+  #throttler = new Common37.Throttler.Throttler(2e3);
   #enabled = false;
   // Used by tests to remove the Throttler timeout.
   #scheduleAsSoonAsPossible = false;
@@ -36711,7 +36724,7 @@ var ServiceWorkerCacheModel = class extends SDKModel {
   async deleteCacheEntry(cache, request) {
     const response = await this.cacheAgent.invoke_deleteEntry({ cacheId: cache.cacheId, request });
     if (response.getError()) {
-      Common39.Console.Console.instance().error(i18nString17(UIStrings17.serviceworkercacheagentError, { PH1: cache.toString(), PH2: String(response.getError()) }));
+      Common37.Console.Console.instance().error(i18nString17(UIStrings17.serviceworkercacheagentError, { PH1: cache.toString(), PH2: String(response.getError()) }));
       return;
     }
   }
@@ -36912,7 +36925,7 @@ __export(ServiceWorkerManager_exports, {
   ServiceWorkerVersion: () => ServiceWorkerVersion,
   ServiceWorkerVersionState: () => ServiceWorkerVersionState
 });
-import * as Common40 from "./../common/common.js";
+import * as Common38 from "./../common/common.js";
 import * as i18n39 from "./../i18n/i18n.js";
 var UIStrings18 = {
   /**
@@ -36976,7 +36989,7 @@ var ServiceWorkerManager = class extends SDKModel {
     target.registerServiceWorkerDispatcher(new ServiceWorkerDispatcher(this));
     this.#agent = target.serviceWorkerAgent();
     void this.enable();
-    this.#forceUpdateSetting = this.target().targetManager().context.get(Common40.Settings.Settings).createSetting("service-worker-update-on-reload", false);
+    this.#forceUpdateSetting = this.target().targetManager().context.get(Common38.Settings.Settings).createSetting("service-worker-update-on-reload", false);
     if (this.#forceUpdateSetting.get()) {
       this.forceUpdateSettingChanged();
     }
@@ -37038,7 +37051,7 @@ var ServiceWorkerManager = class extends SDKModel {
     if (!registration) {
       return;
     }
-    const origin = Common40.ParsedURL.ParsedURL.extractOrigin(registration.scopeURL);
+    const origin = Common38.ParsedURL.ParsedURL.extractOrigin(registration.scopeURL);
     await this.#agent.invoke_deliverPushMessage({ origin, registrationId, data });
   }
   async dispatchSyncEvent(registrationId, tag, lastChance) {
@@ -37046,7 +37059,7 @@ var ServiceWorkerManager = class extends SDKModel {
     if (!registration) {
       return;
     }
-    const origin = Common40.ParsedURL.ParsedURL.extractOrigin(registration.scopeURL);
+    const origin = Common38.ParsedURL.ParsedURL.extractOrigin(registration.scopeURL);
     await this.#agent.invoke_dispatchSyncEvent({ origin, registrationId, tag, lastChance });
   }
   async dispatchPeriodicSyncEvent(registrationId, tag) {
@@ -37054,7 +37067,7 @@ var ServiceWorkerManager = class extends SDKModel {
     if (!registration) {
       return;
     }
-    const origin = Common40.ParsedURL.ParsedURL.extractOrigin(registration.scopeURL);
+    const origin = Common38.ParsedURL.ParsedURL.extractOrigin(registration.scopeURL);
     await this.#agent.invoke_dispatchPeriodicSyncEvent({ origin, registrationId, tag });
   }
   async unregister(scopeURL) {
@@ -37175,7 +37188,7 @@ var ServiceWorkerVersion = class {
   update(payload) {
     this.id = payload.versionId;
     this.scriptURL = payload.scriptURL;
-    const parsedURL = new Common40.ParsedURL.ParsedURL(payload.scriptURL);
+    const parsedURL = new Common38.ParsedURL.ParsedURL(payload.scriptURL);
     this.securityOrigin = parsedURL.securityOrigin();
     this.currentState = new ServiceWorkerVersionState(payload.runningStatus, payload.status, this.currentState, Date.now());
     this.scriptLastModified = payload.scriptLastModified;
@@ -37330,7 +37343,7 @@ var ServiceWorkerRegistration = class {
     this.#fingerprint = Symbol("fingerprint");
     this.id = payload.registrationId;
     this.scopeURL = payload.scopeURL;
-    const parsedURL = new Common40.ParsedURL.ParsedURL(payload.scopeURL);
+    const parsedURL = new Common38.ParsedURL.ParsedURL(payload.scopeURL);
     this.securityOrigin = parsedURL.securityOrigin();
     this.isDeleted = payload.isDeleted;
   }
@@ -37426,7 +37439,7 @@ var ServiceWorkerContextNamer = class {
       context.setLabel("");
       return;
     }
-    const parsedUrl = Common40.ParsedURL.ParsedURL.fromString(context.origin);
+    const parsedUrl = Common38.ParsedURL.ParsedURL.fromString(context.origin);
     const label = parsedUrl ? parsedUrl.lastPathComponentWithFragment() : context.name;
     const localizedStatus = ServiceWorkerVersion.Status[version.status];
     context.setLabel(i18nString18(UIStrings18.sSS, { PH1: label, PH2: version.id, PH3: localizedStatus() }));
