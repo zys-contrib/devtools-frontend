@@ -1027,7 +1027,8 @@ export class AiAssistancePanel extends UI.Panel.Panel {
         if (!isAiAssistancePatchingEnabled() || !this.#conversation || this.#conversation?.isReadOnly) {
             return;
         }
-        return this.#changeManager.formatChangesForPatching(this.#conversation.id, /* includeSourceLocation= */ true);
+        const hasAiV2 = Boolean(Root.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled);
+        return this.#changeManager.formatChangesForPatching(this.#conversation.id, /* includeMetadata= */ !hasAiV2);
     }
     async performUpdate() {
         const viewInput = {

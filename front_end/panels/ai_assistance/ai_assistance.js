@@ -10,7 +10,7 @@ import * as Common6 from "./../../core/common/common.js";
 import * as Host7 from "./../../core/host/host.js";
 import * as i18n19 from "./../../core/i18n/i18n.js";
 import * as Platform7 from "./../../core/platform/platform.js";
-import * as Root6 from "./../../core/root/root.js";
+import * as Root7 from "./../../core/root/root.js";
 import * as SDK5 from "./../../core/sdk/sdk.js";
 import * as AiAssistanceModel6 from "./../../models/ai_assistance/ai_assistance.js";
 import * as Annotations from "./../../models/annotations/annotations.js";
@@ -80,6 +80,7 @@ var aiAssistancePanel_css_default = `/*
 import "./../../ui/components/spinners/spinners.js";
 import * as Host5 from "./../../core/host/host.js";
 import * as i18n13 from "./../../core/i18n/i18n.js";
+import * as Root4 from "./../../core/root/root.js";
 import * as AiAssistanceModel4 from "./../../models/ai_assistance/ai_assistance.js";
 import * as Buttons7 from "./../../ui/components/buttons/buttons.js";
 import * as UI7 from "./../../ui/legacy/legacy.js";
@@ -2254,6 +2255,7 @@ var chatMessage_css_default = `/*
     justify-content: space-between;
     align-items: center;
     margin-block: calc(-1 * var(--sys-size-3));
+    margin-top: var(--sys-size-5);
 
     &.not-v2 {
       /* Can be removed when AIv2 ships */
@@ -2405,6 +2407,10 @@ var chatMessage_css_default = `/*
 
     &.ai-v2 {
       border-bottom: none;
+    }
+
+    .ai-css-change {
+      margin: var(--sys-size-6) 0;
     }
 
     &.ai-v2 .answer-body-wrapper {
@@ -2679,6 +2685,10 @@ var chatMessage_css_default = `/*
 
     .widget-name {
       font: var(--sys-typescale-body4-regular);
+      max-width: 80%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap; /* stop the titles going onto multiple lines */
     }
 
     .widget-reveal-container {
@@ -3503,6 +3513,14 @@ var DEFAULT_VIEW4 = (input, output, target) => {
     return Lit3.nothing;
   })}
         ${renderError(message)}
+        ${input.isLastMessage && hasAiV2 && !input.isLoading && input.changeSummary ? html5`
+          <devtools-code-block
+            .code=${input.changeSummary}
+            .codeLang=${"css"}
+            .displayNotice=${true}
+            class="ai-css-change"
+          ></devtools-code-block>
+        ` : Lit3.nothing}
         ${input.showActions ? renderActions(input, output) : Lit3.nothing}
       </div>
     </section>
@@ -3803,7 +3821,8 @@ async function makeBottomUpTimelineTreeWidget(widgetData) {
     parsedTrace: widgetData.data.parsedTrace,
     startTime,
     endTime,
-    compactMode: true
+    compactMode: true,
+    maxLinkLength: 15
   })}></devtools-widget>`;
   return {
     renderedWidget,
@@ -4058,7 +4077,7 @@ function renderActions(input, output) {
     /* Host.AidaClient.Rating.NEGATIVE */
   )}
           ></devtools-button>
-          <div class="vertical-separator"></div>
+          ${aiAssistanceV2 ? Lit3.nothing : html5`<div class="vertical-separator"></div>`}
         ` : Lit3.nothing}
         <devtools-button
           .data=${{
@@ -4084,7 +4103,6 @@ function renderActions(input, output) {
             @click=${input.onCopyResponseClick}></devtools-button>
         `}
         ${input.onExportClick && aiAssistanceV2 && input.isLastMessage ? html5`
-        <div class="vertical-separator"></div>
           <devtools-button
             class="export-for-agents-button"
             .jslogContext=${"ai-export-for-agents"}
@@ -4092,7 +4110,7 @@ function renderActions(input, output) {
             .iconName=${"copy"}
             @click=${input.onExportClick}
           >${lockedString5(UIStringsNotTranslate4.exportForAgents)}</devtools-button>
-          <div class="vertical-separator"></div>
+          ${input.suggestions ? html5`<div class="vertical-separator"></div>` : Lit3.nothing}
         ` : Lit3.nothing}
       </div>
       ${input.suggestions ? html5`<div class="suggestions-container">
@@ -4199,6 +4217,7 @@ var ChatMessage = class extends UI5.Widget.Widget {
   };
   onExportClick = () => {
   };
+  changeSummary;
   walkthrough = {
     onOpen: () => {
     },
@@ -4258,6 +4277,7 @@ var ChatMessage = class extends UI5.Widget.Widget {
       currentRating: this.#currentRating,
       isShowingFeedbackForm: this.#isShowingFeedbackForm,
       onFeedbackSubmit: this.onFeedbackSubmit,
+      changeSummary: this.changeSummary,
       walkthrough: this.walkthrough
     }, this.#viewOutput, this.contentElement);
     if (this.#viewOutput.suggestionsScrollContainer && !this.#isObservingSuggestions) {
@@ -4457,8 +4477,6 @@ var chatView_css_default = `/*
     margin-right: calc(-1 * var(--half-scrollbar-width));
   }
 }
-
-
 
 .link {
   color: var(--text-link);
@@ -5103,14 +5121,17 @@ var UIStringsNotTranslate5 = {
 var lockedString6 = i18n13.i18n.lockedString;
 var SCROLL_ROUNDING_OFFSET2 = 1;
 var DEFAULT_VIEW6 = (input, output, target) => {
+  const hasAiV2 = Boolean(Root4.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled);
   const chatUiClasses = classMap({
     "chat-ui": true,
-    gemini: AiAssistanceModel4.AiUtils.isGeminiBranding()
+    gemini: AiAssistanceModel4.AiUtils.isGeminiBranding(),
+    "ai-v2": hasAiV2
   });
   const inputWidgetClasses = classMap({
     "chat-input-widget": true,
     sticky: !input.isReadOnly
   });
+  const shouldShowPatchWidget = !hasAiV2 && !input.isLoading;
   render7(html7`
       <style>${chatView_css_default}</style>
       <div class=${chatUiClasses}>
@@ -5131,14 +5152,15 @@ var DEFAULT_VIEW6 = (input, output, target) => {
     onFeedbackSubmit: input.onFeedbackSubmit,
     onCopyResponseClick: input.onCopyResponseClick,
     onExportClick: input.exportForAgentsClick,
+    changeSummary: input.changeSummary,
     walkthrough: {
       ...input.walkthrough
     }
   }))}
-              ${input.isLoading ? nothing7 : widget4(PatchWidget, {
+              ${shouldShowPatchWidget ? widget4(PatchWidget, {
     changeSummary: input.changeSummary ?? "",
     changeManager: input.changeManager
-  })}
+  }) : nothing7}
             </div>
           ` : html7`
             <div class="empty-state-container">
@@ -5350,7 +5372,7 @@ __export(DisabledWidget_exports, {
 });
 import * as Host6 from "./../../core/host/host.js";
 import * as i18n15 from "./../../core/i18n/i18n.js";
-import * as Root4 from "./../../core/root/root.js";
+import * as Root5 from "./../../core/root/root.js";
 import * as uiI18n from "./../../ui/i18n/i18n.js";
 import * as UI8 from "./../../ui/legacy/legacy.js";
 import { html as html8, render as render8 } from "./../../ui/lit/lit.js";
@@ -5508,7 +5530,7 @@ var DisabledWidget = class extends UI8.Widget.Widget {
     void this.requestUpdate();
   }
   performUpdate() {
-    const hostConfig = Root4.Runtime.hostConfig;
+    const hostConfig = Root5.Runtime.hostConfig;
     this.#view({
       aidaAvailability: this.aidaAvailability,
       hostConfig
@@ -5523,7 +5545,7 @@ __export(ExploreWidget_exports, {
   ExploreWidget: () => ExploreWidget
 });
 import * as i18n17 from "./../../core/i18n/i18n.js";
-import * as Root5 from "./../../core/root/root.js";
+import * as Root6 from "./../../core/root/root.js";
 import * as UI9 from "./../../ui/legacy/legacy.js";
 import { html as html9, render as render9 } from "./../../ui/lit/lit.js";
 import * as VisualLogging5 from "./../../ui/visual_logging/visual_logging.js";
@@ -5743,7 +5765,7 @@ var ExploreWidget = class extends UI9.Widget.Widget {
     void this.requestUpdate();
   }
   performUpdate() {
-    const config = Root5.Runtime.hostConfig;
+    const config = Root6.Runtime.hostConfig;
     const featureCards = [];
     if (config.devToolsFreestyler?.enabled && UI9.ViewManager.ViewManager.instance().hasView("elements")) {
       featureCards.push({
@@ -6371,7 +6393,7 @@ function getMarkdownRenderer(conversation) {
   return new MarkdownRendererWithCodeBlock();
 }
 function toolbarView(input) {
-  const hasAiV2 = Boolean(Root6.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled);
+  const hasAiV2 = Boolean(Root7.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled);
   return html13`
     <div class="toolbar-container" role="toolbar" jslog=${VisualLogging6.toolbar()}>
       <devtools-toolbar class="freestyler-left-toolbar" role="presentation">
@@ -6459,7 +6481,7 @@ function defaultView(input, output, target) {
                     </devtools-widget>`;
     }
   }
-  if (Root6.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled || Greendev.Prototypes.instance().isEnabled("breakpointDebuggerAgent")) {
+  if (Root7.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled || Greendev.Prototypes.instance().isEnabled("breakpointDebuggerAgent")) {
     const shouldShowWalkthrough = input.state === "chat-view" && input.props.walkthrough.isExpanded;
     let walkthroughIsForLastMessage = false;
     if (input.state === "chat-view") {
@@ -6601,7 +6623,7 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
     };
   }
   async #getPanelViewInput() {
-    const blockedByAge = Root6.Runtime.hostConfig.aidaAvailability?.blockedByAge === true;
+    const blockedByAge = Root7.Runtime.hostConfig.aidaAvailability?.blockedByAge === true;
     if (this.#aidaAvailability !== "available" || !this.#aiAssistanceEnabledSetting?.getIfNotDisabled() || blockedByAge) {
       return {
         state: "disabled-view",
@@ -6686,7 +6708,7 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
   // Responsive logic for Walkthrough
   onResize() {
     super.onResize();
-    if (Root6.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled) {
+    if (Root7.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled) {
       this.#updateWalkthroughResponsiveness();
     }
   }
@@ -6789,7 +6811,7 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
     });
   }
   #getDefaultConversationType() {
-    const { hostConfig } = Root6.Runtime;
+    const { hostConfig } = Root7.Runtime;
     const viewManager = UI10.ViewManager.ViewManager.instance();
     const isElementsPanelVisible = viewManager.isViewVisible("elements");
     const isNetworkPanelVisible = viewManager.isViewVisible("network");
@@ -7021,10 +7043,11 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
     if (!isAiAssistancePatchingEnabled() || !this.#conversation || this.#conversation?.isReadOnly) {
       return;
     }
+    const hasAiV2 = Boolean(Root7.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled);
     return this.#changeManager.formatChangesForPatching(
       this.#conversation.id,
-      /* includeSourceLocation= */
-      true
+      /* includeMetadata= */
+      !hasAiV2
     );
   }
   async performUpdate() {
@@ -7061,7 +7084,7 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
   }
   #shouldShowChatActions() {
     const aiAssistanceSetting = this.#aiAssistanceEnabledSetting?.getIfNotDisabled();
-    const isBlockedByAge = Root6.Runtime.hostConfig.aidaAvailability?.blockedByAge === true;
+    const isBlockedByAge = Root7.Runtime.hostConfig.aidaAvailability?.blockedByAge === true;
     if (!aiAssistanceSetting || isBlockedByAge) {
       return false;
     }
@@ -7106,7 +7129,7 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
     if (!this.#conversation || this.#conversation.isReadOnly) {
       return i18nString5(UIStrings5.inputDisclaimerForEmptyState);
     }
-    const noLogging = Root6.Runtime.hostConfig.aidaAvailability?.enterprisePolicyValue === Root6.Runtime.GenAiEnterprisePolicyValue.ALLOW_WITHOUT_LOGGING;
+    const noLogging = Root7.Runtime.hostConfig.aidaAvailability?.enterprisePolicyValue === Root7.Runtime.GenAiEnterprisePolicyValue.ALLOW_WITHOUT_LOGGING;
     switch (this.#conversation.type) {
       case "freestyler":
         if (noLogging) {
@@ -7194,8 +7217,8 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
     this.requestUpdate();
   }
   #canExecuteQuery() {
-    const isBrandedBuild = Boolean(Root6.Runtime.hostConfig.aidaAvailability?.enabled);
-    const isBlockedByAge = Boolean(Root6.Runtime.hostConfig.aidaAvailability?.blockedByAge);
+    const isBrandedBuild = Boolean(Root7.Runtime.hostConfig.aidaAvailability?.enabled);
+    const isBlockedByAge = Boolean(Root7.Runtime.hostConfig.aidaAvailability?.blockedByAge);
     const isAidaAvailable = Boolean(
       this.#aidaAvailability === "available"
       /* Host.AidaClient.AidaAccessPreconditions.AVAILABLE */
@@ -7568,7 +7591,7 @@ var AiAssistancePanel = class _AiAssistancePanel extends UI10.Panel.Panel {
               }
               systemMessage.parts.push(newPart);
             }
-            if (data.widgets && Root6.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled) {
+            if (data.widgets && Root7.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled) {
               systemMessage.parts.push({
                 type: "widget",
                 widgets: data.widgets
@@ -7704,16 +7727,16 @@ var ActionDelegate = class {
   }
 };
 function isAiAssistanceMultimodalUploadInputEnabled() {
-  return isAiAssistanceMultimodalInputEnabled() && Boolean(Root6.Runtime.hostConfig.devToolsFreestyler?.multimodalUploadInput);
+  return isAiAssistanceMultimodalInputEnabled() && Boolean(Root7.Runtime.hostConfig.devToolsFreestyler?.multimodalUploadInput);
 }
 function isAiAssistanceMultimodalInputEnabled() {
-  return Boolean(Root6.Runtime.hostConfig.devToolsFreestyler?.multimodal);
+  return Boolean(Root7.Runtime.hostConfig.devToolsFreestyler?.multimodal);
 }
 function isAiAssistanceContextSelectionAgentEnabled() {
-  return Boolean(Root6.Runtime.hostConfig.devToolsAiAssistanceContextSelectionAgent?.enabled);
+  return Boolean(Root7.Runtime.hostConfig.devToolsAiAssistanceContextSelectionAgent?.enabled);
 }
 function isAiAssistanceServerSideLoggingEnabled() {
-  return !Root6.Runtime.hostConfig.aidaAvailability?.disallowLogging;
+  return !Root7.Runtime.hostConfig.aidaAvailability?.disallowLogging;
 }
 export {
   ActionDelegate,
