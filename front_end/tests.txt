@@ -109,6 +109,7 @@ core/sdk/ConsoleModel.test.js
 core/sdk/Cookie.test.js
 core/sdk/CookieModel.test.js
 core/sdk/CookieParser.test.js
+core/sdk/CrashReportContextModel.test.js
 core/sdk/DOMModel.test.js
 core/sdk/EmulationModel.test.js
 core/sdk/EnhancedTracesParser.test.js
@@ -154,7 +155,6 @@ models/ai_assistance/AiConversation.test.js
 models/ai_assistance/AiHistoryStorage.test.js
 models/ai_assistance/BuiltInAi.test.js
 models/ai_assistance/ChangeManager.test.js
-models/ai_assistance/ConversationHandler.test.js
 models/ai_assistance/EvaluateAction.test.js
 models/ai_assistance/ExtensionScope.test.js
 models/ai_assistance/agents/AccessibilityAgent.test.js
@@ -320,6 +320,7 @@ panels/ai_assistance/AiAssistancePanel.test.js
 panels/ai_assistance/ExportConversation.test.js
 panels/ai_assistance/PatchWidget.test.js
 panels/ai_assistance/SelectWorkspaceDialog.test.js
+panels/ai_assistance/components/AccessibilityAgentMarkdownRenderer.test.js
 panels/ai_assistance/components/ChatInput.test.js
 panels/ai_assistance/components/ChatMessage.test.js
 panels/ai_assistance/components/ChatView.test.js
