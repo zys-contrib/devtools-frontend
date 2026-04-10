@@ -262,9 +262,8 @@ async function getEmptyStateSuggestions(conversation) {
             ];
         case "accessibility" /* AiAssistanceModel.AiHistoryStorage.ConversationType.ACCESSIBILITY */:
             return [
-                { title: 'What are the accessibility issues on this page?', jslogContext: 'accessibility-default' },
-                { title: 'How can I fix these accessibility issues?', jslogContext: 'accessibility-default' },
-                { title: 'What does this Lighthouse report say about accessibility?', jslogContext: 'accessibility-default' },
+                { title: 'How can I fix accessibility issues on my page?', jslogContext: 'accessibility-default' },
+                { title: 'What accessibility issues exist on my page?', jslogContext: 'accessibility-default' },
             ];
         case "drjones-network-request" /* AiAssistanceModel.AiHistoryStorage.ConversationType.NETWORK */:
             return [
