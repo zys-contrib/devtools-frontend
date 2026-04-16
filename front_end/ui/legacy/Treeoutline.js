@@ -1668,7 +1668,7 @@ export class TreeViewElement extends HTMLElementWithLightDOMTemplate {
     }
     TreeViewElement.ExpandEvent = ExpandEvent;
 })(TreeViewElement || (TreeViewElement = {}));
-class IfExpandedDirective extends Lit.Directive.Directive {
+export const ifExpanded = Lit.Directive.directive(class extends Lit.Directive.Directive {
     #partInfo;
     constructor(partInfo) {
         if (partInfo.type !== Lit.Directive.PartType.CHILD) {
@@ -1703,8 +1703,7 @@ class IfExpandedDirective extends Lit.Directive.Directive {
         }
         return node.expanded;
     }
-}
-export const ifExpanded = Lit.Directive.directive(IfExpandedDirective);
+});
 export class TreeElementWrapper extends HTMLElement {
     #treeElement;
     set treeElement(treeElement) {

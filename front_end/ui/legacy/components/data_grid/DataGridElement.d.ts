@@ -31,7 +31,7 @@ import { type ColumnDescriptor, type ResizeMethod } from './DataGrid.js';
  * @attribute striped If true, the data grid will have striped rows.
  * @attribute displayName
  */
-export declare class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate {
+declare class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate {
     #private;
     static readonly observedAttributes: string[];
     constructor();
@@ -62,10 +62,16 @@ declare global {
 export interface DataGridInternalToken {
     token: 'DataGridInternalToken';
 }
-declare class IfExpandedDirective extends Lit.Directive.Directive {
-    #private;
-    constructor(partInfo: Lit.Directive.PartInfo);
-    render(content: Lit.LitTemplate | Iterable<Lit.LitTemplate>): Lit.LitTemplate | Iterable<Lit.LitTemplate>;
-}
-export declare const ifExpanded: (content: Lit.LitTemplate | Iterable<Lit.LitTemplate>) => Lit.DirectiveResult<typeof IfExpandedDirective>;
+export declare const ifExpanded: (content: Lit.LitTemplate | Iterable<Lit.LitTemplate>) => Lit.DirectiveResult<{
+    new (partInfo: Lit.Directive.PartInfo): {
+        "__#private@#partInfo": {
+            type: Lit.Directive.PartType;
+            startNode: Node;
+        };
+        render(content: Lit.LitTemplate | Iterable<Lit.LitTemplate>): Lit.LitTemplate | Iterable<Lit.LitTemplate>;
+        "__#private@#isInExpandedRow"(element: Node | null | undefined): boolean;
+        get _$isConnected(): boolean;
+        update(_part: Lit.Directive.Part, props: Array<unknown>): unknown;
+    };
+}>;
 export {};
