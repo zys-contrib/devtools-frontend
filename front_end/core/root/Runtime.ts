@@ -480,6 +480,10 @@ export interface HostConfigAiAssistanceAccessibilityAgent {
   enabled: boolean;
 }
 
+export interface HostConfigAiAssistanceStorageAgent {
+  enabled: boolean;
+}
+
 export interface HostConfigAiCodeCompletion {
   modelId: string;
   temperature: number;
@@ -638,6 +642,7 @@ export type HostConfig = Platform.TypeScriptUtilities.RecursivePartial<{
   devToolsAiAssistanceFileAgent: HostConfigAiAssistanceFileAgent,
   devToolsAiAssistancePerformanceAgent: HostConfigAiAssistancePerformanceAgent,
   devToolsAiAssistanceAccessibilityAgent: HostConfigAiAssistanceAccessibilityAgent,
+  devToolsAiAssistanceStorageAgent: HostConfigAiAssistanceStorageAgent,
   devToolsAiAssistanceV2: HostConfigAiAssistanceV2,
   devToolsAiCodeCompletion: HostConfigAiCodeCompletion,
   devToolsAiCodeGeneration: HostConfigAiCodeGeneration,

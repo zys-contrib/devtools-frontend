@@ -43,6 +43,7 @@ DEFAULT_FEATURE_SET.enable('DevToolsVerticalDrawer');
 DEFAULT_FEATURE_SET.enable('DevToolsAiPromptApi');
 DEFAULT_FEATURE_SET.enable('DevToolsAiAssistanceContextSelectionAgent');
 DEFAULT_FEATURE_SET.enable('DevToolsAiAssistanceAccessibilityAgent');
+DEFAULT_FEATURE_SET.enable('DevToolsAiAssistanceStorageAgent');
 DEFAULT_FEATURE_SET.enable('DevToolsAiAssistanceV2');
 
 // The unstable feature set (can be enabled via `--enable-unstable-features`).
