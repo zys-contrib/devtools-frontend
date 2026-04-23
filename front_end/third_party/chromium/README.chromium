@@ -1,7 +1,7 @@
 Name: Dependencies sourced from the upstream `chromium` repository
 URL: Internal
 Version: N/A
-Revision: 9b1af1c3bfa10271c6f92691e32659acea5f941c
+Revision: d274176fb7eb1ba60f8d63bd9a746827c1d313b1
 Update Mechanism: Manual (https://crbug.com/428069060)
 License: BSD-3-Clause
 License File: LICENSE
