@@ -169,10 +169,16 @@ export class NetworkManager extends SDKModel<EventTypes> {
 
     void this.#networkAgent.invoke_enable({
       maxPostDataSize: MAX_EAGER_POST_REQUEST_BODY_LENGTH,
-      enableDurableMessages: Root.Runtime.hostConfig.devToolsEnableDurableMessages?.enabled,
       maxTotalBufferSize: MAX_RESPONSE_BODY_TOTAL_BUFFER_LENGTH,
       reportDirectSocketTraffic: true,
     });
+
+    if (Root.Runtime.hostConfig.devToolsEnableDurableMessages?.enabled) {
+      const preserveLogSetting = settings.moduleSetting('network-log.preserve-log');
+      this.#updateDurableMessages(preserveLogSetting.get());
+      preserveLogSetting.addChangeListener(this.preserveLogChanged, this);
+    }
+
     void this.#networkAgent.invoke_setAttachDebugStack({enabled: true});
 
     this.#bypassServiceWorkerSetting = settings.createSetting('bypass-service-worker', false);
@@ -380,9 +386,24 @@ export class NetworkManager extends SDKModel<EventTypes> {
     void this.#networkAgent.invoke_setCacheDisabled({cacheDisabled: enabled});
   }
 
+  private preserveLogChanged({data: enabled}: Common.EventTarget.EventTargetEvent<boolean>): void {
+    this.#updateDurableMessages(enabled);
+  }
+
+  #updateDurableMessages(enabled: boolean): void {
+    if (enabled) {
+      void this.#networkAgent.invoke_configureDurableMessages({
+        maxTotalBufferSize: MAX_RESPONSE_BODY_TOTAL_BUFFER_LENGTH,
+      });
+    } else {
+      void this.#networkAgent.invoke_configureDurableMessages({});
+    }
+  }
+
   override dispose(): void {
     const settings = this.target().targetManager().settings;
     settings.moduleSetting('cache-disabled').removeChangeListener(this.cacheDisabledSettingChanged, this);
+    settings.moduleSetting('network-log.preserve-log').removeChangeListener(this.preserveLogChanged, this);
   }
 
   private bypassServiceWorkerChanged(): void {
