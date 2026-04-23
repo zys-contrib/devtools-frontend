@@ -75,7 +75,7 @@ describeWithMockConnection('DeviceModeToolbar', () => {
    */
   function findRotateButton(): Buttons.Button.Button {
     const buttons = toolbar.element().querySelectorAll<Buttons.Button.Button>('devtools-button.toolbar-button');
-    const button = [...buttons].find(b => b.jslogContext === 'screen-rotation');
+    const button = [...buttons].find(b => b.getAttribute('jslog')?.includes('screen-rotation'));
     assert.exists(button, 'Could not find rotate button');
     return button;
   }
