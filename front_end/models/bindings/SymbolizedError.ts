@@ -11,8 +11,8 @@ import type * as Workspace from '../workspace/workspace.js';
 import type {DebuggerWorkspaceBinding} from './DebuggerWorkspaceBinding.js';
 import {type LiveLocation, LiveLocationPool} from './LiveLocation.js';
 
-// TODO: also add SymbolizedSyntaxError and UnparsableError
-export type SymbolizedError = SymbolizedErrorObject;
+// TODO: also add UnparsableError
+export type SymbolizedError = SymbolizedErrorObject|SymbolizedSyntaxError;
 
 export class SymbolizedErrorObject extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
   readonly message: string;
@@ -32,7 +32,9 @@ export class SymbolizedErrorObject extends Common.ObjectWrapper.ObjectWrapper<Ev
   dispose(): void {
     this.stackTrace.removeEventListener(StackTrace.StackTrace.Events.UPDATED, this.#fireUpdated, this);
     this.cause?.removeEventListener(Events.UPDATED, this.#fireUpdated, this);
-    this.cause?.dispose();
+    if (this.cause instanceof SymbolizedErrorObject) {
+      this.cause.dispose();
+    }
   }
 
   #fireUpdated(): void {
@@ -44,7 +46,7 @@ export class SymbolizedSyntaxError extends Common.ObjectWrapper.ObjectWrapper<Ev
   readonly message: string;
   #uiLocation: Workspace.UISourceCode.UILocation|null = null;
 
-  private constructor(message: string) {
+  constructor(message: string) {
     super();
     this.message = message;
   }

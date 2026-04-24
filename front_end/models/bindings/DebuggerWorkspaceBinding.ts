@@ -20,7 +20,7 @@ import {type LiveLocation, type LiveLocationPool, LiveLocationWithPool} from './
 import {NetworkProject} from './NetworkProject.js';
 import type {ResourceMapping} from './ResourceMapping.js';
 import {type ResourceScriptFile, ResourceScriptMapping} from './ResourceScriptMapping.js';
-import {type SymbolizedError, SymbolizedErrorObject} from './SymbolizedError.js';
+import {type SymbolizedError, SymbolizedErrorObject, SymbolizedSyntaxError} from './SymbolizedError.js';
 
 export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObserver<SDK.DebuggerModel.DebuggerModel> {
   readonly resourceMapping: ResourceMapping;
@@ -233,6 +233,13 @@ export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObser
       fetchedExceptionDetails = details;
       causeRemoteObject = causeRemote;
 
+      if (remoteObject.className === 'SyntaxError' && fetchedExceptionDetails) {
+        const syntaxError = await SymbolizedSyntaxError.fromExceptionDetails(
+            remoteObject.runtimeModel().target(), this, fetchedExceptionDetails);
+        if (syntaxError) {
+          return syntaxError;
+        }
+      }
     } else if (remoteObject.type === 'string') {
       errorStack = remoteObject.description || '';
     } else {

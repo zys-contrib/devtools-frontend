@@ -54,14 +54,15 @@ describe('SymbolizedError', () => {
   it('can create a SymbolizedError from a RemoteObject', async () => {
     const symbolizedError = await createSymbolizedErrorWithCause();
 
-    assert.exists(symbolizedError);
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.SymbolizedErrorObject);
     assert.strictEqual(symbolizedError.message, 'Error: some error');
     assert.strictEqual(symbolizedError.stackTrace.syncFragment.frames[0].url, 'http://example.com/script.js');
 
-    assert.exists(symbolizedError.cause);
-    assert.strictEqual(symbolizedError.cause.message, 'Error: cause error');
-    assert.strictEqual(symbolizedError.cause.stackTrace.syncFragment.frames[0].url, 'http://example.com/script.js');
-    assert.strictEqual(symbolizedError.cause.stackTrace.syncFragment.frames[0].line, 1);  // 0-based in frames
+    const cause = symbolizedError.cause;
+    assert.instanceOf(cause, Bindings.SymbolizedError.SymbolizedErrorObject);
+    assert.strictEqual(cause.message, 'Error: cause error');
+    assert.strictEqual(cause.stackTrace.syncFragment.frames[0].url, 'http://example.com/script.js');
+    assert.strictEqual(cause.stackTrace.syncFragment.frames[0].line, 1);  // 0-based in frames
   });
 
   it('returns null if the RemoteObject is not an error', async () => {
@@ -112,10 +113,58 @@ describe('SymbolizedError', () => {
 
     const symbolizedError = await universe.debuggerWorkspaceBinding.createSymbolizedError(stringRemoteObject);
 
-    assert.exists(symbolizedError);
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.SymbolizedErrorObject);
     assert.strictEqual(symbolizedError.message, 'Error: string error');
     assert.strictEqual(symbolizedError.stackTrace.syncFragment.frames[0].url, 'http://example.com/script.js');
     assert.isNull(symbolizedError.cause);
+  });
+
+  it('can create a SymbolizedSyntaxError from a SyntaxError RemoteObject', async () => {
+    const target = universe.createTarget({});
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+    assert.exists(runtimeModel);
+    const debuggerModel = target.model(SDK.DebuggerModel.DebuggerModel);
+    assert.exists(debuggerModel);
+
+    const scriptId = '1' as Protocol.Runtime.ScriptId;
+    const exceptionDetails = {
+      exception: {
+        subtype: 'error',
+        className: 'SyntaxError',
+        description: 'SyntaxError: Unexpected token',
+      },
+      scriptId,
+      lineNumber: 1,
+      columnNumber: 1,
+    } as Protocol.Runtime.ExceptionDetails;
+
+    const errorRemoteObject = {
+      subtype: 'error',
+      className: 'SyntaxError',
+      runtimeModel: () => runtimeModel,
+      objectId: '1' as Protocol.Runtime.RemoteObjectId,
+      getAllProperties: async () => ({properties: [], internalProperties: []}),
+    } as unknown as SDK.RemoteObject.RemoteObject;
+
+    sinon.stub(debuggerModel, 'scriptForId').withArgs(scriptId).returns({} as SDK.Script.Script);
+
+    const uiLocation = {} as Workspace.UISourceCode.UILocation;
+    const liveLocation = {
+      uiLocation: async () => uiLocation,
+      dispose: () => {},
+    } as Bindings.LiveLocation.LiveLocation;
+
+    sinon.stub(universe.debuggerWorkspaceBinding, 'createLiveLocation')
+        .callsFake(async (_rawLocation, updateDelegate, _pool) => {
+          await updateDelegate(liveLocation);
+          return liveLocation as unknown as Bindings.DebuggerWorkspaceBinding.Location;
+        });
+
+    const symbolizedError =
+        await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject, exceptionDetails);
+
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.SymbolizedSyntaxError);
+    assert.strictEqual(symbolizedError.message, 'SyntaxError: Unexpected token');
   });
 
   it('returns null for a string RemoteObject if the stack trace cannot be parsed', async () => {
@@ -158,7 +207,7 @@ describe('SymbolizedError', () => {
     const symbolizedError =
         await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject, exceptionDetails);
 
-    assert.exists(symbolizedError);
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.SymbolizedErrorObject);
     assert.strictEqual(symbolizedError.message, 'Error: error');
     sinon.assert.notCalled(invokeGetExceptionDetailsSpy);
   });
@@ -189,7 +238,7 @@ describe('SymbolizedError', () => {
     const symbolizedError =
         await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject, exceptionDetails);
 
-    assert.exists(symbolizedError);
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.SymbolizedErrorObject);
     assert.strictEqual(symbolizedError.message, 'Error: error. This is an issue summary');
     assert.strictEqual(symbolizedError.stackTrace.syncFragment.frames[0].url, 'http://example.com/script.js');
     assert.strictEqual(symbolizedError.stackTrace.syncFragment.frames[0].line, 0);
@@ -197,7 +246,7 @@ describe('SymbolizedError', () => {
 
   it('emits UPDATED when stackTrace or cause updates', async () => {
     const symbolizedError = await createSymbolizedErrorWithCause();
-    assert.exists(symbolizedError);
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.SymbolizedErrorObject);
 
     const listener = sinon.stub();
     symbolizedError.addEventListener(Bindings.SymbolizedError.Events.UPDATED, listener);
@@ -207,7 +256,9 @@ describe('SymbolizedError', () => {
     sinon.assert.callCount(listener, 1);
 
     // Trigger update on the cause error's stackTrace
-    symbolizedError.cause?.stackTrace.dispatchEventToListeners(StackTrace.StackTrace.Events.UPDATED);
+    const cause = symbolizedError.cause;
+    assert.instanceOf(cause, Bindings.SymbolizedError.SymbolizedErrorObject);
+    cause.stackTrace.dispatchEventToListeners(StackTrace.StackTrace.Events.UPDATED);
     sinon.assert.callCount(listener, 2);
 
     // Trigger update on the cause error directly
@@ -217,7 +268,7 @@ describe('SymbolizedError', () => {
 
   it('removes listeners when dispose is called', async () => {
     const symbolizedError = await createSymbolizedErrorWithCause();
-    assert.exists(symbolizedError);
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.SymbolizedErrorObject);
 
     const listener = sinon.stub();
     symbolizedError.addEventListener(Bindings.SymbolizedError.Events.UPDATED, listener);
@@ -229,7 +280,9 @@ describe('SymbolizedError', () => {
     sinon.assert.notCalled(listener);
 
     // Trigger update on the cause error's stackTrace
-    symbolizedError.cause?.stackTrace.dispatchEventToListeners(StackTrace.StackTrace.Events.UPDATED);
+    const cause = symbolizedError.cause;
+    assert.instanceOf(cause, Bindings.SymbolizedError.SymbolizedErrorObject);
+    cause.stackTrace.dispatchEventToListeners(StackTrace.StackTrace.Events.UPDATED);
     sinon.assert.notCalled(listener);
 
     // Trigger update on the cause error directly
@@ -272,7 +325,7 @@ describe('SymbolizedError', () => {
       const symbolizedError = await Bindings.SymbolizedError.SymbolizedSyntaxError.fromExceptionDetails(
           target, universe.debuggerWorkspaceBinding, exceptionDetails);
 
-      assert.exists(symbolizedError);
+      assert.instanceOf(symbolizedError, Bindings.SymbolizedError.SymbolizedSyntaxError);
       assert.strictEqual(symbolizedError.message, 'SyntaxError: Unexpected token');
       assert.strictEqual(symbolizedError.uiLocation, uiLocation);
 
@@ -347,7 +400,7 @@ describe('SymbolizedError', () => {
 
       const symbolizedError = await Bindings.SymbolizedError.SymbolizedSyntaxError.fromExceptionDetails(
           target, universe.debuggerWorkspaceBinding, exceptionDetails);
-      assert.exists(symbolizedError);
+      assert.instanceOf(symbolizedError, Bindings.SymbolizedError.SymbolizedSyntaxError);
 
       const updatedListener = sinon.stub();
       symbolizedError.addEventListener(Bindings.SymbolizedError.Events.UPDATED, updatedListener);
