@@ -176,7 +176,6 @@ ts_library("unittests") {
     "ScopeTreeCache.test.ts",
     "ScreenCaptureModel.test.ts",
     "Script.test.ts",
-    "ServerSentEventsProtocol.test.ts",
     "ServerTiming.test.ts",
     "ServiceWorkerCacheModel.test.ts",
     "ServiceWorkerManager.test.ts",
@@ -214,6 +213,7 @@ devtools_foundation_module("foundation_unittests") {
     "DebuggerModel.test.ts",
     "PageResourceLoader.test.ts",
     "RuntimeModel.test.ts",
+    "ServerSentEventsProtocol.test.ts",
     "Target.test.ts",
     "TargetManager.test.ts",
   ]

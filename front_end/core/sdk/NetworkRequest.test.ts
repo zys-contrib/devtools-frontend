@@ -410,7 +410,7 @@ data: bar\n\n`;
         dataLength: 1,
         encodedDataLength: 1,
         timestamp: time++,
-        data: window.btoa(c),
+        data: globalThis.btoa(c),
       });
     }
 
