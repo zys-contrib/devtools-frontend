@@ -15,7 +15,7 @@ describe('WalkthroughUtils', () => {
         hasWidgets: true,
         prompt: 'test prompt',
       });
-      expect(label).to.equal('Hide AI walkthrough for prompt \'test prompt\'');
+      expect(label).to.equal('Hide AI walkthrough for prompt test prompt');
     });
 
     it('returns the label for collapsed state without widgets', () => {
@@ -49,7 +49,7 @@ describe('WalkthroughUtils', () => {
         prompt: predictablePrompt,
       });
       expect(label).to.equal(
-          'Show AI walkthrough for prompt \'0123456789 123456789 123456789 123456789 123456789\' (and 2 more characters)');
+          'Show AI walkthrough for prompt 0123456789 123456789 123456789 123456789 123456789 (and 2 more characters)');
     });
 
     it('truncates the prompt at the first space after 50 if closer', () => {
@@ -60,7 +60,7 @@ describe('WalkthroughUtils', () => {
         prompt: 'This is a very long prompt that has a space right after fifty characters',
       });
       expect(label).to.equal(
-          'Show thinking for prompt \'This is a very long prompt that has a space right\' (and 23 more characters)');
+          'Show thinking for prompt This is a very long prompt that has a space right (and 23 more characters)');
     });
 
     it('works with a real long prompt', () => {
@@ -72,7 +72,7 @@ describe('WalkthroughUtils', () => {
         prompt,
       });
       expect(label).to.equal(
-          'Show AI walkthrough for prompt \'What is the LCP element of this page and how can I\' (and 33 more characters)');
+          'Show AI walkthrough for prompt What is the LCP element of this page and how can I (and 33 more characters)');
     });
 
     it('does not truncate if no spaces are found and it is over 50 chars (just cuts at 50)', () => {
@@ -84,8 +84,8 @@ describe('WalkthroughUtils', () => {
         prompt,
       });
       expect(label).to.equal(
-          'Show thinking for prompt \'' +
-          'a'.repeat(50) + '\' (and 10 more characters)');
+          'Show thinking for prompt ' +
+          'a'.repeat(50) + ' (and 10 more characters)');
     });
   });
 });

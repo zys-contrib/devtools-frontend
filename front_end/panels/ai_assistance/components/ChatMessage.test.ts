@@ -31,7 +31,7 @@ describeWithEnvironment('ChatMessage', () => {
       isReadOnly: false,
       isLastMessage: true,
       isFirstMessage: false,
-      prompt: '',
+      prompt: 'test prompt',
       shouldShowCSSChangeSummary: false,
       markdownRenderer: new AiAssistance.MarkdownRendererWithCodeBlock(),
       canShowFeedbackForm: true,
@@ -72,7 +72,7 @@ describeWithEnvironment('ChatMessage', () => {
           isShowingFeedbackForm: false,
           isLastMessage: true,
           isFirstMessage: false,
-          prompt: '',
+          prompt: 'test prompt',
           shouldShowCSSChangeSummary: false,
           showActions: true,
           message: {
@@ -383,7 +383,7 @@ describeWithEnvironment('ChatMessage', () => {
         }
       });
       const button = querySelectorErrorOnMissing(target, '[data-show-walkthrough]');
-      assert.strictEqual(button.getAttribute('accessibleLabel'), 'Show thinking for prompt \'\'');
+      assert.strictEqual(button.getAttribute('accessibleLabel'), 'Show thinking for prompt test prompt');
     });
 
     it('accessible label defaults to visible text when expanded and not loading', async () => {
@@ -398,7 +398,7 @@ describeWithEnvironment('ChatMessage', () => {
         }
       });
       const button = querySelectorErrorOnMissing(target, '[data-show-walkthrough]');
-      assert.strictEqual(button.getAttribute('accessibleLabel'), 'Hide thinking for prompt \'\'');
+      assert.strictEqual(button.getAttribute('accessibleLabel'), 'Hide thinking for prompt test prompt');
     });
 
     it('accessible label appends "Loading: " when expanded and loading', async () => {
@@ -732,7 +732,7 @@ describeWithEnvironment('ChatMessage', () => {
             isShowingFeedbackForm: false,
             isLastMessage: true,
             isFirstMessage: false,
-            prompt: '',
+            prompt: 'test prompt',
             shouldShowCSSChangeSummary: false,
             showActions: true,
             message: messageWithNamedWidget,
@@ -870,7 +870,7 @@ describeWithEnvironment('ChatMessage', () => {
             isShowingFeedbackForm: true,
             isLastMessage: true,
             isFirstMessage: false,
-            prompt: '',
+            prompt: 'test prompt',
             shouldShowCSSChangeSummary: false,
             showActions: true,
             message: {
@@ -909,7 +909,7 @@ describeWithEnvironment('ChatMessage', () => {
             isShowingFeedbackForm: false,
             isLastMessage: true,
             isFirstMessage: false,
-            prompt: '',
+            prompt: 'test prompt',
             shouldShowCSSChangeSummary: false,
             showActions: false,
             message: {
@@ -946,7 +946,7 @@ describeWithEnvironment('ChatMessage', () => {
             isShowingFeedbackForm: false,
             isLastMessage: false,
             isFirstMessage: true,
-            prompt: '',
+            prompt: 'test prompt',
             shouldShowCSSChangeSummary: false,
             showActions: false,
             message: {
@@ -982,7 +982,7 @@ describeWithEnvironment('ChatMessage', () => {
             isShowingFeedbackForm: false,
             isLastMessage: false,
             isFirstMessage: true,
-            prompt: '',
+            prompt: 'test prompt',
             shouldShowCSSChangeSummary: false,
             showActions: false,
             message: {
