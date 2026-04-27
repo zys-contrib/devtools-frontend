@@ -661,7 +661,7 @@ code
           ]);
     });
 
-    it('deduplicates DOM tree widgets within a single response for the same node', async function() {
+    it('yields multiple DOM tree widgets within a single response for the same node', async function() {
       const parsedTrace = await TraceLoader.traceEngine(this, 'lcp-images.json.gz');
       assert.isOk(parsedTrace.insights);
       const [firstNav] = parsedTrace.data.Meta.mainFrameNavigations;
@@ -712,12 +712,14 @@ code
       const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
       assert.lengthOf(actions, 2);
 
-      // The first call should have a widget, the second one should not as it is within the same response.
+      // The first call should have a widget, the second one should also have it as deduplication now happens in the UI.
       assert.exists(actions[0].widgets);
       assert.lengthOf(actions[0].widgets!, 1);
       assert.strictEqual(actions[0].widgets![0].name, 'DOM_TREE');
 
-      assert.lengthOf(actions[1].widgets!, 0);
+      assert.exists(actions[1].widgets);
+      assert.lengthOf(actions[1].widgets!, 1);
+      assert.strictEqual(actions[1].widgets![0].name, 'DOM_TREE');
     });
 
     it('does NOT deduplicate DOM tree widgets across different responses for the same node', async function() {

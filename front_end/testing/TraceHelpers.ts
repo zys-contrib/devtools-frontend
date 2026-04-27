@@ -894,6 +894,15 @@ export function microseconds(x: number): Trace.Types.Timing.Micro {
   return Trace.Types.Timing.Micro(x);
 }
 
+/**
+ * Creates a mock `ParsedTrace` object for use in tests. This is a simple
+ * cast of an empty object to the `ParsedTrace` type to reduce noise in tests
+ * that only need a typed trace object without specific data.
+ */
+export function makeFakeParsedTrace(): Trace.TraceModel.ParsedTrace {
+  return {} as unknown as Trace.TraceModel.ParsedTrace;
+}
+
 export function milliseconds(x: number): Trace.Types.Timing.Milli {
   return Trace.Types.Timing.Milli(x);
 }

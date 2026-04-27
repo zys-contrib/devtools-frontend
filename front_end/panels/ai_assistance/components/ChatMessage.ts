@@ -272,6 +272,12 @@ export interface StepPart {
   step: Step;
 }
 
+/**
+ * Represents a part of the message that consists of one or more widgets.
+ * The agent can yield widgets directly as part of its response, separate
+ * from those returned by a specific tool call (which are encapsulated
+ * within a StepPart).
+ */
 export interface WidgetPart {
   type: 'widget';
   widgets: AiWidget[];
@@ -1111,8 +1117,82 @@ async function makeDomTreeWidget(widgetData: DomTreeAiWidget): Promise<WidgetMak
  *
  * This allows for a flexible and extensible system where new widget types
  * can be added to the AI responses and rendered in DevTools by adding
- * corresponding \`make...Widget\` functions and handling them here.
+ * corresponding `make...Widget` functions and handling them here.
  */
+/**
+ * Generates a deterministic unique identifier for a given AiWidget based on
+ * its name and identifying data. This signature is used for widget deduplication.
+ */
+export function getWidgetSignature(widget: AiWidget): string {
+  switch (widget.name) {
+    case 'COMPUTED_STYLES':
+      return `${widget.name}:${widget.data.backendNodeId}`;
+    case 'CORE_VITALS':
+      return `${widget.name}:${widget.data.insightSetKey}`;
+    case 'STYLE_PROPERTIES':
+      return `${widget.name}:${widget.data.backendNodeId}:${widget.data.selector ?? ''}`;
+    case 'DOM_TREE':
+      return `${widget.name}:${widget.data.root.backendNodeId()}`;
+    case 'PERFORMANCE_TRACE':
+      return `${widget.name}`;
+    case 'PERF_INSIGHT':
+      return `${widget.name}:${widget.data.insight}:${widget.data.insightData.insightKey}:${
+          widget.data.insightData.navigation?.args?.data?.navigationId ?? 'no-nav-id'}`;
+    case 'TIMELINE_RANGE_SUMMARY':
+      return `${widget.name}:${widget.data.track}:${widget.data.bounds.min}-${widget.data.bounds.max}`;
+    case 'BOTTOM_UP_TREE':
+      return `${widget.name}:${widget.data.bounds.min}-${widget.data.bounds.max}`;
+    default:
+      Platform.assertNever(widget, 'Unknown AiWidget name');
+  }
+}
+
+/**
+ * Returns a new ModelChatMessage where widgets have been deduplicated
+ * across all parts and steps of the message. The first occurrence of each
+ * unique widget (determined by its signature) is preserved.
+ */
+export function getDeduplicatedWidgetsMessage(message: ModelChatMessage): ModelChatMessage {
+  const seenWidgets = new Set<string>();
+
+  const filterWidgets = (widgets: AiWidget[]): AiWidget[] => {
+    return widgets.filter(widget => {
+      const signature = getWidgetSignature(widget);
+      if (seenWidgets.has(signature)) {
+        return false;
+      }
+      seenWidgets.add(signature);
+      return true;
+    });
+  };
+
+  const deduplicatedParts = message.parts.map(part => {
+    if (part.type === 'widget') {
+      return {
+        ...part,
+        widgets: filterWidgets(part.widgets),
+      };
+    }
+
+    if (part.type === 'step' && part.step.widgets) {
+      return {
+        ...part,
+        step: {
+          ...part.step,
+          widgets: filterWidgets(part.step.widgets),
+        },
+      };
+    }
+
+    return part;
+  });
+
+  return {
+    ...message,
+    parts: deduplicatedParts,
+  };
+}
+
 async function renderWidgets(
     widgets: AiWidget[]|undefined, options: {wrapperClass?: string} = {}): Promise<Lit.LitTemplate> {
   if (!Root.Runtime.hostConfig.devToolsAiAssistanceV2?.enabled || !widgets || widgets.length === 0) {
@@ -1464,9 +1544,11 @@ export class ChatMessage extends UI.Widget.Widget {
   }
 
   override performUpdate(): Promise<void>|void {
+    const message =
+        this.message.entity === ChatMessageEntity.MODEL ? getDeduplicatedWidgetsMessage(this.message) : this.message;
     this.#view(
         {
-          message: this.message,
+          message,
           isLoading: this.isLoading,
           isReadOnly: this.isReadOnly,
           canShowFeedbackForm: this.canShowFeedbackForm,

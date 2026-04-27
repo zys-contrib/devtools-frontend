@@ -8,7 +8,6 @@ import * as i18n from '../../../core/i18n/i18n.js';
 import * as Platform from '../../../core/platform/platform.js';
 import * as Root from '../../../core/root/root.js';
 import * as SDK from '../../../core/sdk/sdk.js';
-import type * as Protocol from '../../../generated/protocol.js';
 import * as Tracing from '../../../services/tracing/tracing.js';
 import * as Annotations from '../../annotations/annotations.js';
 import * as Logs from '../../logs/logs.js';
@@ -456,16 +455,6 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
    */
   #additionalSelectionsForQuery: string[] = [];
 
-  /**
-   * The CWV widget is shown when we analyze the trace summary, but we don't
-   * want to show it on every single "Analyzing data..." pill, as we show one
-   * after every prompt. So we make sure for a given Insight Set (which is based on navigation)
-   * we only show it once.
-   */
-  #hasShownWidgetForInsightSet = new WeakSet<Trace.Insights.Types.InsightSet>();
-  #hasShownWidgetForCallTree = new WeakSet<AICallTree>();
-  #hasShownWidgetForInsight = new WeakSet<Trace.Insights.Types.InsightModel>();
-
   get clientFeature(): Host.AidaClient.ClientFeature {
     return Host.AidaClient.ClientFeature.CHROME_PERFORMANCE_FULL_AGENT;
   }
@@ -524,35 +513,31 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
 
     // Case 1: Specific task (call tree) -> timeline summary & bottom up tree widgets
     if (focus.callTree) {
-      if (!this.#hasShownWidgetForCallTree.has(focus.callTree)) {
-        const event = focus.callTree.selectedNode?.event;
-        if (event) {
-          const {startTime, endTime} = Trace.Helpers.Timing.eventTimingsMicroSeconds(event);
-          const bounds = Trace.Helpers.Timing.traceWindowFromMicroSeconds(startTime, endTime);
-          widgets.push({
-            name: 'TIMELINE_RANGE_SUMMARY',
-            data: {
-              bounds,
-              parsedTrace: focus.parsedTrace,
-              track: 'main',
-            },
-          });
-          widgets.push({
-            name: 'BOTTOM_UP_TREE',
-            data: {
-              bounds,
-              parsedTrace: focus.parsedTrace,
-            },
-          });
-          this.#hasShownWidgetForCallTree.add(focus.callTree);
-        }
+      const event = focus.callTree.selectedNode?.event;
+      if (event) {
+        const {startTime, endTime} = Trace.Helpers.Timing.eventTimingsMicroSeconds(event);
+        const bounds = Trace.Helpers.Timing.traceWindowFromMicroSeconds(startTime, endTime);
+        widgets.push({
+          name: 'TIMELINE_RANGE_SUMMARY',
+          data: {
+            bounds,
+            parsedTrace: focus.parsedTrace,
+            track: 'main',
+          },
+        });
+        widgets.push({
+          name: 'BOTTOM_UP_TREE',
+          data: {
+            bounds,
+            parsedTrace: focus.parsedTrace,
+          },
+        });
       }
       return widgets;
     }
 
     // Case 2: LCP Insight -> LCP breakdown & CWV widgets
-    if (focus.insight && Trace.Insights.Models.LCPBreakdown.isLCPBreakdownInsight(focus.insight) &&
-        !this.#hasShownWidgetForInsight.has(focus.insight)) {
+    if (focus.insight && Trace.Insights.Models.LCPBreakdown.isLCPBreakdownInsight(focus.insight)) {
       widgets.push({
         name: 'PERF_INSIGHT',
         data: {
@@ -560,12 +545,11 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
           insightData: focus.insight,
         },
       });
-      this.#hasShownWidgetForInsight.add(focus.insight);
     }
 
     // Case 3: Whole Trace or insight other than LCP -> CWV widget
     const primaryInsightSet = focus.primaryInsightSet;
-    if (primaryInsightSet && !this.#hasShownWidgetForInsightSet.has(primaryInsightSet)) {
+    if (primaryInsightSet) {
       widgets.push({
         name: 'CORE_VITALS',
         data: {
@@ -573,7 +557,6 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
           insightSetKey: primaryInsightSet.id,
         },
       });
-      this.#hasShownWidgetForInsightSet.add(primaryInsightSet);
     }
 
     return widgets;
@@ -936,7 +919,6 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
   #declareFunctions(context: PerformanceTraceContext): void {
     const focus = context.getItem();
     const {parsedTrace} = focus;
-    const processedNodeIds = new Set<Protocol.DOM.BackendNodeId>();
 
     this.declareFunction<{insightSetId: string, insightName: string}, {details: string}>('getInsightDetails', {
       description:
@@ -993,9 +975,7 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
           const lcpEvent = lcpMetric?.event;
           if (lcpEvent && Trace.Types.Events.isAnyLargestContentfulPaintCandidate(lcpEvent)) {
             const nodeId = lcpEvent.args.data?.nodeId;
-            // We want to show only one DOM tree widget per walkthrough per node.
-            // We do want to show the widget for the same node again, if it's within a new walkthrough.
-            if (nodeId && !processedNodeIds.has(nodeId)) {
+            if (nodeId) {
               const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
               const domModel = target?.model(SDK.DOMModel.DOMModel);
               if (domModel) {
@@ -1022,7 +1002,6 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
                       networkRequest,
                     },
                   });
-                  processedNodeIds.add(nodeId);
                 }
               }
             }

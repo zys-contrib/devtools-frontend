@@ -5,6 +5,7 @@
 import type * as AiAssistanceModel from '../../../models/ai_assistance/ai_assistance.js';
 import {querySelectorErrorOnMissing, renderElementIntoDOM} from '../../../testing/DOMHelpers.js';
 import {describeWithEnvironment} from '../../../testing/EnvironmentHelpers.js';
+import {makeFakeParsedTrace} from '../../../testing/TraceHelpers.js';
 import type {Icon} from '../../../ui/kit/kit.js';
 import * as Lit from '../../../ui/lit/lit.js';
 import * as AiAssistance from '../ai_assistance.js';
@@ -248,6 +249,10 @@ describeWithEnvironment('WalkthroughView', () => {
             widgets: [
               {
                 name: 'CORE_VITALS',
+                data: {
+                  insightSetKey: 'test-key',
+                  parsedTrace: makeFakeParsedTrace(),
+                },
               } as unknown as AiAssistanceModel.AiAgent.AiWidget,
             ]
           }

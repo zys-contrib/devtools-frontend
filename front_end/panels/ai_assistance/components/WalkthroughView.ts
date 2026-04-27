@@ -12,7 +12,13 @@ import * as Lit from '../../../ui/lit/lit.js';
 import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
 
 import chatMessageStyles from './chatMessage.css.js';
-import {type ModelChatMessage, renderStep, type Step, titleForStep} from './ChatMessage.js';
+import {
+  getDeduplicatedWidgetsMessage,
+  type ModelChatMessage,
+  renderStep,
+  type Step,
+  titleForStep
+} from './ChatMessage.js';
 import {getButtonLabel} from './WalkthroughUtils.js';
 import walkthroughViewStyles from './walkthroughView.css.js';
 
@@ -411,6 +417,7 @@ export class WalkthroughView extends UI.Widget.Widget {
     if (!this.#markdownRenderer) {
       return;
     }
+    const message = this.#message ? getDeduplicatedWidgetsMessage(this.#message) : null;
     this.#view(
         {
           isLoading: this.#isLoading,
@@ -420,7 +427,7 @@ export class WalkthroughView extends UI.Widget.Widget {
           isInlined: this.#isInlined,
           isExpanded: this.#isExpanded,
           prompt: this.#prompt,
-          message: this.#message,
+          message,
           handleScroll: this.#handleScroll,
         },
         this.#output, this.contentElement);
