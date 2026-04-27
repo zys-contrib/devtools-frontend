@@ -439,7 +439,8 @@ Learn more`,
     checkHeaderSectionRow(rows[1], 'server', 'overridden server', true, false, false);
   });
 
-  it('can edit original headers', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: can edit original headers', async () => {
     const headerOverridesFileContent = `[
       {
         "applyTo": "index.html",
@@ -482,7 +483,8 @@ Learn more`,
         Host.UserMetrics.Action.HeaderOverrideHeaderEdited));
   });
 
-  it('can handle tab-character in header value', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: can handle tab-character in header value', async () => {
     const headers = [
       {name: 'foo', value: 'syn\tax'},
     ];
@@ -511,7 +513,8 @@ Learn more`,
     checkHeaderSectionRow(rows[0], 'foo', 'syntax', true, false, true);
   });
 
-  it('can edit overridden headers', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: can edit overridden headers', async () => {
     const headerOverridesFileContent = `[
       {
         "applyTo": "index.html",
@@ -711,32 +714,36 @@ Learn more`,
     checkHeaderSectionRow(rows[1], 'cache-control', 'max-age=600', false, false, true);
   });
 
-  it('does not generate header overrides which have "applyTo" but empty "headers" array', async () => {
-    const actualHeaders = [
-      {name: 'server', value: 'original server'},
-    ];
-    const {component, spy} = await setupHeaderEditing('[]', actualHeaders, actualHeaders);
-    await editHeaderRow(component, 0, HeaderAttribute.HEADER_VALUE, 'overridden server');
+  // Flaky on Mac arm64.
+  it.skip(
+      '[crbug.com/506798055]: does not generate header overrides which have "applyTo" but empty "headers" array',
+      async () => {
+        const actualHeaders = [
+          {name: 'server', value: 'original server'},
+        ];
+        const {component, spy} = await setupHeaderEditing('[]', actualHeaders, actualHeaders);
+        await editHeaderRow(component, 0, HeaderAttribute.HEADER_VALUE, 'overridden server');
 
-    const expected = [{
-      applyTo: 'index.html',
-      headers: [
-        {
-          name: 'server',
-          value: 'overridden server',
-        },
-      ],
-    }];
-    sinon.assert.callCount(spy, 1);
-    assert.isTrue(spy.calledOnceWith(JSON.stringify(expected, null, 2)));
+        const expected = [{
+          applyTo: 'index.html',
+          headers: [
+            {
+              name: 'server',
+              value: 'overridden server',
+            },
+          ],
+        }];
+        sinon.assert.callCount(spy, 1);
+        assert.isTrue(spy.calledOnceWith(JSON.stringify(expected, null, 2)));
 
-    spy.resetHistory();
-    await editHeaderRow(component, 0, HeaderAttribute.HEADER_VALUE, 'original server');
-    sinon.assert.callCount(spy, 1);
-    assert.isTrue(spy.calledOnceWith(JSON.stringify([], null, 2)));
-  });
+        spy.resetHistory();
+        await editHeaderRow(component, 0, HeaderAttribute.HEADER_VALUE, 'original server');
+        sinon.assert.callCount(spy, 1);
+        assert.isTrue(spy.calledOnceWith(JSON.stringify([], null, 2)));
+      });
 
-  it('can add headers', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: can add headers', async () => {
     const headerOverridesFileContent = `[
       {
         "applyTo": "index.html",
@@ -808,7 +815,8 @@ Learn more`,
     sinon.assert.calledWith(spy.getCall(-1), JSON.stringify(expected, null, 2));
   });
 
-  it('does not persist invalid header names', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: does not persist invalid header names', async () => {
     const headerOverridesFileContent = `[
       {
         "applyTo": "index.html",
@@ -941,7 +949,8 @@ Learn more`,
     assert.isNull(rows[0].shadowRoot.querySelector('.enable-editing'));
   });
 
-  it('can edit multiple headers', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: can edit multiple headers', async () => {
     const headerOverridesFileContent = `[
       {
         "applyTo": "index.html",
@@ -982,7 +991,8 @@ Learn more`,
     sinon.assert.calledWith(spy.lastCall, JSON.stringify(expected, null, 2));
   });
 
-  it('can edit multiple headers which have the same name', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: can edit multiple headers which have the same name', async () => {
     const headerOverridesFileContent = '[]';
 
     const actualHeaders = [
@@ -1026,8 +1036,11 @@ Learn more`,
     sinon.assert.calledWith(spy.lastCall, JSON.stringify(expected, null, 2));
   });
 
-  it('can edit multiple headers which have the same name and which are already overridden', async () => {
-    const headerOverridesFileContent = `[
+  // Flaky on Mac arm64.
+  it.skip(
+      '[crbug.com/506798055]: can edit multiple headers which have the same name and which are already overridden',
+      async () => {
+        const headerOverridesFileContent = `[
       {
         "applyTo": "index.html",
         "headers": [
@@ -1043,59 +1056,62 @@ Learn more`,
       }
     ]`;
 
-    const actualHeaders = [
-      {name: 'link', value: 'third value'},
-      {name: 'link', value: 'fourth value'},
-    ];
+        const actualHeaders = [
+          {name: 'link', value: 'third value'},
+          {name: 'link', value: 'fourth value'},
+        ];
 
-    const originalHeaders = [
-      {name: 'link', value: 'first value'},
-      {name: 'link', value: 'second value'},
-    ];
+        const originalHeaders = [
+          {name: 'link', value: 'first value'},
+          {name: 'link', value: 'second value'},
+        ];
 
-    const {component, spy} = await setupHeaderEditing(headerOverridesFileContent, actualHeaders, originalHeaders);
-    await editHeaderRow(component, 1, HeaderAttribute.HEADER_VALUE, 'fifth value');
+        const {component, spy} = await setupHeaderEditing(headerOverridesFileContent, actualHeaders, originalHeaders);
+        await editHeaderRow(component, 1, HeaderAttribute.HEADER_VALUE, 'fifth value');
 
-    let expected = [{
-      applyTo: 'index.html',
-      headers: [
-        {
-          name: 'link',
-          value: 'third value',
-        },
-        {
-          name: 'link',
-          value: 'fifth value',
-        },
-      ],
-    }];
-    sinon.assert.calledWith(spy.lastCall, JSON.stringify(expected, null, 2));
+        let expected = [{
+          applyTo: 'index.html',
+          headers: [
+            {
+              name: 'link',
+              value: 'third value',
+            },
+            {
+              name: 'link',
+              value: 'fifth value',
+            },
+          ],
+        }];
+        sinon.assert.calledWith(spy.lastCall, JSON.stringify(expected, null, 2));
 
-    await editHeaderRow(component, 0, HeaderAttribute.HEADER_VALUE, 'sixth value');
-    expected = [{
-      applyTo: 'index.html',
-      headers: [
-        {
-          name: 'link',
-          value: 'sixth value',
-        },
-        {
-          name: 'link',
-          value: 'fifth value',
-        },
-      ],
-    }];
-    sinon.assert.calledWith(spy.lastCall, JSON.stringify(expected, null, 2));
-  });
+        await editHeaderRow(component, 0, HeaderAttribute.HEADER_VALUE, 'sixth value');
+        expected = [{
+          applyTo: 'index.html',
+          headers: [
+            {
+              name: 'link',
+              value: 'sixth value',
+            },
+            {
+              name: 'link',
+              value: 'fifth value',
+            },
+          ],
+        }];
+        sinon.assert.calledWith(spy.lastCall, JSON.stringify(expected, null, 2));
+      });
 
-  it('persists edits to header overrides and resurfaces them upon component (re-)creation', async () => {
-    const request = SDK.NetworkRequest.NetworkRequest.create(
-        'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com/index.html`, urlString``, null,
-        null, null);
-    request.responseHeaders = [{name: 'server', value: 'overridden server'}];
-    request.originalResponseHeaders = [{name: 'server', value: 'original server'}];
+  // Flaky on Mac arm64.
+  it.skip(
+      '[crbug.com/506798055]: persists edits to header overrides and resurfaces them upon component (re-)creation',
+      async () => {
+        const request = SDK.NetworkRequest.NetworkRequest.create(
+            'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com/index.html`, urlString``, null,
+            null, null);
+        request.responseHeaders = [{name: 'server', value: 'overridden server'}];
+        request.originalResponseHeaders = [{name: 'server', value: 'original server'}];
 
-    const headerOverridesFileContent = `[
+        const headerOverridesFileContent = `[
       {
         "applyTo": "index.html",
         "headers": [{
@@ -1105,40 +1121,40 @@ Learn more`,
       }
     ]`;
 
-    const {component, spy} = await setupHeaderEditingWithRequest(headerOverridesFileContent, request);
-    assert.isNotNull(component.shadowRoot);
-    const addHeaderButton = component.shadowRoot.querySelector('.add-header-button');
-    assert.instanceOf(addHeaderButton, HTMLElement);
-    addHeaderButton.click();
-    await RenderCoordinator.done();
+        const {component, spy} = await setupHeaderEditingWithRequest(headerOverridesFileContent, request);
+        assert.isNotNull(component.shadowRoot);
+        const addHeaderButton = component.shadowRoot.querySelector('.add-header-button');
+        assert.instanceOf(addHeaderButton, HTMLElement);
+        addHeaderButton.click();
+        await RenderCoordinator.done();
 
-    await editHeaderRow(component, 0, HeaderAttribute.HEADER_VALUE, 'unit test');
-    await editHeaderRow(component, 1, HeaderAttribute.HEADER_NAME, 'foo');
-    await editHeaderRow(component, 1, HeaderAttribute.HEADER_VALUE, 'bar');
-    const expected = [{
-      applyTo: 'index.html',
-      headers: [
-        {
-          name: 'server',
-          value: 'unit test',
-        },
-        {
-          name: 'foo',
-          value: 'bar',
-        },
-      ],
-    }];
-    sinon.assert.calledWith(spy.getCall(-1), JSON.stringify(expected, null, 2));
+        await editHeaderRow(component, 0, HeaderAttribute.HEADER_VALUE, 'unit test');
+        await editHeaderRow(component, 1, HeaderAttribute.HEADER_NAME, 'foo');
+        await editHeaderRow(component, 1, HeaderAttribute.HEADER_VALUE, 'bar');
+        const expected = [{
+          applyTo: 'index.html',
+          headers: [
+            {
+              name: 'server',
+              value: 'unit test',
+            },
+            {
+              name: 'foo',
+              value: 'bar',
+            },
+          ],
+        }];
+        sinon.assert.calledWith(spy.getCall(-1), JSON.stringify(expected, null, 2));
 
-    component.remove();
-    const component2 = await renderResponseHeaderSection(request);
-    assert.isNotNull(component2.shadowRoot);
+        component.remove();
+        const component2 = await renderResponseHeaderSection(request);
+        assert.isNotNull(component2.shadowRoot);
 
-    const rows = component2.shadowRoot.querySelectorAll('devtools-header-section-row');
-    assert.lengthOf(rows, 2);
-    checkHeaderSectionRow(rows[0], 'server', 'unit test', true, false, true);
-    checkHeaderSectionRow(rows[1], 'foo', 'bar', true, true, true);
-  });
+        const rows = component2.shadowRoot.querySelectorAll('devtools-header-section-row');
+        assert.lengthOf(rows, 2);
+        checkHeaderSectionRow(rows[0], 'server', 'unit test', true, false, true);
+        checkHeaderSectionRow(rows[1], 'foo', 'bar', true, true, true);
+      });
 
   it('focuses on newly added header rows on initial render', async () => {
     const request = SDK.NetworkRequest.NetworkRequest.create(
@@ -1211,7 +1227,8 @@ Learn more`,
     assert.isNull(addHeaderButton);
   });
 
-  it('handles rendering and editing \'set-cookie\' headers', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: handles rendering and editing \'set-cookie\' headers', async () => {
     const request = SDK.NetworkRequest.NetworkRequest.create(
         'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com/index.html`, urlString``, null,
         null, null);

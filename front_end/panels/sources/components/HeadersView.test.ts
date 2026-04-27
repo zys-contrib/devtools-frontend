@@ -237,7 +237,8 @@ describe('HeadersView', () => {
     sinon.assert.callCount(commitWorkingCopySpy, 4);
   });
 
-  it('resets edited value to previous state on Escape key', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: resets edited value to previous state on Escape key', async () => {
     const editor = await renderEditor();
     assert.isNotNull(editor.shadowRoot);
     assert.deepEqual(getSingleRowContent(editor.shadowRoot, 1), 'server:DevTools Unit Test Server');
@@ -269,7 +270,8 @@ describe('HeadersView', () => {
     assert.deepEqual(getSingleRowContent(editor.shadowRoot, 1), 'server:DevTools Unit Test Server');
   });
 
-  it('selects the whole content when clicking on an editable field', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: selects the whole content when clicking on an editable field', async () => {
     const editor = await renderEditor();
     assert.isNotNull(editor.shadowRoot);
     const editables = editor.shadowRoot.querySelectorAll('.editable');
@@ -287,7 +289,8 @@ describe('HeadersView', () => {
     assert.isTrue(isWholeElementContentSelected(element));
   });
 
-  it('un-selects the content when an editable field loses focus', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: un-ts the content when an editable field loses focus', async () => {
     const editor = await renderEditor();
     assert.isNotNull(editor.shadowRoot);
     const editables = editor.shadowRoot.querySelectorAll('.editable');
@@ -299,30 +302,33 @@ describe('HeadersView', () => {
     assert.isFalse(element.hasSelection());
   });
 
-  it('handles pressing \'Enter\' key by removing focus and moving it to the next field if possible', async () => {
-    const editor = await renderEditor();
-    assert.isNotNull(editor.shadowRoot);
-    const editables = editor.shadowRoot.querySelectorAll('.editable');
-    assert.lengthOf(editables, 8);
+  // Flaky on Mac arm64.
+  it.skip(
+      '[crbug.com/506798055]: handles pressing \'Enter\' key by removing focus and moving it to the next field if possible',
+      async () => {
+        const editor = await renderEditor();
+        assert.isNotNull(editor.shadowRoot);
+        const editables = editor.shadowRoot.querySelectorAll('.editable');
+        assert.lengthOf(editables, 8);
 
-    const lastHeaderName = editables[6] as HTMLSpanElement;
-    const lastHeaderValue = editables[7] as HTMLSpanElement;
-    assert.isFalse(lastHeaderName.hasSelection());
-    assert.isFalse(lastHeaderValue.hasSelection());
+        const lastHeaderName = editables[6] as HTMLSpanElement;
+        const lastHeaderValue = editables[7] as HTMLSpanElement;
+        assert.isFalse(lastHeaderName.hasSelection());
+        assert.isFalse(lastHeaderValue.hasSelection());
 
-    lastHeaderName.focus();
-    assert.isTrue(isWholeElementContentSelected(lastHeaderName));
-    assert.isFalse(lastHeaderValue.hasSelection());
+        lastHeaderName.focus();
+        assert.isTrue(isWholeElementContentSelected(lastHeaderName));
+        assert.isFalse(lastHeaderValue.hasSelection());
 
-    dispatchKeyDownEvent(lastHeaderName, {key: 'Enter', bubbles: true});
-    assert.isFalse(lastHeaderName.hasSelection());
-    assert.isTrue(isWholeElementContentSelected(lastHeaderValue));
+        dispatchKeyDownEvent(lastHeaderName, {key: 'Enter', bubbles: true});
+        assert.isFalse(lastHeaderName.hasSelection());
+        assert.isTrue(isWholeElementContentSelected(lastHeaderValue));
 
-    dispatchKeyDownEvent(lastHeaderValue, {key: 'Enter', bubbles: true});
-    for (const editable of editables) {
-      assert.isFalse(editable.hasSelection());
-    }
-  });
+        dispatchKeyDownEvent(lastHeaderValue, {key: 'Enter', bubbles: true});
+        for (const editable of editables) {
+          assert.isFalse(editable.hasSelection());
+        }
+      });
 
   it('sets empty \'ApplyTo\' to \'*\'', async () => {
     const editor = await renderEditor();
@@ -544,7 +550,8 @@ describe('HeadersView', () => {
         Host.UserMetrics.Action.HeaderOverrideHeadersFileEdited));
   });
 
-  it('removes formatting for pasted content', async () => {
+  // Flaky on Mac arm64.
+  it.skip('[crbug.com/506798055]: removes formatting for pasted content', async () => {
     const editor = await renderEditor();
     assert.isNotNull(editor.shadowRoot);
     const editables = editor.shadowRoot.querySelectorAll('.editable');

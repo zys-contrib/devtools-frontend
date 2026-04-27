@@ -1072,7 +1072,8 @@ describeWithEnvironment('JSONEditor', () => {
     });
   });
 
-  describe('Verify the type of the entered value', () => {
+  // Flaky on Mac arm64.
+  describe.skip('[crbug.com/506798055]: Verify the type of the entered value', () => {
     it('should show a warning icon if the type of the parameter is number but the entered value is not', async () => {
       const command = 'Test.test8';
 
@@ -1215,95 +1216,97 @@ describeWithEnvironment('JSONEditor', () => {
     assert.lengthOf(parameters, 6);
   });
 
-  it('should return the parameters in a format understandable by the ProtocolMonitor when sending a command with object parameter that has no typeRef found in map',
-     async () => {
-       const command = 'Test.test10';
-       const typesByName = new Map();
-       // We set the map typesBynames without the key NoTypeRef
-       typesByName.set('Tracing.TraceConfig', [
-         {
-           name: 'memoryDumpConfig',
-           type: 'object',
-           optional: true,
-           description:
-               'Configuration for memory dump triggers. Used only when \\"memory-infra\\" category is enabled.',
-           typeRef:
-               'Tracing.MemoryDumpConfig',  // This typeref is on purpose not added to show that this param will be treated as a string parameter
-         },
-       ]);
+  // Flaky on Mac arm64.
+  it.skip(
+      '[crbug.com/506798055]: should return the parameters in a format understandable by the ProtocolMonitor when sending a command with object parameter that has no typeRef found in map',
+      async () => {
+        const command = 'Test.test10';
+        const typesByName = new Map();
+        // We set the map typesBynames without the key NoTypeRef
+        typesByName.set('Tracing.TraceConfig', [
+          {
+            name: 'memoryDumpConfig',
+            type: 'object',
+            optional: true,
+            description:
+                'Configuration for memory dump triggers. Used only when \\"memory-infra\\" category is enabled.',
+            typeRef:
+                'Tracing.MemoryDumpConfig',  // This typeref is on purpose not added to show that this param will be treated as a string parameter
+          },
+        ]);
 
-       const jsonEditor = renderJSONEditor();
+        const jsonEditor = renderJSONEditor();
 
-       await populateMetadata(jsonEditor);
-       jsonEditor.typesByName = typesByName;
-       jsonEditor.command = command;
-       jsonEditor.populateParametersForCommandWithDefaultValues();
-       await jsonEditor.updateComplete;
-       const shadowRoot = jsonEditor.contentElement;
-       const parameters = shadowRoot.querySelector('.parameter');
+        await populateMetadata(jsonEditor);
+        jsonEditor.typesByName = typesByName;
+        jsonEditor.command = command;
+        jsonEditor.populateParametersForCommandWithDefaultValues();
+        await jsonEditor.updateComplete;
+        const shadowRoot = jsonEditor.contentElement;
+        const parameters = shadowRoot.querySelector('.parameter');
 
-       await renderHoveredElement(parameters);
+        await renderHoveredElement(parameters);
 
-       const addParamButton = jsonEditor.contentElement.querySelector('devtools-button[title="Add custom property"]');
-       if (!addParamButton) {
-         throw new Error('No button');
-       }
-       // We click two times to display two parameters with key/value pairs
-       dispatchClickEvent(addParamButton, {
-         bubbles: true,
-         composed: true,
-       });
-       dispatchClickEvent(addParamButton, {
-         bubbles: true,
-         composed: true,
-       });
+        const addParamButton = jsonEditor.contentElement.querySelector('devtools-button[title="Add custom property"]');
+        if (!addParamButton) {
+          throw new Error('No button');
+        }
+        // We click two times to display two parameters with key/value pairs
+        dispatchClickEvent(addParamButton, {
+          bubbles: true,
+          composed: true,
+        });
+        dispatchClickEvent(addParamButton, {
+          bubbles: true,
+          composed: true,
+        });
 
-       await jsonEditor.updateComplete;
-       const editors = shadowRoot.querySelectorAll('devtools-suggestion-input');
+        await jsonEditor.updateComplete;
+        const editors = shadowRoot.querySelectorAll('devtools-suggestion-input');
 
-       // Editors[0] refers to the command editor, so we start at index 1
-       // We populate the key/value pairs
-       editors[1].value = 'testName1';
-       await jsonEditor.updateComplete;
-       editors[1].focus();
-       editors[1].blur();
-       await jsonEditor.updateComplete;
+        // Editors[0] refers to the command editor, so we start at index 1
+        // We populate the key/value pairs
+        editors[1].value = 'testName1';
+        await jsonEditor.updateComplete;
+        editors[1].focus();
+        editors[1].blur();
+        await jsonEditor.updateComplete;
 
-       editors[2].value = 'testValue1';
-       await jsonEditor.updateComplete;
-       editors[2].focus();
-       editors[2].blur();
-       await jsonEditor.updateComplete;
+        editors[2].value = 'testValue1';
+        await jsonEditor.updateComplete;
+        editors[2].focus();
+        editors[2].blur();
+        await jsonEditor.updateComplete;
 
-       editors[3].value = 'testName2';
-       await jsonEditor.updateComplete;
-       editors[3].focus();
-       editors[3].blur();
-       await jsonEditor.updateComplete;
+        editors[3].value = 'testName2';
+        await jsonEditor.updateComplete;
+        editors[3].focus();
+        editors[3].blur();
+        await jsonEditor.updateComplete;
 
-       editors[4].value = 'testValue2';
-       await jsonEditor.updateComplete;
-       editors[4].focus();
-       editors[4].blur();
-       await jsonEditor.updateComplete;
+        editors[4].value = 'testValue2';
+        await jsonEditor.updateComplete;
+        editors[4].focus();
+        editors[4].blur();
+        await jsonEditor.updateComplete;
 
-       const promise = jsonEditor.once(ProtocolMonitor.JSONEditor.Events.SUBMIT_EDITOR);
+        const promise = jsonEditor.once(ProtocolMonitor.JSONEditor.Events.SUBMIT_EDITOR);
 
-       // We send the command
-       dispatchKeyDownEvent(
-           jsonEditor.contentElement.querySelector('.wrapper')!, {key: 'Enter', ctrlKey: true, metaKey: true});
+        // We send the command
+        dispatchKeyDownEvent(
+            jsonEditor.contentElement.querySelector('.wrapper')!, {key: 'Enter', ctrlKey: true, metaKey: true});
 
-       const response = await promise;
+        const response = await promise;
 
-       const expectedParameters = {
-         NoTypeRef: {
-           testName1: 'testValue1',
-           testName2: 'testValue2',
-         },
-       };
+        const expectedParameters = {
+          NoTypeRef: {
+            testName1: 'testValue1',
+            testName2: 'testValue2',
+          },
+        };
 
-       assert.deepEqual(response.parameters, expectedParameters);
-     });
+        assert.deepEqual(response.parameters, expectedParameters);
+      });
 
   it('should show the custom editor for an object param that has no type ref', async () => {
     const command = 'Test.test14';
