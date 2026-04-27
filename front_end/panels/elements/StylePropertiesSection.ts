@@ -1181,7 +1181,7 @@ export class StylePropertiesSection {
 
     const containerElement = new ElementsComponents.QueryContainer.QueryContainer();
     containerElement.data = {
-      container: ElementsComponents.Helper.legacyNodeToElementsComponentsNode(container.containerNode),
+      container: container.containerNode,
       queryName: containerQuery.name,
       onContainerLinkClick: event => {
         event.preventDefault();

@@ -37,7 +37,6 @@ devtools_ui_module("components") {
     "ElementsBreadcrumbs.ts",
     "ElementsBreadcrumbsUtils.ts",
     "ElementsTreeExpandButton.ts",
-    "Helper.ts",
     "QueryContainer.ts",
     "StylePropertyEditor.ts",
   ]

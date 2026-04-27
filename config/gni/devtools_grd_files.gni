@@ -1653,7 +1653,6 @@ grd_files_unbundled_sources = [
   "front_end/panels/elements/components/ElementsBreadcrumbs.js",
   "front_end/panels/elements/components/ElementsBreadcrumbsUtils.js",
   "front_end/panels/elements/components/ElementsTreeExpandButton.js",
-  "front_end/panels/elements/components/Helper.js",
   "front_end/panels/elements/components/QueryContainer.js",
   "front_end/panels/elements/components/StylePropertyEditor.js",
   "front_end/panels/elements/components/accessibilityTreeNode.css.js",
