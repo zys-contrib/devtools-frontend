@@ -210,10 +210,13 @@ describeWithEnvironment('WebMCPView (View)', () => {
     assert.isNull(target.querySelector('.tool-list .empty-state'));
   });
 
-  it('highlights the selected tool', () => {
+  it('highlights the selected tool', async () => {
     updateHostConfig({devToolsWebMCPSupport: {enabled: true}});
     const sdkTarget = createTarget();
     const target = document.createElement('div');
+    target.style.width = '600px';
+    target.style.height = '400px';
+    renderElementIntoDOM(target, {includeCommonStyles: true});
     const tools = [
       createTool('tool1', 'desc1', 'frame1' as Protocol.Page.FrameId, sdkTarget),
       createTool('tool2', 'desc2', 'frame1' as Protocol.Page.FrameId, sdkTarget)
@@ -230,6 +233,7 @@ describeWithEnvironment('WebMCPView (View)', () => {
     assert.lengthOf(listElements, 2);
     assert.isFalse(listElements[0].classList.contains('selected'));
     assert.isTrue(listElements[1].classList.contains('selected'));
+    await assertScreenshot('application/webmcp-tool-selected.png');
   });
 
   it('renders a selected tool call details in a TabbedPane', async () => {

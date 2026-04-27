@@ -284,8 +284,8 @@ function getIconGroupsFromStats(toolStats: ReturnType<typeof calculateToolStats>
     groups.push({
       iconName: 'check-circle',
       iconColor: 'var(--sys-color-green)',
-      iconWidth: '16px',
-      iconHeight: '16px',
+      iconWidth: 'var(--sys-size-8)',
+      iconHeight: 'var(--sys-size-8)',
       text: String(toolStats.completed),
     });
   }
@@ -293,8 +293,8 @@ function getIconGroupsFromStats(toolStats: ReturnType<typeof calculateToolStats>
     groups.push({
       iconName: 'cross-circle-filled',
       iconColor: 'var(--sys-color-error)',
-      iconWidth: '16px',
-      iconHeight: '16px',
+      iconWidth: 'var(--sys-size-8)',
+      iconHeight: 'var(--sys-size-8)',
       text: String(toolStats.failed),
     });
   }
@@ -302,16 +302,16 @@ function getIconGroupsFromStats(toolStats: ReturnType<typeof calculateToolStats>
     groups.push({
       iconName: 'record-stop',
       iconColor: 'var(--sys-color-on-surface-light)',
-      iconWidth: '16px',
-      iconHeight: '16px',
+      iconWidth: 'var(--sys-size-8)',
+      iconHeight: 'var(--sys-size-8)',
       text: String(toolStats.canceled),
     });
   }
   if (toolStats.inProgress > 0) {
     groups.push({
       iconName: 'watch',
-      iconWidth: '16px',
-      iconHeight: '16px',
+      iconWidth: 'var(--sys-size-8)',
+      iconHeight: 'var(--sys-size-8)',
       text: String(toolStats.inProgress),
     });
   }
@@ -532,7 +532,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
           ${UI.Widget.widget(UI.EmptyWidget.EmptyWidget, {header: i18nString(UIStrings.noToolsPlaceholderTitle),
                                                           text: i18nString(UIStrings.noToolsPlaceholder)})}
           ` : html`
-            <devtools-list>
+            <devtools-list class="square-corners">
               ${tools.map(tool => {
                 const toolStats = calculateToolStats(input.toolCalls.filter(c => c.tool === tool));
                 const groups = getIconGroupsFromStats(toolStats);

@@ -59,8 +59,8 @@
         display: flex;
         gap: var(--sys-size-2);
         background-color: var(--sys-color-surface1);
-        padding: 0 5px;
-        line-height: 22px;
+        padding: 0 var(--sys-size-3);
+        line-height: var(--sys-size-10);
         overflow: hidden;
         align-items: center;
         flex: none;
@@ -71,7 +71,7 @@
     .status-cell {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: var(--sys-size-3);
     }
 
     .tool-details {
@@ -84,7 +84,7 @@
     .tool-details-grid {
       display: grid;
       grid-template-columns: min-content 1fr;
-      gap: 0 var(--sys-size-16);
+      gap: var(--sys-size-6);
       padding: calc(0.5*var(--sys-size-6)) var(--sys-size-8);
       align-items: flex-start;
       overflow-y: auto;
@@ -92,17 +92,17 @@
       .label {
         color: var(--sys-color-on-surface-subtle);
         white-space: nowrap;
-        padding: var(--sys-size-6) 0;
+        padding: var(--sys-size-3) 0;
       }
 
       .value {
         user-select: text;
 
         &.source-code {
-          color: var(--sys-color-token-attribute);
+          color: var(--sys-color-token-property-special);
         }
 
-        padding: var(--sys-size-6) 0;
+        padding: var(--sys-size-3) 0;
         color: var(--sys-color-on-surface);
         overflow-wrap: anywhere;
 
@@ -131,15 +131,15 @@
     devtools-list {
       flex: 1 1 auto;
       margin: 0;
-      padding: var(--sys-size-4);
+      padding: var(--sys-size-4) 0;
       box-sizing: border-box;
     }
 
     .tool-item {
         display: flex;
         flex-direction: column;
-        padding: 8px 0;
-        gap: 4px;
+        padding: var(--sys-size-5) var(--sys-size-4);
+        gap: var(--sys-size-3);
         width: 100%;
         box-sizing: border-box;
         border-bottom: 1px solid var(--sys-color-divider);
@@ -158,11 +158,11 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 8px;
+        gap: var(--sys-size-5);
     }
 
     .tool-name.source-code {
-        color: var(--sys-color-token-string);
+        color: var(--sys-color-token-property-special);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
