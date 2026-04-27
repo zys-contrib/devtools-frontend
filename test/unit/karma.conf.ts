@@ -125,7 +125,7 @@ const CustomChrome = function(this: any, _baseBrowserDecorator: unknown, args: B
       '--remote-allow-origins=*',
       `--remote-debugging-port=${REMOTE_DEBUGGING_PORT}`,
       '--use-mock-keychain',
-      '--disable-features=DialMediaRouteProvider',
+      '--disable-features=DialMediaRouteProvider, WebUIReloadButton',
       '--disable-blink-features=BlockingFocusWithoutUserActivation',
       '--password-store=basic',
       '--disable-extensions',
