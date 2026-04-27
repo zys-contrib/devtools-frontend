@@ -179,8 +179,7 @@ describe('PieChart', () => {
       assert.isFalse(total!.classList.contains('selected'));
     });
 
-    // Flaky on Mac arm64.
-    it.skip('[crbug.com/506798055]: can focus legend with keyboard ', () => {
+    it('can focus legend with keyboard ', () => {
       const chart = new PerfUI.PieChart.PieChart();
       renderElementIntoDOM(chart);
 

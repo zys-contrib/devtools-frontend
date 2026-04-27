@@ -195,8 +195,7 @@ Learn more`,
     sinon.assert.calledOnce(scrollIntoViewSpy);
   });
 
-  // Flaky on Mac arm64.
-  it.skip('[crbug.com/506798055]: allows editing header name and header value', async () => {
+  it('allows editing header name and header value', async () => {
     const originalHeaderName = Platform.StringUtilities.toLowerCaseString('some-header-name');
     const originalHeaderValue = 'someHeaderValue';
     const headerData: NetworkComponents.HeaderSectionRow.HeaderDescriptor = {
@@ -271,8 +270,7 @@ Learn more`,
     assert.isTrue(hasReloadPrompt(component.shadowRoot));
   });
 
-  // Flaky on Mac arm64.
-  it.skip('[crbug.com/506798055]: does not allow setting an emtpy header name', async () => {
+  it('does not allow setting an emtpy header name', async () => {
     const headerName = Platform.StringUtilities.toLowerCaseString('some-header-name');
     const headerData: NetworkComponents.HeaderSectionRow.HeaderDescriptor = {
       name: headerName,
@@ -327,8 +325,7 @@ Learn more`,
     assert.isFalse(row?.classList.contains('header-overridden'));
   });
 
-  // Flaky on Mac arm64.
-  it.skip('[crbug.com/506798055]: confirms edited value and exits editing mode on "Enter"-key', async () => {
+  it('confirms edited value and exits editing mode on "Enter"-key', async () => {
     const headerData: NetworkComponents.HeaderSectionRow.HeaderDescriptor = {
       name: Platform.StringUtilities.toLowerCaseString('some-header-name'),
       value: 'someHeaderValue',
@@ -440,8 +437,7 @@ Learn more`,
     assert.isTrue(hasReloadPrompt(component.shadowRoot));
   });
 
-  // Flaky on Mac arm64.
-  it.skip('[crbug.com/506798055]: split header name and value on pasted content', async () => {
+  it('split header name and value on pasted content', async () => {
     const originalHeaderName = Platform.StringUtilities.toLowerCaseString('some-header-name');
     const originalHeaderValue = 'someHeaderValue';
     const headerData: NetworkComponents.HeaderSectionRow.HeaderDescriptor = {
@@ -618,8 +614,7 @@ Learn more`,
     assert.strictEqual(headerValueFromEvent, headerValue);
   });
 
-  // Flaky on Mac arm64.
-  it.skip('[crbug.com/506798055]: removes leading/trailing whitespace when editing header names/values', async () => {
+  it('removes leading/trailing whitespace when editing header names/values', async () => {
     const originalHeaderName = Platform.StringUtilities.toLowerCaseString('some-header-name');
     const originalHeaderValue = 'someHeaderValue';
     const headerData: NetworkComponents.HeaderSectionRow.HeaderDescriptor = {

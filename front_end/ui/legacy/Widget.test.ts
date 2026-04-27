@@ -513,8 +513,7 @@ describeWithEnvironment('Widget', () => {
       assert.strictEqual(document.activeElement, child1Input);
     });
 
-    // Flaky on Mac arm64.
-    it.skip('[crbug.com/506798055]: should remember focus correctly on widgets.', () => {
+    it('should remember focus correctly on widgets.', () => {
       const container = document.createElement('div');
       renderElementIntoDOM(container);
 
