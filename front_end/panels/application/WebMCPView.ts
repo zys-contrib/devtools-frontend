@@ -202,6 +202,7 @@ export interface FilterState {
     completed?: boolean,
     error?: boolean,
     pending?: boolean,
+    canceled?: boolean,
   };
 }
 
@@ -241,11 +242,14 @@ export function filterToolCalls(
   const statusTypes = filterState.statusTypes;
   if (statusTypes) {
     filtered = filtered.filter(call => {
-      const {completed, error, pending} = statusTypes;
+      const {completed, error, pending, canceled} = statusTypes;
       if (completed && call.result?.status === Protocol.WebMCP.InvocationStatus.Completed) {
         return true;
       }
       if (error && call.result?.status === Protocol.WebMCP.InvocationStatus.Error) {
+        return true;
+      }
+      if (canceled && call.result?.status === Protocol.WebMCP.InvocationStatus.Canceled) {
         return true;
       }
       if (pending && call.result === undefined) {
@@ -281,63 +285,54 @@ export function filterToolCalls(
   return filtered;
 }
 export type View = (input: ViewInput, output: object, target: HTMLElement) => void;
+
+type ToolStats = Map<Protocol.WebMCP.InvocationStatus|undefined, number>;
+
 function calculateToolStats(calls: WebMCP.WebMCPModel.Call[]):
-    {total: number, completed: number, failed: number, canceled: number, inProgress: number} {
-  let total = 0, completed = 0, failed = 0, canceled = 0, inProgress = 0;
+    {stats: Map<WebMCP.WebMCPModel.Tool, ToolStats>, totals: ToolStats} {
+  const stats = new Map<WebMCP.WebMCPModel.Tool, ToolStats>();
+  const totals: ToolStats = new Map();
+
   for (const call of calls) {
-    total++;
-    if (call.result?.status === Protocol.WebMCP.InvocationStatus.Error) {
-      failed++;
-    } else if (call.result?.status === Protocol.WebMCP.InvocationStatus.Canceled) {
-      canceled++;
-    } else if (call.result?.status === Protocol.WebMCP.InvocationStatus.Completed) {
-      completed++;
-    } else if (call.result === undefined) {
-      inProgress++;
+    let toolStats = stats.get(call.tool);
+    if (!toolStats) {
+      toolStats = new Map();
+      stats.set(call.tool, toolStats);
     }
+    toolStats.set(call.result?.status, (toolStats.get(call.result?.status) ?? 0) + 1);
+    totals.set(call.result?.status, (totals.get(call.result?.status) ?? 0) + 1);
   }
-  return {total, completed, failed, canceled, inProgress};
+  return {totals, stats};
 }
 
-function getIconGroupsFromStats(toolStats: ReturnType<typeof calculateToolStats>):
-    IconButton.IconButton.IconWithTextData[] {
-  const groups = [];
-  if (toolStats.completed > 0) {
-    groups.push({
-      iconName: 'check-circle',
-      iconColor: 'var(--sys-color-green)',
-      iconWidth: 'var(--sys-size-8)',
-      iconHeight: 'var(--sys-size-8)',
-      text: String(toolStats.completed),
-    });
+function toolStatsIcon(status: Protocol.WebMCP.InvocationStatus|undefined): {iconName: string, iconColor?: string} {
+  switch (status) {
+    case Protocol.WebMCP.InvocationStatus.Completed:
+      return {iconName: 'check-circle', iconColor: 'var(--sys-color-green)'};
+    case Protocol.WebMCP.InvocationStatus.Error:
+      return {iconName: 'cross-circle-filled', iconColor: 'var(--sys-color-error)'};
+    case Protocol.WebMCP.InvocationStatus.Canceled:
+      return {iconName: 'record-stop', iconColor: 'var(--sys-color-on-surface-light)'};
+    case undefined:
+      return {iconName: 'watch'};
   }
-  if (toolStats.failed > 0) {
-    groups.push({
-      iconName: 'cross-circle-filled',
-      iconColor: 'var(--sys-color-error)',
-      iconWidth: 'var(--sys-size-8)',
-      iconHeight: 'var(--sys-size-8)',
-      text: String(toolStats.failed),
-    });
-  }
-  if (toolStats.canceled > 0) {
-    groups.push({
-      iconName: 'record-stop',
-      iconColor: 'var(--sys-color-on-surface-light)',
-      iconWidth: 'var(--sys-size-8)',
-      iconHeight: 'var(--sys-size-8)',
-      text: String(toolStats.canceled),
-    });
-  }
-  if (toolStats.inProgress > 0) {
-    groups.push({
-      iconName: 'watch',
-      iconWidth: 'var(--sys-size-8)',
-      iconHeight: 'var(--sys-size-8)',
-      text: String(toolStats.inProgress),
-    });
-  }
-  return groups;
+}
+
+function getIconGroupsFromStats(toolStats?: ToolStats):
+    Array<IconButton.IconButton.IconWithTextData&{status: Protocol.WebMCP.InvocationStatus | undefined}> {
+  const status = [
+    Protocol.WebMCP.InvocationStatus.Completed, Protocol.WebMCP.InvocationStatus.Error,
+    Protocol.WebMCP.InvocationStatus.Canceled, undefined
+  ];
+  return status
+      .map(status => ({
+             ...toolStatsIcon(status),
+             iconWidth: 'var(--sys-size-8)',
+             iconHeight: 'var(--sys-size-8)',
+             text: String(toolStats?.get(status) ?? 0),
+             status,
+           }))
+      .filter(({text}) => text !== '0');
 }
 
 export function parsePayload(payload?: unknown): {
@@ -382,7 +377,7 @@ export function getJSONEditorParameters(tool: WebMCP.WebMCPModel.Tool): {
 export const DEFAULT_VIEW: View = (input, output, target) => {
   const tools = input.tools;
   let editorWidget: ProtocolMonitor.JSONEditor.JSONEditor|null = null;
-  const stats = calculateToolStats(input.toolCalls);
+  const toolStats = calculateToolStats(input.toolCalls);
   const isFilterActive =
       Boolean(input.filters.text) || Boolean(input.filters.toolTypes) || Boolean(input.filters.statusTypes);
   const iconName = (call: WebMCP.WebMCPModel.Call): string => {
@@ -409,6 +404,23 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
         return i18nString(UIStrings.inProgress);
     }
   };
+  const onIconClick = (toolName: string, status: Protocol.WebMCP.InvocationStatus|undefined): void => {
+    let statusTypes: FilterState['statusTypes'] = undefined;
+    if (status === Protocol.WebMCP.InvocationStatus.Completed) {
+      statusTypes = {completed: true};
+    } else if (status === Protocol.WebMCP.InvocationStatus.Error) {
+      statusTypes = {error: true};
+    } else if (status === Protocol.WebMCP.InvocationStatus.Canceled) {
+      statusTypes = {canceled: true};
+    } else if (status === undefined) {
+      statusTypes = {pending: true};
+    }
+    input.onFilterChange({
+      ...input.filters,
+      text: toolName,
+      statusTypes,
+    });
+  };
   const onToolContextMenu = (event: Event, tool: WebMCP.WebMCPModel.Tool): void => {
     const contextMenu = new UI.ContextMenu.ContextMenu(event);
     contextMenu.defaultSection().appendItem(i18nString(UIStrings.copyName), () => {
@@ -434,9 +446,9 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
             <div class="toolbar-divider"></div>
             <devtools-toolbar-input type="filter"
                                     placeholder=${i18nString(UIStrings.filter)}
-                                    .value=${input.filters.text}
                                     @change=${(e: CustomEvent<string>) =>
-                                      input.onFilterChange({...input.filters, text: e.detail})}>
+                                      input.onFilterChange({...input.filters, text: e.detail})}
+                                    .value=${input.filters.text}>
             </devtools-toolbar-input>
             <div class="toolbar-divider"></div>
             ${input.filterButtons.toolTypes.button.element}
@@ -554,14 +566,18 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
           </devtools-split-view>
           <div class="webmcp-toolbar-container" role="toolbar">
             <devtools-toolbar class="webmcp-toolbar" role="presentation" wrappable>
-              <span class="toolbar-text">${i18nString(UIStrings.totalCalls, {PH1: stats.total})}</span>
+              <span class="toolbar-text">${i18nString(UIStrings.totalCalls, {PH1: input.toolCalls.length})}</span>
               <div class="toolbar-divider"></div>
-              <span class="toolbar-text status-error-text">${i18nString(UIStrings.failed, {PH1: stats.failed})}</span>
+              <span class="toolbar-text status-error-text">${
+                i18nString(UIStrings.failed,
+                           {PH1: toolStats.totals.get(Protocol.WebMCP.InvocationStatus.Error) ?? 0})}</span>
               <div class="toolbar-divider"></div>
               <span class="toolbar-text status-cancelled-text">${
-                  i18nString(UIStrings.canceledCount, {PH1: stats.canceled})}</span>
+                  i18nString(UIStrings.canceledCount,
+                             {PH1: toolStats.totals.get(Protocol.WebMCP.InvocationStatus.Canceled) ?? 0})}</span>
               <div class="toolbar-divider"></div>
-              <span class="toolbar-text">${i18nString(UIStrings.inProgressCount, {PH1: stats.inProgress})}</span>
+              <span class="toolbar-text">${i18nString(UIStrings.inProgressCount,
+                                                      {PH1: toolStats.totals.get(undefined) ?? 0})}</span>
             </devtools-toolbar>
           </div>
         ` : html`
@@ -581,22 +597,25 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                                                           text: i18nString(UIStrings.noToolsPlaceholder)})}
           ` : html`
             <devtools-list class="square-corners">
-              ${tools.map(tool => {
-                const toolStats = calculateToolStats(input.toolCalls.filter(c => c.tool === tool));
-                const groups = getIconGroupsFromStats(toolStats);
-                return html`
-                    <div class=${Directives.classMap({'tool-item': true, selected: tool === input.selectedTool?.tool})}
-                         @click=${() => input.onToolSelect(tool)}
-                         @contextmenu=${(e: Event) => onToolContextMenu(e, tool)}>
-                    <div class="tool-name-container">
-                      <div class="tool-name source-code">${tool.name}</div>
-                      ${groups.length > 0 ? html`<icon-button .data=${
-                          {groups, compact: false} as IconButton.IconButton.IconButtonData}></icon-button>` : ''}
+              ${tools.map(tool => html`
+                <div class=${Directives.classMap({'tool-item': true, selected: tool === input.selectedTool?.tool})}
+                     @click=${() => input.onToolSelect(tool)}
+                     @contextmenu=${(e: Event) => onToolContextMenu(e, tool)}>
+                  <div class="tool-name-container">
+                    <div class="tool-name source-code">${tool.name}</div>
+                    <div class="tool-icons">
+                      ${getIconGroupsFromStats(toolStats.stats.get(tool)).map(group => html`
+                        <icon-button
+                          .data=${{
+                            groups: [group],
+                            compact: false,
+                            clickHandler: () => onIconClick(tool.name, group.status),
+                          } as IconButton.IconButton.IconButtonData}
+                          @click=${(e: Event) => e.stopPropagation()}></icon-button>`)}
                     </div>
-                    <div class="tool-description">${tool.description}</div>
                   </div>
-                `;
-              })}
+                  <div class="tool-description">${tool.description}</div>
+                </div>`)}
             </devtools-list>
           `}
         </div>
@@ -745,11 +764,11 @@ export class WebMCPView extends UI.Widget.VBox {
   }
 
   #showStatusTypesContextMenu(contextMenu: UI.ContextMenu.ContextMenu): void {
-    const toggle = (key: 'completed'|'error'|'pending'): void => {
+    const toggle = (key: 'completed'|'error'|'pending'|'canceled'): void => {
       const current = this.#filterState.statusTypes ?? {};
       const next = {...current, [key]: !current[key]};
       let statusTypesToPass: FilterState['statusTypes'] = next;
-      if (!next.completed && !next.error && !next.pending) {
+      if (!next.completed && !next.error && !next.pending && !next.canceled) {
         statusTypesToPass = undefined;
       }
       this.#handleFilterChange({...this.#filterState, statusTypes: statusTypesToPass});
@@ -761,6 +780,9 @@ export class WebMCPView extends UI.Widget.VBox {
     contextMenu.defaultSection().appendCheckboxItem(
         i18nString(UIStrings.error), () => toggle('error'),
         {checked: this.#filterState.statusTypes?.['error'] ?? false, jslogContext: 'webmcp.error'});
+    contextMenu.defaultSection().appendCheckboxItem(
+        i18nString(UIStrings.canceled), () => toggle('canceled'),
+        {checked: this.#filterState.statusTypes?.['canceled'] ?? false, jslogContext: 'webmcp.canceled'});
     contextMenu.defaultSection().appendCheckboxItem(
         i18nString(UIStrings.pending), () => toggle('pending'),
         {checked: this.#filterState.statusTypes?.['pending'] ?? false, jslogContext: 'webmcp.pending'});

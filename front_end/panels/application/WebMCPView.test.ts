@@ -771,6 +771,12 @@ describe('filterToolCalls', () => {
       input: '{}',
       result: new WebMCP.WebMCPModel.Result(
           Protocol.WebMCP.InvocationStatus.Completed, 'Declarative success content', undefined, undefined)
+    },
+    {
+      invocationId: '6',
+      tool: tools[0],
+      input: '{}',
+      result: new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Canceled, undefined, undefined, undefined)
     }
   ];
 
@@ -800,6 +806,15 @@ describe('filterToolCalls', () => {
     assert.lengthOf(resultPending, 2);
     assert.strictEqual(resultPending[0].invocationId, '1');
     assert.strictEqual(resultPending[1].invocationId, '4');
+
+    const resultCanceled = filterToolCalls(mockCalls, {
+      text: '',
+      statusTypes: {
+        canceled: true,
+      },
+    });
+    assert.lengthOf(resultCanceled, 1);
+    assert.strictEqual(resultCanceled[0].invocationId, '6');
   });
 
   it('filters by type', () => {
@@ -819,10 +834,11 @@ describe('filterToolCalls', () => {
         imperative: true,
       },
     });
-    assert.lengthOf(resultImperative, 3);
+    assert.lengthOf(resultImperative, 4);
     assert.strictEqual(resultImperative[0].invocationId, '1');
     assert.strictEqual(resultImperative[1].invocationId, '2');
     assert.strictEqual(resultImperative[2].invocationId, '3');
+    assert.strictEqual(resultImperative[3].invocationId, '6');
   });
 
   it('filters by all three together', () => {
