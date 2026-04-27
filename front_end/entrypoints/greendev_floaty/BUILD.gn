@@ -34,6 +34,7 @@ devtools_entrypoint("floaty_entrypoint") {
     "../../foundation:bundle",
     "../../generated",
     "../../models/ai_assistance:bundle",
+    "../../models/logs:meta",
     "../../models/workspace:meta",
     "../../panels/greendev:greendev_shared",
     "../../panels/sensors:meta",

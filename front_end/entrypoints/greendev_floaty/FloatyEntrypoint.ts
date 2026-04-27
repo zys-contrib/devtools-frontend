@@ -5,6 +5,7 @@
 
 import '../../core/sdk/sdk-meta.js';
 import '../../models/workspace/workspace-meta.js';
+import '../../models/logs/logs-meta.js';
 import '../../panels/sensors/sensors-meta.js';
 import '../../entrypoints/inspector_main/inspector_main-meta.js';
 import '../../entrypoints/main/main-meta.js';
@@ -19,6 +20,7 @@ import * as SDK from '../../core/sdk/sdk.js';
 import * as Foundation from '../../foundation/foundation.js';
 import type * as Protocol from '../../generated/protocol.js';
 import * as AiAssistance from '../../models/ai_assistance/ai_assistance.js';
+import * as Greendev from '../../models/greendev/greendev.js';
 import type {SyncMessage} from '../../panels/greendev/GreenDevShared.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import * as ThemeSupport from '../../ui/legacy/theme_support/theme_support.js';
@@ -33,7 +35,7 @@ class GreenDevFloaty {
   #textField!: HTMLInputElement;
   #playButton!: HTMLButtonElement;
   #node?: SDK.DOMModel.DOMNode;
-  #agent?: AiAssistance.StylingAgent.StylingAgent;
+  #agent?: AiAssistance.GreenDevAgent.GreenDevAgent|AiAssistance.StylingAgent.StylingAgent;
   #nodeContext?: AiAssistance.StylingAgent.NodeContext;
   #backendNodeId?: Protocol.DOM.BackendNodeId;
   #syncChannel: BroadcastChannel;
@@ -92,7 +94,7 @@ class GreenDevFloaty {
         const msg = JSON.stringify({
           id: 9999,
           method: 'Overlay.setShowInspectedElementAnchor',
-          params: {inspectedElementAnchorConfig: {backendNodeId: this.#backendNodeId}}
+          params: {inspectedElementAnchorConfig: {backendNodeId: this.#backendNodeId}},
         });
         Host.InspectorFrontendHost.InspectorFrontendHostInstance.sendMessageToBackend(msg);
       }
@@ -112,7 +114,7 @@ class GreenDevFloaty {
       type: 'full-state',
       messages: this.#getMessages(),
       sessionId: this.#backendNodeId,
-      nodeDescription: document.querySelector('.green-dev-floaty-dialog-node-description')?.textContent
+      nodeDescription: document.querySelector('.green-dev-floaty-dialog-node-description')?.textContent,
     };
     this.#syncChannel.postMessage(state);
   }
@@ -143,10 +145,7 @@ class GreenDevFloaty {
     }
   }
 
-  static instance(opts: {
-    forceNew: boolean|null,
-    document: Document,
-  } = {forceNew: null, document}): GreenDevFloaty {
+  static instance(opts: {forceNew: boolean|null, document: Document} = {forceNew: null, document}): GreenDevFloaty {
     const {forceNew, document} = opts;
     if (!greenDevFloatyInstance || forceNew) {
       greenDevFloatyInstance = new GreenDevFloaty(document);
@@ -235,7 +234,7 @@ class GreenDevFloaty {
       const msg = JSON.stringify({
         id: 9999,
         method: 'Overlay.setShowInspectedElementAnchor',
-        params: {inspectedElementAnchorConfig: {backendNodeId: this.#backendNodeId}}
+        params: {inspectedElementAnchorConfig: {backendNodeId: this.#backendNodeId}},
       });
       Host.InspectorFrontendHost.InspectorFrontendHostInstance.sendMessageToBackend(msg);
     }
@@ -265,10 +264,16 @@ class GreenDevFloaty {
     const query = this.#textField.value || this.#textField.placeholder;
     this.#textField.value = '';
 
+    const useGreenDevAgent = Greendev.Prototypes.instance().isEnabled('beyondStyling');
+
     if (!this.#agent) {
       const aidaClient = new AidaClient();
-      this.#agent = new AiAssistance.StylingAgent.StylingAgent({aidaClient});
-      this.#nodeContext = new AiAssistance.StylingAgent.NodeContext(this.#node);
+      if (useGreenDevAgent) {
+        this.#agent = new AiAssistance.GreenDevAgent.GreenDevAgent({aidaClient});
+      } else {
+        this.#agent = new AiAssistance.StylingAgent.StylingAgent({aidaClient});
+        this.#nodeContext = new AiAssistance.StylingAgent.NodeContext(this.#node);
+      }
     }
 
     this.#addMessageInternal(query, true);
@@ -290,10 +295,111 @@ class GreenDevFloaty {
     });
 
     try {
-      if (!this.#nodeContext) {
-        throw new Error('Node context not found.');
+      let results;
+      if (useGreenDevAgent && this.#agent instanceof AiAssistance.GreenDevAgent.GreenDevAgent) {
+        const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+        if (!target) {
+          return;
+        }
+
+        // --- Add the Accessibility Tree ---
+        const accessibilityModel = target.model(SDK.AccessibilityModel.AccessibilityModel);
+        let axTree = '';
+        if (accessibilityModel) {
+          await accessibilityModel.resumeModel();
+          const axResponse = await accessibilityModel.agent.invoke_getFullAXTree({});
+          if (!axResponse.getError()) {
+            axTree = JSON.stringify(axResponse.nodes);
+          } else {
+            console.error('Failed to capture Accessibility Tree:', axResponse.getError());
+          }
+        }
+
+        // --- Add the most recent network requests ---
+        const allNetworkRequests = await AiAssistance.GreenDevAgent.GreenDevAgent.getNetworkContextData(target);
+        const networkResourcesMax = 50;
+        const startNetworkIndex = Math.max(0, allNetworkRequests.length - networkResourcesMax);
+        const lastNetworkRequests = allNetworkRequests.slice(startNetworkIndex);
+        let formattedNetworkContext = lastNetworkRequests.map(req => req.string).join('\n');
+
+        if (!formattedNetworkContext) {
+          formattedNetworkContext = 'No network requests found.';
+        } else {
+          const footer = allNetworkRequests.length > lastNetworkRequests.length ?
+              `${
+                  allNetworkRequests.length -
+                  lastNetworkRequests.length} additional requests are available (network requests shown are capped at ${
+                  networkResourcesMax} requests).` :
+              'No further network requests have been issued.';
+
+          formattedNetworkContext = `Showing network requests with indices ${startNetworkIndex}-${
+              startNetworkIndex + lastNetworkRequests.length - 1}:\n\n${formattedNetworkContext}\n\n${footer}`;
+        }
+
+        // --- Add the most recent console messages ---
+        const consoleModel = target.model(SDK.ConsoleModel.ConsoleModel);
+        const allConsoleMessages = consoleModel ? consoleModel.messages() : [];
+        const consoleMsgLimit = 50;
+        const startIndex = Math.max(0, allConsoleMessages.length - consoleMsgLimit);
+        const lastConsoleMessages = allConsoleMessages.slice(startIndex);
+        let formattedConsoleMessages =
+            lastConsoleMessages
+                .map(
+                    (entry: SDK.ConsoleModel.ConsoleMessage, i: number) =>
+                        AiAssistance.GreenDevAgent.GreenDevAgent.formatConsoleMessage(entry, startIndex + i))
+                .join('\n');
+        formattedConsoleMessages = formattedConsoleMessages.trimEnd();
+
+        if (!formattedConsoleMessages) {
+          formattedConsoleMessages = 'No console messages found.';
+        } else {
+          const footer = allConsoleMessages.length > lastConsoleMessages.length ?
+              `${
+                  allConsoleMessages.length -
+                  lastConsoleMessages.length} additional messages are available (errors shown are capped at ${
+                  consoleMsgLimit} most recent).` :
+              'No further console messages have been emitted.';
+
+          formattedConsoleMessages = `Showing console messages with indices ${startIndex}-${
+              startIndex + lastConsoleMessages.length - 1}:\n\n${formattedConsoleMessages}\n\n${footer}`;
+        }
+
+        const mainUrl = target.inspectedURL();
+
+        // --- Add some context information about the selected node ---
+        const elementContext = await AiAssistance.StylingAgent.StylingAgent.describeElement(this.#node);
+        const context = `# Page URL
+
+${mainUrl}
+
+# User-selected node
+
+${elementContext}
+
+# Recent network requests
+
+${formattedNetworkContext}
+
+# Recent console messages
+
+${formattedConsoleMessages}
+
+# Accessibility tree
+
+${axTree}`;
+
+        const nodeContext = new AiAssistance.GreenDevAgent.GreenDevContext(context);
+        results = this.#agent.run(query, {selected: nodeContext});
+      } else if (this.#agent instanceof AiAssistance.StylingAgent.StylingAgent) {
+        if (!this.#nodeContext) {
+          throw new Error('Node context not found.');
+        }
+        results = this.#agent.run(query, {selected: this.#nodeContext});
+      } else {
+        throw new Error('Agent not initialized correctly');
       }
-      for await (const result of this.#agent.run(query, {selected: this.#nodeContext})) {
+
+      for await (const result of results) {
         switch (result.type) {
           case ResponseType.ANSWER:
             aiContent.textContent = result.text;
