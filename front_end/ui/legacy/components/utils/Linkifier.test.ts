@@ -316,6 +316,46 @@ describeWithMockConnection('Linkifier', () => {
     });
   });
 
+  describe('linkifyUILocation', () => {
+    it('creates a link from a UILocation', async () => {
+      const {target, backend} = setUpEnvironment();
+      const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
+      const url = Platform.DevToolsPath.urlString`https://www.google.com/script.js`;
+      const script = await backend.addScript(target, {content: simpleScriptContent, url}, null);
+      const uiSourceCode = debuggerWorkspaceBinding.uiSourceCodeForScript(script);
+      assert.exists(uiSourceCode);
+
+      const uiLocation = new Workspace.UISourceCode.UILocation(uiSourceCode, 1, 2);
+      const anchor = Components.Linkifier.Linkifier.linkifyUILocation(uiLocation);
+
+      assert.exists(anchor);
+      assert.include(anchor.textContent, 'script.js');
+      assert.include(anchor.textContent, '2');
+    });
+
+    it('applies ignore-list-link class to fallback anchor if URL is ignore-listed and manager is provided',
+       async () => {
+         const {target, backend} = setUpEnvironment();
+         const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
+         const url = Platform.DevToolsPath.urlString`https://www.google.com/script.js`;
+         const script = await backend.addScript(target, {content: simpleScriptContent, url}, null);
+         const uiSourceCode = debuggerWorkspaceBinding.uiSourceCodeForScript(script);
+         assert.exists(uiSourceCode);
+
+         const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance();
+         ignoreListManager.ignoreListURL(url);
+
+         const uiLocation = new Workspace.UISourceCode.UILocation(uiSourceCode, 1, 2);
+         const anchor = Components.Linkifier.Linkifier.linkifyUILocation(uiLocation, {ignoreListManager});
+
+         assert.exists(anchor);
+         const info = Components.Linkifier.Linkifier.linkInfo(anchor);
+         assert.exists(info);
+         assert.exists(info.fallback);
+         assert.isTrue(info.fallback.classList.contains('ignore-list-link'));
+       });
+  });
+
   describe('maybeLinkifyScriptLocation', () => {
     it('uses the BreakLocation as a revealable if the option is provided and a breakpoint is at the given location',
        async () => {

@@ -347,11 +347,11 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper<EventTypes> im
         callFrame.url as Platform.DevToolsPath.UrlString, callFrame.lineNumber, linkifyOptions);
   }
 
-  static linkifyStackTraceFrame(frame: StackTrace.StackTrace.Frame, options?: LinkifyOptions): HTMLElement {
+  static linkifyUILocation(uiLocation: Workspace.UISourceCode.UILocation, options?: LinkifyOptions): HTMLElement {
     const linkifyURLOptions = {
       ...options,
-      lineNumber: frame.line,
-      columnNumber: frame.column,
+      lineNumber: uiLocation.lineNumber,
+      columnNumber: uiLocation.columnNumber,
       showColumnNumber: Boolean(options?.showColumnNumber),
       className: options?.className,
       tabStop: options?.tabStop,
@@ -361,13 +361,10 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper<EventTypes> im
       omitOrigin: options?.omitOrigin,
     } satisfies LinkifyURLOptions;
     const {className = ''} = linkifyURLOptions;
-    const fallbackAnchor = Linkifier.linkifyURL(frame.url as Platform.DevToolsPath.UrlString, linkifyURLOptions);
-    if (!frame.uiSourceCode) {
-      const isIgnoreListed = (options?.ignoreListManager ?? Workspace.IgnoreListManager.IgnoreListManager.instance())
-                                 .isUserIgnoreListedURL(frame.url as Platform.DevToolsPath.UrlString);
-      fallbackAnchor.classList.toggle('ignore-list-link', isIgnoreListed);
-      return fallbackAnchor;
-    }
+    const fallbackAnchor = Linkifier.linkifyURL(uiLocation.uiSourceCode.url(), linkifyURLOptions);
+    const isIgnoreListed = (options?.ignoreListManager ?? Workspace.IgnoreListManager.IgnoreListManager.instance())
+                               .isUserIgnoreListedURL(uiLocation.uiSourceCode.url());
+    fallbackAnchor.classList.toggle('ignore-list-link', isIgnoreListed);
 
     const createLinkOptions: CreateLinkOptions = {
       tabStop: options?.tabStop,
@@ -384,10 +381,34 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper<EventTypes> im
       revealBreakpoint: options?.revealBreakpoint,
     };
 
-    const uiLocation = frame.uiSourceCode.uiLocation(frame.line, frame.column) ?? null;
     Linkifier.updateAnchorFromUILocation(link, linkDisplayOptions, uiLocation, options?.ignoreListManager);
 
     return link;
+  }
+
+  static linkifyStackTraceFrame(frame: StackTrace.StackTrace.Frame, options?: LinkifyOptions): HTMLElement {
+    const linkifyURLOptions = {
+      ...options,
+      lineNumber: frame.line,
+      columnNumber: frame.column,
+      showColumnNumber: Boolean(options?.showColumnNumber),
+      className: options?.className,
+      tabStop: options?.tabStop,
+      inlineFrameIndex: options?.inlineFrameIndex ?? 0,
+      userMetric: options?.userMetric,
+      jslogContext: options?.jslogContext || 'script-location',
+      omitOrigin: options?.omitOrigin,
+    } satisfies LinkifyURLOptions;
+    const fallbackAnchor = Linkifier.linkifyURL(frame.url as Platform.DevToolsPath.UrlString, linkifyURLOptions);
+    if (!frame.uiSourceCode) {
+      const isIgnoreListed = (options?.ignoreListManager ?? Workspace.IgnoreListManager.IgnoreListManager.instance())
+                                 .isUserIgnoreListedURL(frame.url as Platform.DevToolsPath.UrlString);
+      fallbackAnchor.classList.toggle('ignore-list-link', isIgnoreListed);
+      return fallbackAnchor;
+    }
+
+    const uiLocation = frame.uiSourceCode.uiLocation(frame.line, frame.column);
+    return Linkifier.linkifyUILocation(uiLocation, options);
   }
 
   linkifyStackTraceTopFrame(target: SDK.Target.Target|null, stackTrace: Protocol.Runtime.StackTrace): HTMLElement {
