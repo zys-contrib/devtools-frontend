@@ -171,6 +171,14 @@ const UIStrings = {
    * @description Text for the header of the tool run section
    */
   runTool: 'Run Tool',
+  /**
+   * @description Context menu action to reveal the tool in the tool list
+   */
+  revealTool: 'Reveal tool',
+  /**
+   * @description Context menu action to edit and run the tool
+   */
+  editAndRun: 'Edit and run',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/application/WebMCPView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -198,10 +206,15 @@ export interface FilterMenuButtons {
   toolTypes: FilterMenuButton;
   statusTypes: FilterMenuButton;
 }
+export interface SelectedTool {
+  tool: WebMCP.WebMCPModel.Tool;
+  parameters?: Record<string, unknown>;
+}
 export interface ViewInput {
   tools: WebMCP.WebMCPModel.Tool[];
-  selectedTool: WebMCP.WebMCPModel.Tool|null;
+  selectedTool: SelectedTool|null;
   onToolSelect: (tool: WebMCP.WebMCPModel.Tool|null) => void;
+  onRevealTool: (tool: WebMCP.WebMCPModel.Tool, parameters?: Record<string, unknown>) => void;
   selectedCall: WebMCP.WebMCPModel.Call|null;
   onCallSelect: (call: WebMCP.WebMCPModel.Call|null) => void;
   filters: FilterState;
@@ -453,8 +466,33 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                       'status-error': call.result?.status === Protocol.WebMCP.InvocationStatus.Error,
                       'status-cancelled': call.result?.status === Protocol.WebMCP.InvocationStatus.Canceled,
                       selected: call === input.selectedCall,
-                    })} @click=${() => input.onCallSelect(call)}>
-                      <td>${call.tool.name}</td>
+                    })} @click=${() => input.onCallSelect(call)}
+                        @contextmenu=${(e: CustomEvent<UI.ContextMenu.ContextMenu>) => {
+                          const contextMenu = e.detail;
+                          contextMenu.defaultSection().appendItem(i18nString(UIStrings.revealTool), () => {
+                            input.onRevealTool(call.tool);
+                          }, {jslogContext: 'webmcp.reveal-tool'});
+                          contextMenu.defaultSection().appendItem(i18nString(UIStrings.editAndRun), () => {
+                            const payload = parsePayload(call.input);
+                            input.onRevealTool(call.tool, payload.valueObject as Record<string, unknown> | undefined);
+                          }, {jslogContext: 'webmcp.edit-and-run'});
+                        }}>
+                      <td>
+                        <div class="name-cell">
+                          <span>${call.tool.name}</span>
+                          <button class="run-tool-action-button"
+                                  title=${i18nString(UIStrings.editAndRun)}
+                                  aria-label=${i18nString(UIStrings.editAndRun)}
+                                  @click=${(e: Event) => {
+                                    e.stopPropagation();
+                                    const payload = parsePayload(call.input);
+                                    input.onRevealTool(call.tool,
+                                                       payload.valueObject as Record<string, unknown> | undefined);
+                                  }}>
+                            <devtools-icon name="goto-filled"></devtools-icon>
+                          </button>
+                        </div>
+                      </td>
                       <td>
                         <div class="status-cell">
                           ${iconName(call) ? html`<devtools-icon class="small" name=${iconName(call)}></devtools-icon>`
@@ -537,7 +575,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                 const toolStats = calculateToolStats(input.toolCalls.filter(c => c.tool === tool));
                 const groups = getIconGroupsFromStats(toolStats);
                 return html`
-                    <div class=${Directives.classMap({'tool-item': true, selected: tool === input.selectedTool})}
+                    <div class=${Directives.classMap({'tool-item': true, selected: tool === input.selectedTool?.tool})}
                          @click=${() => input.onToolSelect(tool)}
                          @contextmenu=${(e: Event) => onToolContextMenu(e, tool)}>
                     <div class="tool-name-container">
@@ -565,7 +603,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
           </div>
           ${input.selectedTool ? html`
             <div class="sidebar-tool-details">
-              ${widget(ToolDetailsWidget, {tool: input.selectedTool})}
+              ${widget(ToolDetailsWidget, {tool: input.selectedTool.tool})}
             </div>
             <div class="section-title">
               <span>${i18nString(UIStrings.runTool)}</span>
@@ -576,9 +614,12 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                 displayTargetSelector: false,
                 displayCommandInput: false,
                 displayToolbar: false,
-                ...getJSONEditorParameters(input.selectedTool),
-                commandToDisplay: input.selectedTool.name,
-              })}
+                ...getJSONEditorParameters(input.selectedTool.tool),
+                commandToDisplay: {
+                  command: input.selectedTool.tool.name,
+                  parameters: input.selectedTool.parameters || {}
+                },
+                })}
               ${UI.Widget.widgetRef(ProtocolMonitor.JSONEditor.JSONEditor, e => { editorWidget = e; })}
               @submiteditor=${(e: CustomEvent<ProtocolMonitor.JSONEditor.Command>) => input.onRunTool({data: e.detail})}
             ></devtools-widget>
@@ -592,7 +633,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                   const params = editorWidget.getParameters();
                   input.onRunTool({
                     data: {
-                      command: input.selectedTool.name,
+                      command: input.selectedTool.tool.name,
                       parameters: params,
                     } as ProtocolMonitor.JSONEditor.Command
                   });
@@ -608,7 +649,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
 
 export class WebMCPView extends UI.Widget.VBox {
   readonly #view: View;
-  #selectedTool: WebMCP.WebMCPModel.Tool|null = null;
+  #selectedTool: SelectedTool|null = null;
   #selectedCall: WebMCP.WebMCPModel.Call|null = null;
 
   #filterState: FilterState = {
@@ -721,7 +762,7 @@ export class WebMCPView extends UI.Widget.VBox {
   }
 
   #toolsRemoved(event: Common.EventTarget.EventTargetEvent<readonly WebMCP.WebMCPModel.Tool[]>): void {
-    if (this.#selectedTool && event.data.includes(this.#selectedTool)) {
+    if (this.#selectedTool && event.data.includes(this.#selectedTool.tool)) {
       this.#selectedTool = null;
     }
     this.requestUpdate();
@@ -763,7 +804,11 @@ export class WebMCPView extends UI.Widget.VBox {
       tools,
       selectedTool: this.#selectedTool,
       onToolSelect: tool => {
-        this.#selectedTool = tool;
+        this.#selectedTool = tool ? {tool} : null;
+        this.requestUpdate();
+      },
+      onRevealTool: (tool, parameters) => {
+        this.#selectedTool = {tool, parameters};
         this.requestUpdate();
       },
       selectedCall: this.#selectedCall,
@@ -778,7 +823,7 @@ export class WebMCPView extends UI.Widget.VBox {
       onFilterChange: this.#handleFilterChange,
       onRunTool: event => {
         if (this.#selectedTool) {
-          void this.#selectedTool.invoke(event.data.parameters || {});
+          void this.#selectedTool.tool.invoke(event.data.parameters || {});
         }
       },
     };

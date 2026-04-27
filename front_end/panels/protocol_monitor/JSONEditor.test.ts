@@ -1363,7 +1363,7 @@ describeWithEnvironment('JSONEditor', () => {
 
     it('sets the command via commandToDisplay', async () => {
       const jsonEditor = renderJSONEditor();
-      jsonEditor.commandToDisplay = 'Test.testCommand';
+      jsonEditor.commandToDisplay = {command: 'Test.testCommand', parameters: {}};
       await jsonEditor.updateComplete;
 
       assert.strictEqual(jsonEditor.command, 'Test.testCommand');

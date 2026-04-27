@@ -254,8 +254,8 @@ export class JSONEditor extends Common.ObjectWrapper.eventMixin<EventTypes, type
     }
   }
 
-  set commandToDisplay(command: string) {
-    this.displayCommand(command, {});
+  set commandToDisplay(data: {command: string, parameters: Record<string, unknown>}) {
+    this.displayCommand(data.command, data.parameters);
   }
 
   get targetId(): string|undefined {

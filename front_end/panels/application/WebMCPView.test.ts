@@ -20,6 +20,7 @@ import {assertScreenshot, renderElementIntoDOM} from '../../testing/DOMHelpers.j
 import {createTarget, describeWithEnvironment, updateHostConfig} from '../../testing/EnvironmentHelpers.js';
 import {StubStackTrace} from '../../testing/StackTraceHelpers.js';
 import {createViewFunctionStub} from '../../testing/ViewFunctionHelpers.js';
+import * as RenderCoordinator from '../../ui/components/render_coordinator/render_coordinator.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import * as ProtocolMonitor from '../protocol_monitor/protocol_monitor.js';
 
@@ -36,23 +37,24 @@ function createTool(
     }): WebMCP.WebMCPModel.Tool {
   return new WebMCP.WebMCPModel.Tool({name, description, inputSchema, frameId, backendNodeId}, target);
 }
-describeWithEnvironment('WebMCPView (View)', () => {
-  const createDefaultViewInput = (): Application.WebMCPView.ViewInput => {
-    return {
-      filters: {text: ''},
-      tools: [],
-      toolCalls: [],
-      filterButtons: WebMCPView.createFilterButtons(() => {}, () => {}),
-      onClearLogClick: () => {},
-      onFilterChange: () => {},
-      selectedTool: null,
-      onToolSelect: () => {},
-      selectedCall: null,
-      onCallSelect: () => {},
-      onRunTool: () => {},
-    };
+const createDefaultViewInput = (): Application.WebMCPView.ViewInput => {
+  return {
+    filters: {text: ''},
+    tools: [],
+    toolCalls: [],
+    filterButtons: WebMCPView.createFilterButtons(() => {}, () => {}),
+    onClearLogClick: () => {},
+    onFilterChange: () => {},
+    selectedTool: null,
+    onToolSelect: () => {},
+    onRevealTool: () => {},
+    selectedCall: null,
+    onCallSelect: () => {},
+    onRunTool: () => {},
   };
+};
 
+describeWithEnvironment('WebMCPView (View)', () => {
   it('renders empty when no tools are available', async () => {
     const target = document.createElement('div');
     target.style.width = '600px';
@@ -129,6 +131,59 @@ describeWithEnvironment('WebMCPView (View)', () => {
     const grid = target.querySelector('devtools-data-grid');
     assert.isNotNull(grid);
     await assertScreenshot('application/webmcp-tool-calls.png');
+  });
+
+  it('renders tool calls with action button visible on focus', async () => {
+    updateHostConfig({devToolsWebMCPSupport: {enabled: true}});
+    const sdkTarget = createTarget();
+    const target = document.createElement('div');
+    target.style.width = '600px';
+    target.style.height = '400px';
+    renderElementIntoDOM(target, {includeCommonStyles: true});
+
+    const tools = [
+      createTool('list_files', 'List files', 'frame-1' as Protocol.Page.FrameId, sdkTarget),
+    ];
+    const toolCalls: WebMCP.WebMCPModel.Call[] = [
+      {
+        invocationId: '1',
+        input: '{"dir": "/tmp"}',
+        tool: tools[0],
+      },
+    ];
+    DEFAULT_VIEW(
+        {
+          ...createDefaultViewInput(),
+          tools,
+          toolCalls,
+          selectedCall: toolCalls[0],
+        },
+        {}, target);
+
+    const grid = target.querySelector('devtools-data-grid');
+    assert.isNotNull(grid);
+
+    await RenderCoordinator.done({waitForWork: true});
+
+    const row = grid.shadowRoot?.querySelector('tbody tr.selected') as HTMLElement;
+    assert.isNotNull(row);
+
+    // Focus the datagrid wrapper to trigger focus-within on host-context
+    const dataGridContainer = grid.shadowRoot?.querySelector('.data-grid') as HTMLElement;
+    assert.isNotNull(dataGridContainer);
+    dataGridContainer.focus();
+
+    const button = grid.shadowRoot?.querySelector('.run-tool-action-button') as HTMLElement;
+    assert.isNotNull(button);
+
+    const icon = button.querySelector('devtools-icon') as HTMLElement;
+    assert.isNotNull(icon);
+
+    const rect = icon.getBoundingClientRect();
+    assert.isAbove(rect.width, 0, 'Icon width should be above 0');
+    assert.isAbove(rect.height, 0, 'Icon height should be above 0');
+
+    await assertScreenshot('application/webmcp-tool-call-action-focus.png');
   });
 
   it('renders a list of tools correctly', async () => {
@@ -225,7 +280,7 @@ describeWithEnvironment('WebMCPView (View)', () => {
         {
           ...createDefaultViewInput(),
           tools,
-          selectedTool: tools[1],
+          selectedTool: {tool: tools[1]},
         },
         {}, target);
 
@@ -378,6 +433,59 @@ describeWithEnvironment('WebMCPView (View)', () => {
     clearButton.click();
     sinon.assert.calledOnce(onClearLogClick);
   });
+
+  it('calls onRevealTool on context menu actions', async () => {
+    updateHostConfig({devToolsWebMCPSupport: {enabled: true}});
+    const sdkTarget = createTarget();
+    const target = document.createElement('div');
+    target.style.width = '600px';
+    target.style.height = '400px';
+    renderElementIntoDOM(target, {includeCommonStyles: true});
+
+    const tool = createTool('list_files', 'List files', 'frame-1' as Protocol.Page.FrameId, sdkTarget);
+    const selectedCall: WebMCP.WebMCPModel.Call = {
+      invocationId: '1',
+      input: '{"dir": "/tmp"}',
+      tool,
+      result: new WebMCP.WebMCPModel.Result(
+          Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined)
+    };
+
+    const onRevealTool = sinon.spy();
+
+    DEFAULT_VIEW(
+        {
+          ...createDefaultViewInput(),
+          toolCalls: [selectedCall],
+          onRevealTool,
+        },
+        {}, target);
+
+    const dataGrid = target.querySelector('devtools-data-grid');
+    assert.isNotNull(dataGrid);
+
+    // Wait for the data grid to fully render its shadow DOM and internal legacy grid
+    await RenderCoordinator.done({waitForWork: true});
+
+    const nameCell = dataGrid.shadowRoot?.querySelector('.name-cell') as HTMLElement;
+    assert.isNotNull(nameCell);
+    const row = nameCell.closest('tr') as HTMLElement;
+    assert.isNotNull(row);
+
+    // Select the row before requesting the context menu
+    row.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+    const contextMenu = getContextMenuForElement(row);
+
+    const revealToolItem = findMenuItemWithLabel(contextMenu.defaultSection(), 'Reveal tool');
+    assert.exists(revealToolItem);
+    contextMenu.invokeHandler(revealToolItem.id());
+    sinon.assert.calledWith(onRevealTool, tool);
+
+    const editAndRunItem = findMenuItemWithLabel(contextMenu.defaultSection(), 'Edit and run');
+    assert.exists(editAndRunItem);
+    contextMenu.invokeHandler(editAndRunItem.id());
+    sinon.assert.calledWith(onRevealTool, tool, {dir: '/tmp'});
+  });
 });
 
 describeWithEnvironment('WebMCPView Presenter', () => {
@@ -436,7 +544,25 @@ describeWithEnvironment('WebMCPView Presenter', () => {
 
     viewStub.input.onToolSelect(tool);
     const nextInput = await viewStub.nextInput;
-    assert.strictEqual(nextInput.selectedTool, tool);
+    assert.strictEqual(nextInput.selectedTool?.tool, tool);
+  });
+
+  it('updates selected tool and parameters on reveal tool', async () => {
+    const {model, viewStub} = await setup();
+    const toolProtocol = {
+      name: 'tool1',
+      description: 'desc1',
+      inputSchema: {type: 'object'},
+      frameId: 'frame1' as Protocol.Page.FrameId
+    };
+    model.toolsAdded({tools: [toolProtocol]});
+    const input = await viewStub.nextInput;
+    const tool = input.tools[0];
+
+    viewStub.input.onRevealTool(tool, {foo: 'bar'});
+    const nextInput = await viewStub.nextInput;
+    assert.strictEqual(nextInput.selectedTool?.tool, tool);
+    assert.deepEqual(nextInput.selectedTool?.parameters, {foo: 'bar'});
   });
 
   it('invokes tool via onRunTool', async () => {
@@ -474,7 +600,6 @@ describeWithEnvironment('WebMCPView Presenter', () => {
     });
     sinon.assert.calledWith(invokeStub, {toolName: 'tool1', frameId: 'frame1' as Protocol.Page.FrameId, input: {}});
   });
-
   it('updates when tools are removed', async () => {
     const {model, viewStub} = await setup();
     const tool = {
@@ -506,7 +631,7 @@ describeWithEnvironment('WebMCPView Presenter', () => {
 
     viewStub.input.onToolSelect(tool);
     const nextInput = await viewStub.nextInput;
-    assert.strictEqual(nextInput.selectedTool, tool);
+    assert.strictEqual(nextInput.selectedTool?.tool, tool);
 
     model.toolsRemoved({tools: [toolProtocol]});
     const finalInput = await viewStub.nextInput;
@@ -1032,6 +1157,7 @@ describeWithEnvironment('WebMCPView JSON Editor', () => {
       onFilterChange: () => {},
       selectedTool: null,
       onToolSelect: () => {},
+      onRevealTool: () => {},
       selectedCall: null,
       onCallSelect: () => {},
       onRunTool: () => {},
@@ -1056,7 +1182,7 @@ describeWithEnvironment('WebMCPView JSON Editor', () => {
     Application.WebMCPView.DEFAULT_VIEW(
         {
           ...createDefaultViewInput(),
-          selectedTool: tool,
+          selectedTool: {tool},
         },
         {}, targetEl);
 
@@ -1066,10 +1192,10 @@ describeWithEnvironment('WebMCPView JSON Editor', () => {
     const devtoolsWidget = targetEl.querySelector('devtools-widget.json-editor-widget');
     assert.isNotNull(devtoolsWidget);
 
-    const inputs = devtoolsWidget!.shadowRoot?.querySelectorAll('devtools-suggestion-input');
+    const inputs = devtoolsWidget.shadowRoot?.querySelectorAll('devtools-suggestion-input');
 
     assert.isDefined(inputs);
-    assert.isTrue(inputs!.length > 0, 'Should render suggestion inputs for parameters');
+    assert.isTrue(inputs.length > 0, 'Should render suggestion inputs for parameters');
 
     await assertScreenshot('application/webmcp-json-editor.png');
   });
