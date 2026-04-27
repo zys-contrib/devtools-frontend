@@ -179,6 +179,10 @@ const UIStrings = {
    * @description Context menu action to edit and run the tool
    */
   editAndRun: 'Edit and run',
+  /**
+   * @description Notice to display when a tool has been unregistered
+   */
+  toolUnregisteredNotice: 'This tool has been unregistered',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/application/WebMCPView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -469,13 +473,14 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                     })} @click=${() => input.onCallSelect(call)}
                         @contextmenu=${(e: CustomEvent<UI.ContextMenu.ContextMenu>) => {
                           const contextMenu = e.detail;
+                          const isUnregistered = !input.tools.includes(call.tool);
                           contextMenu.defaultSection().appendItem(i18nString(UIStrings.revealTool), () => {
                             input.onRevealTool(call.tool);
-                          }, {jslogContext: 'webmcp.reveal-tool'});
+                          }, {jslogContext: 'webmcp.reveal-tool', disabled: isUnregistered});
                           contextMenu.defaultSection().appendItem(i18nString(UIStrings.editAndRun), () => {
                             const payload = parsePayload(call.input);
                             input.onRevealTool(call.tool, payload.valueObject as Record<string, unknown> | undefined);
-                          }, {jslogContext: 'webmcp.edit-and-run'});
+                          }, {jslogContext: 'webmcp.edit-and-run', disabled: isUnregistered});
                         }}>
                       <td>
                         <div class="name-cell">
@@ -523,7 +528,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                 <devtools-widget
                   id="webmcp.tool-details"
                   title=${i18nString(UIStrings.toolDetails)}
-                  ${widget(ToolDetailsWidget, {tool: input.selectedCall?.tool})}>
+                  ${widget(ToolDetailsWidget, {tool: input.selectedCall?.tool, isUnregistered: input.selectedCall ? !input.tools.includes(input.selectedCall.tool) : false})}>
                 </devtools-widget>
                 <devtools-widget
                   id="webmcp.call-inputs"
@@ -1009,6 +1014,7 @@ export class PayloadWidget extends UI.Widget.Widget {
 
 export interface ToolDetailsViewInput {
   tool: WebMCP.WebMCPModel.Tool|null|undefined;
+  isUnregistered?: boolean;
   origin: SDK.DOMModel.DOMNode|StackTrace.StackTrace.StackTrace|undefined;
   highlightNode: (node: SDK.DOMModel.DOMNode) => void;
   clearHighlight: () => void;
@@ -1065,6 +1071,16 @@ const TOOL_DETAILS_VIEW = (input: ToolDetailsViewInput, output: undefined, targe
                  {stackTrace: origin, options: { expandable: true}})}
       </div>` : nothing}
     </div>
+    ${input.isUnregistered ? html`
+      <div class="call-to-action">
+        <div class="call-to-action-body">
+          <div class="explanation">
+            <devtools-icon class="inline-icon medium" name="warning-filled"></devtools-icon>
+            ${i18nString(UIStrings.toolUnregisteredNotice)}
+          </div>
+        </div>
+      </div>
+    ` : nothing}
   `, target);
 };
 // clang-format on
@@ -1072,12 +1088,25 @@ const TOOL_DETAILS_VIEW = (input: ToolDetailsViewInput, output: undefined, targe
 export class ToolDetailsWidget extends UI.Widget.Widget {
   #tool: WebMCP.WebMCPModel.Tool|null|undefined = null;
   #origin: SDK.DOMModel.DOMNode|StackTrace.StackTrace.StackTrace|undefined;
+  #isUnregistered = false;
 
   #view: typeof TOOL_DETAILS_VIEW;
 
   constructor(element?: HTMLElement, view: typeof TOOL_DETAILS_VIEW = TOOL_DETAILS_VIEW) {
     super(element);
     this.#view = view;
+  }
+
+  set isUnregistered(isUnregistered: boolean) {
+    if (this.#isUnregistered === isUnregistered) {
+      return;
+    }
+    this.#isUnregistered = isUnregistered;
+    this.requestUpdate();
+  }
+
+  get isUnregistered(): boolean {
+    return this.#isUnregistered;
   }
 
   set tool(tool: WebMCP.WebMCPModel.Tool|null|undefined) {
@@ -1121,6 +1150,7 @@ export class ToolDetailsWidget extends UI.Widget.Widget {
   override performUpdate(): void {
     const viewInput = {
       tool: this.#tool,
+      isUnregistered: this.#isUnregistered,
       origin: this.#origin,
       highlightNode: this.#highlightNode,
       clearHighlight: this.#clearHighlight,

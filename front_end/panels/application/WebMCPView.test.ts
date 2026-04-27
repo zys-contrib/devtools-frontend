@@ -296,7 +296,7 @@ describeWithEnvironment('WebMCPView (View)', () => {
     const sdkTarget = createTarget();
     const target = document.createElement('div');
     target.style.width = '600px';
-    target.style.height = '400px';
+    target.style.height = '600px';
     renderElementIntoDOM(target, {includeCommonStyles: true});
 
     const tool = createTool('list_files', 'List files', 'frame-1' as Protocol.Page.FrameId, sdkTarget);
@@ -866,6 +866,30 @@ describeWithEnvironment('ToolDetailsWidget', () => {
     await widget.updateComplete;
 
     await assertScreenshot('application/webmcp_tool_details_frame.png');
+  });
+
+  it('renders an unregistered warning', async () => {
+    updateHostConfig({devToolsWebMCPSupport: {enabled: true}});
+    const sdkTarget = createTarget();
+    const container = document.createElement('div');
+    container.style.width = '600px';
+    container.style.height = '600px';
+    renderElementIntoDOM(container, {includeCommonStyles: true});
+
+    const tool = createTool('my-tool', 'my description', 'frame1' as Protocol.Page.FrameId, sdkTarget);
+
+    const widget = new Application.WebMCPView.ToolDetailsWidget();
+    widget.markAsRoot();
+    widget.show(container);
+    widget.tool = tool;
+    widget.isUnregistered = true;
+    await widget.updateComplete;
+
+    const warning = container.querySelector('.call-to-action .explanation');
+    assert.isNotNull(warning);
+    assert.include(warning!.textContent, 'This tool has been unregistered');
+
+    await assertScreenshot('application/webmcp_tool_details_unregistered.png');
   });
 });
 
