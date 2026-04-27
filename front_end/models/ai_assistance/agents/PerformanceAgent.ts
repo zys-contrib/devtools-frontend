@@ -222,6 +222,12 @@ enum ScorePriority {
   DEFAULT = 1,
 }
 
+// TODO(crbug.com/503296282): Remove this when we add support for all insights
+const SUPPORTED_INSIGHT_WIDGETS = new Set<Trace.Insights.Types.InsightKeys>([
+  Trace.Insights.Types.InsightKeys.LCP_BREAKDOWN,
+  Trace.Insights.Types.InsightKeys.RENDER_BLOCKING,
+]);
+
 export class PerformanceTraceContext extends ConversationContext<AgentFocus> {
   static fromParsedTrace(parsedTrace: Trace.TraceModel.ParsedTrace): PerformanceTraceContext {
     return new PerformanceTraceContext(AgentFocus.fromParsedTrace(parsedTrace));
@@ -536,15 +542,18 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
       return widgets;
     }
 
-    // Case 2: LCP Insight -> LCP breakdown & CWV widgets
-    if (focus.insight && Trace.Insights.Models.LCPBreakdown.isLCPBreakdownInsight(focus.insight)) {
-      widgets.push({
-        name: 'PERF_INSIGHT',
-        data: {
-          insight: 'lcp',
-          insightData: focus.insight,
-        },
-      });
+    // Case 2: Insight -> PERF_INSIGHT widget
+    if (focus.insight) {
+      const insightKey = focus.insight.insightKey as Trace.Insights.Types.InsightKeys;
+      if (SUPPORTED_INSIGHT_WIDGETS.has(insightKey)) {
+        widgets.push({
+          name: 'PERF_INSIGHT',
+          data: {
+            insight: insightKey,
+            insightData: focus.insight,
+          },
+        });
+      }
     }
 
     // Case 3: Whole Trace or insight other than LCP -> CWV widget
@@ -1006,15 +1015,17 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
               }
             }
           }
-          if (params.insightName === 'LCPBreakdown') {
-            widgets.push({
-              name: 'PERF_INSIGHT',
-              data: {
-                insight: 'lcp',
-                insightData: insight as Trace.Insights.Types.InsightModel,
-              },
-            });
-          }
+        }
+
+        const insightKey = params.insightName as Trace.Insights.Types.InsightKeys;
+        if (SUPPORTED_INSIGHT_WIDGETS.has(insightKey)) {
+          widgets.push({
+            name: 'PERF_INSIGHT',
+            data: {
+              insight: insightKey,
+              insightData: insight as Trace.Insights.Types.InsightModel,
+            },
+          });
         }
 
         const key = `getInsightDetails('${params.insightSetId}', '${params.insightName}')`;

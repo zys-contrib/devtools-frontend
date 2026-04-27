@@ -229,7 +229,7 @@ describeWithEnvironment('ChatMessage', () => {
         const widget = {
           name: 'PERF_INSIGHT',
           data: {
-            insight: 'lcp',
+            insight: 'LCPBreakdown',
             insightData: {
               insightKey: 'LCPBreakdown',
               navigation: {
@@ -242,7 +242,29 @@ describeWithEnvironment('ChatMessage', () => {
             } as unknown as AIAssistanceModel.AiAgent.PerfInsightAiWidget['data']['insightData'],
           },
         } as AIAssistanceModel.AiAgent.AiWidget;
-        assert.strictEqual(AiAssistance.ChatMessage.getWidgetSignature(widget), 'PERF_INSIGHT:lcp:LCPBreakdown:nav1');
+        assert.strictEqual(
+            AiAssistance.ChatMessage.getWidgetSignature(widget), 'PERF_INSIGHT:LCPBreakdown:LCPBreakdown:nav1');
+      });
+
+      it('should correctly handle PERF_INSIGHT widget with render-blocking-request', () => {
+        const widget = {
+          name: 'PERF_INSIGHT',
+          data: {
+            insight: 'RenderBlocking',
+            insightData: {
+              insightKey: 'RenderBlocking',
+              navigation: {
+                args: {
+                  data: {
+                    navigationId: 'nav1',
+                  },
+                },
+              },
+            } as unknown as AIAssistanceModel.AiAgent.PerfInsightAiWidget['data']['insightData'],
+          },
+        } as AIAssistanceModel.AiAgent.AiWidget;
+        assert.strictEqual(
+            AiAssistance.ChatMessage.getWidgetSignature(widget), 'PERF_INSIGHT:RenderBlocking:RenderBlocking:nav1');
       });
 
       it('should correctly handle TIMELINE_RANGE_SUMMARY widget', () => {

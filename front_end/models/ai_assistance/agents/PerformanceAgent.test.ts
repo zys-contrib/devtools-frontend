@@ -788,7 +788,7 @@ code
       assert.lengthOf(secondActions[0].widgets!, 1);
     });
 
-    it('yields an lcp-type PERF_INSIGHT widget when getInsightDetails is called for LCPBreakdown', async function() {
+    it('yields a PERF_INSIGHT widget when getInsightDetails is called for insights', async function() {
       const parsedTrace = await TraceLoader.traceEngine(this, 'lcp-images.json.gz');
       assert.isOk(parsedTrace.insights);
       const [nav] = parsedTrace.data.Meta.mainFrameNavigations;
@@ -807,9 +807,17 @@ code
         } as unknown as Trace.Types.Events.LargestContentfulPaintCandidate,
       } as Trace.Insights.Types.InsightModels['LCPBreakdown'];
 
+      // Mock the RenderBlocking insight
+      insightSet.model.RenderBlocking = {
+        insightKey: 'RenderBlocking',
+        state: 'fail',
+        renderBlockingRequests: [],
+      } as unknown as Trace.Insights.Types.InsightModels['RenderBlocking'];
+
       const context = PerformanceAgent.PerformanceTraceContext.fromInsight(parsedTrace, lcpDiscovery);
 
-      const agent = createAgentForConversation({
+      // Test LCPBreakdown
+      const agent1 = createAgentForConversation({
         aidaClient: mockAidaClient([
           [{
             explanation: '',
@@ -821,15 +829,36 @@ code
         ])
       });
 
-      const responses = await Array.fromAsync(agent.run('test', {selected: context}));
-      const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
-      assert.lengthOf(actions, 1);
-
-      assert.exists(actions[0].widgets);
-      const lcpWidget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+      const responses1 = await Array.fromAsync(agent1.run('test', {selected: context}));
+      const actions1 = responses1.filter(r => r.type === AiAgent.ResponseType.ACTION);
+      assert.lengthOf(actions1, 1);
+      assert.exists(actions1[0].widgets);
+      const lcpWidget = actions1[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
       assert.exists(lcpWidget);
-      assert.strictEqual(lcpWidget?.data.insight, 'lcp');
+      assert.strictEqual(lcpWidget?.data.insight, Trace.Insights.Types.InsightKeys.LCP_BREAKDOWN);
       assert.strictEqual(lcpWidget?.data.insightData, insightSet.model.LCPBreakdown);
+
+      // Test RenderBlocking
+      const agent2 = createAgentForConversation({
+        aidaClient: mockAidaClient([
+          [{
+            explanation: '',
+            functionCalls: [
+              {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'RenderBlocking'}},
+            ]
+          }],
+          [{explanation: 'done'}]
+        ])
+      });
+
+      const responses2 = await Array.fromAsync(agent2.run('test', {selected: context}));
+      const actions2 = responses2.filter(r => r.type === AiAgent.ResponseType.ACTION);
+      assert.lengthOf(actions2, 1);
+      assert.exists(actions2[0].widgets);
+      const widget = actions2[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+      assert.exists(widget);
+      assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.RENDER_BLOCKING);
+      assert.strictEqual(widget?.data.insightData, insightSet.model.RenderBlocking);
     });
 
     it('yields a BOTTOM_UP_TREE widget when getDetailedCallTree is called', async function() {
