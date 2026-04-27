@@ -900,6 +900,13 @@ export default defineConfig([
     },
   },
   {
+    name: 'AI Assistance agents',
+    files: ['front_end/models/ai_assistance/agents/**/*.ts'],
+    rules: {
+      '@devtools/no-dynamic-preamble': 'error',
+    },
+  },
+  {
     name: 'TypeScript type-definitions',
     files: ['**/*.d.ts'],
     rules: {
