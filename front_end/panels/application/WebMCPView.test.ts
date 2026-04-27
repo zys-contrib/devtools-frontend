@@ -51,6 +51,7 @@ const createDefaultViewInput = (): Application.WebMCPView.ViewInput => {
     selectedCall: null,
     onCallSelect: () => {},
     onRunTool: () => {},
+    onPaste: () => {},
   };
 };
 
@@ -669,6 +670,53 @@ describeWithEnvironment('WebMCPView Presenter', () => {
     assert.isUndefined(input.filters.toolTypes);
     assert.isUndefined(input.filters.statusTypes);
   });
+
+  describe('onPaste', () => {
+    it('successfully populates a command', async () => {
+      const {model, viewStub} = await setup();
+      const toolProtocol = {
+        name: 'tool1',
+        description: 'desc1',
+        inputSchema: {type: 'object', properties: {arg1: {type: 'string'}}},
+        frameId: 'frame1' as Protocol.Page.FrameId
+      };
+      model.toolsAdded({tools: [toolProtocol]});
+      const input = await viewStub.nextInput;
+      const tool = input.tools[0];
+
+      viewStub.input.onToolSelect(tool);
+      const nextInput = await viewStub.nextInput;
+
+      sinon.stub(navigator.clipboard, 'readText').resolves('{"arg1": "value"}');
+
+      await nextInput.onPaste();
+      const pasteInput = await viewStub.nextInput;
+
+      assert.deepEqual(pasteInput.selectedTool?.parameters, {arg1: 'value'});
+    });
+
+    it('fails to populate a command because the json doesn\'t parse', async () => {
+      const {model, viewStub} = await setup();
+      const toolProtocol = {
+        name: 'tool1',
+        description: 'desc1',
+        inputSchema: {type: 'object'},
+        frameId: 'frame1' as Protocol.Page.FrameId
+      };
+      model.toolsAdded({tools: [toolProtocol]});
+      const input = await viewStub.nextInput;
+      const tool = input.tools[0];
+
+      viewStub.input.onToolSelect(tool);
+      const nextInput = await viewStub.nextInput;
+
+      sinon.stub(navigator.clipboard, 'readText').resolves('invalid json');
+
+      await nextInput.onPaste();
+
+      assert.isUndefined(viewStub.input.selectedTool?.parameters);
+    });
+  });
 });
 
 describe('filterToolCalls', () => {
@@ -1185,6 +1233,7 @@ describeWithEnvironment('WebMCPView JSON Editor', () => {
       selectedCall: null,
       onCallSelect: () => {},
       onRunTool: () => {},
+      onPaste: () => {},
     };
   };
 

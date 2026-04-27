@@ -180,6 +180,10 @@ const UIStrings = {
    */
   editAndRun: 'Edit and run',
   /**
+   * @description Tooltip for the paste button
+   */
+  paste: 'Paste',
+  /**
    * @description Notice to display when a tool has been unregistered
    */
   toolUnregisteredNotice: 'This tool has been unregistered',
@@ -227,6 +231,7 @@ export interface ViewInput {
   onFilterChange: (filters: FilterState) => void;
   toolCalls: WebMCP.WebMCPModel.Call[];
   onRunTool: (event: Common.EventTarget.EventTargetEvent<ProtocolMonitor.JSONEditor.Command>) => void;
+  onPaste: () => void;
 }
 
 export function filterToolCalls(
@@ -612,6 +617,14 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
             </div>
             <div class="section-title">
               <span>${i18nString(UIStrings.runTool)}</span>
+              <div style="flex: auto;"></div>
+              <devtools-button
+                .iconName=${'import'}
+                .size=${Buttons.Button.Size.SMALL}
+                .variant=${Buttons.Button.Variant.TEXT}
+                title=${i18nString(UIStrings.paste)}
+                @click=${input.onPaste}
+              >${i18nString(UIStrings.paste)}</devtools-button>
             </div>
             <devtools-widget
               class="json-editor-widget"
@@ -829,6 +842,20 @@ export class WebMCPView extends UI.Widget.VBox {
       onRunTool: event => {
         if (this.#selectedTool) {
           void this.#selectedTool.tool.invoke(event.data.parameters || {});
+        }
+      },
+      onPaste: async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          const json = JSON.parse(text);
+          if (typeof json !== 'object' || json === null || Array.isArray(json)) {
+            throw new Error('Pasted JSON must be an object');
+          }
+          if (this.#selectedTool) {
+            this.#selectedTool.parameters = json as Record<string, unknown>;
+            this.requestUpdate();
+          }
+        } catch {
         }
       },
     };
@@ -1108,7 +1135,6 @@ export class ToolDetailsWidget extends UI.Widget.Widget {
   get isUnregistered(): boolean {
     return this.#isUnregistered;
   }
-
   set tool(tool: WebMCP.WebMCPModel.Tool|null|undefined) {
     if (this.#tool === tool) {
       return;

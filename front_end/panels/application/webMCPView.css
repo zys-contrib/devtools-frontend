@@ -72,6 +72,10 @@
     flex: none;
     color: var(--sys-color-on-surface);
     border-bottom: 1px solid var(--sys-color-divider);
+
+    devtools-button {
+      margin: calc(-1 * var(--sys-size-1)) 0;
+    }
   }
 
   .status-cell {
