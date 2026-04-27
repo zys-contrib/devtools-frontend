@@ -147,7 +147,7 @@ export const TestConfig: Config = {
   shardBias: options['shard-bias'],
   isAiAgent:
       ['GEMINI_CLI', 'CLAUDECODE', 'CODEX_SANDBOX', 'CURSOR_AGENT', 'AI_AGENT'].some(agent => agent in process.env),
-  allowDuplicateTestIds: false,
+  allowDuplicateTestIds: options['repeat'] > 1 || options['retries'] > 0,
 };
 
 export function loadTests(testDirectory: string, filename = 'tests.txt') {
