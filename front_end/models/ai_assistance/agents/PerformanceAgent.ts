@@ -62,17 +62,34 @@ export type MainThreadSectionLabel = 'nav-to-lcp'|'lcp-ttfb'|'lcp-render-delay'|
  * chrome_preambles.gcl). Sync local changes with the server-side.
  */
 
-const greenDevAdditionalAnnotationsFunction = `
+const GREEN_DEV_ANNOTATIONS_INSTRUCTIONS = `
 - CRITICAL: You also have access to functions called addElementAnnotation and addNeworkRequestAnnotation,
-which should be used to highlight elements and network requests (respectively).`;
+which should be used to highlight elements and network requests (respectively).
 
-const greenDevAdditionalAnnotationsGuidelines = `
 - CRITICAL: Each time an element or a network request is mentioned, you MUST ALSO call the functions
   addElementAnnotation (for an element) or addNeworkRequestAnnotation (for a network request).
 - CRITICAL: Don't add more than one annotation per element or network request.
 - These functions should be called as soon as you identify the entity that needs to be highlighted.
 - In addition to this, the addElementAnnotation function should always be called for the LCP element, if known.
 - The annotationMessage should be descriptive and relevant to why the element or network request is being highlighted.
+`;
+
+const GREEN_DEV_FRESH_TRACE_ANNOTATIONS_INSTRUCTIONS = `
+When referring to an element for which you know the nodeId, always call the function addElementAnnotation, specifying
+the id and an annotation reason.
+When referring to a network request for which you know the eventKey for, always call the function
+addNetworkRequestAnnotation, specifying the id and an annotation reason.
+- CRITICAL: Each time you add an annotating link you MUST ALSO call the function addElementAnnotation.
+- CRITICAL: Each time you describe an element or network request as being problematic you MUST call the function
+addElementAnnotation and specify an annotation reason.
+- CRITICAL: Each time you describe a network request as being problematic you MUST call the function
+addNetworkRequestAnnotation and specify an annotation reason.
+- CRITICAL: If you spot ANY of the following problems:
+  - Render-blocking elements/network requests.
+  - Significant long task (especially on main thread).
+  - Layout shifts (e.g. due to unsized images).
+  ... then you MUST call addNetworkRequestAnnotation for ALL network requests and addaddElementAnnotation for all
+  elements described in your conclusion.
 `;
 
 /**
@@ -82,9 +99,7 @@ const greenDevAdditionalAnnotationsGuidelines = `
  *
  * Check token length in https://aistudio.google.com/
  */
-const buildPreamble = (): string => {
-  const annotationsEnabled = Annotations.AnnotationRepository.annotationsEnabled();
-  return `You are an assistant, expert in web performance and highly skilled with Chrome DevTools.
+const preamble = `You are an assistant, expert in web performance and highly skilled with Chrome DevTools.
 
 Your primary goal is to provide actionable advice to web developers about their web page by using the Chrome Performance Panel and analyzing a trace. You may need to diagnose problems yourself, or you may be given direction for what to focus on by the user.
 
@@ -93,8 +108,6 @@ You will be provided a summary of a trace: some performance metrics; the most cr
 Always call getInsightDetails to gather more data on an insight or the actual LCP element BEFORE mentioning any specific details about them.
 
 You have functions available to learn more about the trace. Use these to confirm hypotheses, or to further explore the trace when diagnosing performance issues.
-
-${annotationsEnabled ? greenDevAdditionalAnnotationsFunction : ''}
 
 You will be given bounds representing a time range within the trace. Bounds include a min and a max time in microseconds. max is always bigger than min in a bounds.
 
@@ -167,8 +180,6 @@ Note: if the user asks a specific question about the trace (such as "What is my 
 - Structure your response using markdown headings and bullet points for improved readability.
 - Be direct and to the point. Avoid unnecessary introductory phrases or filler content. Focus on delivering actionable advice efficiently.
 
-${annotationsEnabled ? greenDevAdditionalAnnotationsGuidelines : ''}
-
 ## Strict Constraints
 
 Adhere to the following critical requirements:
@@ -186,7 +197,6 @@ Adhere to the following critical requirements:
 - Do not provide answers on non-web-development topics, such as legal, financial, medical, or personal advice.
 - Use the precision of Strunk & White, the brevity of Hemingway, and the simple clarity of Vonnegut. Don't add repeated information, and keep the whole answer short.
 `;
-};
 
 const extraPreambleWhenNotExternal = `Additional notes:
 
@@ -198,38 +208,14 @@ When referring to a trace event that has a corresponding \`eventKey\`, annotate 
 When asking the user to make a choice between options, output a list of choices at the end of your text response. The format is \`SUGGESTIONS: ["suggestion1", "suggestion2", "suggestion3"]\`. This MUST start on a newline, and be a single line.
 `;
 
-const buildExtraPreambleWhenFreshTrace = (): string => {
-  const annotationsEnabled = Annotations.AnnotationRepository.annotationsEnabled();
-  const greenDevAdditionalGuidelineFreshTrace = `
-When referring to an element for which you know the nodeId, always call the function addElementAnnotation, specifying
-the id and an annotation reason.
-When referring to a network request for which you know the eventKey for, always call the function
-addNetworkRequestAnnotation, specifying the id and an annotation reason.
-- CRITICAL: Each time you add an annotating link you MUST ALSO call the function addElementAnnotation.
-- CRITICAL: Each time you describe an element or network request as being problematic you MUST call the function
-addElementAnnotation and specify an annotation reason.
-- CRITICAL: Each time you describe a network request as being problematic you MUST call the function
-addNetworkRequestAnnotation and specify an annotation reason.
-- CRITICAL: If you spot ANY of the following problems:
-  - Render-blocking elements/network requests.
-  - Significant long task (especially on main thread).
-  - Layout shifts (e.g. due to unsized images).
-  ... then you MUST call addNetworkRequestAnnotation for ALL network requests and addaddElementAnnotation for all
-  elements described in your conclusion.
-`;
-
-  const extraPreambleWhenFreshTrace = `Additional notes:
+const freshTracePreamble = `Additional notes:
 
 When referring to an element for which you know the nodeId, annotate your output using markdown link syntax:
 - For example, if nodeId is 23: [LCP element](#node-23)
 - This link will reveal the element in the Elements panel
 - Never mention node or nodeId when referring to the element, and especially not in the link text.
 - When referring to the LCP, it's useful to also mention what the LCP element is via its nodeId. Use the markdown link syntax to do so.
-
-${annotationsEnabled ? greenDevAdditionalGuidelineFreshTrace : ''}`;
-
-  return extraPreambleWhenFreshTrace;
-};
+`;
 
 enum ScorePriority {
   REQUIRED = 3,
@@ -406,6 +392,7 @@ export function getLabelName(label: MainThreadSectionLabel, focus: AgentFocus): 
  * instance for a new conversation.
  */
 export class PerformanceAgent extends AiAgent<AgentFocus> {
+  readonly preamble = preamble;
   #formatter: PerformanceTraceFormatter|null = null;
   #lastEventForEnhancedQuery: Trace.Types.Events.Event|undefined;
   #lastInsightForEnhancedQuery: Trace.Insights.Types.InsightModel|undefined;
@@ -428,7 +415,15 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
     metadata: {source: 'devtools', score: ScorePriority.CRITICAL}
   };
   #freshTraceExtraPreambleFact: Host.AidaClient.RequestFact = {
-    text: buildExtraPreambleWhenFreshTrace(),
+    text: freshTracePreamble,
+    metadata: {source: 'devtools', score: ScorePriority.CRITICAL}
+  };
+  #greenDevAnnotationsFact: Host.AidaClient.RequestFact = {
+    text: GREEN_DEV_ANNOTATIONS_INSTRUCTIONS,
+    metadata: {source: 'devtools', score: ScorePriority.CRITICAL}
+  };
+  #greenDevFreshTraceAnnotationsFact: Host.AidaClient.RequestFact = {
+    text: GREEN_DEV_FRESH_TRACE_ANNOTATIONS_INSTRUCTIONS,
     metadata: {source: 'devtools', score: ScorePriority.CRITICAL}
   };
   #networkDataDescriptionFact: Host.AidaClient.RequestFact = {
@@ -450,6 +445,8 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
     this.#networkDataDescriptionFact,
     this.#freshTraceExtraPreambleFact,
     this.#notExternalExtraPreambleFact,
+    this.#greenDevAnnotationsFact,
+    this.#greenDevFreshTraceAnnotationsFact,
   ]);
 
   /**
@@ -468,10 +465,6 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
   #hasShownWidgetForInsightSet = new WeakSet<Trace.Insights.Types.InsightSet>();
   #hasShownWidgetForCallTree = new WeakSet<AICallTree>();
   #hasShownWidgetForInsight = new WeakSet<Trace.Insights.Types.InsightModel>();
-
-  get preamble(): string {
-    return buildPreamble();
-  }
 
   get clientFeature(): Host.AidaClient.ClientFeature {
     return Host.AidaClient.ClientFeature.CHROME_PERFORMANCE_FULL_AGENT;
@@ -833,9 +826,17 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
       this.addFact(this.#notExternalExtraPreambleFact);
     }
 
+    const annotationsEnabled = Annotations.AnnotationRepository.annotationsEnabled();
+    if (annotationsEnabled) {
+      this.addFact(this.#greenDevAnnotationsFact);
+    }
+
     const isFresh = Tracing.FreshRecording.Tracker.instance().recordingIsFresh(focus.parsedTrace);
     if (isFresh) {
       this.addFact(this.#freshTraceExtraPreambleFact);
+      if (annotationsEnabled) {
+        this.addFact(this.#greenDevFreshTraceAnnotationsFact);
+      }
     }
 
     this.addFact(this.#callFrameDataDescriptionFact);
