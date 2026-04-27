@@ -9,7 +9,8 @@ import * as path from 'node:path';
 import type {Page, ScreenshotOptions, Target} from 'puppeteer-core';
 import puppeteer from 'puppeteer-core';
 
-import {formatAsPatch, resultAssertionsDiff, ResultsDBReporter} from '../../test/conductor/karma-resultsdb-reporter.js';
+import {resultAssertionsDiff} from '../../test/conductor/diff-utils.js';
+import {formatAsPatch, ResultsDBReporter} from '../../test/conductor/karma-resultsdb-reporter.js';
 import {CHECKOUT_ROOT, GEN_DIR, SOURCE_ROOT} from '../../test/conductor/paths.js';
 import * as ResultsDb from '../../test/conductor/resultsdb.js';
 import {loadTests, TestConfig} from '../../test/conductor/test_config.js';
