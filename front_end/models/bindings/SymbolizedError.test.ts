@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import * as SDK from '../../core/sdk/sdk.js';
-import type * as Protocol from '../../generated/protocol.js';
+import * as Protocol from '../../generated/protocol.js';
 import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
 import {setupSettingsHooks} from '../../testing/SettingsHelpers.js';
 import {TestUniverse} from '../../testing/TestUniverse.js';
@@ -30,23 +30,23 @@ describe('SymbolizedError', () => {
     const errorStack = 'Error: some error\n    at http://example.com/script.js:1:1';
     const causeStack = 'Error: cause error\n    at http://example.com/script.js:2:2';
 
-    const causeRemoteObject = {
-      subtype: 'error',
+    const causeRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: causeStack,
-      runtimeModel: () => runtimeModel,
-      getAllProperties: async () => ({properties: [], internalProperties: []}),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
 
-    const errorRemoteObject = {
-      subtype: 'error',
+    const errorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: errorStack,
-      runtimeModel: () => runtimeModel,
       objectId: '1' as Protocol.Runtime.RemoteObjectId,
-      getAllProperties: async () => ({
-        properties: [{name: 'cause', value: causeRemoteObject} as SDK.RemoteObject.RemoteObjectProperty],
-        internalProperties: [],
-      }),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
+
+    sinon.stub(errorRemoteObject, 'getAllProperties').resolves({
+      properties: [new SDK.RemoteObject.RemoteObjectProperty('cause', causeRemoteObject)],
+      internalProperties: [],
+    });
 
     return await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject);
   }
@@ -70,11 +70,10 @@ describe('SymbolizedError', () => {
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
 
-    const nonErrorRemoteObject = {
-      type: 'object',
-      subtype: 'null',
-      runtimeModel: () => runtimeModel,
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    const nonErrorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Null,
+    });
 
     const result = await universe.debuggerWorkspaceBinding.createSymbolizedError(nonErrorRemoteObject);
     assert.isNull(result);
@@ -85,16 +84,17 @@ describe('SymbolizedError', () => {
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
 
-    const errorRemoteObject = {
-      subtype: 'error',
+    const errorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: 'Error: message\n    at http://example.com/script.js:1:1\ninvalid line',
-      runtimeModel: () => runtimeModel,
       objectId: '1' as Protocol.Runtime.RemoteObjectId,
-      getAllProperties: async () => ({
-        properties: [],
-        internalProperties: [],
-      }),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
+
+    sinon.stub(errorRemoteObject, 'getAllProperties').resolves({
+      properties: [],
+      internalProperties: [],
+    });
 
     const result = await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject);
     assert.instanceOf(result, Bindings.SymbolizedError.UnparsableError);
@@ -108,23 +108,23 @@ describe('SymbolizedError', () => {
     assert.exists(runtimeModel);
 
     const causeStack = 'Error: cause error\n    at http://example.com/script.js:2:2';
-    const causeRemoteObject = {
-      subtype: 'error',
+    const causeRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: causeStack,
-      runtimeModel: () => runtimeModel,
-      getAllProperties: async () => ({properties: [], internalProperties: []}),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
 
-    const errorRemoteObject = {
-      subtype: 'error',
+    const errorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: 'Error: message\n    at http://example.com/script.js:1:1\ninvalid line',
-      runtimeModel: () => runtimeModel,
       objectId: '1' as Protocol.Runtime.RemoteObjectId,
-      getAllProperties: async () => ({
-        properties: [{name: 'cause', value: causeRemoteObject} as SDK.RemoteObject.RemoteObjectProperty],
-        internalProperties: [],
-      }),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
+
+    sinon.stub(errorRemoteObject, 'getAllProperties').resolves({
+      properties: [new SDK.RemoteObject.RemoteObjectProperty('cause', causeRemoteObject)],
+      internalProperties: [],
+    });
 
     const result = await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject);
     assert.instanceOf(result, Bindings.SymbolizedError.UnparsableError);
@@ -139,11 +139,11 @@ describe('SymbolizedError', () => {
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
 
-    const stringRemoteObject = {
-      type: 'string',
+    const stringRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.String,
+      value: 'Error: string error\n    at http://example.com/script.js:1:1',
       description: 'Error: string error\n    at http://example.com/script.js:1:1',
-      runtimeModel: () => runtimeModel,
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
 
     const symbolizedError = await universe.debuggerWorkspaceBinding.createSymbolizedError(stringRemoteObject);
 
@@ -163,7 +163,7 @@ describe('SymbolizedError', () => {
     const scriptId = '1' as Protocol.Runtime.ScriptId;
     const exceptionDetails = {
       exception: {
-        subtype: 'error',
+        subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
         className: 'SyntaxError',
         description: 'SyntaxError: Unexpected token',
       },
@@ -172,13 +172,14 @@ describe('SymbolizedError', () => {
       columnNumber: 1,
     } as Protocol.Runtime.ExceptionDetails;
 
-    const errorRemoteObject = {
-      subtype: 'error',
+    const errorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       className: 'SyntaxError',
-      runtimeModel: () => runtimeModel,
       objectId: '1' as Protocol.Runtime.RemoteObjectId,
-      getAllProperties: async () => ({properties: [], internalProperties: []}),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
+
+    sinon.stub(errorRemoteObject, 'getAllProperties').resolves({properties: [], internalProperties: []});
 
     sinon.stub(debuggerModel, 'scriptForId').withArgs(scriptId).returns({} as SDK.Script.Script);
 
@@ -206,11 +207,11 @@ describe('SymbolizedError', () => {
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
 
-    const stringRemoteObject = {
-      type: 'string',
+    const stringRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.String,
+      value: 'just a regular string',
       description: 'just a regular string',
-      runtimeModel: () => runtimeModel,
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
 
     const result = await universe.debuggerWorkspaceBinding.createSymbolizedError(stringRemoteObject);
     assert.isNull(result);
@@ -221,11 +222,12 @@ describe('SymbolizedError', () => {
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
 
-    const stringRemoteObject = {
-      type: 'string',
-      description: 'Error: string error\n    at http://example.com/script.js:1:1\ninvalid line',
-      runtimeModel: () => runtimeModel,
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    const description = 'Error: string error\n    at http://example.com/script.js:1:1\ninvalid line';
+    const stringRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.String,
+      value: description,
+      description,
+    });
 
     const result = await universe.debuggerWorkspaceBinding.createSymbolizedError(stringRemoteObject);
     assert.instanceOf(result, Bindings.SymbolizedError.UnparsableError);
@@ -238,13 +240,14 @@ describe('SymbolizedError', () => {
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
 
-    const errorRemoteObject = {
-      subtype: 'error',
+    const errorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: 'Error: error\n    at http://example.com/script.js:1:1',
-      runtimeModel: () => runtimeModel,
       objectId: '1' as Protocol.Runtime.RemoteObjectId,
-      getAllProperties: async () => ({properties: [], internalProperties: []}),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
+
+    sinon.stub(errorRemoteObject, 'getAllProperties').resolves({properties: [], internalProperties: []});
 
     const exceptionDetails = {
       exceptionId: 1,
@@ -268,13 +271,14 @@ describe('SymbolizedError', () => {
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
 
-    const errorRemoteObject = {
-      subtype: 'error',
+    const errorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: 'Error: error\n    at http://example.com/script.js:1:1',
-      runtimeModel: () => runtimeModel,
       objectId: '1' as Protocol.Runtime.RemoteObjectId,
-      getAllProperties: async () => ({properties: [], internalProperties: []}),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
+
+    sinon.stub(errorRemoteObject, 'getAllProperties').resolves({properties: [], internalProperties: []});
 
     const exceptionDetails = {
       exceptionId: 1,
@@ -300,13 +304,14 @@ describe('SymbolizedError', () => {
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
 
-    const errorRemoteObject = {
-      subtype: 'error',
+    const errorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: 'Error: message\n    at http://example.com/script.js:1:1\ninvalid line',
-      runtimeModel: () => runtimeModel,
       objectId: '1' as Protocol.Runtime.RemoteObjectId,
-      getAllProperties: async () => ({properties: [], internalProperties: []}),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
+
+    sinon.stub(errorRemoteObject, 'getAllProperties').resolves({properties: [], internalProperties: []});
 
     const exceptionDetails = {
       exceptionId: 1,
@@ -379,23 +384,23 @@ describe('SymbolizedError', () => {
     assert.exists(runtimeModel);
 
     const causeStack = 'Error: cause error\n    at http://example.com/script.js:2:2';
-    const causeRemoteObject = {
-      subtype: 'error',
+    const causeRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: causeStack,
-      runtimeModel: () => runtimeModel,
-      getAllProperties: async () => ({properties: [], internalProperties: []}),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
 
-    const errorRemoteObject = {
-      subtype: 'error',
+    const errorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: 'Error: message\n    at http://example.com/script.js:1:1\ninvalid line',
-      runtimeModel: () => runtimeModel,
       objectId: '1' as Protocol.Runtime.RemoteObjectId,
-      getAllProperties: async () => ({
-        properties: [{name: 'cause', value: causeRemoteObject} as SDK.RemoteObject.RemoteObjectProperty],
-        internalProperties: [],
-      }),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
+
+    sinon.stub(errorRemoteObject, 'getAllProperties').resolves({
+      properties: [new SDK.RemoteObject.RemoteObjectProperty('cause', causeRemoteObject)],
+      internalProperties: [],
+    });
 
     const symbolizedError = await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject);
     assert.instanceOf(symbolizedError, Bindings.SymbolizedError.UnparsableError);
@@ -420,23 +425,23 @@ describe('SymbolizedError', () => {
     assert.exists(runtimeModel);
 
     const causeStack = 'Error: cause error\n    at http://example.com/script.js:2:2';
-    const causeRemoteObject = {
-      subtype: 'error',
+    const causeRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: causeStack,
-      runtimeModel: () => runtimeModel,
-      getAllProperties: async () => ({properties: [], internalProperties: []}),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
 
-    const errorRemoteObject = {
-      subtype: 'error',
+    const errorRemoteObject = runtimeModel.createRemoteObject({
+      type: Protocol.Runtime.RemoteObjectType.Object,
+      subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
       description: 'Error: message\n    at http://example.com/script.js:1:1\ninvalid line',
-      runtimeModel: () => runtimeModel,
       objectId: '1' as Protocol.Runtime.RemoteObjectId,
-      getAllProperties: async () => ({
-        properties: [{name: 'cause', value: causeRemoteObject} as SDK.RemoteObject.RemoteObjectProperty],
-        internalProperties: [],
-      }),
-    } as unknown as SDK.RemoteObject.RemoteObject;
+    });
+
+    sinon.stub(errorRemoteObject, 'getAllProperties').resolves({
+      properties: [new SDK.RemoteObject.RemoteObjectProperty('cause', causeRemoteObject)],
+      internalProperties: [],
+    });
 
     const symbolizedError = await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject);
     assert.instanceOf(symbolizedError, Bindings.SymbolizedError.UnparsableError);
@@ -466,7 +471,7 @@ describe('SymbolizedError', () => {
       const scriptId = '1' as Protocol.Runtime.ScriptId;
       const exceptionDetails = {
         exception: {
-          subtype: 'error',
+          subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
           className: 'SyntaxError',
           description: 'SyntaxError: Unexpected token',
         },
@@ -503,7 +508,7 @@ describe('SymbolizedError', () => {
       const target = universe.createTarget({});
       const exceptionDetails = {
         exception: {
-          subtype: 'error',
+          subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
           className: 'TypeError',
         },
       } as Protocol.Runtime.ExceptionDetails;
@@ -523,7 +528,7 @@ describe('SymbolizedError', () => {
       const target = universe.createTarget({});
       const exceptionDetails = {
         exception: {
-          subtype: 'error',
+          subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
           className: 'SyntaxError',
         },
       } as Protocol.Runtime.ExceptionDetails;
@@ -541,7 +546,7 @@ describe('SymbolizedError', () => {
       const scriptId = '1' as Protocol.Runtime.ScriptId;
       const exceptionDetails = {
         exception: {
-          subtype: 'error',
+          subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
           className: 'SyntaxError',
           description: 'SyntaxError: Unexpected token',
         },
