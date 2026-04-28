@@ -21,6 +21,19 @@ export class UnparsableError extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     super();
     this.errorStack = errorStack;
     this.cause = cause;
+
+    this.cause?.addEventListener(Events.UPDATED, this.#fireUpdated, this);
+  }
+
+  dispose(): void {
+    this.cause?.removeEventListener(Events.UPDATED, this.#fireUpdated, this);
+    if (this.cause instanceof SymbolizedErrorObject || this.cause instanceof UnparsableError) {
+      this.cause.dispose();
+    }
+  }
+
+  #fireUpdated(): void {
+    this.dispatchEventToListeners(Events.UPDATED);
   }
 }
 
@@ -42,7 +55,7 @@ export class SymbolizedErrorObject extends Common.ObjectWrapper.ObjectWrapper<Ev
   dispose(): void {
     this.stackTrace.removeEventListener(StackTrace.StackTrace.Events.UPDATED, this.#fireUpdated, this);
     this.cause?.removeEventListener(Events.UPDATED, this.#fireUpdated, this);
-    if (this.cause instanceof SymbolizedErrorObject) {
+    if (this.cause instanceof SymbolizedErrorObject || this.cause instanceof UnparsableError) {
       this.cause.dispose();
     }
   }

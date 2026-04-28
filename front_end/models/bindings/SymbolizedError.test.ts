@@ -358,6 +358,90 @@ describe('SymbolizedError', () => {
     sinon.assert.notCalled(listener);
   });
 
+  it('UnparsableError emits UPDATED when its cause updates', async () => {
+    const target = universe.createTarget({});
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+    assert.exists(runtimeModel);
+
+    const causeStack = 'Error: cause error\n    at http://example.com/script.js:2:2';
+    const causeRemoteObject = {
+      subtype: 'error',
+      description: causeStack,
+      runtimeModel: () => runtimeModel,
+      getAllProperties: async () => ({properties: [], internalProperties: []}),
+    } as unknown as SDK.RemoteObject.RemoteObject;
+
+    const errorRemoteObject = {
+      subtype: 'error',
+      description: 'Error: message\n    at http://example.com/script.js:1:1\ninvalid line',
+      runtimeModel: () => runtimeModel,
+      objectId: '1' as Protocol.Runtime.RemoteObjectId,
+      getAllProperties: async () => ({
+        properties: [{name: 'cause', value: causeRemoteObject} as SDK.RemoteObject.RemoteObjectProperty],
+        internalProperties: [],
+      }),
+    } as unknown as SDK.RemoteObject.RemoteObject;
+
+    const symbolizedError = await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject);
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.UnparsableError);
+
+    const listener = sinon.stub();
+    symbolizedError.addEventListener(Bindings.SymbolizedError.Events.UPDATED, listener);
+
+    // Trigger update on the cause error's stackTrace
+    const cause = symbolizedError.cause;
+    assert.instanceOf(cause, Bindings.SymbolizedError.SymbolizedErrorObject);
+    cause.stackTrace.dispatchEventToListeners(StackTrace.StackTrace.Events.UPDATED);
+    sinon.assert.callCount(listener, 1);
+
+    // Trigger update on the cause error directly
+    symbolizedError.cause?.dispatchEventToListeners(Bindings.SymbolizedError.Events.UPDATED);
+    sinon.assert.callCount(listener, 2);
+  });
+
+  it('UnparsableError removes listeners when dispose is called', async () => {
+    const target = universe.createTarget({});
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+    assert.exists(runtimeModel);
+
+    const causeStack = 'Error: cause error\n    at http://example.com/script.js:2:2';
+    const causeRemoteObject = {
+      subtype: 'error',
+      description: causeStack,
+      runtimeModel: () => runtimeModel,
+      getAllProperties: async () => ({properties: [], internalProperties: []}),
+    } as unknown as SDK.RemoteObject.RemoteObject;
+
+    const errorRemoteObject = {
+      subtype: 'error',
+      description: 'Error: message\n    at http://example.com/script.js:1:1\ninvalid line',
+      runtimeModel: () => runtimeModel,
+      objectId: '1' as Protocol.Runtime.RemoteObjectId,
+      getAllProperties: async () => ({
+        properties: [{name: 'cause', value: causeRemoteObject} as SDK.RemoteObject.RemoteObjectProperty],
+        internalProperties: [],
+      }),
+    } as unknown as SDK.RemoteObject.RemoteObject;
+
+    const symbolizedError = await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject);
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.UnparsableError);
+
+    const listener = sinon.stub();
+    symbolizedError.addEventListener(Bindings.SymbolizedError.Events.UPDATED, listener);
+
+    symbolizedError.dispose();
+
+    // Trigger update on the cause error's stackTrace
+    const cause = symbolizedError.cause;
+    assert.instanceOf(cause, Bindings.SymbolizedError.SymbolizedErrorObject);
+    cause.stackTrace.dispatchEventToListeners(StackTrace.StackTrace.Events.UPDATED);
+    sinon.assert.notCalled(listener);
+
+    // Trigger update on the cause error directly
+    symbolizedError.cause?.dispatchEventToListeners(Bindings.SymbolizedError.Events.UPDATED);
+    sinon.assert.notCalled(listener);
+  });
+
   describe('SymbolizedSyntaxError', () => {
     it('can create a SymbolizedSyntaxError from exception details', async () => {
       const target = universe.createTarget({});
