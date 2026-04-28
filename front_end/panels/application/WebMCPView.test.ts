@@ -98,27 +98,31 @@ describeWithEnvironment('WebMCPView (View)', () => {
         invocationId: '1',
         input: '{"dir": "/tmp"}',
         tool: tools[0],
+        cancel: () => {},
       },
       {
         invocationId: '2',
         input: '{"path": "/tmp/test.txt"}',
         tool: tools[1],
         result: new WebMCP.WebMCPModel.Result(
-            Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined)
+            Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined),
+        cancel: () => {},
       },
       {
         invocationId: '3',
         input: '{"path": "/root/secret.txt"}',
         tool: tools[2],
         result: new WebMCP.WebMCPModel.Result(
-            Protocol.WebMCP.InvocationStatus.Error, undefined, 'Permission denied', undefined)
+            Protocol.WebMCP.InvocationStatus.Error, undefined, 'Permission denied', undefined),
+        cancel: () => {},
       },
       {
         invocationId: '4',
         input: '{"timeout": 100}',
         tool: tools[3],
         result:
-            new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Canceled, undefined, undefined, undefined)
+            new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Canceled, undefined, undefined, undefined),
+        cancel: () => {},
       },
     ];
     DEFAULT_VIEW(
@@ -150,6 +154,7 @@ describeWithEnvironment('WebMCPView (View)', () => {
         invocationId: '1',
         input: '{"dir": "/tmp"}',
         tool: tools[0],
+        cancel: () => {},
       },
     ];
     DEFAULT_VIEW(
@@ -306,7 +311,8 @@ describeWithEnvironment('WebMCPView (View)', () => {
       input: '{"dir": "/tmp"}',
       tool,
       result: new WebMCP.WebMCPModel.Result(
-          Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined)
+          Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined),
+      cancel: () => {},
     };
 
     DEFAULT_VIEW(
@@ -346,7 +352,8 @@ describeWithEnvironment('WebMCPView (View)', () => {
       invocationId: '1',
       input: '{"dir": "/tmp"}',
       tool,
-      result: new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Error, undefined, undefined, undefined)
+      result: new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Error, undefined, undefined, undefined),
+      cancel: () => {},
     };
 
     const errorObject = sinon.createStubInstance(SDK.RemoteObject.RemoteObject);
@@ -449,7 +456,8 @@ describeWithEnvironment('WebMCPView (View)', () => {
       input: '{"dir": "/tmp"}',
       tool,
       result: new WebMCP.WebMCPModel.Result(
-          Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined)
+          Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined),
+      cancel: () => {},
     };
 
     const onRevealTool = sinon.spy();
@@ -670,7 +678,6 @@ describeWithEnvironment('WebMCPView Presenter', () => {
     assert.isUndefined(input.filters.toolTypes);
     assert.isUndefined(input.filters.statusTypes);
   });
-
   describe('onPaste', () => {
     it('successfully populates a command', async () => {
       const {model, viewStub} = await setup();
@@ -745,38 +752,44 @@ describe('filterToolCalls', () => {
       invocationId: '1',
       tool: tools[0],
       input: '{"dir": "/tmp"}',
+      cancel: () => {},
     },
     {
       invocationId: '2',
       tool: tools[1],
       input: '{"path": "/tmp/test.txt"}',
       result: new WebMCP.WebMCPModel.Result(
-          Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined)
+          Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined),
+      cancel: () => {},
     },
     {
       invocationId: '3',
       tool: tools[2],
       input: '{"path": "/root/secret.txt"}',
       result: new WebMCP.WebMCPModel.Result(
-          Protocol.WebMCP.InvocationStatus.Error, undefined, 'Permission denied', undefined)
+          Protocol.WebMCP.InvocationStatus.Error, undefined, 'Permission denied', undefined),
+      cancel: () => {},
     },
     {
       invocationId: '4',
       tool: tools[3],
       input: '{"timeout": 100}',
+      cancel: () => {},
     },
     {
       invocationId: '5',
       tool: tools[3],
       input: '{}',
       result: new WebMCP.WebMCPModel.Result(
-          Protocol.WebMCP.InvocationStatus.Completed, 'Declarative success content', undefined, undefined)
+          Protocol.WebMCP.InvocationStatus.Completed, 'Declarative success content', undefined, undefined),
+      cancel: () => {},
     },
     {
       invocationId: '6',
       tool: tools[0],
       input: '{}',
-      result: new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Canceled, undefined, undefined, undefined)
+      result: new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Canceled, undefined, undefined, undefined),
+      cancel: () => {},
     }
   ];
 
@@ -806,7 +819,6 @@ describe('filterToolCalls', () => {
     assert.lengthOf(resultPending, 2);
     assert.strictEqual(resultPending[0].invocationId, '1');
     assert.strictEqual(resultPending[1].invocationId, '4');
-
     const resultCanceled = filterToolCalls(mockCalls, {
       text: '',
       statusTypes: {
@@ -931,7 +943,6 @@ describeWithEnvironment('ToolDetailsWidget', () => {
 
     await assertScreenshot('application/webmcp_tool_details_frame.png');
   });
-
   it('renders an unregistered warning', async () => {
     updateHostConfig({devToolsWebMCPSupport: {enabled: true}});
     const sdkTarget = createTarget();

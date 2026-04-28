@@ -120,4 +120,25 @@ describeWithEnvironment('WebMCPModel', () => {
 
     assert.isEmpty(webMCPModel.toolCalls);
   });
+
+  it('provides a cancel method for in-progress tool calls', async () => {
+    const tool = createTool('test-tool', 'frame-1' as Protocol.Page.FrameId);
+    webMCPModel.toolsAdded({tools: [tool]});
+
+    const toolInvokedPromise = webMCPModel.once(WebMCP.WebMCPModel.Events.TOOL_INVOKED);
+    const invokedEvent: Protocol.WebMCP.ToolInvokedEvent = {
+      toolName: 'test-tool',
+      frameId: 'frame-1' as Protocol.Page.FrameId,
+      invocationId: 'cancelable-invocation',
+      input: 'test input',
+    };
+    webMCPModel.toolInvoked(invokedEvent);
+    const call = await toolInvokedPromise;
+
+    assert.isDefined(call.cancel);
+
+    const invokeCancelStub = sinon.stub(target.webMCPAgent(), 'invoke_cancelInvocation');
+    call.cancel();
+    sinon.assert.calledOnceWithExactly(invokeCancelStub, {invocationId: 'cancelable-invocation'});
+  });
 });

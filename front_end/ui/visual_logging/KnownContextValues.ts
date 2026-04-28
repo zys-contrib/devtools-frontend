@@ -4383,6 +4383,7 @@ export const knownContextValues = new Set([
   'webgl-warning-fired',
   'webmcp.call-inputs',
   'webmcp.call-outputs',
+  'webmcp.cancel-call',
   'webmcp.canceled',
   'webmcp.completed',
   'webmcp.copy-tool-description',

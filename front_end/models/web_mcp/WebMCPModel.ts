@@ -90,6 +90,7 @@ export interface Call {
   tool: Tool;
   input: string;
   result?: Result;
+  cancel: () => void;
 }
 
 export class Tool {
@@ -244,7 +245,16 @@ export class WebMCPModel extends SDK.SDKModel.SDKModel<EventTypes> implements Pr
     if (!tool) {
       return;
     }
-    const call: Call = {tool, input: params.input, invocationId: params.invocationId};
+    const call: Call = {
+      tool,
+      input: params.input,
+      invocationId: params.invocationId,
+      cancel: () => {
+        if (call.result === undefined) {
+          void this.agent.invoke_cancelInvocation({invocationId: params.invocationId});
+        }
+      },
+    };
     this.#calls.set(params.invocationId, call);
     this.dispatchEventToListeners(Events.TOOL_INVOKED, call);
   }
