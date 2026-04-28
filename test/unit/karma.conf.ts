@@ -18,7 +18,6 @@ import {ScreenshotError, ScreenshotErrorReporter} from '../conductor/screenshot-
 import {assertElementScreenshotUnchanged} from '../shared/screenshots.js';
 
 const COVERAGE_OUTPUT_DIRECTORY = 'karma-coverage';
-const REMOTE_DEBUGGING_PORT = 7722;
 
 const tests = [
   ...loadTests(path.join(GEN_DIR, 'front_end')),
@@ -47,6 +46,7 @@ const CustomChrome = function(this: any, _baseBrowserDecorator: unknown, args: B
   this._execCommand = async function(_cmd: string, args: string[]) {
     const url = args.pop()!;
     const browser = await puppeteer.launch({
+      pipe: true,
       headless: TestConfig.headless,
       executablePath: TestConfig.chromeBinary,
       defaultViewport: null,
@@ -124,7 +124,6 @@ const CustomChrome = function(this: any, _baseBrowserDecorator: unknown, args: B
 
     return [
       '--remote-allow-origins=*',
-      `--remote-debugging-port=${REMOTE_DEBUGGING_PORT}`,
       '--use-mock-keychain',
       '--disable-features=DialMediaRouteProvider,WebUIReloadButton',
       '--password-store=basic',
@@ -284,7 +283,6 @@ module.exports = function(config: any) {
         retries: TestConfig.retries,
         timeout: TestConfig.debug ? 0 : 5_000,
       },
-      remoteDebuggingPort: REMOTE_DEBUGGING_PORT,
     },
 
     plugins: [
@@ -310,7 +308,6 @@ module.exports = function(config: any) {
     proxies: {
       '/Images': `/base/${targetDir}/front_end/Images`,
       '/locales': `/base/${targetDir}/front_end/core/i18n/locales`,
-      '/json': `http://localhost:${REMOTE_DEBUGGING_PORT}/json`,
       '/front_end': `/base/${targetDir}/front_end`,
     },
 
