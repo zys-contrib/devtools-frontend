@@ -67,6 +67,8 @@ function getBaseViewInput(): Elements.ElementsTreeElement.ViewInput {
     decorationsTooltip: '',
     indent: 0,
     adTooltipId: '',
+    editorState: null,
+    editorWidth: null,
   };
 }
 

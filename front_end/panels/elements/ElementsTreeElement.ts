@@ -460,10 +460,14 @@ export interface ViewInput {
   descendantDecorations: Decoration[];
   decorationsTooltip: string;
   indent: number;
+
+  editorState: CodeMirror.EditorState|null;
+  editorWidth: number|null;
 }
 
 export interface ViewOutput {
   contentElement?: HTMLElement;
+  editorRef?: TextEditor.TextEditor.TextEditor;
 }
 
 export function adornerRef(): DirectiveResult<typeof Lit.Directives.RefDirective> {
@@ -936,11 +940,12 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
   const gutterContainerClasses = {
     'has-decorations': input.decorations.length || input.descendantDecorations.length,
     'gutter-container': true,
+    hidden: Boolean(input.editorState),
   };
   // clang-format off
   render(html`
     <div ${ref(el => { output.contentElement = el as HTMLElement; })}>
-      ${input.node ? html`<span class="highlight">${renderTitle(
+      ${input.node ? html`<span class="highlight ${input.editorState ? 'hidden' : ''}">${renderTitle(
     input.node,
     input.isClosingTag,
     input.expanded,
@@ -951,7 +956,7 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
     input.onExpand,
   )}</span>` : nothing}
       ${input.isHovered || input.isSelected ? html`
-        <div class="selection fill" style=${`margin-left: ${-input.indent}px`}></div>
+        <div class="selection fill ${input.editorState ? 'hidden' : ''}" style=${`margin-left: ${-input.indent}px`}></div>
       ` : nothing}
       <div class=${Lit.Directives.classMap(gutterContainerClasses)}
            style="left: ${-input.indent}px"
@@ -964,7 +969,7 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
              ${input.descendantDecorations.map(d => html`<div class="elements-gutter-decoration elements-has-decorated-children" style="--decoration-color: ${d.color}"></div>`)}
         </div>` : nothing}
       </div>
-      ${hasAdorners ? html`<div class="adorner-container ${!hasAdorners ? 'hidden' : ''}">
+      ${hasAdorners ? html`<div class="adorner-container ${(input.editorState) ? 'hidden' : ''}">
         ${maybeRenderAdAdorner(input)}
         ${input.showViewSourceAdorner ? html`<devtools-adorner
           .name=${ElementsComponents.AdornerManager.RegisteredAdorners.VIEW_SOURCE}
@@ -1123,10 +1128,10 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
         </devtools-adorner>` : nothing}
       </div>`: nothing}
       ${input.isSelected ? html`
-        <span class="selected-hint" title=${i18nString(UIStrings.useSInTheConsoleToReferToThis, { PH1: '$0' })} aria-hidden="true"></span>
+        <span class="selected-hint ${input.editorState ? 'hidden' : ''}" title=${i18nString(UIStrings.useSInTheConsoleToReferToThis, { PH1: '$0' })} aria-hidden="true"></span>
       ` : nothing}
       ${input.showAiButton ? html`
-        <span class="ai-button-container">
+        <span class="ai-button-container ${input.editorState ? 'hidden' : ''}">
           <devtools-floating-button
             icon-name=${AIAssistance.AiUtils.getIconName()}
             title=${input.aiButtonTitle || ''}
@@ -1136,6 +1141,15 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
           </devtools-floating-button>
         </span>
       ` : nothing}
+      ${input.editorState ? html`<div @keydown=${(event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          event.consume(true);
+        }
+      }} class="source-code elements-tree-editor" style="width: ${input.editorWidth ?? 0}px;">
+        <devtools-text-editor .state=${input.editorState} ${ref(el => {
+          output.editorRef = el as TextEditor.TextEditor.TextEditor;
+        })}></devtools-text-editor>
+      </div>`: nothing}
     </div>
   `, target);
   // clang-format on
@@ -1151,7 +1165,9 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
   private inClipboard: boolean;
   #hovered: boolean;
   private editing: EditorHandles|null;
-  private htmlEditElement?: HTMLElement;
+  #editorRef?: TextEditor.TextEditor.TextEditor;
+  #editorState: CodeMirror.EditorState|null = null;
+  #editorWidth: number|null = null;
   expandAllButtonElement: UI.TreeOutline.TreeElement|null;
   #elementIssues = new Map<string, IssuesManager.Issue.Issue>();
   #nodeElementToIssue = new Map<Element, IssuesManager.Issue.Issue[]>();
@@ -1288,9 +1304,6 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
 
   // ClearNode param is used to clean DOM after in-place editing..
   performUpdate(clearNode = false): void {
-    if (this.editing) {
-      return;
-    }
     const output: ViewOutput = {};
     DEFAULT_VIEW(
         {
@@ -1380,10 +1393,13 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
               void action.execute();
             }
           },
+          editorState: this.#editorState,
+          editorWidth: this.#editorWidth,
         },
         output, this.listItemElement);
 
     this.#contentElement = output.contentElement;
+    this.#editorRef = output.editorRef;
     if (this.#updateRecord) {
       this.#updateRecord = null;
     }
@@ -1683,10 +1699,7 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
     }
   }
 
-  override onunbind(): void {
-    if (this.editing) {
-      this.editing.cancel();
-    }
+  clearView(): void {
     // Update the element to clean up adorner registrations with the
     // ElementsPanel.
     // We do not change the ElementsTreeElement state in case the
@@ -1744,9 +1757,17 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
           descendantDecorations: [],
           decorationsTooltip: '',
           indent: 0,
+          editorState: null,
+          editorWidth: null,
         },
         {}, this.listItemElement);
+  }
 
+  override onunbind(): void {
+    if (this.editing) {
+      this.editing.cancel();
+    }
+    this.clearView();
     if (this.treeOutline && this.treeOutline.treeElementByNode.get(this.nodeInternal) === this) {
       this.treeOutline.treeElementByNode.delete(this.nodeInternal);
     }
@@ -2553,7 +2574,6 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
       this.editing = {
         commit: editorHandles.commit,
         cancel: editorHandles.cancel,
-        editor: undefined,
         resize: () => {},
       };
     }
@@ -2569,31 +2589,13 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
       return;
     }
 
-    const initialValue = convertUnicodeCharsToHTMLEntities(maybeInitialValue).text;
-    this.htmlEditElement = document.createElement('div');
-    this.htmlEditElement.className = 'source-code elements-tree-editor';
-
-    // Hide header items.
-    let child: (ChildNode|null) = this.listItemElement.firstChild;
-    while (child) {
-      if (child instanceof HTMLElement) {
-        child.style.display = 'none';
-      }
-      child = child.nextSibling;
-    }
     // Hide children item.
     if (this.childrenListElement) {
       this.childrenListElement.style.display = 'none';
     }
+    const initialValue = convertUnicodeCharsToHTMLEntities(maybeInitialValue).text;
     // Append editor.
-    this.listItemElement.append(this.htmlEditElement);
-    this.htmlEditElement.addEventListener('keydown', event => {
-      if (event.key === 'Escape') {
-        event.consume(true);
-      }
-    });
-
-    const editor = new TextEditor.TextEditor.TextEditor(CodeMirror.EditorState.create({
+    this.#editorState = CodeMirror.EditorState.create({
       doc: initialValue,
       extensions: [
         CodeMirror.keymap.of([
@@ -2623,57 +2625,48 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
         }),
         CodeMirror.EditorView.domEventHandlers({
           focusout: event => {
+            if (!this.#editorRef) {
+              return;
+            }
             // The relatedTarget is null when no element gains focus, e.g. switching windows.
             const relatedTarget = (event.relatedTarget as Node | null);
-            if (relatedTarget && !relatedTarget.isSelfOrDescendant(editor)) {
+            if (relatedTarget && !relatedTarget.isSelfOrDescendant(this.#editorRef)) {
               this.editing?.commit();
             }
           },
         }),
       ],
-    }));
-    this.editing = {commit: commit.bind(this), cancel: dispose.bind(this), editor, resize: resize.bind(this)};
+    });
+    this.performUpdate();
     resize.call(this);
-    this.htmlEditElement.appendChild(editor);
-    editor.editor.focus();
-
+    this.#editorRef?.focus();
+    this.editing = {commit: commit.bind(this), cancel: dispose.bind(this), resize: resize.bind(this)};
     this.treeOutline?.setMultilineEditing(this.editing);
 
     function resize(this: ElementsTreeElement): void {
-      if (this.treeOutline && this.htmlEditElement) {
-        this.htmlEditElement.style.width = this.treeOutline.visibleWidth() - this.computeLeftIndent() - 30 + 'px';
+      if (this.treeOutline) {
+        this.#editorWidth = this.treeOutline.visibleWidth() - this.computeLeftIndent() - 30;
+        this.performUpdate();
       }
     }
 
     function commit(this: ElementsTreeElement): void {
-      if (this.editing?.editor) {
-        commitCallback(initialValue, this.editing.editor.state.doc.toString());
+      if (this.#editorRef) {
+        commitCallback(initialValue, this.#editorRef.editor.state.doc.toString());
       }
       dispose.call(this);
     }
 
     function dispose(this: ElementsTreeElement): void {
-      if (!this.editing?.editor) {
+      if (!this.#editorRef) {
         return;
       }
       this.editing = null;
-
-      // Remove editor.
-      if (this.htmlEditElement) {
-        this.listItemElement.removeChild(this.htmlEditElement);
-      }
-      this.htmlEditElement = undefined;
+      this.#editorState = null;
+      this.performUpdate();
       // Unhide children item.
       if (this.childrenListElement) {
         this.childrenListElement.style.removeProperty('display');
-      }
-      // Unhide header items.
-      let child: (ChildNode|null) = this.listItemElement.firstChild;
-      while (child) {
-        if (child instanceof HTMLElement) {
-          child.style.removeProperty('display');
-        }
-        child = child.nextSibling;
       }
 
       if (this.treeOutline) {
@@ -3016,7 +3009,7 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
   }
 
   toggleEditAsHTML(callback?: ((arg0: boolean) => void), startEditing?: boolean): void {
-    if (this.editing && this.htmlEditElement) {
+    if (this.editing && this.#editorState) {
       this.editing.commit();
       return;
     }
@@ -3222,7 +3215,6 @@ export function convertUnicodeCharsToHTMLEntities(text: string): {
 export interface EditorHandles {
   commit: () => void;
   cancel: () => void;
-  editor?: TextEditor.TextEditor.TextEditor;
   resize: () => void;
 }
 
