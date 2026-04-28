@@ -340,8 +340,8 @@ export class PerformanceTraceContext extends ConversationContext<AgentFocus> {
         const failingInsightSuggestions =
             Object.values(insightSet.model)
                 .filter(model => {
-                  return model.state !== 'pass' &&
-                      !poorMetrics.has(model.insightKey as Trace.Insights.Types.InsightKeys);
+                  return model.state !== 'pass' && Trace.Insights.Common.isInsightKey(model.insightKey) &&
+                      !poorMetrics.has(model.insightKey);
                 })
                 .map(model => new PerformanceInsightFormatter(focus, model).getSuggestions().at(-1))
                 .filter((suggestion): suggestion is ConversationSuggestion => !!suggestion)
@@ -544,8 +544,8 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
 
     // Case 2: Insight -> PERF_INSIGHT widget
     if (focus.insight) {
-      const insightKey = focus.insight.insightKey as Trace.Insights.Types.InsightKeys;
-      if (SUPPORTED_INSIGHT_WIDGETS.has(insightKey)) {
+      const insightKey = focus.insight.insightKey;
+      if (Trace.Insights.Common.isInsightKey(insightKey) && SUPPORTED_INSIGHT_WIDGETS.has(insightKey)) {
         widgets.push({
           name: 'PERF_INSIGHT',
           data: {
@@ -1017,8 +1017,8 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
           }
         }
 
-        const insightKey = params.insightName as Trace.Insights.Types.InsightKeys;
-        if (SUPPORTED_INSIGHT_WIDGETS.has(insightKey)) {
+        const insightKey = params.insightName;
+        if (Trace.Insights.Common.isInsightKey(insightKey) && SUPPORTED_INSIGHT_WIDGETS.has(insightKey)) {
           widgets.push({
             name: 'PERF_INSIGHT',
             data: {
