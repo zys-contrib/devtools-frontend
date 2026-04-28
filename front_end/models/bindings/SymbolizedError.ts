@@ -11,8 +11,18 @@ import type * as Workspace from '../workspace/workspace.js';
 import type {DebuggerWorkspaceBinding} from './DebuggerWorkspaceBinding.js';
 import {type LiveLocation, LiveLocationPool} from './LiveLocation.js';
 
-// TODO: also add UnparsableError
-export type SymbolizedError = SymbolizedErrorObject|SymbolizedSyntaxError;
+export type SymbolizedError = SymbolizedErrorObject|SymbolizedSyntaxError|UnparsableError;
+
+export class UnparsableError extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
+  readonly errorStack: string;
+  readonly cause: SymbolizedError|null;
+
+  constructor(errorStack: string, cause: SymbolizedError|null) {
+    super();
+    this.errorStack = errorStack;
+    this.cause = cause;
+  }
+}
 
 export class SymbolizedErrorObject extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
   readonly message: string;

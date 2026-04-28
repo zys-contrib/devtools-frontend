@@ -80,7 +80,7 @@ describe('SymbolizedError', () => {
     assert.isNull(result);
   });
 
-  it('returns null if the error stack cannot be parsed', async () => {
+  it('returns an UnparsableError if the error stack cannot be parsed', async () => {
     const target = universe.createTarget({});
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
@@ -97,7 +97,41 @@ describe('SymbolizedError', () => {
     } as unknown as SDK.RemoteObject.RemoteObject;
 
     const result = await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject);
-    assert.isNull(result);
+    assert.instanceOf(result, Bindings.SymbolizedError.UnparsableError);
+    assert.strictEqual(result.errorStack, errorRemoteObject.description);
+    assert.isNull(result.cause);
+  });
+
+  it('can create an UnparsableError with a parsable cause', async () => {
+    const target = universe.createTarget({});
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+    assert.exists(runtimeModel);
+
+    const causeStack = 'Error: cause error\n    at http://example.com/script.js:2:2';
+    const causeRemoteObject = {
+      subtype: 'error',
+      description: causeStack,
+      runtimeModel: () => runtimeModel,
+      getAllProperties: async () => ({properties: [], internalProperties: []}),
+    } as unknown as SDK.RemoteObject.RemoteObject;
+
+    const errorRemoteObject = {
+      subtype: 'error',
+      description: 'Error: message\n    at http://example.com/script.js:1:1\ninvalid line',
+      runtimeModel: () => runtimeModel,
+      objectId: '1' as Protocol.Runtime.RemoteObjectId,
+      getAllProperties: async () => ({
+        properties: [{name: 'cause', value: causeRemoteObject} as SDK.RemoteObject.RemoteObjectProperty],
+        internalProperties: [],
+      }),
+    } as unknown as SDK.RemoteObject.RemoteObject;
+
+    const result = await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject);
+    assert.instanceOf(result, Bindings.SymbolizedError.UnparsableError);
+    assert.strictEqual(result.errorStack, errorRemoteObject.description);
+    assert.instanceOf(result.cause, Bindings.SymbolizedError.SymbolizedErrorObject);
+    assert.strictEqual(result.cause.message, 'Error: cause error');
+    assert.strictEqual(result.cause.stackTrace.syncFragment.frames[0].url, 'http://example.com/script.js');
   });
 
   it('can create a SymbolizedError from a string RemoteObject', async () => {
@@ -167,7 +201,7 @@ describe('SymbolizedError', () => {
     assert.strictEqual(symbolizedError.message, 'SyntaxError: Unexpected token');
   });
 
-  it('returns null for a string RemoteObject if the stack trace cannot be parsed', async () => {
+  it('returns an UnparsableError for a string RemoteObject if the stack trace cannot be parsed', async () => {
     const target = universe.createTarget({});
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
     assert.exists(runtimeModel);
@@ -179,7 +213,9 @@ describe('SymbolizedError', () => {
     } as unknown as SDK.RemoteObject.RemoteObject;
 
     const result = await universe.debuggerWorkspaceBinding.createSymbolizedError(stringRemoteObject);
-    assert.isNull(result);
+    assert.instanceOf(result, Bindings.SymbolizedError.UnparsableError);
+    assert.strictEqual(result.errorStack, stringRemoteObject.description);
+    assert.isNull(result.cause);
   });
 
   it('uses the provided exceptionDetails preferentially', async () => {
@@ -242,6 +278,38 @@ describe('SymbolizedError', () => {
     assert.strictEqual(symbolizedError.message, 'Error: error. This is an issue summary');
     assert.strictEqual(symbolizedError.stackTrace.syncFragment.frames[0].url, 'http://example.com/script.js');
     assert.strictEqual(symbolizedError.stackTrace.syncFragment.frames[0].line, 0);
+  });
+
+  it('includes issueSummary in the errorStack for an UnparsableError', async () => {
+    const target = universe.createTarget({});
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+    assert.exists(runtimeModel);
+
+    const errorRemoteObject = {
+      subtype: 'error',
+      description: 'Error: message\n    at http://example.com/script.js:1:1\ninvalid line',
+      runtimeModel: () => runtimeModel,
+      objectId: '1' as Protocol.Runtime.RemoteObjectId,
+      getAllProperties: async () => ({properties: [], internalProperties: []}),
+    } as unknown as SDK.RemoteObject.RemoteObject;
+
+    const exceptionDetails = {
+      exceptionId: 1,
+      text: 'Uncaught',
+      lineNumber: 0,
+      columnNumber: 0,
+      exceptionMetaData: {
+        issueSummary: 'This is an issue summary',
+      },
+    } as Protocol.Runtime.ExceptionDetails;
+
+    const symbolizedError =
+        await universe.debuggerWorkspaceBinding.createSymbolizedError(errorRemoteObject, exceptionDetails);
+
+    assert.instanceOf(symbolizedError, Bindings.SymbolizedError.UnparsableError);
+    assert.strictEqual(
+        symbolizedError.errorStack,
+        'Error: message. This is an issue summary\n    at http://example.com/script.js:1:1\ninvalid line');
   });
 
   it('emits UPDATED when stackTrace or cause updates', async () => {

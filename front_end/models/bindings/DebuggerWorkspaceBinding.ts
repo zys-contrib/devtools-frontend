@@ -20,7 +20,12 @@ import {type LiveLocation, type LiveLocationPool, LiveLocationWithPool} from './
 import {NetworkProject} from './NetworkProject.js';
 import type {ResourceMapping} from './ResourceMapping.js';
 import {type ResourceScriptFile, ResourceScriptMapping} from './ResourceScriptMapping.js';
-import {type SymbolizedError, SymbolizedErrorObject, SymbolizedSyntaxError} from './SymbolizedError.js';
+import {
+  type SymbolizedError,
+  SymbolizedErrorObject,
+  SymbolizedSyntaxError,
+  UnparsableError
+} from './SymbolizedError.js';
 
 export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObserver<SDK.DebuggerModel.DebuggerModel> {
   readonly resourceMapping: ResourceMapping;
@@ -252,13 +257,13 @@ export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObser
       causeRemoteObject ? this.createSymbolizedError(causeRemoteObject) : Promise.resolve(null),
     ]);
 
-    if (!stackTrace) {
-      return null;
-    }
-
     const issueSummary = fetchedExceptionDetails?.exceptionMetaData?.issueSummary;
     if (typeof issueSummary === 'string') {
       errorStack = StackTrace.ErrorStackParser.concatErrorDescriptionAndIssueSummary(errorStack, issueSummary);
+    }
+
+    if (!stackTrace) {
+      return new UnparsableError(errorStack, cause);
     }
 
     const message = StackTraceImpl.DetailedErrorStackParser.parseMessage(errorStack);
