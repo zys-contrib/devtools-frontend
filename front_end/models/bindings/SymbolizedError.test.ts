@@ -201,6 +201,21 @@ describe('SymbolizedError', () => {
     assert.strictEqual(symbolizedError.message, 'SyntaxError: Unexpected token');
   });
 
+  it('returns null for a basic string RemoteObject', async () => {
+    const target = universe.createTarget({});
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+    assert.exists(runtimeModel);
+
+    const stringRemoteObject = {
+      type: 'string',
+      description: 'just a regular string',
+      runtimeModel: () => runtimeModel,
+    } as unknown as SDK.RemoteObject.RemoteObject;
+
+    const result = await universe.debuggerWorkspaceBinding.createSymbolizedError(stringRemoteObject);
+    assert.isNull(result);
+  });
+
   it('returns an UnparsableError for a string RemoteObject if the stack trace cannot be parsed', async () => {
     const target = universe.createTarget({});
     const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);

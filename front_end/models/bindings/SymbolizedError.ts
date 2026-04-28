@@ -11,6 +11,10 @@ import type * as Workspace from '../workspace/workspace.js';
 import type {DebuggerWorkspaceBinding} from './DebuggerWorkspaceBinding.js';
 import {type LiveLocation, LiveLocationPool} from './LiveLocation.js';
 
+export function isErrorLike(stack: string): boolean {
+  return /\n\s*at\s/.test(stack) || stack.startsWith('SyntaxError:');
+}
+
 export type SymbolizedError = SymbolizedErrorObject|SymbolizedSyntaxError|UnparsableError;
 
 export class UnparsableError extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {

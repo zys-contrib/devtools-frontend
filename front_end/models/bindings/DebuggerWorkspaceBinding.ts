@@ -21,10 +21,11 @@ import {NetworkProject} from './NetworkProject.js';
 import type {ResourceMapping} from './ResourceMapping.js';
 import {type ResourceScriptFile, ResourceScriptMapping} from './ResourceScriptMapping.js';
 import {
+  isErrorLike,
   type SymbolizedError,
   SymbolizedErrorObject,
   SymbolizedSyntaxError,
-  UnparsableError
+  UnparsableError,
 } from './SymbolizedError.js';
 
 export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObserver<SDK.DebuggerModel.DebuggerModel> {
@@ -247,6 +248,9 @@ export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObser
       }
     } else if (remoteObject.type === 'string') {
       errorStack = remoteObject.description || '';
+      if (!isErrorLike(errorStack)) {
+        return null;
+      }
     } else {
       return null;
     }
