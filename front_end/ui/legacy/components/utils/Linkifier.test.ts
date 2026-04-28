@@ -160,7 +160,7 @@ describeWithMockConnection('Linkifier', () => {
     observer.observe(anchor, {childList: true});
   });
 
-  it('always favors script ID over url', done => {
+  it('always favors script ID over url', async () => {
     const {target, linkifier} = setUpEnvironment();
     const lineNumber = 4;
     const url = 'https://www.google.com/script.js';
@@ -210,22 +210,24 @@ describeWithMockConnection('Linkifier', () => {
     };
     dispatchEvent(target, 'Debugger.scriptParsed', scriptParsedEvent2);
 
-    const callback: MutationCallback = function(mutations: MutationRecord[]) {
-      for (const mutation of mutations) {
-        if (mutation.type === 'childList') {
-          const info = Components.Linkifier.Linkifier.linkInfo(anchor);
-          assert.exists(info);
-          assert.exists(info.uiLocation);
+    await new Promise<void>(resolve => {
+      const callback: MutationCallback = function(mutations: MutationRecord[]) {
+        for (const mutation of mutations) {
+          if (mutation.type === 'childList') {
+            const info = Components.Linkifier.Linkifier.linkInfo(anchor);
+            assert.exists(info);
+            assert.exists(info.uiLocation);
 
-          // Make sure that a uiSourceCode is linked to that anchor.
-          assert.exists(info.uiLocation.uiSourceCode);
-          observer.disconnect();
-          done();
+            // Make sure that a uiSourceCode is linked to that anchor.
+            assert.exists(info.uiLocation.uiSourceCode);
+            observer.disconnect();
+            resolve();
+          }
         }
-      }
-    };
-    const observer = new MutationObserver(callback);
-    observer.observe(anchor, {childList: true});
+      };
+      const observer = new MutationObserver(callback);
+      observer.observe(anchor, {childList: true});
+    });
   });
 
   it('optionally shows column numbers in the link text', done => {

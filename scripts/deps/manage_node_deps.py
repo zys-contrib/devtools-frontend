@@ -184,6 +184,14 @@ def fixChaiExports():
         pkg_json.truncate()
 
 
+def apply_patches():
+    cmd = [
+        "git", "apply", "scripts/deps/node_module_patches/karma-mocha.patch"
+    ]
+
+    return exec_command(cmd)
+
+
 def run_npm_command():
     for (name, version) in DEPS.items():
         if (version.find('^') == 0):
@@ -215,6 +223,9 @@ def run_npm_command():
         return True
 
     fixChaiExports()
+
+    if apply_patches():
+        return True
 
     return ensure_licenses()
 

@@ -88,7 +88,7 @@ describeWithMockConnection('ElementsPanel', () => {
   it('does not create tree outlines for out of scope models', createsTreeOutlines(false));
 
   // Causes unit test execution to abort
-  it.skip('[crbug.com/503622772] expands the tree even when target added later', async () => {
+  it('expands the tree even when target added later', async () => {
     SDK.TargetManager.TargetManager.instance().setScopeTarget(null);
     const model = target.model(SDK.DOMModel.DOMModel);
     assert.exists(model);
@@ -110,7 +110,7 @@ describeWithMockConnection('ElementsPanel', () => {
   });
 
   // Causes unit test execution to abort
-  it.skip('[crbug.com/503622772] restores the focused node after reload when it becomes available later', async () => {
+  it('restores the focused node after reload when it becomes available later', async () => {
     const clock = sinon.useFakeTimers();
     try {
       let includeDivInDocument = true;
@@ -236,7 +236,7 @@ describeWithMockConnection('ElementsPanel', () => {
   });
 
   // Causes unit test execution to abort
-  it.skip('[crbug.com/503622772] deleting a node unhides it if it was hidden', async () => {
+  it('deleting a node unhides it if it was hidden', async () => {
     SDK.TargetManager.TargetManager.instance().setScopeTarget(null);
     const model = target.model(SDK.DOMModel.DOMModel);
     assert.exists(model);
@@ -273,7 +273,7 @@ describeWithMockConnection('ElementsPanel', () => {
   });
 
   // Causes unit test execution to abort
-  it.skip('[crbug.com/503622772] duplicating a hidden node results in a hidden copy', async () => {
+  it('duplicating a hidden node results in a hidden copy', async () => {
     SDK.TargetManager.TargetManager.instance().setScopeTarget(null);
     const model = target.model(SDK.DOMModel.DOMModel);
     assert.exists(model);
