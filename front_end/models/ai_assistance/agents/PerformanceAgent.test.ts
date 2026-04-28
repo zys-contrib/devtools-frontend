@@ -714,11 +714,11 @@ code
 
       // The first call should have a widget, the second one should also have it as deduplication now happens in the UI.
       assert.exists(actions[0].widgets);
-      assert.lengthOf(actions[0].widgets!, 1);
+      assert.lengthOf(actions[0].widgets!, 2);
       assert.strictEqual(actions[0].widgets![0].name, 'DOM_TREE');
 
       assert.exists(actions[1].widgets);
-      assert.lengthOf(actions[1].widgets!, 1);
+      assert.lengthOf(actions[1].widgets!, 2);
       assert.strictEqual(actions[1].widgets![0].name, 'DOM_TREE');
     });
 
@@ -777,7 +777,7 @@ code
       const firstActions = firstResponses.filter(r => r.type === AiAgent.ResponseType.ACTION);
       assert.lengthOf(firstActions, 1);
       assert.exists(firstActions[0].widgets);
-      assert.lengthOf(firstActions[0].widgets!, 1);
+      assert.lengthOf(firstActions[0].widgets!, 2);
 
       // Second run for the same node
       const secondResponses = await Array.fromAsync(agent.run('second test', {selected: context}));
@@ -785,80 +785,143 @@ code
       assert.lengthOf(secondActions, 1);
       // It should show the widget again because it's a new response.
       assert.exists(secondActions[0].widgets);
-      assert.lengthOf(secondActions[0].widgets!, 1);
+      assert.lengthOf(secondActions[0].widgets!, 2);
     });
 
-    it('yields a PERF_INSIGHT widget when getInsightDetails is called for insights', async function() {
-      const parsedTrace = await TraceLoader.traceEngine(this, 'lcp-images.json.gz');
-      assert.isOk(parsedTrace.insights);
-      const [nav] = parsedTrace.data.Meta.mainFrameNavigations;
-      const lcpDiscovery = getInsightOrError('LCPDiscovery', parsedTrace.insights, nav);
-      const insightSetId = [...parsedTrace.insights.keys()][0];
-      const insightSet = parsedTrace.insights.get(insightSetId)!;
+    describe('getInsightDetails yields PERF_INSIGHT widget', () => {
+      let parsedTrace: Trace.TraceModel.ParsedTrace;
+      let insightSet: Trace.Insights.Types.InsightSet;
+      let context: PerformanceAgent.PerformanceTraceContext;
 
-      // Mock the LCPBreakdown insight
-      insightSet.model.LCPBreakdown = {
-        insightKey: 'LCPBreakdown',
-        state: 'fail',
-        lcpMs: 1000 as Trace.Types.Timing.Milli,
-        lcpEvent: {
-          name: 'largestContentfulPaint::Candidate',
-          args: {data: {nodeId: 4}},
-        } as unknown as Trace.Types.Events.LargestContentfulPaintCandidate,
-      } as Trace.Insights.Types.InsightModels['LCPBreakdown'];
-
-      // Mock the RenderBlocking insight
-      insightSet.model.RenderBlocking = {
-        insightKey: 'RenderBlocking',
-        state: 'fail',
-        renderBlockingRequests: [],
-      } as unknown as Trace.Insights.Types.InsightModels['RenderBlocking'];
-
-      const context = PerformanceAgent.PerformanceTraceContext.fromInsight(parsedTrace, lcpDiscovery);
-
-      // Test LCPBreakdown
-      const agent1 = createAgentForConversation({
-        aidaClient: mockAidaClient([
-          [{
-            explanation: '',
-            functionCalls: [
-              {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'LCPBreakdown'}},
-            ]
-          }],
-          [{explanation: 'done'}]
-        ])
+      beforeEach(async function() {
+        parsedTrace = await TraceLoader.traceEngine(this, 'lcp-images.json.gz');
+        assert.isOk(parsedTrace.insights);
+        const [nav] = parsedTrace.data.Meta.mainFrameNavigations;
+        const lcpDiscovery = getInsightOrError('LCPDiscovery', parsedTrace.insights, nav);
+        const insightSetId = [...parsedTrace.insights.keys()][0];
+        insightSet = parsedTrace.insights.get(insightSetId)!;
+        context = PerformanceAgent.PerformanceTraceContext.fromInsight(parsedTrace, lcpDiscovery);
       });
 
-      const responses1 = await Array.fromAsync(agent1.run('test', {selected: context}));
-      const actions1 = responses1.filter(r => r.type === AiAgent.ResponseType.ACTION);
-      assert.lengthOf(actions1, 1);
-      assert.exists(actions1[0].widgets);
-      const lcpWidget = actions1[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
-      assert.exists(lcpWidget);
-      assert.strictEqual(lcpWidget?.data.insight, Trace.Insights.Types.InsightKeys.LCP_BREAKDOWN);
-      assert.strictEqual(lcpWidget?.data.insightData, insightSet.model.LCPBreakdown);
+      it('yields a PERF_INSIGHT widget for LCPBreakdown', async function() {
+        insightSet.model.LCPBreakdown = {
+          insightKey: 'LCPBreakdown',
+          state: 'fail',
+          lcpMs: 1000 as Trace.Types.Timing.Milli,
+          lcpEvent: {
+            name: 'largestContentfulPaint::Candidate',
+            args: {data: {nodeId: 4}},
+          } as unknown as Trace.Types.Events.LargestContentfulPaintCandidate,
+        } as Trace.Insights.Types.InsightModels['LCPBreakdown'];
 
-      // Test RenderBlocking
-      const agent2 = createAgentForConversation({
-        aidaClient: mockAidaClient([
-          [{
-            explanation: '',
-            functionCalls: [
-              {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'RenderBlocking'}},
-            ]
-          }],
-          [{explanation: 'done'}]
-        ])
+        const agent = createAgentForConversation({
+          aidaClient: mockAidaClient([
+            [{
+              explanation: '',
+              functionCalls: [
+                {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'LCPBreakdown'}},
+              ]
+            }],
+            [{explanation: 'done'}]
+          ])
+        });
+
+        const responses = await Array.fromAsync(agent.run('test', {selected: context}));
+        const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
+        assert.lengthOf(actions, 1);
+        assert.exists(actions[0].widgets);
+        const widget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+        assert.exists(widget);
+        assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.LCP_BREAKDOWN);
+        assert.strictEqual(widget?.data.insightData, insightSet.model.LCPBreakdown);
       });
 
-      const responses2 = await Array.fromAsync(agent2.run('test', {selected: context}));
-      const actions2 = responses2.filter(r => r.type === AiAgent.ResponseType.ACTION);
-      assert.lengthOf(actions2, 1);
-      assert.exists(actions2[0].widgets);
-      const widget = actions2[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
-      assert.exists(widget);
-      assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.RENDER_BLOCKING);
-      assert.strictEqual(widget?.data.insightData, insightSet.model.RenderBlocking);
+      it('yields a PERF_INSIGHT widget for RenderBlocking', async function() {
+        insightSet.model.RenderBlocking = {
+          insightKey: 'RenderBlocking',
+          state: 'fail',
+          renderBlockingRequests: [],
+        } as unknown as Trace.Insights.Types.InsightModels['RenderBlocking'];
+
+        const agent = createAgentForConversation({
+          aidaClient: mockAidaClient([
+            [{
+              explanation: '',
+              functionCalls: [
+                {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'RenderBlocking'}},
+              ]
+            }],
+            [{explanation: 'done'}]
+          ])
+        });
+
+        const responses = await Array.fromAsync(agent.run('test', {selected: context}));
+        const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
+        assert.lengthOf(actions, 1);
+        assert.exists(actions[0].widgets);
+        const widget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+        assert.exists(widget);
+        assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.RENDER_BLOCKING);
+        assert.strictEqual(widget?.data.insightData, insightSet.model.RenderBlocking);
+      });
+
+      it('yields a PERF_INSIGHT widget for LCPDiscovery', async function() {
+        insightSet.model.LCPDiscovery = {
+          insightKey: 'LCPDiscovery',
+          state: 'fail',
+        } as unknown as Trace.Insights.Types.InsightModels['LCPDiscovery'];
+
+        const agent = createAgentForConversation({
+          aidaClient: mockAidaClient([
+            [{
+              explanation: '',
+              functionCalls: [
+                {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'LCPDiscovery'}},
+              ]
+            }],
+            [{explanation: 'done'}]
+          ])
+        });
+
+        const responses = await Array.fromAsync(agent.run('test', {selected: context}));
+        const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
+        assert.lengthOf(actions, 1);
+        assert.exists(actions[0].widgets);
+        const widget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+        assert.exists(widget);
+        assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.LCP_DISCOVERY);
+        assert.strictEqual(widget?.data.insightData, insightSet.model.LCPDiscovery);
+      });
+
+      it('yields a PERF_INSIGHT widget for CLSCulprits', async function() {
+        insightSet.model.CLSCulprits = {
+          insightKey: 'CLSCulprits',
+          state: 'fail',
+          clusters: [],
+          worstCluster: null,
+        } as unknown as Trace.Insights.Types.InsightModels['CLSCulprits'];
+
+        const agent = createAgentForConversation({
+          aidaClient: mockAidaClient([
+            [{
+              explanation: '',
+              functionCalls: [
+                {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'CLSCulprits'}},
+              ]
+            }],
+            [{explanation: 'done'}]
+          ])
+        });
+
+        const responses = await Array.fromAsync(agent.run('test', {selected: context}));
+        const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
+        assert.lengthOf(actions, 1);
+        assert.exists(actions[0].widgets);
+        const widget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+        assert.exists(widget);
+        assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.CLS_CULPRITS);
+        assert.strictEqual(widget?.data.insightData, insightSet.model.CLSCulprits);
+      });
     });
 
     it('yields a BOTTOM_UP_TREE widget when getDetailedCallTree is called', async function() {

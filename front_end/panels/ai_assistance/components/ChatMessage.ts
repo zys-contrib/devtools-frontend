@@ -20,6 +20,7 @@ import * as AiAssistanceModel from '../../../models/ai_assistance/ai_assistance.
 import * as ComputedStyle from '../../../models/computed_style/computed_style.js';
 import * as Trace from '../../../models/trace/trace.js';
 import * as PanelsCommon from '../../../panels/common/common.js';
+import * as TraceBounds from '../../../services/trace_bounds/trace_bounds.js';
 import * as Marked from '../../../third_party/marked/marked.js';
 import * as Buttons from '../../../ui/components/buttons/buttons.js';
 import * as Input from '../../../ui/components/input/input.js';
@@ -202,6 +203,14 @@ const UIStringsNotTranslate = {
    */
   revealLcpBreakdown: 'Reveal LCP breakdown',
   /**
+   * @description Accessible label for the reveal button in the LCP discovery widget.
+   */
+  revealLcpDiscovery: 'Reveal LCP discovery',
+  /**
+   * @description Accessible label for the reveal button in the layout shift culprits widget.
+   */
+  revealClsCulprits: 'Reveal layout shift culprits',
+  /**
    * @description Accessible label for the reveal button in the render-blocking requests widget.
    */
   revealRenderBlockingBreakdown: 'Reveal render-blocking requests',
@@ -225,6 +234,14 @@ const UIStringsNotTranslate = {
    * @description Title for the LCP breakdown widget.
    */
   lcpBreakdown: 'LCP breakdown',
+  /**
+   * @description Title for the LCP discovery widget.
+   */
+  lcpDiscovery: 'LCP discovery',
+  /**
+   * @description Title for the layout shift culprits widget.
+   */
+  clsCulprits: 'Layout shift culprits',
   /**
    * @description Title for the render-blocking requests widget.
    */
@@ -923,10 +940,10 @@ async function makeStylePropertiesWidget(widgetData: StylePropertiesAiWidget): P
 }
 
 async function makePerfInsightWidget(widgetData: PerfInsightAiWidget): Promise<WidgetMakerResponse|null> {
+  const insight = widgetData.data.insightData;
   switch (widgetData.data.insight) {
     case Trace.Insights.Types.InsightKeys.LCP_BREAKDOWN: {
-      const insight = widgetData.data.insightData;
-      if (!insight || !Trace.Insights.Models.LCPBreakdown.isLCPBreakdownInsight(insight)) {
+      if (!Trace.Insights.Models.LCPBreakdown.isLCPBreakdownInsight(insight)) {
         return null;
       }
       // clang-format off
@@ -947,8 +964,7 @@ async function makePerfInsightWidget(widgetData: PerfInsightAiWidget): Promise<W
       };
     }
     case Trace.Insights.Types.InsightKeys.RENDER_BLOCKING: {
-      const insight = widgetData.data.insightData;
-      if (!insight || !Trace.Insights.Models.RenderBlocking.isRenderBlockingInsight(insight)) {
+      if (!Trace.Insights.Models.RenderBlocking.isRenderBlockingInsight(insight)) {
         return null;
       }
       // clang-format off
@@ -966,6 +982,50 @@ async function makePerfInsightWidget(widgetData: PerfInsightAiWidget): Promise<W
         accessibleRevealLabel: lockedString(UIStringsNotTranslate.revealRenderBlockingBreakdown),
         title: lockedString(UIStringsNotTranslate.renderBlockingBreakdown),
         jslogContext: 'render-blocking-widget',
+      };
+    }
+    case Trace.Insights.Types.InsightKeys.LCP_DISCOVERY: {
+      if (!Trace.Insights.Models.LCPDiscovery.isLCPDiscoveryInsight(insight)) {
+        return null;
+      }
+      // clang-format off
+      const renderedWidget = html`<devtools-widget
+        class="lcp-discovery-widget"
+        ${widget(TimelineInsights.LCPDiscovery.LCPDiscovery, {
+          model: insight,
+          minimal: true,
+        })}></devtools-widget>`;
+      // clang-format on
+
+      return {
+        renderedWidget,
+        revealable: new TimelineUtils.Helpers.RevealableInsight(insight),
+        accessibleRevealLabel: lockedString(UIStringsNotTranslate.revealLcpDiscovery),
+        title: lockedString(UIStringsNotTranslate.lcpDiscovery),
+        jslogContext: 'lcp-discovery-widget',
+      };
+    }
+    case Trace.Insights.Types.InsightKeys.CLS_CULPRITS: {
+      const traceBounds = TraceBounds.TraceBounds.BoundsManager.instance().state()?.micro.entireTraceBounds;
+      if (!Trace.Insights.Models.CLSCulprits.isCLSCulpritsInsight(insight) || !traceBounds) {
+        return null;
+      }
+      // clang-format off
+      const renderedWidget = html`<devtools-widget
+        class="cls-culprits-widget"
+        ${widget(TimelineInsights.CLSCulprits.CLSCulprits, {
+          model: insight,
+          minimal: true,
+          bounds: traceBounds,
+        })}></devtools-widget>`;
+      // clang-format on
+
+      return {
+        renderedWidget,
+        revealable: new TimelineUtils.Helpers.RevealableInsight(insight),
+        accessibleRevealLabel: lockedString(UIStringsNotTranslate.revealClsCulprits),
+        title: lockedString(UIStringsNotTranslate.clsCulprits),
+        jslogContext: 'cls-culprits-widget',
       };
     }
     default:
