@@ -32,6 +32,7 @@ import * as Lit from '../../../ui/lit/lit.js';
 import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
 import * as Elements from '../../elements/elements.js';
 import * as TimelineComponents from '../../timeline/components/components.js';
+import type {BaseInsightComponent} from '../../timeline/components/insights/BaseInsightComponent.js';
 import * as TimelineInsights from '../../timeline/components/insights/insights.js';
 import * as Timeline from '../../timeline/timeline.js';
 import * as TimelineUtils from '../../timeline/utils/utils.js';
@@ -939,98 +940,78 @@ async function makeStylePropertiesWidget(widgetData: StylePropertiesAiWidget): P
   };
 }
 
+const INSIGHT_METADATA: Record<string, {
+  component: typeof TimelineInsights.LCPBreakdown.LCPBreakdown | typeof TimelineInsights.RenderBlocking.RenderBlocking |
+      typeof TimelineInsights.LCPDiscovery.LCPDiscovery | typeof TimelineInsights.CLSCulprits.CLSCulprits,
+  accessibleLabel: string,
+  title: string,
+  jslog: string,
+}> = {
+  [Trace.Insights.Types.InsightKeys.LCP_BREAKDOWN]: {
+    component: TimelineInsights.LCPBreakdown.LCPBreakdown,
+    accessibleLabel: UIStringsNotTranslate.revealLcpBreakdown,
+    title: UIStringsNotTranslate.lcpBreakdown,
+    jslog: 'lcp-breakdown-widget',
+  },
+  [Trace.Insights.Types.InsightKeys.RENDER_BLOCKING]: {
+    component: TimelineInsights.RenderBlocking.RenderBlocking,
+    accessibleLabel: UIStringsNotTranslate.revealRenderBlockingBreakdown,
+    title: UIStringsNotTranslate.renderBlockingBreakdown,
+    jslog: 'render-blocking-widget',
+  },
+  [Trace.Insights.Types.InsightKeys.LCP_DISCOVERY]: {
+    component: TimelineInsights.LCPDiscovery.LCPDiscovery,
+    accessibleLabel: UIStringsNotTranslate.revealLcpDiscovery,
+    title: UIStringsNotTranslate.lcpDiscovery,
+    jslog: 'lcp-discovery-widget',
+  },
+  [Trace.Insights.Types.InsightKeys.CLS_CULPRITS]: {
+    component: TimelineInsights.CLSCulprits.CLSCulprits,
+    accessibleLabel: UIStringsNotTranslate.revealClsCulprits,
+    title: UIStringsNotTranslate.clsCulprits,
+    jslog: 'cls-culprits-widget',
+  },
+};
+
+function renderInsightWidget<T extends Trace.Insights.Types.InsightModel>(
+    component: new () => BaseInsightComponent<T>, insight: T, jslog: string, accessibleLabel: string, title: string,
+    bounds?: Trace.Types.Timing.TraceWindowMicro): WidgetMakerResponse {
+  const renderedWidget = html`<devtools-widget
+    class=${jslog}
+    ${widget(component, {
+    model: insight,
+    minimal: true,
+    bounds: bounds ?? null,
+  })}></devtools-widget>`;
+
+  return {
+    renderedWidget,
+    revealable: new TimelineUtils.Helpers.RevealableInsight(insight),
+    accessibleRevealLabel: lockedString(accessibleLabel),
+    title: lockedString(title),
+    jslogContext: jslog,
+  };
+}
+
 async function makePerfInsightWidget(widgetData: PerfInsightAiWidget): Promise<WidgetMakerResponse|null> {
+  const insightKey = widgetData.data.insight;
   const insight = widgetData.data.insightData;
-  switch (widgetData.data.insight) {
-    case Trace.Insights.Types.InsightKeys.LCP_BREAKDOWN: {
-      if (!Trace.Insights.Models.LCPBreakdown.isLCPBreakdownInsight(insight)) {
-        return null;
-      }
-      // clang-format off
-      const renderedWidget = html`<devtools-widget
-        class="lcp-breakdown-widget"
-        ${widget(TimelineInsights.LCPBreakdown.LCPBreakdown, {
-          model: insight,
-          minimal: true,
-        })}></devtools-widget>`;
-      // clang-format on
 
-      return {
-        renderedWidget,
-        revealable: new TimelineUtils.Helpers.RevealableInsight(insight),
-        accessibleRevealLabel: lockedString(UIStringsNotTranslate.revealLcpBreakdown),
-        title: lockedString(UIStringsNotTranslate.lcpBreakdown),
-        jslogContext: 'lcp-breakdown',
-      };
-    }
-    case Trace.Insights.Types.InsightKeys.RENDER_BLOCKING: {
-      if (!Trace.Insights.Models.RenderBlocking.isRenderBlockingInsight(insight)) {
-        return null;
-      }
-      // clang-format off
-      const renderedWidget = html`<devtools-widget
-        class="render-blocking-widget"
-        ${widget(TimelineInsights.RenderBlocking.RenderBlocking, {
-          model: insight,
-          minimal: true,
-        })}></devtools-widget>`;
-      // clang-format on
-
-      return {
-        renderedWidget,
-        revealable: new TimelineUtils.Helpers.RevealableInsight(insight),
-        accessibleRevealLabel: lockedString(UIStringsNotTranslate.revealRenderBlockingBreakdown),
-        title: lockedString(UIStringsNotTranslate.renderBlockingBreakdown),
-        jslogContext: 'render-blocking-widget',
-      };
-    }
-    case Trace.Insights.Types.InsightKeys.LCP_DISCOVERY: {
-      if (!Trace.Insights.Models.LCPDiscovery.isLCPDiscoveryInsight(insight)) {
-        return null;
-      }
-      // clang-format off
-      const renderedWidget = html`<devtools-widget
-        class="lcp-discovery-widget"
-        ${widget(TimelineInsights.LCPDiscovery.LCPDiscovery, {
-          model: insight,
-          minimal: true,
-        })}></devtools-widget>`;
-      // clang-format on
-
-      return {
-        renderedWidget,
-        revealable: new TimelineUtils.Helpers.RevealableInsight(insight),
-        accessibleRevealLabel: lockedString(UIStringsNotTranslate.revealLcpDiscovery),
-        title: lockedString(UIStringsNotTranslate.lcpDiscovery),
-        jslogContext: 'lcp-discovery-widget',
-      };
-    }
-    case Trace.Insights.Types.InsightKeys.CLS_CULPRITS: {
-      const traceBounds = TraceBounds.TraceBounds.BoundsManager.instance().state()?.micro.entireTraceBounds;
-      if (!Trace.Insights.Models.CLSCulprits.isCLSCulpritsInsight(insight) || !traceBounds) {
-        return null;
-      }
-      // clang-format off
-      const renderedWidget = html`<devtools-widget
-        class="cls-culprits-widget"
-        ${widget(TimelineInsights.CLSCulprits.CLSCulprits, {
-          model: insight,
-          minimal: true,
-          bounds: traceBounds,
-        })}></devtools-widget>`;
-      // clang-format on
-
-      return {
-        renderedWidget,
-        revealable: new TimelineUtils.Helpers.RevealableInsight(insight),
-        accessibleRevealLabel: lockedString(UIStringsNotTranslate.revealClsCulprits),
-        title: lockedString(UIStringsNotTranslate.clsCulprits),
-        jslogContext: 'cls-culprits-widget',
-      };
-    }
-    default:
-      return null;
+  const meta = INSIGHT_METADATA[insightKey];
+  if (!meta) {
+    return null;
   }
+
+  let bounds;
+  if (insightKey === Trace.Insights.Types.InsightKeys.CLS_CULPRITS) {
+    const traceBounds = TraceBounds.TraceBounds.BoundsManager.instance().state()?.micro.entireTraceBounds;
+    if (!traceBounds) {
+      return null;
+    }
+    bounds = traceBounds;
+  }
+
+  return renderInsightWidget(meta.component, insight, meta.jslog, meta.accessibleLabel, meta.title, bounds);
 }
 
 async function makeBottomUpTimelineTreeWidget(widgetData: BottomUpTreeAiWidget): Promise<WidgetMakerResponse|null> {
