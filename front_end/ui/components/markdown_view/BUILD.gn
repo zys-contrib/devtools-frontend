@@ -51,7 +51,8 @@ devtools_entrypoint("bundle") {
     ":markdown_view",
   ]
 
-  visibility = default_components_visibility
+  visibility = default_components_visibility +
+               [ "//front_end/entrypoints/greendev_floaty:*" ]
 }
 
 devtools_ui_module("unittests") {

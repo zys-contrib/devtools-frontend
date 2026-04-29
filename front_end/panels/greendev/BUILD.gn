@@ -35,6 +35,7 @@ devtools_module("greendev") {
     "../../models/ai_assistance:bundle",
     "../../models/workspace:meta",
     "../../panels/sensors:meta",
+    "../../ui/components/markdown_view:bundle",
     "../../ui/legacy:bundle",
   ]
 }

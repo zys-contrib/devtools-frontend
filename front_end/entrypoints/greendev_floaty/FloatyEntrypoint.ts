@@ -7,8 +7,11 @@ import '../../core/sdk/sdk-meta.js';
 import '../../models/workspace/workspace-meta.js';
 import '../../models/logs/logs-meta.js';
 import '../../panels/sensors/sensors-meta.js';
+import '../../panels/sources/sources-meta.js';
 import '../../entrypoints/inspector_main/inspector_main-meta.js';
 import '../../entrypoints/main/main-meta.js';
+import '../../ui/legacy/components/source_frame/source_frame-meta.js';
+import '../../ui/components/markdown_view/markdown_view.js';
 
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
@@ -22,6 +25,8 @@ import type * as Protocol from '../../generated/protocol.js';
 import * as AiAssistance from '../../models/ai_assistance/ai_assistance.js';
 import * as Greendev from '../../models/greendev/greendev.js';
 import type {SyncMessage} from '../../panels/greendev/GreenDevShared.js';
+import * as Marked from '../../third_party/marked/marked.js';
+import * as MarkdownView from '../../ui/components/markdown_view/markdown_view.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import * as ThemeSupport from '../../ui/legacy/theme_support/theme_support.js';
 
@@ -294,6 +299,8 @@ class GreenDevFloaty {
       nodeDescription: document.querySelector('.green-dev-floaty-dialog-node-description')?.textContent,
     });
 
+    let agentFinished = false;
+    let steps = 0;
     try {
       let results;
       if (useGreenDevAgent && this.#agent instanceof AiAssistance.GreenDevAgent.GreenDevAgent) {
@@ -302,7 +309,7 @@ class GreenDevFloaty {
           return;
         }
 
-        // --- Add the Accessibility Tree ---
+        // --- Get the Accessibility Tree ---
         const accessibilityModel = target.model(SDK.AccessibilityModel.AccessibilityModel);
         let axTree = '';
         if (accessibilityModel) {
@@ -315,7 +322,7 @@ class GreenDevFloaty {
           }
         }
 
-        // --- Add the most recent network requests ---
+        // --- Get the most recent network requests ---
         const allNetworkRequests = await AiAssistance.GreenDevAgent.GreenDevAgent.getNetworkContextData(target);
         const networkResourcesMax = 50;
         const startNetworkIndex = Math.max(0, allNetworkRequests.length - networkResourcesMax);
@@ -330,13 +337,13 @@ class GreenDevFloaty {
                   allNetworkRequests.length -
                   lastNetworkRequests.length} additional requests are available (network requests shown are capped at ${
                   networkResourcesMax} requests).` :
-              'No further network requests have been issued.';
+              'No further network requests are available.';
 
           formattedNetworkContext = `Showing network requests with indices ${startNetworkIndex}-${
               startNetworkIndex + lastNetworkRequests.length - 1}:\n\n${formattedNetworkContext}\n\n${footer}`;
         }
 
-        // --- Add the most recent console messages ---
+        // --- Get the most recent console messages ---
         const consoleModel = target.model(SDK.ConsoleModel.ConsoleModel);
         const allConsoleMessages = consoleModel ? consoleModel.messages() : [];
         const consoleMsgLimit = 50;
@@ -358,7 +365,7 @@ class GreenDevFloaty {
                   allConsoleMessages.length -
                   lastConsoleMessages.length} additional messages are available (errors shown are capped at ${
                   consoleMsgLimit} most recent).` :
-              'No further console messages have been emitted.';
+              'No further console messages are available.';
 
           formattedConsoleMessages = `Showing console messages with indices ${startIndex}-${
               startIndex + lastConsoleMessages.length - 1}:\n\n${formattedConsoleMessages}\n\n${footer}`;
@@ -366,8 +373,15 @@ class GreenDevFloaty {
 
         const mainUrl = target.inspectedURL();
 
-        // --- Add some context information about the selected node ---
+        // --- Get the React Props for the selected node (if available) ---
+        const reactComponentProps = this.#backendNodeId ?
+            await this.#agent.getReactComponentProps(this.#backendNodeId, false) :
+            'Could not get the backendNodeId for the selected element.';
+
+        // --- Get some context information about the selected node ---
         const elementContext = await AiAssistance.StylingAgent.StylingAgent.describeElement(this.#node);
+
+        // Now construct the full context.
         const context = `# Page URL
 
 ${mainUrl}
@@ -375,6 +389,10 @@ ${mainUrl}
 # User-selected node
 
 ${elementContext}
+
+# React component props:
+
+${reactComponentProps}
 
 # Recent network requests
 
@@ -401,15 +419,53 @@ ${axTree}`;
 
       for await (const result of results) {
         switch (result.type) {
-          case ResponseType.ANSWER:
-            aiContent.textContent = result.text;
+          case ResponseType.QUERYING:
+            steps++;
+            break;
+          case ResponseType.ANSWER: {
+            aiContent.textContent = '';
+            // Add a space in the protocol, which prevents links from being linkified in
+            // the markup. Why? Because there's an exception thrown if the links don't match the
+            // allowlist in getMarkdownLink(). Need to figure out later.
+            let sanitizedText = result.text.replace(/https:\/\//g, 'https: //');
+            sanitizedText = sanitizedText.replace(/http:\/\//g, 'http: //');
+            const markdown = new MarkdownView.MarkdownView.MarkdownView();
+            markdown.data = {
+              tokens: Marked.Marked.lexer(sanitizedText),
+            };
+            aiContent.append(markdown);
+            void new Promise(resolve => setTimeout(resolve, 0)).then(() => {
+              const style = document.createElement('style');
+              style.textContent =
+                  '.message { font-size: 1.0rem; } .message code { font-size: 1.0rem; font-family: \'Roboto Mono\', ' +
+                  'monospace; color: green; } .message ul { margin-left: 20px; }';
+              markdown.shadowRoot?.appendChild(style);
+
+              const codeBlocks = markdown.shadowRoot?.querySelectorAll('devtools-code-block');
+              if (codeBlocks) {
+                for (const codeBlock of codeBlocks) {
+                  const style = document.createElement('style');
+                  style.textContent = `
+.heading { color: black; background-color: #f2f6ff; font-family: 'Roboto Mono', monospace; padding: 2px 4px;
+           border-top-left-radius: 8px; border-top-right-radius: 8px; margin-bottom: 3px; }
+.code { background-color: #f8f9fa; font-family: 'Roboto Mono', monospace; padding: 5px;
+        border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+.editor-wrapper { margin-left: 20px; }
+                  `;
+                  codeBlock.shadowRoot?.appendChild(style);
+                }
+              }
+            });
             this.#syncChannel.postMessage(
                 {type: 'update-last-message', text: result.text, sessionId: this.#backendNodeId});
+            agentFinished = true;
             break;
+          }
           case ResponseType.ERROR:
             aiContent.textContent = this.#formatError(result.error);
             this.#syncChannel.postMessage(
                 {type: 'update-last-message', text: this.#formatError(result.error), sessionId: this.#backendNodeId});
+            agentFinished = true;
             break;
           case ResponseType.SIDE_EFFECT:
             result.confirm(true);
@@ -423,6 +479,14 @@ ${axTree}`;
       }
     } catch (e) {
       aiContent.textContent = `Exception: ${e instanceof Error ? e.message : String(e)}`;
+      agentFinished = true;
+    }
+
+    const MAX_AGENT_STEPS = AiAssistance.AiAgent.MAX_STEPS;
+    if (!agentFinished && steps >= MAX_AGENT_STEPS) {
+      aiContent.textContent = `The agent has reached its internal limit of ${MAX_AGENT_STEPS} steps per turn before
+      finding an answer. Please try again with a more specific query or say 'continue' (to get ${MAX_AGENT_STEPS}
+      more steps and continue trying).`;
     }
   };
 

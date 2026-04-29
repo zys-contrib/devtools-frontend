@@ -38,6 +38,9 @@ devtools_entrypoint("floaty_entrypoint") {
     "../../models/workspace:meta",
     "../../panels/greendev:greendev_shared",
     "../../panels/sensors:meta",
+    "../../panels/sources:meta",
+    "../../ui/components/markdown_view:bundle",
+    "../../ui/legacy/components/source_frame:meta",
   ]
 
   visibility = [
