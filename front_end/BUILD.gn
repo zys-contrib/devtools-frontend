@@ -114,7 +114,6 @@ group("unittests") {
   deps = [
     ":foundation_unittests",
     "Images:optimize_images",
-    "core/common:unittests",
     "core/dom_extension:unittests",
     "core/host:unittests",
     "core/i18n:unittests",

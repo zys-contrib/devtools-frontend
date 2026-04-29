@@ -72,18 +72,6 @@ devtools_entrypoint("bundle") {
   visibility = [ "*" ]
 }
 
-ts_library("unittests") {
-  testonly = true
-
-  sources = [ "Base64.browser.test.ts" ]
-
-  deps = [
-    ":bundle",
-    "../../testing",
-    "../i18n:bundle",
-  ]
-}
-
 devtools_foundation_module("foundation_unittests") {
   testonly = true
 

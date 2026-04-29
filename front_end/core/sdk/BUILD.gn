@@ -164,7 +164,6 @@ ts_library("unittests") {
     "EmulationModel.test.ts",
     "EnhancedTracesParser.test.ts",
     "FrameManager.test.ts",
-    "NetworkManager.test.ts",
     "NetworkRequest.test.ts",
     "OverlayColorGenerator.test.ts",
     "OverlayModel.test.ts",
@@ -211,6 +210,7 @@ devtools_foundation_module("foundation_unittests") {
 
   sources = [
     "DebuggerModel.test.ts",
+    "NetworkManager.test.ts",
     "PageResourceLoader.test.ts",
     "RuntimeModel.test.ts",
     "ServerSentEventsProtocol.test.ts",
