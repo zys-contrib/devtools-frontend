@@ -3257,6 +3257,7 @@ var knownContextValues = /* @__PURE__ */ new Set([
   "removed-size",
   "rename",
   "render-blocking",
+  "render-blocking-widget",
   "rendering",
   "rendering-emulations",
   "rendering.toggle-prefers-color-scheme",
