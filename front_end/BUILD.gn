@@ -115,7 +115,6 @@ group("unittests") {
     ":foundation_unittests",
     "Images:optimize_images",
     "core/host:unittests",
-    "core/i18n:unittests",
     "core/protocol_client:unittests",
     "core/root:unittests",
     "core/sdk:unittests",

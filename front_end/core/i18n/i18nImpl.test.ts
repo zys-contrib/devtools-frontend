@@ -8,8 +8,8 @@ describe('fetchAndRegisterLocaleData', () => {
   let fetchStub: sinon.SinonStub;
 
   beforeEach(() => {
-    fetchStub = sinon.stub(window, 'fetch');
-    fetchStub.returns(Promise.resolve(new window.Response(JSON.stringify({}), {
+    fetchStub = sinon.stub(globalThis, 'fetch');
+    fetchStub.returns(Promise.resolve(new globalThis.Response(JSON.stringify({}), {
       // Always return an empty JSON object.
       status: 200,
       headers: {'Content-type': 'application/json'},
