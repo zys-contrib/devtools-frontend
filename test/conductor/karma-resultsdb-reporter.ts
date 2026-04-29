@@ -40,6 +40,9 @@ export const ResultsDBReporter = function(
   };
 
   const specComplete = (_browser: any, result: any) => {
+    if (result.mocha?.hasExclusiveTests) {
+      this.hasExclusiveTests = true;
+    }
     const {suite, description, log, startTime, endTime, success, skipped} = result;
     const testId = ResultsDb.sanitizedTestId([...suite, description].join('/'));
     const expected = success || skipped;
@@ -109,7 +112,7 @@ export const ResultsDBReporter = function(
   this.onRunComplete = (browsers: any, results: any) => {
     browsers.forEach((browser: any) => {
       const {total, success, failed, skipped} = browser.lastResult;
-      if (total !== success + failed + skipped) {
+      if (total !== success + failed + skipped && !this.hasExclusiveTests) {
         throw new Error(`Karma exited early: executed ${success + failed + skipped} out of ${total} tests`);
       }
     });

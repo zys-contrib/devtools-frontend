@@ -170,6 +170,9 @@ const ProgressWithDiffReporter = function(
   const duplicateTestIds: string[] = [];
 
   const onSpecComplete = (result: any) => {
+    if (result.mocha?.hasExclusiveTests) {
+      this.hasExclusiveTests = true;
+    }
     const testId = ResultsDb.sanitizedTestId([...result.suite, result.description].join('/'));
     if (seenTestIds.has(testId)) {
       duplicateTestIds.push(testId);
@@ -180,6 +183,9 @@ const ProgressWithDiffReporter = function(
   const baseSpecFailure = this.specFailure;
   this.specFailure = function(this: any, _browser: unknown, result: any) {
     onSpecComplete(result);
+    if (result.mocha?.hasExclusiveTests) {
+      this.hasExclusiveTests = true;
+    }
     baseSpecFailure.apply(this, arguments);
     const patch = formatAsPatch(resultAssertionsDiff(result));
     if (patch) {
@@ -190,6 +196,9 @@ const ProgressWithDiffReporter = function(
   const baseSpecSuccess = this.specSuccess;
   this.specSuccess = function(this: any, _browser: unknown, result: any) {
     onSpecComplete(result);
+    if (result.mocha?.hasExclusiveTests) {
+      this.hasExclusiveTests = true;
+    }
     if (!TestConfig.isAiAgent) {
       baseSpecSuccess.apply(this, arguments);
     }
@@ -198,6 +207,9 @@ const ProgressWithDiffReporter = function(
   const baseSpecSkipped = this.specSkipped;
   this.specSkipped = function(this: any, _browser: unknown, result: any) {
     onSpecComplete(result);
+    if (result.mocha?.hasExclusiveTests) {
+      this.hasExclusiveTests = true;
+    }
     if (baseSpecSkipped) {
       baseSpecSkipped.apply(this, arguments);
     }
@@ -215,7 +227,7 @@ const ProgressWithDiffReporter = function(
 
     browsers.forEach((browser: any) => {
       const {total, success, failed, skipped} = browser.lastResult;
-      if (total !== success + failed + skipped) {
+      if (total !== success + failed + skipped && !this.hasExclusiveTests) {
         throw new Error(`Karma exited early: executed ${success + failed + skipped} out of ${total} tests`);
       }
     });
@@ -282,6 +294,7 @@ module.exports = function(config: any) {
         ...TestConfig.mochaGrep,
         retries: TestConfig.retries,
         timeout: TestConfig.debug ? 0 : 5_000,
+        expose: ['hasExclusiveTests'],
       },
     },
 
