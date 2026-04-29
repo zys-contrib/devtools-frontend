@@ -102,7 +102,6 @@ devtools_ui_module("ui") {
 
   deps = [
     "../../core/common:bundle",
-    "../../core/dom_extension:bundle",
     "../../core/host:bundle",
     "../../core/i18n:bundle",
     "../../core/platform:bundle",
@@ -121,6 +120,7 @@ devtools_ui_module("ui") {
     "../components/buttons:bundle",
     "../components/helpers:bundle",
     "../components/highlighting:bundle",
+    "../dom_extension:bundle",
     "../helpers:bundle",
     "../kit:bundle",
     "../lit:bundle",

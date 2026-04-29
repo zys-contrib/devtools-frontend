@@ -114,7 +114,6 @@ group("unittests") {
   deps = [
     ":foundation_unittests",
     "Images:optimize_images",
-    "core/dom_extension:unittests",
     "core/host:unittests",
     "core/i18n:unittests",
     "core/protocol_client:unittests",
@@ -253,6 +252,7 @@ group("unittests") {
     "ui/components/text_prompt:unittests",
     "ui/components/tooltips:unittests",
     "ui/components/tree_outline:unittests",
+    "ui/dom_extension:unittests",
     "ui/helpers:unittests",
     "ui/i18n:unittests",
     "ui/kit:unittests",

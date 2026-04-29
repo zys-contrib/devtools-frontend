@@ -29,7 +29,7 @@ _EXCLUDED_PATHS = [
     r'^front_end[\\/]core[\\/]common[\\/]Object\.ts$',  # Apple copyright
     r'^front_end[\\/]core[\\/]common[\\/]ResourceType\.ts$',  # Apple copyright
     # Apple copyright
-    r'^front_end[\\/]core[\\/]dom_extension[\\/]DOMExtension\.ts$',
+    r'^front_end[\\/]ui[\\/]dom_extension[\\/]DOMExtension\.ts$',
     r'^front_end[\\/]core[\\/]platform[\\/]UIString\.ts$',  # Apple copyright
     r'^front_end[\\/]core[\\/]sdk[\\/]Resource\.ts$',  # Apple copyright
     r'^front_end[\\/]core[\\/]sdk[\\/]Script\.ts$',  # Apple copyright
