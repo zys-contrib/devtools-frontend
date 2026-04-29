@@ -983,6 +983,92 @@ code
         assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.THIRD_PARTIES);
         assert.strictEqual(widget?.data.insightData, insightSet.model.ThirdParties);
       });
+
+      it('yields a PERF_INSIGHT widget for ForcedReflow', async function() {
+        insightSet.model.ForcedReflow = {
+          insightKey: 'ForcedReflow',
+          state: 'fail',
+          aggregatedBottomUpData: [],
+        } as unknown as Trace.Insights.Types.InsightModels['ForcedReflow'];
+
+        const agent = createAgentForConversation({
+          aidaClient: mockAidaClient([
+            [{
+              explanation: '',
+              functionCalls: [
+                {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'ForcedReflow'}},
+              ]
+            }],
+            [{explanation: 'done'}]
+          ])
+        });
+
+        const responses = await Array.fromAsync(agent.run('test', {selected: context}));
+        const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
+        assert.lengthOf(actions, 1);
+        assert.exists(actions[0].widgets);
+        const widget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+        assert.exists(widget);
+        assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.FORCED_REFLOW);
+        assert.strictEqual(widget?.data.insightData, insightSet.model.ForcedReflow);
+      });
+
+      it('yields a PERF_INSIGHT widget for Cache', async function() {
+        insightSet.model.Cache = {
+          insightKey: 'Cache',
+          state: 'fail',
+          requests: [],
+        } as unknown as Trace.Insights.Types.InsightModels['Cache'];
+
+        const agent = createAgentForConversation({
+          aidaClient: mockAidaClient([
+            [{
+              explanation: '',
+              functionCalls: [
+                {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'Cache'}},
+              ]
+            }],
+            [{explanation: 'done'}]
+          ])
+        });
+
+        const responses = await Array.fromAsync(agent.run('test', {selected: context}));
+        const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
+        assert.lengthOf(actions, 1);
+        assert.exists(actions[0].widgets);
+        const widget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+        assert.exists(widget);
+        assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.CACHE);
+        assert.strictEqual(widget?.data.insightData, insightSet.model.Cache);
+      });
+
+      it('yields a PERF_INSIGHT widget for INPBreakdown', async function() {
+        insightSet.model.INPBreakdown = {
+          insightKey: 'INPBreakdown',
+          state: 'fail',
+        } as unknown as Trace.Insights.Types.InsightModels['INPBreakdown'];
+
+        const agent = createAgentForConversation({
+          aidaClient: mockAidaClient([
+            [{
+              explanation: '',
+              functionCalls: [
+                {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'INPBreakdown'}},
+              ]
+            }],
+            [{explanation: 'done'}]
+          ])
+        });
+
+        const responses = await Array.fromAsync(agent.run('test', {selected: context}));
+        const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
+        assert.lengthOf(actions, 1);
+        assert.exists(actions[0].widgets);
+        const widget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+        assert.exists(widget);
+        assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.INP_BREAKDOWN);
+        assert.strictEqual(widget?.data.insightData, insightSet.model.INPBreakdown);
+      });
     });
 
     it('yields a BOTTOM_UP_TREE widget when getDetailedCallTree is called', async function() {

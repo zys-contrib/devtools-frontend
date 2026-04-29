@@ -279,6 +279,30 @@ const UIStringsNotTranslate = {
    * @description Title for the bottom up thread activity widget.
    */
   bottomUpTree: 'Bottom-up thread activity',
+  /**
+   * @description Accessible label for the reveal button in the forced reflow widget.
+   */
+  revealForcedReflow: 'Reveal forced reflow',
+  /**
+   * @description Title for the forced reflow widget.
+   */
+  forcedReflow: 'Forced reflow',
+  /**
+   * @description Accessible label for the reveal button in the cache widget.
+   */
+  revealCache: 'Reveal efficient cache lifetimes',
+  /**
+   * @description Title for the cache widget.
+   */
+  cache: 'Efficient cache lifetimes',
+  /**
+   * @description Accessible label for the reveal button in the INP breakdown widget.
+   */
+  revealInpBreakdown: 'Reveal INP breakdown',
+  /**
+   * @description Title for the INP breakdown widget.
+   */
+  inpBreakdown: 'INP breakdown',
 } as const;
 
 export interface Step {
@@ -997,6 +1021,24 @@ const INSIGHT_METADATA: Record<string, {
     accessibleLabel: UIStringsNotTranslate.revealThirdParties,
     title: UIStringsNotTranslate.thirdParties,
     jslog: 'third-parties-widget',
+  },
+  [Trace.Insights.Types.InsightKeys.FORCED_REFLOW]: {
+    component: TimelineInsights.ForcedReflow.ForcedReflow,
+    accessibleLabel: UIStringsNotTranslate.revealForcedReflow,
+    title: UIStringsNotTranslate.forcedReflow,
+    jslog: 'forced-reflow-widget',
+  },
+  [Trace.Insights.Types.InsightKeys.CACHE]: {
+    component: TimelineInsights.Cache.Cache,
+    accessibleLabel: UIStringsNotTranslate.revealCache,
+    title: UIStringsNotTranslate.cache,
+    jslog: 'cache-widget',
+  },
+  [Trace.Insights.Types.InsightKeys.INP_BREAKDOWN]: {
+    component: TimelineInsights.INPBreakdown.INPBreakdown,
+    accessibleLabel: UIStringsNotTranslate.revealInpBreakdown,
+    title: UIStringsNotTranslate.inpBreakdown,
+    jslog: 'inp-breakdown-widget',
   },
 };
 
