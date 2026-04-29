@@ -107,7 +107,7 @@ export class WatchExpressionsSidebarPane extends UI.Widget.VBox implements
   private readonly treeOutline: ObjectUI.ObjectPropertiesSection.ObjectPropertiesSectionsTreeOutline;
   private readonly expandController: ObjectUI.ObjectPropertiesSection.ObjectPropertiesSectionsTreeExpandController;
   private readonly linkifier: Components.Linkifier.Linkifier;
-  private constructor() {
+  constructor() {
     super({useShadowDom: true});
     this.registerRequiredCSS(watchExpressionsSidebarPaneStyles, objectValueStyles);
 
@@ -209,6 +209,7 @@ export class WatchExpressionsSidebarPane extends UI.Widget.VBox implements
 
       this.createWatchExpression(expression);
     }
+    await Promise.all(this.#watchExpressions.map(we => we.updateComplete));
   }
 
   private createWatchExpression(expression: string|null): WatchExpression {
@@ -332,6 +333,7 @@ export class WatchExpression extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   private textPrompt?: ObjectPropertyPrompt;
   private result?: SDK.RemoteObject.RemoteObject|null;
   private preventClickTimeout?: number;
+  #updateComplete: Promise<void> = Promise.resolve();
   constructor(
       expression: string|null,
       expandController: ObjectUI.ObjectPropertiesSection.ObjectPropertiesSectionsTreeExpandController,
@@ -348,6 +350,10 @@ export class WatchExpression extends Common.ObjectWrapper.ObjectWrapper<EventTyp
 
     this.createWatchExpression();
     this.update();
+  }
+
+  get updateComplete(): Promise<void> {
+    return this.#updateComplete;
   }
 
   treeElement(): UI.TreeOutline.TreeElement {
@@ -386,7 +392,7 @@ export class WatchExpression extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   update(): void {
     const currentExecutionContext = UI.Context.Context.instance().flavor(SDK.RuntimeModel.ExecutionContext);
     if (currentExecutionContext && this.#expression) {
-      void this.#evaluateExpression(currentExecutionContext, this.#expression).then(result => {
+      this.#updateComplete = this.#evaluateExpression(currentExecutionContext, this.#expression).then(result => {
         if ('object' in result) {
           this.createWatchExpression(result.object, result.exceptionDetails);
         } else {
@@ -395,6 +401,7 @@ export class WatchExpression extends Common.ObjectWrapper.ObjectWrapper<EventTyp
       });
     } else {
       this.createWatchExpression();
+      this.#updateComplete = Promise.resolve();
     }
   }
 
@@ -430,8 +437,9 @@ export class WatchExpression extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     this.#treeElement.setDisableSelectFocus(false);
     this.#treeElement.listItemElement.classList.remove('watch-expression-editing');
     if (this.textPrompt) {
+      const text = this.textPrompt.text();
       this.textPrompt.detach();
-      const newExpression = canceled ? this.#expression : this.textPrompt.text();
+      const newExpression = canceled ? this.#expression : text;
       this.textPrompt = undefined;
       this.element.removeChildren();
       this.updateExpression(newExpression);
@@ -445,7 +453,7 @@ export class WatchExpression extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     }
   }
 
-  private updateExpression(newExpression: string|null): void {
+  updateExpression(newExpression: string|null): void {
     if (this.#expression) {
       this.expandController.stopWatchSectionsWithId(this.#expression);
     }
