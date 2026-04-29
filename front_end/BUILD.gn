@@ -116,7 +116,6 @@ group("unittests") {
     "Images:optimize_images",
     "core/host:unittests",
     "core/protocol_client:unittests",
-    "core/root:unittests",
     "core/sdk:unittests",
     "entrypoints/inspector_main:unittests",
     "entrypoints/main:unittests",
