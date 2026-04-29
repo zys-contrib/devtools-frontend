@@ -227,6 +227,8 @@ const SUPPORTED_INSIGHT_WIDGETS = new Set<Trace.Insights.Types.InsightKeys>([
   Trace.Insights.Types.InsightKeys.RENDER_BLOCKING,
   Trace.Insights.Types.InsightKeys.LCP_DISCOVERY,
   Trace.Insights.Types.InsightKeys.CLS_CULPRITS,
+  Trace.Insights.Types.InsightKeys.NETWORK_DEPENDENCY_TREE,
+  Trace.Insights.Types.InsightKeys.THIRD_PARTIES,
 ]);
 
 export class PerformanceTraceContext extends ConversationContext<AgentFocus> {

@@ -922,6 +922,67 @@ code
         assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.CLS_CULPRITS);
         assert.strictEqual(widget?.data.insightData, insightSet.model.CLSCulprits);
       });
+
+      it('yields a PERF_INSIGHT widget for NetworkDependencyTree', async function() {
+        insightSet.model.NetworkDependencyTree = {
+          insightKey: 'NetworkDependencyTree',
+          state: 'fail',
+          rootNodes: [],
+          maxTime: 0,
+          preconnectedOrigins: [],
+          preconnectCandidates: [],
+        } as unknown as Trace.Insights.Types.InsightModels['NetworkDependencyTree'];
+
+        const agent = createAgentForConversation({
+          aidaClient: mockAidaClient([
+            [{
+              explanation: '',
+              functionCalls: [
+                {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'NetworkDependencyTree'}},
+              ]
+            }],
+            [{explanation: 'done'}]
+          ])
+        });
+
+        const responses = await Array.fromAsync(agent.run('test', {selected: context}));
+        const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
+        assert.lengthOf(actions, 1);
+        assert.exists(actions[0].widgets);
+        const widget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+        assert.exists(widget);
+        assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.NETWORK_DEPENDENCY_TREE);
+        assert.strictEqual(widget?.data.insightData, insightSet.model.NetworkDependencyTree);
+      });
+
+      it('yields a PERF_INSIGHT widget for ThirdParties', async function() {
+        insightSet.model.ThirdParties = {
+          insightKey: 'ThirdParties',
+          state: 'fail',
+          entitySummaries: [],
+        } as unknown as Trace.Insights.Types.InsightModels['ThirdParties'];
+
+        const agent = createAgentForConversation({
+          aidaClient: mockAidaClient([
+            [{
+              explanation: '',
+              functionCalls: [
+                {name: 'getInsightDetails', args: {insightSetId: insightSet.id, insightName: 'ThirdParties'}},
+              ]
+            }],
+            [{explanation: 'done'}]
+          ])
+        });
+
+        const responses = await Array.fromAsync(agent.run('test', {selected: context}));
+        const actions = responses.filter(r => r.type === AiAgent.ResponseType.ACTION);
+        assert.lengthOf(actions, 1);
+        assert.exists(actions[0].widgets);
+        const widget = actions[0].widgets?.find(w => w.name === 'PERF_INSIGHT');
+        assert.exists(widget);
+        assert.strictEqual(widget?.data.insight, Trace.Insights.Types.InsightKeys.THIRD_PARTIES);
+        assert.strictEqual(widget?.data.insightData, insightSet.model.ThirdParties);
+      });
     });
 
     it('yields a BOTTOM_UP_TREE widget when getDetailedCallTree is called', async function() {

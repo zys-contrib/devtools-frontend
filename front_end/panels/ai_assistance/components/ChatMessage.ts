@@ -228,6 +228,14 @@ const UIStringsNotTranslate = {
    */
   revealBottomUpTree: 'Reveal bottom-up thread activity',
   /**
+   * @description Accessible label for the reveal button in the network dependency tree widget.
+   */
+  revealNetworkDependencyTree: 'Reveal network dependency tree',
+  /**
+   * @description Accessible label for the reveal button in the 3rd parties widget.
+   */
+  revealThirdParties: 'Reveal 3rd parties',
+  /**
    * @description Title for the core web vitals widget.
    */
   coreVitals: 'Core Web Vitals',
@@ -247,6 +255,14 @@ const UIStringsNotTranslate = {
    * @description Title for the render-blocking requests widget.
    */
   renderBlockingBreakdown: 'Render-blocking requests',
+  /**
+   * @description Title for the network dependency tree widget.
+   */
+  networkDependencyTree: 'Network dependency tree',
+  /**
+   * @description Title for the 3rd parties widget.
+   */
+  thirdParties: '3rd parties',
   /**
    * @description Title for the LCP element widget.
    */
@@ -941,8 +957,7 @@ async function makeStylePropertiesWidget(widgetData: StylePropertiesAiWidget): P
 }
 
 const INSIGHT_METADATA: Record<string, {
-  component: typeof TimelineInsights.LCPBreakdown.LCPBreakdown | typeof TimelineInsights.RenderBlocking.RenderBlocking |
-      typeof TimelineInsights.LCPDiscovery.LCPDiscovery | typeof TimelineInsights.CLSCulprits.CLSCulprits,
+  component: new () => BaseInsightComponent<Trace.Insights.Types.InsightModel>,
   accessibleLabel: string,
   title: string,
   jslog: string,
@@ -970,6 +985,18 @@ const INSIGHT_METADATA: Record<string, {
     accessibleLabel: UIStringsNotTranslate.revealClsCulprits,
     title: UIStringsNotTranslate.clsCulprits,
     jslog: 'cls-culprits-widget',
+  },
+  [Trace.Insights.Types.InsightKeys.NETWORK_DEPENDENCY_TREE]: {
+    component: TimelineInsights.NetworkDependencyTree.NetworkDependencyTree,
+    accessibleLabel: UIStringsNotTranslate.revealNetworkDependencyTree,
+    title: UIStringsNotTranslate.networkDependencyTree,
+    jslog: 'network-dependency-tree-widget',
+  },
+  [Trace.Insights.Types.InsightKeys.THIRD_PARTIES]: {
+    component: TimelineInsights.ThirdParties.ThirdParties,
+    accessibleLabel: UIStringsNotTranslate.revealThirdParties,
+    title: UIStringsNotTranslate.thirdParties,
+    jslog: 'third-parties-widget',
   },
 };
 
