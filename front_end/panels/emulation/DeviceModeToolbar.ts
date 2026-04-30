@@ -16,7 +16,6 @@ import * as UI from '../../ui/legacy/legacy.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 import * as MobileThrottling from '../mobile_throttling/mobile_throttling.js';
 
-import * as EmulationComponents from './components/components.js';
 const UIStrings = {
   /**
    * @description Title of the device dimensions selection item in the Device Mode Toolbar.
@@ -219,8 +218,8 @@ export class DeviceModeToolbar {
   private spanButton!: Buttons.Button.Button;
   private postureItem!: HTMLSelectElement;
   private modeButton!: Buttons.Button.Button;
-  private widthInput: EmulationComponents.DeviceSizeInputElement.SizeInputElement;
-  private heightInput: EmulationComponents.DeviceSizeInputElement.SizeInputElement;
+  private widthInput: HTMLInputElement;
+  private heightInput: HTMLInputElement;
   private deviceScaleItem!: HTMLSelectElement;
   private deviceScaleItems: HTMLElement[] = [];
   private deviceSelectItem!: HTMLSelectElement;
@@ -255,10 +254,9 @@ export class DeviceModeToolbar {
         Common.Settings.Settings.instance().createSetting('emulation.auto-adjust-scale', true);
 
     this.lastMode = new Map();
-    this.widthInput = new EmulationComponents.DeviceSizeInputElement.SizeInputElement(
-        i18nString(UIStrings.width), {jslogContext: 'width'});
-    this.heightInput = new EmulationComponents.DeviceSizeInputElement.SizeInputElement(
-        i18nString(UIStrings.heightLeaveEmptyForFull), {jslogContext: 'height'});
+
+    this.widthInput = this.createSizeInput(i18nString(UIStrings.width), 'width');
+    this.heightInput = this.createSizeInput(i18nString(UIStrings.heightLeaveEmptyForFull), 'height');
 
     this.#element = document.createElement('div');
     this.#element.classList.add('device-mode-toolbar');
@@ -306,6 +304,30 @@ export class DeviceModeToolbar {
     return element;
   }
 
+  private createSizeInput(title: string, jslogContext: string): HTMLInputElement {
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.max = String(EmulationModel.DeviceModeModel.MaxDeviceSize);
+    input.min = String(EmulationModel.DeviceModeModel.MinDeviceSize);
+    input.title = title;
+    input.classList.add('device-mode-size-input');
+    input.setAttribute('jslog', `${VisualLogging.textField().track({change: true}).context(jslogContext)}`);
+
+    input.addEventListener('keydown', (event: Event) => {
+      let modifiedValue = UI.UIUtils.modifiedFloatNumber(Number(input.value), event);
+      if (modifiedValue === null) {
+        return;
+      }
+      modifiedValue = Math.min(modifiedValue, EmulationModel.DeviceModeModel.MaxDeviceSize);
+      modifiedValue = Math.max(modifiedValue, EmulationModel.DeviceModeModel.MinDeviceSize);
+
+      event.preventDefault();
+      input.value = String(modifiedValue);
+      input.dispatchEvent(new Event('change'));
+    });
+    return input;
+  }
+
   private createMainToolbar(): UI.Toolbar.Toolbar {
     const mainToolbar = this.#element.createChild('devtools-toolbar', 'main-toolbar');
 
@@ -320,14 +342,16 @@ export class DeviceModeToolbar {
     mainToolbar.append(...dimensionsSpan.childNodes);
     mainToolbar.append(this.deviceSelectItem);
 
-    this.widthInput.addEventListener('sizechanged', ({size: width}) => {
+    this.widthInput.addEventListener('change', () => {
+      const width = Number(this.widthInput.value);
       if (this.autoAdjustScaleSetting.get()) {
         this.model.setWidthAndScaleToFit(width);
       } else {
         this.model.setWidth(width);
       }
     });
-    this.heightInput.addEventListener('sizechanged', ({size: height}) => {
+    this.heightInput.addEventListener('change', () => {
+      const height = Number(this.heightInput.value);
       if (this.autoAdjustScaleSetting.get()) {
         this.model.setHeightAndScaleToFit(height);
       } else {
@@ -947,8 +971,8 @@ export class DeviceModeToolbar {
     }
 
     const size = this.model.appliedDeviceSize();
-    this.widthInput.size = String(size.width);
-    this.heightInput.size =
+    this.widthInput.value = String(size.width);
+    this.heightInput.value =
         this.model.type() === EmulationModel.DeviceModeModel.Type.Responsive && this.model.isFullHeight() ?
         '' :
         String(size.height);
