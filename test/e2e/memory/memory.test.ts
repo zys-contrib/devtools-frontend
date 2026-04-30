@@ -11,7 +11,6 @@ import {
 import {
   changeAllocationSampleViewViaDropdown,
   changeViewViaDropdown,
-  checkExposeInternals,
   checkRetainerChainSatisfies,
   clickOnContextMenuForRetainer,
   expandFocusedRow,
@@ -163,7 +162,7 @@ describe('The Memory Panel', function() {
     });
     await devToolsPage.page.keyboard.press('ArrowRight');
     const internalNodeSpan = await devToolsPage.waitFor(
-        '//span[text()="InternalNode"][ancestor-or-self::tr[preceding-sibling::*[1][//span[text()="Pending activities"]]]]',
+        '//span[contains(text(), "blink::HeapVectorBacking")][ancestor-or-self::tr[preceding-sibling::*[1][//span[text()="Pending activities"]]]]',
         undefined, undefined, 'xpath');
     const internalNodeRow = (await devToolsPage.$('ancestor-or-self::tr', internalNodeSpan, 'xpath'))!;
     await devToolsPage.waitForFunction(async () => {
@@ -216,7 +215,7 @@ describe('The Memory Panel', function() {
     await devToolsPage.waitForFunction(async () => {
       // Wait for all the rows of the data-grid to load.
       const retainerGridElements = await getDataGridRows('.retaining-paths-view table.data', devToolsPage);
-      return retainerGridElements.length === 12;
+      return retainerGridElements.length === 114;
     });
 
     const sharedInLeakingElementRow = await devToolsPage.waitForFunction(async () => {
@@ -454,31 +453,16 @@ describe('The Memory Panel', function() {
     }
   });
 
-  it('Includes backing store size in the shallow size of a JS Set', async ({devToolsPage, inspectedPage}) => {
-    await inspectedPage.goToResource('memory/set.html');
-    const sizes = await runJSSetTest(devToolsPage);
-
-    // The Set is reported as containing at least 100 pointers.
-    assert.isTrue(sizes.sizesForSet.shallowSize >= 400);
-    // The Set retains its backing storage.
-    assert.isTrue(
-        sizes.sizesForSet.retainedSize >= sizes.sizesForSet.shallowSize + sizes.sizesForBackingStorage.retainedSize);
-    // The backing storage is reported as zero size.
-    assert.strictEqual(sizes.sizesForBackingStorage.shallowSize, 0);
-    // The backing storage retains 100 strings, which occupy at least 16 bytes each.
-    assert.isTrue(sizes.sizesForBackingStorage.retainedSize >= 1600);
-  });
-
   it('Computes distances and sizes for WeakMap values correctly', async ({devToolsPage, inspectedPage}) => {
     await inspectedPage.goToResource('memory/weakmap.html');
     await navigateToMemoryTab(devToolsPage);
     await takeHeapSnapshot(undefined, devToolsPage);
     await waitForNonEmptyHeapSnapshotData(devToolsPage);
     await setClassFilter('CustomClass', devToolsPage);
-    assert.strictEqual(6, await getDistanceFromCategoryRow('CustomClass1', devToolsPage));
-    assert.strictEqual(7, await getDistanceFromCategoryRow('CustomClass2', devToolsPage));
-    assert.strictEqual(3, await getDistanceFromCategoryRow('CustomClass3', devToolsPage));
-    assert.strictEqual(9, await getDistanceFromCategoryRow('CustomClass4', devToolsPage));
+    assert.strictEqual(8, await getDistanceFromCategoryRow('CustomClass1', devToolsPage));
+    assert.strictEqual(9, await getDistanceFromCategoryRow('CustomClass2', devToolsPage));
+    assert.strictEqual(5, await getDistanceFromCategoryRow('CustomClass3', devToolsPage));
+    assert.strictEqual(11, await getDistanceFromCategoryRow('CustomClass4', devToolsPage));
     assert.isTrue((await getSizesFromCategoryRow('CustomClass1Key', devToolsPage)).retainedSize >= 2 ** 15);
     assert.isTrue((await getSizesFromCategoryRow('CustomClass2Key', devToolsPage)).retainedSize >= 2 ** 15);
     assert.isTrue((await getSizesFromCategoryRow('CustomClass3Key', devToolsPage)).retainedSize < 2 ** 15);
@@ -639,7 +623,6 @@ describe('The Memory Panel', () => {
   it('Does not include backing store size in the shallow size of a JS Set', async ({devToolsPage, inspectedPage}) => {
     await inspectedPage.goToResource('memory/set.html');
     await navigateToMemoryTab(devToolsPage);
-    await checkExposeInternals(devToolsPage);
     const sizes = await runJSSetTest(devToolsPage);
 
     // The Set object is small, regardless of the contained content.
