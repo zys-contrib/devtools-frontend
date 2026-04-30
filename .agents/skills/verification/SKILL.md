@@ -13,25 +13,16 @@ description: MANDATORY: Activate this skill ANY TIME you need to build the proje
 
 ## Building & compiling
 
-- Check for TypeScript or dependency issues in the build system by running `autoninja -C out/Default`.
-
-## Fast builds
-
-- If the `out/Fast` or `out/fast-build` directory exists, this means that a build that does not execute TypeScript is available to you which greatly decreases build time.
-- To use the fast build for tests, pass the `--target=Fast` (adjust the value based on the name of the directory) argument to `npm run test`.
+- Check for build issues by running `autoninja -C out/Default`.
 
 ## Linting
 
 - `npm run lint` will execute ESLint and StyleLint. It will report any violations and automatically fix them where possible.
 - To run the linter on a specific file or directory, you can run `npm run lint -- <PATH>` where `PATH` is a path to a file or directory. This will also automatically fix violations where possible.
 
-## Presubmit
-
-- `git cl presubmit -u` will check if the current change is ready for upload. It will also format and lint the change.
-
 ## Best practices
 
 - Run tests often to verify your changes.
 - Prefer using a fast build, if it exists, to keep the feedback loop shorter.
-- Periodically compile with TypeScript to check for type errors.
+- Periodically build to check for errors.
 - Run `git cl presubmit -u` at the end of your code changes.
