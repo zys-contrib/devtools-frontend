@@ -3,8 +3,10 @@
 // found in the LICENSE file.
 
 import type * as Protocol from '../../generated/protocol.js';
+import {renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {createTarget} from '../../testing/EnvironmentHelpers.js';
 import {describeWithMockConnection, setMockConnectionResponseHandler} from '../../testing/MockConnection.js';
+import * as UI from '../../ui/legacy/legacy.js';
 
 import * as Network from './network.js';
 
@@ -31,6 +33,10 @@ describeWithMockConnection('NetworkConfigView', () => {
     });
 
     const networkConfigView = Network.NetworkConfigView.NetworkConfigView.instance();
+    networkConfigView.markAsRoot();
+    networkConfigView.show(renderElementIntoDOM(document.createElement('main')));
+    await UI.Widget.Widget.allUpdatesComplete;
+
     const saveDataSelect = networkConfigView.contentElement.querySelector(
         'select[aria-label="Override the value reported by navigator.connection.saveData on the page"]');
     assert.exists(saveDataSelect);

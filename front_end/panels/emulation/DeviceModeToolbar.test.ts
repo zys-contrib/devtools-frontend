@@ -57,9 +57,10 @@ describeWithMockConnection('DeviceModeToolbar', () => {
 
     // Stub ThrottlingManager to avoid dependency on network condition settings.
     const fakeMenuButton = new UI.Toolbar.ToolbarMenuButton(() => {}, undefined, undefined, 'throttle-menu');
+    const fakeSelectElement = document.createElement('select');
     sinon.stub(MobileThrottling.ThrottlingManager.ThrottlingManager, 'instance').returns({
       createMobileThrottlingButton: () => fakeMenuButton,
-      createSaveDataOverrideSelector: () => fakeMenuButton,
+      createSaveDataOverrideSelector: () => fakeSelectElement,
     } as unknown as MobileThrottling.ThrottlingManager.ThrottlingManager);
 
     toolbar = new Emulation.DeviceModeToolbar.DeviceModeToolbar(

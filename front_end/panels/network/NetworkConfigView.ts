@@ -218,7 +218,7 @@ export class NetworkConfigView extends UI.Widget.VBox {
     const section = this.createSection(title, 'network-config-throttling');
     MobileThrottling.NetworkThrottlingSelector.NetworkThrottlingSelect.createForGlobalConditions(section, title);
     const saveDataSelect =
-        MobileThrottling.ThrottlingManager.throttlingManager().createSaveDataOverrideSelector('chrome-select').element;
+        MobileThrottling.ThrottlingManager.throttlingManager().createSaveDataOverrideSelector('chrome-select');
     section.appendChild(saveDataSelect);
   }
 

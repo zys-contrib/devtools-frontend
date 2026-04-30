@@ -389,8 +389,8 @@ export class DeviceModeToolbar {
     MobileThrottling.NetworkThrottlingSelector.NetworkThrottlingSelect.createForGlobalConditions(
         mainToolbar, i18nString(UIStrings.throttling));
     const saveDataItem = MobileThrottling.ThrottlingManager.throttlingManager().createSaveDataOverrideSelector();
-    saveDataItem.turnShrinkable();
-    mainToolbar.appendToolbarItem(saveDataItem);
+    saveDataItem.classList.add('dark-text', 'toolbar-has-dropdown-shrinkable');
+    mainToolbar.append(saveDataItem);
 
     mainToolbar.append(this.createEmptyToolbarElement());
     this.modeButton = new Buttons.Button.Button();
