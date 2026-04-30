@@ -33,6 +33,7 @@ devtools_ui_module("console") {
     "ConsoleViewMessage.ts",
     "ConsoleViewport.ts",
     "PromptBuilder.ts",
+    "SymbolizedErrorWidget.ts",
   ]
 
   deps = [
@@ -126,6 +127,7 @@ devtools_ui_module("unittests") {
     "ConsoleViewMessage.test.ts",
     "ConsoleViewport.test.ts",
     "PromptBuilder.test.ts",
+    "SymbolizedErrorWidget.test.ts",
   ]
 
   deps = [

@@ -1575,6 +1575,7 @@ grd_files_unbundled_sources = [
   "front_end/panels/console/ConsoleViewMessage.js",
   "front_end/panels/console/ConsoleViewport.js",
   "front_end/panels/console/PromptBuilder.js",
+  "front_end/panels/console/SymbolizedErrorWidget.js",
   "front_end/panels/console/consoleContextSelector.css.js",
   "front_end/panels/console/consoleInsightTeaser.css.js",
   "front_end/panels/console/consolePinPane.css.js",
