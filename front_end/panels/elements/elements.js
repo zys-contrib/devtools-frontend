@@ -5583,7 +5583,7 @@ var StylePropertyTreeElement = class _StylePropertyTreeElement extends UI7.TreeO
     if (this.prompt) {
       this.prompt.detach();
       this.prompt = null;
-      this.#clearGhostTextInValue();
+      this.section().activeAiSuggestion = void 0;
     }
   }
   styleTextAppliedForTest() {
@@ -7805,7 +7805,11 @@ var StylesAiCodeCompletionProvider = class _StylesAiCodeCompletionProvider {
     if (this.#aiCodeCompletion) {
       return;
     }
-    this.#aiCodeCompletion = new AiCodeCompletion.AiCodeCompletion.AiCodeCompletion({ aidaClient: this.#aidaClient }, this.#aiCodeCompletionConfig.panel, void 0, this.#aiCodeCompletionConfig.completionContext.stopSequences);
+    const stopSequences = ["}"];
+    if (this.#aiCodeCompletionConfig.completionContext.stopSequences) {
+      stopSequences.push(...this.#aiCodeCompletionConfig.completionContext.stopSequences);
+    }
+    this.#aiCodeCompletion = new AiCodeCompletion.AiCodeCompletion.AiCodeCompletion({ aidaClient: this.#aidaClient }, this.#aiCodeCompletionConfig.panel, void 0, stopSequences);
     this.#aiCodeCompletionConfig.onFeatureEnabled();
   }
   #cleanupAiCodeCompletion() {
@@ -10091,9 +10095,16 @@ var CSSPropertyPrompt = class extends UI10.TextPrompt.TextPrompt {
     if (!this.queryRange) {
       this.queryRange = new TextUtils5.TextRange.TextRange(0, 0, 0, this.text().length);
     }
+    const properties = this.#getAiSuggestedProperties(args.text);
+    if (properties.length === 0) {
+      this.treeElement.section().activeAiSuggestion = void 0;
+      this.activeAiSuggestionInfo = void 0;
+      return;
+    }
+    const styleText = properties.map((p) => `${p.name}: ${p.value};`).join(" ");
     this.treeElement.section().activeAiSuggestion = {
-      text: args.text,
-      properties: this.#getAiSuggestedProperties(args.text),
+      text: styleText,
+      properties,
       cursorPosition: args.from,
       clearCachedRequest: args.clearCachedRequest,
       cssProperty: this.treeElement.property

@@ -1880,9 +1880,16 @@ export class CSSPropertyPrompt extends UI.TextPrompt.TextPrompt {
         if (!this.queryRange) {
             this.queryRange = new TextUtils.TextRange.TextRange(0, 0, 0, this.text().length);
         }
+        const properties = this.#getAiSuggestedProperties(args.text);
+        if (properties.length === 0) {
+            this.treeElement.section().activeAiSuggestion = undefined;
+            this.activeAiSuggestionInfo = undefined;
+            return;
+        }
+        const styleText = properties.map(p => `${p.name}: ${p.value};`).join(' ');
         this.treeElement.section().activeAiSuggestion = {
-            text: args.text,
-            properties: this.#getAiSuggestedProperties(args.text),
+            text: styleText,
+            properties,
             cursorPosition: args.from,
             clearCachedRequest: args.clearCachedRequest,
             cssProperty: this.treeElement.property,
