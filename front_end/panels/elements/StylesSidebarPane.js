@@ -114,9 +114,15 @@ const UIStrings = {
      * @description Tooltip text for the link in the sidebar pane layer separators that reveals the layer in the layer tree view.
      */
     clickToRevealLayer: 'Click to reveal layer in layer tree',
+    /**
+     * @description Text to announce that the AI suggestion was accepted.
+     * @example {color: blue;} PH1
+     */
+    aiSuggestionAccepted: '{PH1} Suggestion accepted.',
 };
 const str_ = i18n.i18n.registerUIStrings('panels/elements/StylesSidebarPane.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
+const lockedString = i18n.i18n.lockedString;
 // Number of ms elapsed with no keypresses to determine is the input is finished, to announce results
 const FILTER_IDLE_PERIOD = 500;
 // Minimum number of @property rules for the @property section block to be folded initially
@@ -1899,6 +1905,7 @@ export class CSSPropertyPrompt extends UI.TextPrompt.TextPrompt {
         if (args.rpcGlobalId) {
             args.onImpression(args.rpcGlobalId, latency, args.sampleId);
         }
+        UI.ARIAUtils.LiveAnnouncer.status(lockedString(styleText));
     }
     #getAiSuggestedProperties(suggestionText) {
         const cssParser = CodeMirror.css.cssLanguage.parser.configure({ top: 'Styles' });
@@ -1971,7 +1978,7 @@ export class CSSPropertyPrompt extends UI.TextPrompt.TextPrompt {
                 // Explicitly set the query range as it is cleared during `acceptAutoComplete`
                 this.queryRange = new TextUtils.TextRange.TextRange(0, 0, 0, textAfterAccept.length);
                 // Re-apply the ghost text for the remainder
-                this.applySuggestion({ text: suggestionForCurrentPrompt }, true);
+                this.applySuggestion({ text: suggestionForCurrentPrompt, disableAcceptSuggestionOnStopCharacters: true }, true);
             }
             return true;
         }
@@ -1983,9 +1990,13 @@ export class CSSPropertyPrompt extends UI.TextPrompt.TextPrompt {
         return true;
     }
     async commitAiSuggestion() {
+        const suggestionText = this.treeElement.section().activeAiSuggestion?.text;
         await this.treeElement.section().commitActiveAiSuggestion();
         if (this.activeAiSuggestionInfo) {
             this.aiCodeCompletionProvider?.onSuggestionAccepted(this.activeAiSuggestionInfo.citations, this.activeAiSuggestionInfo.rpcGlobalId, this.activeAiSuggestionInfo.sampleId);
+        }
+        if (suggestionText) {
+            UI.ARIAUtils.LiveAnnouncer.status(i18nString(UIStrings.aiSuggestionAccepted, { PH1: suggestionText }));
         }
         // Clear state and return
         this.setAiAutoCompletion(null);
