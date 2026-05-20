@@ -101,6 +101,9 @@
   "core/common/Revealer.ts | issuesView": {
     "message": "Issues view"
   },
+  "core/common/Revealer.ts | lighthousePanel": {
+    "message": "Lighthouse panel"
+  },
   "core/common/Revealer.ts | memoryInspectorPanel": {
     "message": "Memory inspector panel"
   },
@@ -5524,6 +5527,9 @@
   },
   "panels/application/preloading/components/PreloadingGrid.ts | status": {
     "message": "Status"
+  },
+  "panels/application/preloading/components/PreloadingString.ts | PrefetchCancelledOnUserNavigation": {
+    "message": "The prefetch was cancelled because the user navigated the page before the prefetch finished"
   },
   "panels/application/preloading/components/PreloadingString.ts | PrefetchEvictedAfterBrowsingDataRemoved": {
     "message": "The prefetch was discarded because browsing data was removed."

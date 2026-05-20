@@ -4,6 +4,7 @@ import type * as Protocol from '../../../generated/protocol.js';
 import type * as LHModel from '../../lighthouse/lighthouse.js';
 import type * as TextUtils from '../../text_utils/text_utils.js';
 import type * as Trace from '../../trace/trace.js';
+import type * as Workspace from '../../workspace/workspace.js';
 export declare const enum ResponseType {
     CONTEXT = "context",
     TITLE = "title",
@@ -114,6 +115,11 @@ export interface RequestOptions {
     temperature?: number;
     modelId?: string;
 }
+export type AllowedOriginResult = {
+    origin: string | undefined;
+} | {
+    blocked: true;
+};
 export interface AgentOptions {
     aidaClient: Host.AidaClient.AidaClient;
     serverSideLoggingEnabled?: boolean;
@@ -121,7 +127,7 @@ export interface AgentOptions {
     confirmSideEffectForTest?: typeof Promise.withResolvers;
     onInspectElement?: () => Promise<SDK.DOMModel.DOMNode | null>;
     history?: Host.AidaClient.Content[];
-    allowedOrigin?: () => string | undefined;
+    allowedOrigin?: () => AllowedOriginResult;
     lighthouseRecording?: (overrides?: LHModel.RunTypes.RunOverrides) => Promise<LHModel.ReporterTypes.ReportJSON | null>;
 }
 export interface ParsedAnswer {
@@ -212,7 +218,19 @@ export interface BottomUpTreeAiWidget {
         parsedTrace: Trace.TraceModel.ParsedTrace;
     };
 }
-export type AiWidget = ComputedStyleAiWidget | CoreVitalsAiWidget | StylePropertiesAiWidget | DomTreeAiWidget | PerformanceTraceAiWidget | PerfInsightAiWidget | TimelineRangeSummaryAiWidget | BottomUpTreeAiWidget;
+export interface SourceFileAiWidget {
+    name: 'SOURCE_FILE';
+    data: {
+        uiSourceCode: Workspace.UISourceCode.UISourceCode;
+    };
+}
+export interface LighthouseReportAiWidget {
+    name: 'LIGHTHOUSE_REPORT';
+    data: {
+        report: LHModel.ReporterTypes.ReportJSON;
+    };
+}
+export type AiWidget = ComputedStyleAiWidget | CoreVitalsAiWidget | StylePropertiesAiWidget | DomTreeAiWidget | PerformanceTraceAiWidget | PerfInsightAiWidget | TimelineRangeSummaryAiWidget | BottomUpTreeAiWidget | SourceFileAiWidget | LighthouseReportAiWidget;
 export type FunctionCallHandlerResult<Result> = {
     requiresApproval: true;
     /**
