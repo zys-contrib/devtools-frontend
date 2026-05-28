@@ -2114,20 +2114,6 @@ var JavascriptExecutor = class {
 };
 
 // gen/front_end/models/ai_assistance/agents/AccessibilityAgent.js
-var ACCESSIBILITY_CSS_PROPERTIES = [
-  "color",
-  "background-color",
-  "display",
-  "visibility",
-  "opacity",
-  "clip",
-  "clip-path",
-  "font-size",
-  "font-weight",
-  "line-height",
-  "letter-spacing",
-  "text-transform"
-];
 var preamble = `You are an accessibility expert agent integrated into Chrome DevTools.
 Your role is to help users understand and fix accessibility issues found in Lighthouse reports.
 
@@ -2493,20 +2479,13 @@ var AccessibilityAgent = class extends AiAgent {
           backendNodeId: node.backendNodeId()
         };
         const widgets = [];
-        const cssModel = node.domModel().cssModel();
-        const styles = await cssModel.getComputedStyle(node.id);
-        const matchedStyles = await cssModel.getMatchedStyles(node.id);
-        if (styles && matchedStyles) {
-          widgets.push({
-            name: "COMPUTED_STYLES",
-            data: {
-              computedStyles: styles,
-              backendNodeId: node.backendNodeId(),
-              matchedCascade: matchedStyles,
-              properties: ACCESSIBILITY_CSS_PROPERTIES
-            }
-          });
-        }
+        const snapshot = await node.takeSnapshot();
+        widgets.push({
+          name: "DOM_TREE",
+          data: {
+            root: snapshot
+          }
+        });
         return {
           result: JSON.stringify(result, null, 2),
           widgets: widgets.length > 0 ? widgets : void 0
@@ -7593,7 +7572,16 @@ ${result}`,
         }
         const key = `getEventByKey('${params.eventKey}')`;
         this.#cacheFunctionResult(focus, key, details);
-        return { result: { details } };
+        return {
+          result: { details },
+          widgets: [{
+            name: "TIMELINE_EVENT_SUMMARY",
+            data: {
+              event,
+              parsedTrace
+            }
+          }]
+        };
       }
     });
     const createBounds = (min, max) => {
@@ -7925,7 +7913,16 @@ ${result}`,
           }
           const revealable = new SDK8.TraceObject.RevealableEvent(event);
           await Common5.Revealer.reveal(revealable);
-          return { result: { success: true } };
+          return {
+            result: { success: true },
+            widgets: [{
+              name: "TIMELINE_EVENT_SUMMARY",
+              data: {
+                event,
+                parsedTrace
+              }
+            }]
+          };
         }
       });
     }
