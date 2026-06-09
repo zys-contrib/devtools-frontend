@@ -43,6 +43,20 @@ export class ConversationContext {
     async getSuggestions() {
         return;
     }
+    /**
+     * Returns a detailed description of the context item for inclusion in the AI model prompt.
+     * Currently only used by AiAgent2.
+     */
+    async getPromptDetails() {
+        return null;
+    }
+    /**
+     * Returns a list of context details to display to the user in the UI.
+     * Currently only used by AiAgent2.
+     */
+    async getUserFacingDetails() {
+        return null;
+    }
 }
 class CrossOriginError extends Error {
     constructor() {
@@ -127,9 +141,6 @@ export class AiAgent {
     popPendingMultimodalInput() {
         return undefined;
     }
-    preambleFeatures() {
-        return [];
-    }
     buildRequest(part, role) {
         const parts = Array.isArray(part) ? part : [part];
         const currentMessage = {
@@ -169,7 +180,7 @@ export class AiAgent {
                 disable_user_content_logging: !(this.#serverSideLoggingEnabled ?? false),
                 string_session_id: this.#sessionId,
                 user_tier: userTier,
-                client_version: Root.Runtime.getChromeVersion() + this.preambleFeatures().map(feature => `+${feature}`).join(''),
+                client_version: Root.Runtime.getChromeVersion(),
             },
             functionality_type: enableAidaFunctionCalling ? Host.AidaClient.FunctionalityType.AGENTIC_CHAT :
                 Host.AidaClient.FunctionalityType.CHAT,
