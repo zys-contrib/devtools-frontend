@@ -373,6 +373,7 @@ panels/application/StorageBucketsTreeElement.test.js
 panels/application/StorageView.test.js
 panels/application/WebMCPView.test.js
 panels/application/preloading/PreloadingView.test.js
+panels/application/components/AdsView.test.js
 panels/application/components/BackForwardCacheView.test.js
 panels/application/components/BounceTrackingMitigationsView.test.js
 panels/application/components/CrashReportContextGrid.test.js
@@ -731,6 +732,8 @@ ui/legacy/ShortcutRegistry.test.js
 ui/legacy/SoftContextMenu.test.js
 ui/legacy/SoftDropDown.test.js
 ui/legacy/SplitWidget.test.js
+ui/legacy/StackLocation.test.js
+ui/legacy/StackedPane.test.js
 ui/legacy/SuggestBox.test.js
 ui/legacy/TabbedPane.test.js
 ui/legacy/TextPrompt.test.js

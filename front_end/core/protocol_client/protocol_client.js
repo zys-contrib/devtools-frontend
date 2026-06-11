@@ -1802,6 +1802,9 @@ var TargetBase = class {
   autofillAgent() {
     return this.getAgent("Autofill");
   }
+  adsAgent() {
+    return this.getAgent("Ads");
+  }
   browserAgent() {
     return this.getAgent("Browser");
   }
