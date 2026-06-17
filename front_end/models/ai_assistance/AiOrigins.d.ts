@@ -21,3 +21,18 @@ export declare function extractContextOrigin(contextURL: string): string;
  * Opaque origins are never equivalent to anything, not even themselves.
  */
 export declare function areOriginsEquivalent(origin1: string, origin2: string): boolean;
+/**
+ * Validates if the source code contents of a file (identified by targetURL) can be retrieved
+ * and shared with the AI, based on the origin of the active trace context.
+ *
+ * This function handles the following branches:
+ * 1. **Opaque origins**: If either the trace origin or target file origin is opaque
+ *    (e.g., data URLs, about:blank, sandboxed frames), access is blocked.
+ * 2. **Fresh Recordings**: For live page recordings, a strict same-origin comparison
+ *    (scheme, host, and port matching) is enforced.
+ *
+ * @param targetURL The URL of the file to be read.
+ * @param traceOrigin The allowed origin of the trace context.
+ * @returns true if reading the file is permitted; false otherwise.
+ */
+export declare function canResourceContentsBeReadForTrace(targetURL: string, traceOrigin: string): boolean;
