@@ -19,6 +19,15 @@ export class CSSMetadata {
         for (let i = 0; i < properties.length; ++i) {
             const property = properties[i];
             const propertyName = property.name;
+            if ('is_descriptor' in property && 'is_property' in property) {
+                if (property.is_descriptor && !property.is_property) {
+                    continue;
+                }
+            }
+            const runtimeFlagStatus = property.runtime_flag_status;
+            if (Boolean(runtimeFlagStatus) && runtimeFlagStatus !== 'stable') {
+                continue;
+            }
             if (!CSS.supports(propertyName, 'initial')) {
                 continue;
             }
@@ -61,9 +70,18 @@ export class CSSMetadata {
                 propertyValueSets.set(propertyName, extraValues);
             }
         }
-        // finally add common keywords to value sets and convert property #values
+        // finally add keywords from alias property, common keywords to value sets and convert property #values
         // into arrays since callers expect arrays
         for (const [propertyName, values] of propertyValueSets) {
+            const aliasFor = this.#aliasesFor.get(propertyName);
+            if (aliasFor) {
+                const aliasForValues = propertyValueSets.get(aliasFor);
+                if (aliasForValues) {
+                    for (const val of aliasForValues) {
+                        values.add(val);
+                    }
+                }
+            }
             for (const commonKeyword of CommonKeywords) {
                 if (!values.has(commonKeyword) && CSS.supports(propertyName, commonKeyword)) {
                     values.add(commonKeyword);
@@ -73,7 +91,15 @@ export class CSSMetadata {
         }
         for (const name of this.#valuesSet) {
             const values = this.specificPropertyValues(name)
-                .filter(value => CSS.supports(name, value))
+                .filter(value => {
+                // Filter out values which are just the function name (e.g. 'url', 'radial-gradient', etc.)
+                // The 'preset' is the full function (e.g. 'url(||)').
+                const preset = valuePresets.get(name)?.get(value);
+                if (preset && preset !== value) {
+                    return false;
+                }
+                return CSS.supports(name, value);
+            })
                 .sort(CSSMetadata.sortPrefixesAndCSSWideKeywordsToEnd);
             const presets = values.map(value => `${name}: ${value}`);
             if (!this.isSVGProperty(name)) {
@@ -1292,6 +1318,10 @@ const extraPropertyValues = new Map([
         ]),
     ],
     ['outline-style', new Set(['auto'])],
+    ['overflow-block', new Set(['auto', 'hidden', 'visible', 'overlay', 'scroll', 'clip'])],
+    ['overflow-inline', new Set(['auto', 'hidden', 'visible', 'overlay', 'scroll', 'clip'])],
+    ['overscroll-behavior-block', new Set(['auto', 'none', 'contain'])],
+    ['overscroll-behavior-inline', new Set(['auto', 'none', 'contain'])],
 ]);
 // Weight of CSS properties based on their usage from https://www.chromestatus.com/metrics/css/popularity
 const Weight = new Map([
