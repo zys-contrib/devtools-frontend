@@ -1577,16 +1577,21 @@ var JavascriptExecutor = class {
     return error;
   }
 }`;
+    const timeoutSentinel = Symbol("timeout");
+    const { promise: timeoutPromise, resolve: resolveTimeout } = Promise.withResolvers();
+    let timeoutId;
     try {
+      timeoutId = setTimeout(() => resolveTimeout(timeoutSentinel), OBSERVATION_TIMEOUT);
       const result = await Promise.race([
         this.#execJs(functionDeclaration, {
           throwOnSideEffect,
           contextNode: this.#options.getContextNode()
         }),
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Script execution exceeded the maximum allowed time.")), OBSERVATION_TIMEOUT);
-        })
+        timeoutPromise
       ]);
+      if (result === timeoutSentinel) {
+        throw new Error("Script execution exceeded the maximum allowed time.");
+      }
       const byteCount = Platform3.StringUtilities.countWtf8Bytes(result);
       Host2.userMetrics.freestylerEvalResponseSize(byteCount);
       if (byteCount > MAX_OBSERVATION_BYTE_LENGTH) {
@@ -1610,6 +1615,11 @@ var JavascriptExecutor = class {
         sideEffect: false,
         canceled: false
       };
+    } finally {
+      if (timeoutId !== void 0) {
+        clearTimeout(timeoutId);
+      }
+      resolveTimeout(timeoutSentinel);
     }
   }
 };
@@ -3891,7 +3901,6 @@ __export(PerformanceAgent_exports, {
 import * as Common8 from "./../../core/common/common.js";
 import * as Host9 from "./../../core/host/host.js";
 import * as i18n15 from "./../../core/i18n/i18n.js";
-import * as Platform4 from "./../../core/platform/platform.js";
 import * as Root6 from "./../../core/root/root.js";
 import * as SDK7 from "./../../core/sdk/sdk.js";
 import * as Tracing from "./../../services/tracing/tracing.js";
@@ -6989,8 +6998,6 @@ ${result}`,
         error: `${functionName} response is too large. Try investigating using other functions, or a more narrow bounds`
       };
     }
-    const byteCount = Platform4.StringUtilities.countWtf8Bytes(summary);
-    Host9.userMetrics.performanceAIMainThreadActivityResponseSize(byteCount);
     this.#cacheFunctionResult(focus, cacheKey, summary);
     const widgets = [];
     widgets.push({
@@ -7234,8 +7241,6 @@ ${result}`,
             error: "getNetworkTrackSummary response is too large. Try investigating using other functions, or a more narrow bounds"
           };
         }
-        const byteCount = Platform4.StringUtilities.countWtf8Bytes(summary);
-        Host9.userMetrics.performanceAINetworkSummaryResponseSize(byteCount);
         const key = `getNetworkTrackSummary({min: ${bounds.min}, max: ${bounds.max}})`;
         this.#cacheFunctionResult(focus, key, summary);
         return {
@@ -10694,7 +10699,7 @@ __export(AiConversation_exports, {
 });
 import * as Common13 from "./../../core/common/common.js";
 import * as Host18 from "./../../core/host/host.js";
-import * as Platform5 from "./../../core/platform/platform.js";
+import * as Platform4 from "./../../core/platform/platform.js";
 import * as Root14 from "./../../core/root/root.js";
 import * as SDK12 from "./../../core/sdk/sdk.js";
 import * as Greendev3 from "./../greendev/greendev.js";
@@ -10850,8 +10855,8 @@ var NOT_FOUND_IMAGE_DATA = "";
 var CONTEXT_TITLE = "Analyzing data";
 var MAX_TITLE_LENGTH = 80;
 var ALLOWED_PAGE_NAVIGATIONS = [
-  Platform5.DevToolsPath.urlString`about://`,
-  Platform5.DevToolsPath.urlString`chrome://terms`
+  Platform4.DevToolsPath.urlString`about://`,
+  Platform4.DevToolsPath.urlString`chrome://terms`
 ];
 function generateContextDetailsMarkdown(details) {
   const detailsMarkdown = [];
@@ -11158,7 +11163,7 @@ ${item.text.trim()}`);
       case "none":
         return new ContextSelectionAgent(options);
       default:
-        Platform5.assertNever(type, "Unknown conversation type");
+        Platform4.assertNever(type, "Unknown conversation type");
     }
   }
   async *run(initialQuery, options = {}) {
