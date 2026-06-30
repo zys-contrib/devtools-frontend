@@ -116,6 +116,10 @@ const UIStrings = {
    */
   ads: 'Ads',
   /**
+   * @description Tooltip for the experimental icon in the Ads panel
+   */
+  experimental: 'Experimental',
+  /**
    * @description Text in Application Panel Sidebar of the Application panel
    */
   storage: 'Storage',
@@ -411,8 +415,12 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
 
     if (Root.Runtime.hostConfig.devToolsAdsPanel?.enabled) {
       const adsTreeElement = new ApplicationPanelTreeElement(panel, i18nString(UIStrings.ads), false, 'ads');
-      const icon = createIcon('experiment');
+      adsTreeElement.listItemElement.classList.add('ads-tree-element');
+      const icon = createIcon('ads');
       adsTreeElement.setLeadingIcons([icon]);
+      const experimentIcon = createIcon('experiment', 'medium');
+      UI.Tooltip.Tooltip.install(experimentIcon, i18nString(UIStrings.experimental));
+      adsTreeElement.setTrailingIcons([experimentIcon]);
       adsTreeElement.itemURL = 'ads://' as Platform.DevToolsPath.UrlString;
       let adsView: ApplicationComponents.AdsView.AdsView;
       adsTreeElement.onselect = (selectedByUser?: boolean): boolean => {

@@ -826,6 +826,21 @@ export class TreeElement {
     render(icons, this.leadingIconsElement);
   }
 
+  setTrailingIcons(icons: Icon[]|Lit.TemplateResult[]): void {
+    if (!this.trailingIconsElement && !icons.length) {
+      return;
+    }
+    if (!this.trailingIconsElement) {
+      this.trailingIconsElement = document.createElement('div');
+      this.trailingIconsElement.classList.add('trailing-icons');
+      this.trailingIconsElement.classList.add('icons-container');
+      this.listItemNode.appendChild(this.trailingIconsElement);
+      this.ensureSelection();
+    }
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(icons, this.trailingIconsElement);
+  }
+
   get tooltip(): string {
     return this.tooltipInternal;
   }

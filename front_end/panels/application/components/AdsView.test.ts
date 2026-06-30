@@ -44,7 +44,7 @@ describeWithEnvironment('AdsView', () => {
     assert.include(panel.contentElement.textContent, '0');
     assert.include(panel.contentElement.textContent, '0.00');
     assert.include(panel.contentElement.textContent, '0\xa0B');
-    assert.include(panel.contentElement.textContent, '0.0\xa0ms');
+    assert.include(panel.contentElement.textContent, '0\xa0ms');
   });
 
   it('polls and renders ad metrics', async () => {
@@ -60,7 +60,7 @@ describeWithEnvironment('AdsView', () => {
     assert.include(panel.contentElement.textContent, '5');
     assert.include(panel.contentElement.textContent, '2.00');
     assert.include(panel.contentElement.textContent, '2.0\xa0kB');
-    assert.include(panel.contentElement.textContent, '150.0\xa0ms');
+    assert.include(panel.contentElement.textContent, '150\xa0ms');
 
     panel.detach();
   });
@@ -105,7 +105,7 @@ describeWithEnvironment('AdsView', () => {
     assert.include(panel.contentElement.textContent, '0');
     assert.include(panel.contentElement.textContent, '0.00');
     assert.include(panel.contentElement.textContent, '0\xa0B');
-    assert.include(panel.contentElement.textContent, '0.0\xa0ms');
+    assert.include(panel.contentElement.textContent, '0\xa0ms');
 
     panel.detach();
   });

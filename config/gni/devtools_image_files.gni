@@ -29,6 +29,7 @@ devtools_svg_sources = [
   "accelerometer-front.svg",
   "account-tree.svg",
   "add-photo.svg",
+  "ads.svg",
   "ai-explorer-badge.svg",
   "align-content-center.svg",
   "align-content-end.svg",

@@ -80,7 +80,7 @@ const DEFAULT_VIEW: View = (input, output, target) => {
   };
 
   const formatCpu = (val: number): string => {
-    return i18n.TimeUtilities.preciseMillisToString(val, 1);
+    return i18n.TimeUtilities.millisToString(val);
   };
 
   const formatNetwork = (val: number): string => {
