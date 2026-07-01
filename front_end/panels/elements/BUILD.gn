@@ -82,7 +82,6 @@ devtools_ui_module("elements") {
     "../../generated",
     "../../models/ai_assistance:bundle",
     "../../models/ai_code_completion:bundle",
-    "../../models/annotations:bundle",
     "../../models/badges:bundle",
     "../../models/bindings:bundle",
     "../../models/computed_style:bundle",

@@ -40,7 +40,6 @@ import * as Platform from '../../core/platform/platform.js';
 import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
-import * as Annotations from '../../models/annotations/annotations.js';
 import * as ComputedStyle from '../../models/computed_style/computed_style.js';
 import * as PanelCommon from '../../panels/common/common.js';
 import type * as Adorners from '../../ui/components/adorners/adorners.js';
@@ -307,8 +306,6 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     this.#domTreeWidget.onSelectedNodeChanged = this.selectedNodeChanged.bind(this);
     this.#domTreeWidget.onElementsTreeUpdated = this.updateBreadcrumbIfNeeded.bind(this);
     this.#domTreeWidget.onDocumentUpdated = this.documentUpdated.bind(this);
-    this.#domTreeWidget.onElementExpanded = this.handleElementExpanded.bind(this);
-    this.#domTreeWidget.onElementCollapsed = this.handleElementCollapsed.bind(this);
     this.#domTreeWidget.setWordWrap(Common.Settings.Settings.instance().moduleSetting('dom-word-wrap').get());
 
     SDK.TargetManager.TargetManager.instance().observeModels(SDK.DOMModel.DOMModel, this, {scoped: true});
@@ -319,11 +316,6 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
         .addChangeListener(this.showUAShadowDOMChanged.bind(this));
     PanelCommon.ExtensionServer.ExtensionServer.instance().addEventListener(
         PanelCommon.ExtensionServer.Events.SidebarPaneAdded, this.extensionSidebarPaneAdded, this);
-
-    if (Annotations.AnnotationRepository.annotationsEnabled()) {
-      PanelCommon.AnnotationManager.instance().initializePlacementForAnnotationType(
-          Annotations.AnnotationType.ELEMENT_NODE, this.resolveInitialState.bind(this), this.#domTreeWidget.element);
-    }
   }
 
   // This is a debounced method because the user might be navigated from Styles tab to Computed Style tab and vice versa.
@@ -350,18 +342,6 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     this.#computedStyleWidget.matchedStyles = matchedCascade;
     if (matchedCascade) {
       this.#computedStyleWidget.propertyTraces = this.#computedStyleModel.computePropertyTraces(matchedCascade);
-    }
-  }
-
-  private handleElementExpanded(): void {
-    if (Annotations.AnnotationRepository.annotationsEnabled()) {
-      void PanelCommon.AnnotationManager.instance().resolveAnnotationsOfType(Annotations.AnnotationType.ELEMENT_NODE);
-    }
-  }
-
-  private handleElementCollapsed(): void {
-    if (Annotations.AnnotationRepository.annotationsEnabled()) {
-      void PanelCommon.AnnotationManager.instance().resolveAnnotationsOfType(Annotations.AnnotationType.ELEMENT_NODE);
     }
   }
 
@@ -511,10 +491,6 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     UI.Context.Context.instance().setFlavor(ElementsPanel, this);
     this.#domTreeWidget.show(this.domTreeContainer);
     this.evaluateTrackingComputedStyleUpdatesForNode();
-
-    if (Annotations.AnnotationRepository.annotationsEnabled()) {
-      void PanelCommon.AnnotationManager.instance().resolveAnnotationsOfType(Annotations.AnnotationType.ELEMENT_NODE);
-    }
   }
 
   override willHide(): void {
@@ -1319,56 +1295,6 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
 
   copyStyles(node: SDK.DOMModel.DOMNode): void {
     this.#domTreeWidget.copyStyles(node);
-  }
-
-  async resolveInitialState(
-      parentElement: Element, reveal: boolean, lookupId: string,
-      anchor?: SDK.DOMModel.DOMNode|SDK.NetworkRequest.NetworkRequest): Promise<{x: number, y: number}|null> {
-    if (!this.isShowing()) {
-      return null;
-    }
-
-    if (!anchor) {
-      const backendNodeId = Number(lookupId) as Protocol.DOM.BackendNodeId;
-      if (isNaN(backendNodeId)) {
-        return null;
-      }
-      const rootDOMNode = this.#domTreeWidget.rootDOMNode;
-      if (!rootDOMNode) {
-        return null;
-      }
-      const domModel = rootDOMNode.domModel();
-      const nodes = await domModel.pushNodesByBackendIdsToFrontend(new Set([backendNodeId]));
-      if (!nodes) {
-        return null;
-      }
-      const foundNode = nodes.get(backendNodeId);
-      if (!foundNode) {
-        return null;
-      }
-      anchor = foundNode;
-    }
-
-    const element = this.#domTreeWidget.treeElementForNode(anchor as SDK.DOMModel.DOMNode);
-    if (!element) {
-      return null;
-    }
-
-    if (reveal) {
-      // The node must have been revealed in order to calculate its position.
-      await Common.Revealer.reveal(anchor);
-    }
-
-    // The tree element element starts at the top-left of the expand/collapse arrow). We
-    // want to aim for the tagname instead.
-    const offsetToTagName = 22;
-    const yPadding = 5;
-
-    const targetRect = element.listItemElement.getBoundingClientRect();
-    const parentRect = parentElement.getBoundingClientRect();
-    const relativeX = targetRect.x - parentRect.x + offsetToTagName;
-    const relativeY = targetRect.y - parentRect.y + yPadding;
-    return {x: relativeX, y: relativeY};
   }
 
   protected static firstInspectElementCompletedForTest = function(): void {};

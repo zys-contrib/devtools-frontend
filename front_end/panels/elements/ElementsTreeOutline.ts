@@ -235,8 +235,6 @@ export class DOMTreeWidget extends UI.Widget.Widget {
            Common.EventTarget.EventTargetEvent<{node: SDK.DOMModel.DOMNode | null, focus: boolean}>) => void = () => {};
   onElementsTreeUpdated: (event: Common.EventTarget.EventTargetEvent<SDK.DOMModel.DOMNode[]>) => void = () => {};
   onDocumentUpdated: (domModel: SDK.DOMModel.DOMModel) => void = () => {};
-  onElementExpanded: () => void = () => {};
-  onElementCollapsed: () => void = () => {};
 
   #maxTreeDepth?: number;
   #enableContextMenu = true;
@@ -455,11 +453,9 @@ export class DOMTreeWidget extends UI.Widget.Widget {
           },
           onElementCollapsed: () => {
             this.#clearHighlightedNode();
-            this.onElementCollapsed();
           },
           onElementExpanded: () => {
             this.#clearHighlightedNode();
-            this.onElementExpanded();
           },
         },
         this.#viewOutput, this.contentElement);

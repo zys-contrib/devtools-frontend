@@ -6,7 +6,6 @@ import * as Common from '../../../core/common/common.js';
 import type * as Platform from '../../../core/platform/platform.js';
 import type * as SDK from '../../../core/sdk/sdk.js';
 import * as Protocol from '../../../generated/protocol.js';
-import * as Annotations from '../../annotations/annotations.js';
 import * as Logs from '../../logs/logs.js';
 import * as NetworkTimeCalculator from '../../network_time_calculator/network_time_calculator.js';
 import * as TextUtils from '../../text_utils/text_utils.js';
@@ -163,7 +162,6 @@ export class NetworkRequestFormatter {
     }
 
     return `Request: ${this.#request.url()}
-${Annotations.AnnotationRepository.annotationsEnabled() ? `\nRequest ID: ${this.#request.requestId()}\n` : ''}
 ${this.formatRequestHeaders()}
 
 ${this.formatResponseHeaders()}${responseBody}

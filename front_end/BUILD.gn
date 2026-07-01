@@ -19,8 +19,6 @@ group("front_end") {
     "entrypoints/device_mode_emulation_frame",
     "entrypoints/devtools_app:entrypoint",
     "entrypoints/formatter_worker:worker_entrypoint",
-    "entrypoints/greendev_floaty:copy_floaty_resources",
-    "entrypoints/greendev_floaty:floaty_entrypoint",
     "entrypoints/heap_snapshot_worker:worker_entrypoint",
     "entrypoints/inspector:entrypoint",
     "entrypoints/js_app:entrypoint",

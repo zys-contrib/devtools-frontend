@@ -74,7 +74,6 @@ devtools_ui_module("network") {
     "../../core/sdk:bundle",
     "../../generated",
     "../../models/ai_assistance:bundle",
-    "../../models/annotations:bundle",
     "../../models/bindings:bundle",
     "../../models/har:bundle",
     "../../models/logs:bundle",

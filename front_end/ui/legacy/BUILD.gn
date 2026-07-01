@@ -113,7 +113,6 @@ devtools_ui_module("ui") {
     "../../core/root:bundle",
     "../../core/sdk:bundle",
     "../../foundation:bundle",
-    "../../models/annotations:bundle",
     "../../models/geometry:bundle",
     "../../models/stack_trace:bundle",
     "../../models/text_utils:bundle",

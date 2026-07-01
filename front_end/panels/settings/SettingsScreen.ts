@@ -11,14 +11,13 @@ import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
 import * as Root from '../../core/root/root.js';
-import * as GreenDev from '../../models/greendev/greendev.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as UIHelpers from '../../ui/helpers/helpers.js';
 import {type Card, createIcon, Link} from '../../ui/kit/kit.js';
 import * as SettingsUI from '../../ui/legacy/components/settings_ui/settings_ui.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
 import * as UI from '../../ui/legacy/legacy.js';
-import {html, nothing, render, type TemplateResult} from '../../ui/lit/lit.js';
+import {html, render} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 import {PanelUtils} from '../utils/utils.js';
 
@@ -51,11 +50,6 @@ const UIStrings = {
    * @description Message shown in the experiments panel to warn users about any possible unstable features.
    */
   theseExperimentsCouldBeUnstable: 'Warning: These experiments could be unstable or unreliable.',
-  /**
-   * @description Message shown in the GreenDev prototypes panel to warn users about any possible unstable features.
-   */
-  greenDevUnstable:
-      'Warning: All these features are prototype and very unstable. They exist for user testing and are not designed to be relied on.',
   /**
    * @description Message to display if a setting change requires a reload of DevTools
    */
@@ -276,14 +270,14 @@ export class GenericSettingsTab extends UI.Widget.VBox implements SettingsTab {
     );
 
     for (const sectionCategory of explicitSectionOrder) {
-      const settingsForSection = preRegisteredSettings.filter(
-          setting => setting.category === sectionCategory && GenericSettingsTab.isSettingVisible(setting));
+      const settingsForSection = preRegisteredSettings.filter(setting => setting.category === sectionCategory &&
+                                                                  GenericSettingsTab.isSettingVisible(setting));
       this.createSectionElement(sectionCategory, settingsForSection);
     }
 
-    const restoreAndReloadButton = UI.UIUtils.createTextButton(
-        i18nString(UIStrings.restoreDefaultsAndReload), restoreAndReload,
-        {jslogContext: 'settings.restore-defaults-and-reload'});
+    const restoreAndReloadButton =
+        UI.UIUtils.createTextButton(i18nString(UIStrings.restoreDefaultsAndReload), restoreAndReload,
+                                    {jslogContext: 'settings.restore-defaults-and-reload'});
     this.containerElement.appendChild(restoreAndReloadButton);
 
     function restoreAndReload(): void {
@@ -335,8 +329,8 @@ export class GenericSettingsTab extends UI.Widget.VBox implements SettingsTab {
     this.createStandardSectionElement(sectionName, settings, element);
   }
 
-  private createSectionElement(
-      category: Common.Settings.SettingCategory, settings: Common.Settings.SettingRegistration[]): void {
+  private createSectionElement(category: Common.Settings.SettingCategory,
+                               settings: Common.Settings.SettingRegistration[]): void {
     // Always create the EXTENSIONS section and append the link handling control.
     if (category === Common.Settings.SettingCategory.EXTENSIONS) {
       this.createExtensionSection(settings);
@@ -350,9 +344,8 @@ export class GenericSettingsTab extends UI.Widget.VBox implements SettingsTab {
     }
   }
 
-  private createStandardSectionElement(
-      category: Common.Settings.SettingCategory, settings: Common.Settings.SettingRegistration[],
-      content?: Element): void {
+  private createStandardSectionElement(category: Common.Settings.SettingCategory,
+                                       settings: Common.Settings.SettingRegistration[], content?: Element): void {
     const uiSectionName = Common.Settings.getLocalizedSettingsCategory(category);
     const sectionElement = document.createElement('div');
     for (const settingRegistration of settings) {
@@ -399,15 +392,14 @@ export class ExperimentsSettingsTab extends UI.Widget.VBox implements SettingsTa
 
     const filterSection = this.containerElement.createChild('div');
     filterSection.classList.add('experiments-filter');
-    render(
-        html`
+    render(html`
         <devtools-toolbar>
           <devtools-toolbar-input autofocus type="filter" placeholder=${
-            i18nString(UIStrings.searchExperiments)} style="flex-grow:1" @change=${
-            this.#onFilterChanged.bind(this)}></devtools-toolbar-input>
+               i18nString(UIStrings.searchExperiments)} style="flex-grow:1" @change=${
+               this.#onFilterChanged.bind(this)}></devtools-toolbar-input>
         </devtools-toolbar>
     `,
-        filterSection);
+           filterSection);
     this.renderExperiments('');
   }
 
@@ -455,8 +447,8 @@ export class ExperimentsSettingsTab extends UI.Widget.VBox implements SettingsTa
     return subsection;
   }
 
-  private createExperimentCheckbox(experiment: Root.Runtime.Experiment|Root.Runtime.HostExperiment):
-      HTMLParagraphElement {
+  private createExperimentCheckbox(experiment: Root.Runtime.Experiment|
+                                   Root.Runtime.HostExperiment): HTMLParagraphElement {
     const checkbox =
         UI.UIUtils.CheckboxLabel.createWithStringLiteral(experiment.title, experiment.isEnabled(), experiment.name);
     checkbox.classList.add('experiment-label');
@@ -547,8 +539,8 @@ export class ActionDelegate implements UI.ActionRegistration.ActionDelegate {
 }
 export class Revealer implements
     Common.Revealer.Revealer<Root.Runtime.Experiment|Root.Runtime.HostExperiment|Common.Settings.Setting<unknown>> {
-  async reveal(object: Root.Runtime.Experiment|Root.Runtime.HostExperiment|Common.Settings.Setting<unknown>):
-      Promise<void> {
+  async reveal(object: Root.Runtime.Experiment|Root.Runtime.HostExperiment|
+               Common.Settings.Setting<unknown>): Promise<void> {
     const context = UI.Context.Context.instance();
     if (object instanceof Root.Runtime.Experiment || object instanceof Root.Runtime.HostExperiment) {
       Host.InspectorFrontendHost.InspectorFrontendHostInstance.bringToFront();
@@ -598,81 +590,4 @@ export class Revealer implements
 export interface ShowSettingsScreenOptions {
   name?: string;
   focusTabHeader?: boolean;
-}
-
-export class GreenDevSettingsTab extends UI.Widget.VBox implements SettingsTab {
-  #view: View;
-
-  constructor(view = GREENDEV_VIEW) {
-    super({jslog: `${VisualLogging.pane('greendev-prototypes')}`});
-    this.element.id = 'greendev-prototypes-tab-content';
-
-    this.#view = view;
-
-    this.requestUpdate();
-  }
-
-  highlightObject(_object: Object): void {
-  }
-
-  override performUpdate(): Promise<void>|void {
-    const settings = GreenDev.Prototypes.instance().settings();
-    this.#view({settings}, {}, this.element);
-  }
-}
-
-interface GreenDevViewInput {
-  settings: GreenDev.GreenDevSettings;
-}
-
-type View = (input: GreenDevViewInput, output: object, target: HTMLElement) => void;
-const GREENDEV_VIEW: View = (input, _output, target) => {
-  // clang-format off
-  render(html`
-         <div class="settings-card-container">
-           <devtools-card .heading=${'GreenDev prototypes'}>
-             <div class="experiments-warning-subsection">
-              <devtools-icon .name=${'warning'}></devtools-icon>
-              <span>${i18nString(UIStrings.greenDevUnstable)}</span>
-             </div>
-             <div class="settings-experiments-block">
-               ${renderPrototypeCheckboxes(input.settings, ['aiAnnotations', 'beyondStylingGemini', 'beyondStylingAntigravity', 'emulationCapabilities'])}
-             </div>
-           </devtools-card>
-         </div>
-       `, target);
-  // clang-format on
-};
-
-const GREENDEV_PROTOTYPE_NAMES: Record<keyof GreenDev.GreenDevSettings, string> = {
-  aiAnnotations: 'AI auto-annotations',
-  beyondStylingGemini: 'Beyond Styling (Gemini CLI)',
-  beyondStylingAntigravity: 'Beyond Styling (Antigravity CLI)',
-  emulationCapabilities: 'Emulation Capabilities',
-};
-
-function renderPrototypeCheckboxes(
-    settings: GreenDev.GreenDevSettings,
-    keys: Array<keyof GreenDev.GreenDevSettings>,
-    ): TemplateResult {
-  const {bindToSetting} = UI.UIUtils;
-
-  function showChangeWarning(): void {
-    UI.InspectorView.InspectorView.instance().displayReloadRequiredWarning(
-        i18nString(UIStrings.settingsChangedReloadDevTools));
-  }
-  // clang-format off
-  const checkboxes = Object.keys(settings).map(name => {
-    const settingName = name as keyof GreenDev.GreenDevSettings;
-    if(!keys.includes(settingName)) {
-      return nothing;
-    }
-    const setting = settings[settingName];
-    const title = GREENDEV_PROTOTYPE_NAMES[settingName];
-    return html`<p class="settings-experiment">
-      <devtools-checkbox @change=${showChangeWarning} title=${title} ${bindToSetting(setting)}>${title}</devtools-checkbox>
-    </p>`;
-  });
-  return html`${checkboxes}`;
-  // clang-format on
 }

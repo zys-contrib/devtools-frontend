@@ -8,7 +8,6 @@ import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as LHModel from '../../models/lighthouse/lighthouse.js';
 import type * as Trace from '../../models/trace/trace.js';
-import * as Greendev from '../greendev/greendev.js';
 import type * as NetworkTimeCalculator from '../network_time_calculator/network_time_calculator.js';
 
 import {AccessibilityAgent} from './agents/AccessibilityAgent.js';
@@ -203,11 +202,6 @@ export class AiConversation {
 
   get selectedContext(): ConversationContext<unknown>|undefined {
     return this.#contexts.at(0);
-  }
-
-  getPendingMultimodalInput(): MultimodalInput|undefined {
-    const greenDevEmulationEnabled = Greendev.Prototypes.instance().isEnabled('emulationCapabilities');
-    return greenDevEmulationEnabled ? this.#agent.popPendingMultimodalInput() : undefined;
   }
 
   #reconstructHistory(historyWithoutImages: ResponseData[]): ResponseData[] {

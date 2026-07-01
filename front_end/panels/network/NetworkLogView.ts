@@ -41,7 +41,6 @@ import * as i18n from '../../core/i18n/i18n.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
-import * as Annotations from '../../models/annotations/annotations.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as HAR from '../../models/har/har.js';
 import * as Logs from '../../models/logs/logs.js';
@@ -996,14 +995,6 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin<EventTypes, 
 
   summaryToolbar(): UI.Toolbar.Toolbar {
     return this.summaryToolbarInternal;
-  }
-
-  getDataGrid(): DataGrid.SortableDataGrid.SortableDataGrid<NetworkNode>|null {
-    if (Annotations.AnnotationRepository.annotationsEnabled()) {
-      return this.dataGrid;
-    }
-
-    return null;
   }
 
   modelAdded(networkManager: SDK.NetworkManager.NetworkManager): void {

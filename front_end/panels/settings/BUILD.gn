@@ -36,7 +36,6 @@ devtools_ui_module("settings") {
     "../../core/platform:bundle",
     "../../core/root:bundle",
     "../../models/ai_assistance:bundle",
-    "../../models/greendev:bundle",
     "../../models/persistence:bundle",
     "../../ui/components/buttons:bundle",
     "../../ui/components/input:bundle",
