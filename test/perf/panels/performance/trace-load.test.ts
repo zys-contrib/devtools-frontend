@@ -17,10 +17,9 @@ async function timeFixture(fixture: string, devToolsPage: DevToolsPage, inspecte
 }
 
 describe('Performance panel trace load performance', () => {
-  // Flaky test
-  describe.skip('[crbug.com/497965839] Large CPU profile load benchmark', function() {
+  describe('Large CPU profile load benchmark', function() {
     const RUNS = 10;
-    this.timeout(40_000);
+    this.timeout(60_000);
 
     for (let run = 1; run <= RUNS; run++) {
       it('run large cpu profile benchmark', async ({devToolsPage, inspectedPage}) => {

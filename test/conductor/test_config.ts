@@ -43,6 +43,7 @@ interface Config {
   shardBias: number;
   isAiAgent: boolean;
   allowDuplicateTestIds: boolean;
+  isPerfTest: boolean;
 }
 
 function sliceArrayFromElement(array: string[], element: string) {
@@ -148,6 +149,7 @@ export const TestConfig: Config = {
   isAiAgent:
       ['GEMINI_CLI', 'CLAUDECODE', 'CODEX_SANDBOX', 'CURSOR_AGENT', 'AI_AGENT'].some(agent => agent in process.env),
   allowDuplicateTestIds: options['repeat'] > 1 || options['retries'] > 0,
+  isPerfTest: getTestsFromOptions().some(t => t.includes('test/perf') || t.includes('test\\perf')),
 };
 
 export function loadTests(testDirectory: string, filename = 'tests.txt') {
