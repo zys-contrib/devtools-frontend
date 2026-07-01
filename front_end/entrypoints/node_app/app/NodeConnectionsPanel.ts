@@ -95,9 +95,8 @@ export class NodeConnectionsView extends UI.Widget.VBox implements UI.ListWidget
     this.element.classList.add('network-discovery-view');
 
     const networkDiscoveryFooter = this.element.createChild('div', 'network-discovery-footer');
-    const documentationLink = Link.create(
-        'https://nodejs.org/en/docs/inspector/', i18nString(UIStrings.nodejsDebuggingGuide), undefined,
-        'node-js-debugging');
+    const documentationLink = Link.create('https://nodejs.org/learn/getting-started/debugging',
+                                          i18nString(UIStrings.nodejsDebuggingGuide), undefined, 'node-js-debugging');
     networkDiscoveryFooter.appendChild(
         uiI18n.getFormatLocalizedString(str_, UIStrings.specifyNetworkEndpointAnd, {PH1: documentationLink}));
 
