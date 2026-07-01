@@ -727,11 +727,7 @@ describe('Recorder', function() {
     );
   });
 
-  // Test is failing on CQ and flaky locally
-  it.skip('[crbug.com/504874017] should be able to navigate to a prerendered page', async ({
-                                                                                      inspectedPage,
-                                                                                      devToolsPage
-                                                                                    }) => {
+  it('should be able to navigate to a prerendered page', async ({inspectedPage, devToolsPage}) => {
     await setupRecorderWithScriptAndReplay(
         {
           title: 'Test Recording',
@@ -751,6 +747,10 @@ describe('Recorder', function() {
                   url: `${inspectedPage.getResourcesPath()}/recorder/prerendered.html`,
                 },
               ],
+            },
+            {
+              type: 'waitForExpression' as StepType.WaitForExpression,
+              expression: 'document.querySelector("div")?.innerText === "true"',
             }
           ],
         },
@@ -758,10 +758,5 @@ describe('Recorder', function() {
         devToolsPage,
         inspectedPage,
     );
-    const isPrerendered = await inspectedPage.evaluate(() => {
-      return document.querySelector('div')!.innerText === 'true';
-    });
-
-    assert.isTrue(isPrerendered);
   });
 });
