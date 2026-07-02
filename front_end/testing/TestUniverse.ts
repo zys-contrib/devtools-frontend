@@ -175,6 +175,9 @@ export class TestUniverse implements Foundation.Universe.Universe {
           if (ctor === Common.Settings.Settings.prototype.constructor) {
             return universe.settings as T;
           }
+          if (ctor === Common.Console.Console.prototype.constructor) {
+            return universe.console as T;
+          }
           if (ctor === SDK.FrameManager.FrameManager.prototype.constructor) {
             return universe.frameManager as T;
           }

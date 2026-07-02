@@ -31,6 +31,14 @@ export class TargetManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
     return this.context.get(Common.Settings.Settings);
   }
 
+  // TODO(crbug.com/493763857): Remove fallback once all unit tests use TestUniverse.
+  getConsole(): Common.Console.Console {
+    if ('has' in this.context && typeof this.context.has === 'function' && !this.context.has(Common.Console.Console)) {
+      return Common.Console.Console.instance();
+    }
+    return this.context.get(Common.Console.Console);
+  }
+
   /* eslint-disable @typescript-eslint/no-explicit-any */
   #modelListeners: Platform.MapUtilities.Multimap<string|symbol|number, {
     modelClass: SDKModelConstructor,
