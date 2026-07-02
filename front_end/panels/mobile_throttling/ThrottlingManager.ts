@@ -11,6 +11,7 @@ import {Icon} from '../../ui/kit/kit.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import {html, render} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
+import * as PanelsCommon from '../common/common.js';
 
 import {MobileThrottlingSelector} from './MobileThrottlingSelector.js';
 import {
@@ -22,7 +23,7 @@ import {
 
 export interface CPUThrottlingSelectorWrapper {
   control: UI.Toolbar.ToolbarComboBox;
-  updateRecommendedOption(recommendedOption: SDK.CPUThrottlingManager.CPUThrottlingOption|null): void;
+  updateRecommendedOption(recommendedOption: PanelsCommon.CPUThrottlingOption.CPUThrottlingOption|null): void;
 }
 
 const UIStrings = {
@@ -109,15 +110,17 @@ class PromiseQueue<T> {
 
 export class ThrottlingManager extends Common.ObjectWrapper.ObjectWrapper<ThrottlingManager.EventTypes> {
   private readonly cpuThrottlingControls: Set<UI.Toolbar.ToolbarComboBox>;
-  private readonly cpuThrottlingOptions: SDK.CPUThrottlingManager.CPUThrottlingOption[];
+  private readonly cpuThrottlingOptions: PanelsCommon.CPUThrottlingOption.CPUThrottlingOption[];
   private readonly customNetworkConditionsSetting: Common.Settings.Setting<SDK.NetworkManager.Conditions[]>;
   private readonly currentNetworkThrottlingConditionKeySetting:
       Common.Settings.Setting<SDK.NetworkManager.ThrottlingConditionKey>;
   private readonly calibratedCpuThrottlingSetting:
-      Common.Settings.Setting<SDK.CPUThrottlingManager.CalibratedCPUThrottling>;
+      Common.Settings.Setting<PanelsCommon.CPUThrottlingOption.CalibratedCPUThrottling>;
   private lastNetworkThrottlingConditions!: SDK.NetworkManager.Conditions;
   private readonly cpuThrottlingManager: SDK.CPUThrottlingManager.CPUThrottlingManager;
   #hardwareConcurrencyOverrideEnabled = false;
+  #currentCPUThrottlingOption: PanelsCommon.CPUThrottlingOption.CPUThrottlingOption =
+      PanelsCommon.CPUThrottlingOption.NoThrottlingOption;
   readonly #emulationQueue = new PromiseQueue<void>();
   get hardwareConcurrencyOverrideEnabled(): boolean {
     return this.#hardwareConcurrencyOverrideEnabled;
@@ -136,8 +139,9 @@ export class ThrottlingManager extends Common.ObjectWrapper.ObjectWrapper<Thrott
     this.currentNetworkThrottlingConditionKeySetting = SDK.NetworkManager.activeNetworkThrottlingKeySetting();
 
     this.calibratedCpuThrottlingSetting =
-        Common.Settings.Settings.instance().createSetting<SDK.CPUThrottlingManager.CalibratedCPUThrottling>(
+        Common.Settings.Settings.instance().createSetting<PanelsCommon.CPUThrottlingOption.CalibratedCPUThrottling>(
             'calibrated-cpu-throttling', {}, Common.Settings.SettingStorageType.GLOBAL);
+    this.calibratedCpuThrottlingSetting.addChangeListener(this.onCalibratedSettingChanged, this);
 
     SDK.NetworkManager.MultitargetNetworkManager.instance().addEventListener(
         SDK.NetworkManager.MultitargetNetworkManager.Events.CONDITIONS_CHANGED, () => {
@@ -250,23 +254,46 @@ export class ThrottlingManager extends Common.ObjectWrapper.ObjectWrapper<Thrott
 
   private updatePanelIcon(): void {
     const warnings = [];
-    if (this.cpuThrottlingManager.cpuThrottlingRate() !== SDK.CPUThrottlingManager.CPUThrottlingRates.NO_THROTTLING) {
+    if (this.cpuThrottlingManager.cpuThrottlingRate() !==
+        PanelsCommon.CPUThrottlingOption.CPUThrottlingRates.NO_THROTTLING) {
       warnings.push(i18nString(UIStrings.cpuThrottlingIsEnabled));
     }
     UI.InspectorView.InspectorView.instance().setPanelWarnings('timeline', warnings);
   }
 
-  setCPUThrottlingOption(option: SDK.CPUThrottlingManager.CPUThrottlingOption): void {
-    // This will transitively call onCPUThrottlingRateChangedOnSDK.
-    this.cpuThrottlingManager.setCPUThrottlingOption(option);
+  cpuThrottlingOption(): PanelsCommon.CPUThrottlingOption.CPUThrottlingOption {
+    return this.#currentCPUThrottlingOption;
+  }
+
+  setCPUThrottlingOption(option: PanelsCommon.CPUThrottlingOption.CPUThrottlingOption): void {
+    if (this.#currentCPUThrottlingOption === option) {
+      return;
+    }
+    this.#currentCPUThrottlingOption = option;
+    this.cpuThrottlingManager.setCPUThrottlingRate(option.rate());
+  }
+
+  private onCalibratedSettingChanged(): void {
+    if (!this.#currentCPUThrottlingOption.calibratedDeviceType) {
+      return;
+    }
+    const rate = this.#currentCPUThrottlingOption.rate();
+    if (rate === 0) {
+      this.setCPUThrottlingOption(PanelsCommon.CPUThrottlingOption.NoThrottlingOption);
+      return;
+    }
+    this.cpuThrottlingManager.setCPUThrottlingRate(rate);
   }
 
   onCPUThrottlingRateChangedOnSDK(rate: number): void {
-    if (rate !== SDK.CPUThrottlingManager.CPUThrottlingRates.NO_THROTTLING) {
+    if (rate !== PanelsCommon.CPUThrottlingOption.CPUThrottlingRates.NO_THROTTLING) {
       Host.userMetrics.actionTaken(Host.UserMetrics.Action.CpuThrottlingEnabled);
     }
 
-    const index = this.cpuThrottlingOptions.indexOf(this.cpuThrottlingManager.cpuThrottlingOption());
+    const option = PanelsCommon.CPUThrottlingOption.determineOptionFromRate(rate, this.#currentCPUThrottlingOption);
+    this.#currentCPUThrottlingOption = option;
+
+    const index = this.cpuThrottlingOptions.indexOf(option);
     for (const control of this.cpuThrottlingControls) {
       control.setSelectedIndex(index);
     }
@@ -282,7 +309,7 @@ export class ThrottlingManager extends Common.ObjectWrapper.ObjectWrapper<Thrott
 
     const optionSelected = (): void => {
       if (control.selectedIndex() === control.options().length - 1) {
-        const index = this.cpuThrottlingOptions.indexOf(this.cpuThrottlingManager.cpuThrottlingOption());
+        const index = this.cpuThrottlingOptions.indexOf(this.#currentCPUThrottlingOption);
         control.setSelectedIndex(index);
         void Common.Revealer.reveal(this.calibratedCpuThrottlingSetting);
       } else {
@@ -293,7 +320,7 @@ export class ThrottlingManager extends Common.ObjectWrapper.ObjectWrapper<Thrott
     const control =
         new UI.Toolbar.ToolbarComboBox(optionSelected, i18nString(UIStrings.cpuThrottling), '', 'cpu-throttling');
     this.cpuThrottlingControls.add(control);
-    const currentOption = this.cpuThrottlingManager.cpuThrottlingOption();
+    const currentOption = this.#currentCPUThrottlingOption;
 
     const optionEls: HTMLOptionElement[] = [];
     const options = this.cpuThrottlingOptions;
@@ -317,7 +344,7 @@ export class ThrottlingManager extends Common.ObjectWrapper.ObjectWrapper<Thrott
 
     return {
       control,
-      updateRecommendedOption(recommendedOption: SDK.CPUThrottlingManager.CPUThrottlingOption|null) {
+      updateRecommendedOption(recommendedOption: PanelsCommon.CPUThrottlingOption.CPUThrottlingOption|null) {
         for (let i = 0; i < optionEls.length - 1; i++) {
           const option = options[i];
           optionEls[i].text = option === recommendedOption ?

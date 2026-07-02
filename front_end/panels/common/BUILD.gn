@@ -32,6 +32,7 @@ devtools_ui_module("common") {
     "AiCodeGenerationTeaser.ts",
     "AiCodeGenerationUpgradeDialog.ts",
     "BadgeNotification.ts",
+    "CPUThrottlingOption.ts",
     "DOMLinkifier.ts",
     "ExtensionPanel.ts",
     "ExtensionServer.ts",

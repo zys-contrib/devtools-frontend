@@ -12,6 +12,7 @@ import * as Buttons from '../../ui/components/buttons/buttons.js';
 import {type Card, createIcon} from '../../ui/kit/kit.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
+import * as PanelsCommon from '../common/common.js';
 
 import {CalibrationController} from './CalibrationController.js';
 import {ThrottlingPresets} from './ThrottlingPresets.js';
@@ -214,7 +215,7 @@ function createComputePressurePromise(): Promise<{state: string}> {
 export class CPUThrottlingCard {
   element: Card;
 
-  private readonly setting: Common.Settings.Setting<SDK.CPUThrottlingManager.CalibratedCPUThrottling>;
+  private readonly setting: Common.Settings.Setting<PanelsCommon.CPUThrottlingOption.CalibratedCPUThrottling>;
   private computePressurePromise?: ReturnType<typeof createComputePressurePromise>;
   private controller?: CalibrationController;
 
@@ -230,8 +231,9 @@ export class CPUThrottlingCard {
   private warnings: string[] = [];
 
   constructor() {
-    this.setting = Common.Settings.Settings.instance().createSetting<SDK.CPUThrottlingManager.CalibratedCPUThrottling>(
-        'calibrated-cpu-throttling', {}, Common.Settings.SettingStorageType.GLOBAL);
+    this.setting =
+        Common.Settings.Settings.instance().createSetting<PanelsCommon.CPUThrottlingOption.CalibratedCPUThrottling>(
+            'calibrated-cpu-throttling', {}, Common.Settings.SettingStorageType.GLOBAL);
 
     this.element = document.createElement('devtools-card');
     this.element.heading = i18nString(UIStrings.cpuThrottlingPresets);
@@ -331,13 +333,13 @@ export class CPUThrottlingCard {
       this.progress.style.display = '';
     }
 
-    const resultToString = (result: number|SDK.CPUThrottlingManager.CalibrationError|undefined): string => {
+    const resultToString = (result: number|PanelsCommon.CPUThrottlingOption.CalibrationError|undefined): string => {
       if (result === undefined) {
         return i18nString(UIStrings.needsCalibration);
       }
 
       if (typeof result === 'string') {
-        return SDK.CPUThrottlingManager.calibrationErrorToString(result);
+        return PanelsCommon.CPUThrottlingOption.calibrationErrorToString(result);
       }
 
       // Shouldn't happen, but let's not throw an error (.toFixed) if the setting
@@ -349,15 +351,15 @@ export class CPUThrottlingCard {
       return i18nString(UIStrings.dSlowdown, {PH1: result.toFixed(1)});
     };
 
-    const setPresetResult =
-        (element: HTMLElement|null, result: number|SDK.CPUThrottlingManager.CalibrationError|undefined): void => {
-          if (!element) {
-            throw new Error('expected HTMLElement');
-          }
+    const setPresetResult = (element: HTMLElement|null,
+                             result: number|PanelsCommon.CPUThrottlingOption.CalibrationError|undefined): void => {
+      if (!element) {
+        throw new Error('expected HTMLElement');
+      }
 
-          element.textContent = resultToString(result);
-          element.classList.toggle('not-calibrated', result === undefined);
-        };
+      element.textContent = resultToString(result);
+      element.classList.toggle('not-calibrated', result === undefined);
+    };
 
     setPresetResult(this.lowTierMobileDeviceEl.querySelector('.cpu-preset-result'), result.low);
     setPresetResult(this.midTierMobileDeviceEl.querySelector('.cpu-preset-result'), result.mid);

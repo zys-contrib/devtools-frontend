@@ -10,6 +10,7 @@ import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHe
 import {spyCall} from '../../testing/ExpectStubCall.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import * as UI from '../../ui/legacy/legacy.js';
+import * as PanelsCommon from '../common/common.js';
 
 import * as MobileThrottling from './mobile_throttling.js';
 
@@ -74,16 +75,16 @@ describeWithEnvironment('ThrottlingManager', () => {
       const cpuThrottlingPresets = MobileThrottling.ThrottlingPresets.ThrottlingPresets.cpuThrottlingPresets;
       const throttlingManager = MobileThrottling.ThrottlingManager.ThrottlingManager.instance({forceNew: true});
       const selector = throttlingManager.createCPUThrottlingSelector().control;
-      assert.strictEqual(cpuThrottlingPresets[selector.selectedIndex()], SDK.CPUThrottlingManager.NoThrottlingOption);
+      assert.strictEqual(cpuThrottlingPresets[selector.selectedIndex()],
+                         PanelsCommon.CPUThrottlingOption.NoThrottlingOption);
 
-      SDK.CPUThrottlingManager.CPUThrottlingManager.instance().setCPUThrottlingOption(
-          SDK.CPUThrottlingManager.ExtraSlowThrottlingOption);
-      assert.strictEqual(
-          cpuThrottlingPresets[selector.selectedIndex()], SDK.CPUThrottlingManager.ExtraSlowThrottlingOption);
+      throttlingManager.setCPUThrottlingOption(PanelsCommon.CPUThrottlingOption.ExtraSlowThrottlingOption);
+      assert.strictEqual(cpuThrottlingPresets[selector.selectedIndex()],
+                         PanelsCommon.CPUThrottlingOption.ExtraSlowThrottlingOption);
 
-      SDK.CPUThrottlingManager.CPUThrottlingManager.instance().setCPUThrottlingOption(
-          SDK.CPUThrottlingManager.NoThrottlingOption);
-      assert.strictEqual(cpuThrottlingPresets[selector.selectedIndex()], SDK.CPUThrottlingManager.NoThrottlingOption);
+      throttlingManager.setCPUThrottlingOption(PanelsCommon.CPUThrottlingOption.NoThrottlingOption);
+      assert.strictEqual(cpuThrottlingPresets[selector.selectedIndex()],
+                         PanelsCommon.CPUThrottlingOption.NoThrottlingOption);
     });
   });
   describe('DataSaverEmulation', () => {
