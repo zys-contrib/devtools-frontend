@@ -6,6 +6,7 @@ import type * as ProtocolProxyApi from '../../generated/protocol-proxy-api.js';
 import * as Protocol from '../../generated/protocol.js';
 import type * as Common from '../common/common.js';
 import * as Platform from '../platform/platform.js';
+import * as Root from '../root/root.js';
 
 import {CategorizedBreakpoint, Category} from './CategorizedBreakpoint.js';
 import type {EventListenerPausedDetailsAuxData, Location} from './DebuggerModel.js';
@@ -528,8 +529,6 @@ export class DOMEventListenerBreakpoint extends CategorizedBreakpoint {
   static readonly listener = 'listener:';
 }
 
-let domDebuggerManagerInstance: DOMDebuggerManager;
-
 export class DOMDebuggerManager implements SDKModelObserver<DOMDebuggerModel> {
   readonly #xhrBreakpointsSetting: Common.Settings.Setting<Array<{url: string, enabled: boolean}>>;
   readonly #xhrBreakpoints = new Map<string, boolean>();
@@ -671,11 +670,18 @@ export class DOMDebuggerManager implements SDKModelObserver<DOMDebuggerModel> {
     targetManager?: TargetManager,
   } = {forceNew: null}): DOMDebuggerManager {
     const {forceNew, targetManager} = opts;
-    if (!domDebuggerManagerInstance || forceNew) {
-      domDebuggerManagerInstance = new DOMDebuggerManager(targetManager);
+    if (!Root.DevToolsContext.globalInstance().has(DOMDebuggerManager) || forceNew) {
+      Root.DevToolsContext.globalInstance().set(
+          DOMDebuggerManager,
+          new DOMDebuggerManager(targetManager ?? TargetManager.instance()),
+      );
     }
 
-    return domDebuggerManagerInstance;
+    return Root.DevToolsContext.globalInstance().get(DOMDebuggerManager);
+  }
+
+  static removeInstance(): void {
+    Root.DevToolsContext.globalInstance().delete(DOMDebuggerManager);
   }
 
   cspViolationBreakpoints(): CSPViolationBreakpoint[] {
