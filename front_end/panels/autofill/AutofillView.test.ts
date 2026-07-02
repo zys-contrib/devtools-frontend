@@ -7,17 +7,23 @@ import sinon from 'sinon';
 
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
-import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as AutofillManager from '../../models/autofill_manager/autofill_manager.js';
 import {renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 import {createViewFunctionStub} from '../../testing/ViewFunctionHelpers.js';
 import * as UI from '../../ui/legacy/legacy.js';
 
 import * as Autofill from './autofill.js';
 
 describeWithEnvironment('AutofillView', () => {
+  let universe: TestUniverse;
+
+  beforeEach(() => {
+    universe = new TestUniverse();
+  });
+
   const frameId = 'frame#1' as Protocol.Page.FrameId;
 
   it('renders nothing if there\'s no last filled address form', async () => {
@@ -261,8 +267,7 @@ describeWithEnvironment('AutofillView', () => {
       const actionTakenStub = sinon.stub(Host.userMetrics, 'actionTaken');
 
       const view = createViewFunctionStub(Autofill.AutofillView.AutofillView);
-      const autofillManager =
-          new AutofillManager.AutofillManager.AutofillManager(SDK.TargetManager.TargetManager.instance());
+      const autofillManager = universe.autofillManager;
       const autofillView = new Autofill.AutofillView.AutofillView(autofillManager, view);
       renderElementIntoDOM(autofillView);
       return {manager: autofillManager, view: autofillView, showViewStub, actionTakenStub};

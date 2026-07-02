@@ -9,7 +9,7 @@ import * as i18n from '../i18n/i18n.js';
 import * as Platform from '../platform/platform.js';
 
 import {type DeferredDOMNode, DOMModel, type DOMNode} from './DOMModel.js';
-import {FrameManager} from './FrameManager.js';
+import type {FrameManager} from './FrameManager.js';
 import {Events as NetworkManagerEvents, NetworkManager, type RequestUpdateDroppedEventData} from './NetworkManager.js';
 import type {NetworkRequest} from './NetworkRequest.js';
 import {Resource} from './Resource.js';
@@ -25,6 +25,7 @@ export class ResourceTreeModel extends SDKModel<EventTypes> {
   readonly storageAgent: ProtocolProxyApi.StorageApi;
   readonly #securityOriginManager: SecurityOriginManager;
   readonly #storageKeyManager: StorageKeyManager;
+  readonly #frameManager: FrameManager;
   readonly framesInternal = new Map<string, ResourceTreeFrame>();
   #cachedResourcesProcessed = false;
   #pendingReloadOptions: {
@@ -38,6 +39,7 @@ export class ResourceTreeModel extends SDKModel<EventTypes> {
 
   constructor(target: Target) {
     super(target);
+    this.#frameManager = target.targetManager().getFrameManager();
 
     const networkManager = target.model(NetworkManager);
     if (networkManager) {
@@ -216,8 +218,8 @@ export class ResourceTreeModel extends SDKModel<EventTypes> {
     void this.updateStorageKeys();
 
     if (frame.backForwardCacheDetails.restoredFromCache) {
-      FrameManager.instance().modelRemoved(this);
-      FrameManager.instance().modelAdded(this);
+      this.#frameManager.modelRemoved(this);
+      this.#frameManager.modelAdded(this);
       void this.#buildResourceTree();
     }
   }

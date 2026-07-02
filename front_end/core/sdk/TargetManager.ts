@@ -10,6 +10,7 @@ import {assertNotNullOrUndefined} from '../platform/platform.js';
 import type * as ProtocolClient from '../protocol_client/protocol_client.js';
 import * as Root from '../root/root.js';
 
+import {FrameManager} from './FrameManager.js';
 import {type RegistrationInfo, SDKModel, type SDKModelConstructor} from './SDKModel.js';
 import {Target, Type as TargetType} from './Target.js';
 
@@ -37,6 +38,14 @@ export class TargetManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
       return Common.Console.Console.instance();
     }
     return this.context.get(Common.Console.Console);
+  }
+
+  // TODO(crbug.com/493763857): Remove fallback once all unit tests use TestUniverse.
+  getFrameManager(): FrameManager {
+    if ('has' in this.context && typeof this.context.has === 'function' && !this.context.has(FrameManager)) {
+      return FrameManager.instance();
+    }
+    return this.context.get(FrameManager);
   }
 
   /* eslint-disable @typescript-eslint/no-explicit-any */

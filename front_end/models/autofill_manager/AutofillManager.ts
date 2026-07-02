@@ -14,8 +14,7 @@ export class AutofillManager extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   #autofillModel: SDK.AutofillModel.AutofillModel|null = null;
   #frameManager: SDK.FrameManager.FrameManager;
 
-  constructor(targetManager: SDK.TargetManager.TargetManager,
-              frameManager: SDK.FrameManager.FrameManager = SDK.FrameManager.FrameManager.instance()) {
+  constructor(targetManager: SDK.TargetManager.TargetManager, frameManager: SDK.FrameManager.FrameManager) {
     super();
     this.#frameManager = frameManager;
     targetManager.addModelListener(SDK.AutofillModel.AutofillModel, SDK.AutofillModel.Events.ADDRESS_FORM_FILLED,

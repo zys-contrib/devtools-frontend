@@ -222,7 +222,7 @@ describeWithEnvironment('ResourceTreeModel', () => {
 
   it('rebuilds the resource tree upon bfcache-navigation', async () => {
     const target = universe.createTarget({connection});
-    const frameManager = SDK.FrameManager.FrameManager.instance();
+    const frameManager = universe.frameManager;
     const removedFromFrameManagerSpy = sinon.spy(frameManager, 'modelRemoved');
     const addedToFrameManagerSpy = sinon.spy(frameManager, 'modelAdded');
     const resourceTreeModel = getResourceTreeModel(target);
