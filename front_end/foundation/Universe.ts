@@ -262,6 +262,10 @@ export class Universe {
     return this.context.get(LiveMetrics.LiveMetrics);
   }
 
+  get frameManager(): SDK.FrameManager.FrameManager {
+    return this.context.get(SDK.FrameManager.FrameManager);
+  }
+
   get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader {
     return this.context.get(SDK.PageResourceLoader.PageResourceLoader);
   }
