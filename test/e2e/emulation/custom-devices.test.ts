@@ -223,7 +223,7 @@ describe('Custom devices', () => {
     await selectDevice('Prime numbers', devToolsPage);
 
     // Check fit-to-window text is selected.
-    await waitForZoom(devToolsPage, '51% (fit to window)');
+    await waitForZoom(devToolsPage, 'Fit to window');
 
     // Select 100%.
     await selectZoomLevel(devToolsPage, '100%');

@@ -15,7 +15,6 @@ const ZOOM_LIST_DROPDOWN_SELECTOR = '[aria-label*="Zoom"]';
 const DUAL_SCREEN_BUTTON_SELECTOR = 'devtools-button[title="Toggle dual-screen mode"]';
 const DEVICE_POSTURE_DROPDOWN_SELECTOR = '[aria-label="Device posture"]';
 const SCREEN_DIM_INPUT_SELECTOR = '[title="Width"]';
-const AUTO_AUTO_ADJUST_ZOOM_SELECTOR = '[aria-label*="Auto-adjust zoom"]';
 
 export const deviceModeIsEnabled = async (inspectedPage: InspectedPage) => {
   // Check the userAgent string to see whether emulation is really enabled.
@@ -168,9 +167,8 @@ export const getZoom = async (devToolsPage: DevToolsPage) => {
   });
 };
 
-export const toggleAutoAdjustZoom = async (devToolsPage: DevToolsPage) => {
-  const toolbar = await devToolsPage.waitFor(DEVICE_TOOLBAR_SELECTOR);
-  await devToolsPage.click(AUTO_AUTO_ADJUST_ZOOM_SELECTOR, {root: toolbar});
+export const toggleFitToWindow = async (devToolsPage: DevToolsPage) => {
+  await selectZoomLevel(devToolsPage, 'Fit to window');
 };
 
 export const waitForWidthOfDevice = async (devToolsPage: DevToolsPage, expectedWidth: string) => {
