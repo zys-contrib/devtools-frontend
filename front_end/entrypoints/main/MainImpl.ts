@@ -455,13 +455,6 @@ export class MainImpl {
       const outermostTarget = data?.outermostTarget();
       targetManager.setScopeTarget(outermostTarget);
     });
-    Breakpoints.BreakpointManager.BreakpointManager.instance({
-      forceNew: true,
-      workspace: Workspace.Workspace.WorkspaceImpl.instance(),
-      targetManager,
-      debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance(),
-      settings: Common.Settings.Settings.instance(),
-    });
     // @ts-expect-error e2e test global
     self.Extensions.extensionServer = PanelCommon.ExtensionServer.ExtensionServer.instance({forceNew: true});
 

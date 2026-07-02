@@ -7,6 +7,7 @@ import * as Root from '../core/root/root.js';
 import * as SDK from '../core/sdk/sdk.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
 import * as Bindings from '../models/bindings/bindings.js';
+import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as Logs from '../models/logs/logs.js';
 import * as Workspace from '../models/workspace/workspace.js';
@@ -69,6 +70,10 @@ export class Universe {
         resourceMapping, targetManager, ignoreListManager, workspace);
     context.set(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, debuggerWorkspaceBinding);
 
+    const breakpointManager = new Breakpoints.BreakpointManager.BreakpointManager(targetManager, workspace,
+                                                                                  debuggerWorkspaceBinding, settings);
+    context.set(Breakpoints.BreakpointManager.BreakpointManager, breakpointManager);
+
     const networkLog = new Logs.NetworkLog.NetworkLog(targetManager, settings);
     context.set(Logs.NetworkLog.NetworkLog, networkLog);
 
@@ -79,6 +84,10 @@ export class Universe {
     context.set(JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl, javaScriptMetadata);
 
     this.autofillManager = new AutofillManager.AutofillManager.AutofillManager(targetManager, frameManager);
+  }
+
+  get breakpointManager(): Breakpoints.BreakpointManager.BreakpointManager {
+    return this.context.get(Breakpoints.BreakpointManager.BreakpointManager);
   }
 
   get cpuThrottlingManager(): SDK.CPUThrottlingManager.CPUThrottlingManager {

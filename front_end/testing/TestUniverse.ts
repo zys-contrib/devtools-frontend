@@ -11,6 +11,7 @@ import * as SDK from '../core/sdk/sdk.js';
 import type * as Foundation from '../foundation/foundation.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
 import * as Bindings from '../models/bindings/bindings.js';
+import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as Logs from '../models/logs/logs.js';
 import * as Workspace from '../models/workspace/workspace.js';
@@ -60,6 +61,15 @@ export class TestUniverse implements Foundation.Universe.Universe {
                         new AutofillManager.AutofillManager.AutofillManager(this.targetManager, this.frameManager));
     }
     return this.#context.get(AutofillManager.AutofillManager.AutofillManager);
+  }
+
+  get breakpointManager(): Breakpoints.BreakpointManager.BreakpointManager {
+    if (!this.#context.has(Breakpoints.BreakpointManager.BreakpointManager)) {
+      this.#context.set(Breakpoints.BreakpointManager.BreakpointManager,
+                        new Breakpoints.BreakpointManager.BreakpointManager(
+                            this.targetManager, this.workspace, this.debuggerWorkspaceBinding, this.settings));
+    }
+    return this.#context.get(Breakpoints.BreakpointManager.BreakpointManager);
   }
 
   get console(): Common.Console.Console {
