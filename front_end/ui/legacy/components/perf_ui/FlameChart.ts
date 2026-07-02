@@ -1187,6 +1187,10 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
     this.expandGroup(groupIndex, !this.rawTimelineData.groups[groupIndex].expanded /* setExpanded */);
   }
 
+  blurCanvasForTesting(): void {
+    this.canvas.blur();
+  }
+
   bulkExpandGroups(indexes: number[]): void {
     if (indexes.length === 0) {
       return;
