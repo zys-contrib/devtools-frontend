@@ -15,6 +15,7 @@ import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as Logs from '../models/logs/logs.js';
 import * as Persistence from '../models/persistence/persistence.js';
+import * as ProjectSettings from '../models/project_settings/project_settings.js';
 import * as Workspace from '../models/workspace/workspace.js';
 
 import {DEFAULT_SETTING_REGISTRATIONS_FOR_TEST} from './SettingsHelpers.js';
@@ -178,6 +179,18 @@ export class TestUniverse implements Foundation.Universe.Universe {
                         new Persistence.Persistence.PersistenceImpl(this.workspace, this.breakpointManager));
     }
     return this.#context.get(Persistence.Persistence.PersistenceImpl);
+  }
+
+  get projectSettingsModel(): ProjectSettings.ProjectSettingsModel.ProjectSettingsModel {
+    if (!this.#context.has(ProjectSettings.ProjectSettingsModel.ProjectSettingsModel)) {
+      this.#context.set(ProjectSettings.ProjectSettingsModel.ProjectSettingsModel,
+                        new ProjectSettings.ProjectSettingsModel.ProjectSettingsModel(
+                            this.#creationOptions?.hostConfig ?? {} as Root.Runtime.HostConfig,
+                            this.pageResourceLoader,
+                            this.targetManager,
+                            ));
+    }
+    return this.#context.get(ProjectSettings.ProjectSettingsModel.ProjectSettingsModel);
   }
 
   get targetManager(): SDK.TargetManager.TargetManager {

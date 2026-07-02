@@ -49,7 +49,6 @@ import * as CrUXManager from '../../models/crux-manager/crux-manager.js';
 import * as IssuesManager from '../../models/issues_manager/issues_manager.js';
 import * as LiveMetrics from '../../models/live-metrics/live-metrics.js';
 import * as Persistence from '../../models/persistence/persistence.js';
-import * as ProjectSettings from '../../models/project_settings/project_settings.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import * as PanelCommon from '../../panels/common/common.js';
 import * as Snippets from '../../panels/snippets/snippets.js';
@@ -201,6 +200,7 @@ export class MainImpl {
         logSettingAccess: VisualLogging.logSettingAccess,
         runSettingsMigration: !Host.InspectorFrontendHost.isUnderTest(),
       },
+      hostConfig: Root.Runtime.hostConfig,
     };
     this.#universe = new Foundation.Universe.Universe(creationOptions);
     Root.DevToolsContext.setGlobalInstance(this.#universe.context as Root.DevToolsContext.WritableDevToolsContext);
@@ -470,12 +470,7 @@ export class MainImpl {
 
     new ExecutionContextSelector(targetManager, UI.Context.Context.instance());
 
-    const projectSettingsModel = ProjectSettings.ProjectSettingsModel.ProjectSettingsModel.instance({
-      forceNew: true,
-      hostConfig: Root.Runtime.hostConfig,
-      pageResourceLoader: SDK.PageResourceLoader.PageResourceLoader.instance(),
-      targetManager,
-    });
+    const projectSettingsModel = this.#universe.projectSettingsModel;
 
     const automaticFileSystemManager = Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager.instance({
       forceNew: true,

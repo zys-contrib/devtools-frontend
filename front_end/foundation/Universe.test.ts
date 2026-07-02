@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import * as Common from '../core/common/common.js';
+import type * as Root from '../core/root/root.js';
 
 import * as Foundation from './foundation.js';
 
@@ -29,6 +30,7 @@ describe('Universe', () => {
           {settingName: 'network-log.preserve-log', settingType: SettingType.BOOLEAN, defaultValue: false},
         ],
       },
+      hostConfig: {} as Root.Runtime.HostConfig,
     });
   });
 });

@@ -11,11 +11,13 @@ import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as Logs from '../models/logs/logs.js';
 import * as Persistence from '../models/persistence/persistence.js';
+import * as ProjectSettings from '../models/project_settings/project_settings.js';
 import * as Workspace from '../models/workspace/workspace.js';
 
 export interface CreationOptions {
   settingsCreationOptions: Common.Settings.SettingsCreationOptions;
   overrideAutoStartModels?: Set<SDK.SDKModel.SDKModelConstructor>;
+  hostConfig: Root.Runtime.HostConfig;
 }
 
 export class Universe {
@@ -53,6 +55,13 @@ export class Universe {
     const pageResourceLoader =
         new SDK.PageResourceLoader.PageResourceLoader(targetManager, settings, multitargetNetworkManager, null);
     context.set(SDK.PageResourceLoader.PageResourceLoader, pageResourceLoader);
+
+    const projectSettingsModel = new ProjectSettings.ProjectSettingsModel.ProjectSettingsModel(
+        options.hostConfig,
+        pageResourceLoader,
+        targetManager,
+    );
+    context.set(ProjectSettings.ProjectSettingsModel.ProjectSettingsModel, projectSettingsModel);
 
     const cpuThrottlingManager = new SDK.CPUThrottlingManager.CPUThrottlingManager(settings, targetManager);
     context.set(SDK.CPUThrottlingManager.CPUThrottlingManager, cpuThrottlingManager);
@@ -104,5 +113,9 @@ export class Universe {
 
   get persistence(): Persistence.Persistence.PersistenceImpl {
     return this.context.get(Persistence.Persistence.PersistenceImpl);
+  }
+
+  get projectSettingsModel(): ProjectSettings.ProjectSettingsModel.ProjectSettingsModel {
+    return this.context.get(ProjectSettings.ProjectSettingsModel.ProjectSettingsModel);
   }
 }

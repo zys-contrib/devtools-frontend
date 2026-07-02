@@ -24,6 +24,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Logs.LogManager.LogManager',
   'Logs.NetworkLog.NetworkLog',
   'Persistence.Persistence.PersistenceImpl',
+  'ProjectSettings.ProjectSettingsModel.ProjectSettingsModel',
   'SDK.CPUThrottlingManager.CPUThrottlingManager',
   'SDK.FrameManager.FrameManager',
   'SDK.NetworkManager.MultitargetNetworkManager',
