@@ -440,7 +440,6 @@ export class MainImpl {
     });
 
     UI.DockController.DockController.instance({forceNew: true, canDock});
-    SDK.DOMDebuggerModel.DOMDebuggerManager.instance({forceNew: true});
     const targetManager = SDK.TargetManager.TargetManager.instance();
     targetManager.addEventListener(
         SDK.TargetManager.Events.SUSPEND_STATE_CHANGED, this.#onSuspendStateChanged.bind(this));

@@ -113,6 +113,14 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding);
   }
 
+  get domDebuggerManager(): SDK.DOMDebuggerModel.DOMDebuggerManager {
+    if (!this.#context.has(SDK.DOMDebuggerModel.DOMDebuggerManager)) {
+      this.#context.set(SDK.DOMDebuggerModel.DOMDebuggerManager,
+                        new SDK.DOMDebuggerModel.DOMDebuggerManager(this.targetManager));
+    }
+    return this.#context.get(SDK.DOMDebuggerModel.DOMDebuggerManager);
+  }
+
   get frameManager(): SDK.FrameManager.FrameManager {
     if (!this.#context.has(SDK.FrameManager.FrameManager)) {
       this.#context.set(SDK.FrameManager.FrameManager, new SDK.FrameManager.FrameManager(this.targetManager));

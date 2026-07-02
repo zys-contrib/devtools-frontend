@@ -26,6 +26,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Persistence.Persistence.PersistenceImpl',
   'ProjectSettings.ProjectSettingsModel.ProjectSettingsModel',
   'SDK.CPUThrottlingManager.CPUThrottlingManager',
+  'SDK.DOMDebuggerModel.DOMDebuggerManager',
   'SDK.FrameManager.FrameManager',
   'SDK.NetworkManager.MultitargetNetworkManager',
   'SDK.PageResourceLoader.PageResourceLoader',

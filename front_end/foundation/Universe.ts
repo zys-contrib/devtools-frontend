@@ -66,6 +66,9 @@ export class Universe {
     const cpuThrottlingManager = new SDK.CPUThrottlingManager.CPUThrottlingManager(settings, targetManager);
     context.set(SDK.CPUThrottlingManager.CPUThrottlingManager, cpuThrottlingManager);
 
+    const domDebuggerManager = new SDK.DOMDebuggerModel.DOMDebuggerManager(targetManager);
+    context.set(SDK.DOMDebuggerModel.DOMDebuggerManager, domDebuggerManager);
+
     const workspace = new Workspace.Workspace.WorkspaceImpl();
     context.set(Workspace.Workspace.WorkspaceImpl, workspace);
 
@@ -105,6 +108,10 @@ export class Universe {
 
   get cpuThrottlingManager(): SDK.CPUThrottlingManager.CPUThrottlingManager {
     return this.context.get(SDK.CPUThrottlingManager.CPUThrottlingManager);
+  }
+
+  get domDebuggerManager(): SDK.DOMDebuggerModel.DOMDebuggerManager {
+    return this.context.get(SDK.DOMDebuggerModel.DOMDebuggerManager);
   }
 
   get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader {
