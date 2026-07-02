@@ -45,7 +45,6 @@ import * as Foundation from '../../foundation/foundation.js';
 import * as AiAssistanceModel from '../../models/ai_assistance/ai_assistance.js';
 import * as Badges from '../../models/badges/badges.js';
 import * as Bindings from '../../models/bindings/bindings.js';
-import * as Breakpoints from '../../models/breakpoints/breakpoints.js';
 import * as CrUXManager from '../../models/crux-manager/crux-manager.js';
 import * as IssuesManager from '../../models/issues_manager/issues_manager.js';
 import * as LiveMetrics from '../../models/live-metrics/live-metrics.js';
@@ -463,11 +462,7 @@ export class MainImpl {
     isolatedFileSystemManager.addPlatformFileSystem(
         'snippet://' as Platform.DevToolsPath.UrlString, new Snippets.ScriptSnippetFileSystem.SnippetFileSystem());
 
-    const persistenceImpl = Persistence.Persistence.PersistenceImpl.instance({
-      forceNew: true,
-      workspace: Workspace.Workspace.WorkspaceImpl.instance(),
-      breakpointManager: Breakpoints.BreakpointManager.BreakpointManager.instance(),
-    });
+    const persistenceImpl = Persistence.Persistence.PersistenceImpl.instance();
     const linkDecorator = new PanelCommon.PersistenceUtils.LinkDecorator(persistenceImpl);
     Components.Linkifier.Linkifier.setLinkDecorator(linkDecorator);
     Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance(

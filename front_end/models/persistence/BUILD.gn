@@ -46,6 +46,7 @@ devtools_entrypoint("bundle") {
     ":*",
     "../../core/sdk/*",
     "../../entrypoints/main/*",
+    "../../foundation/*",
     "../../models/ai_assistance/*",
     "../../panels/ai_assistance/*",
     "../../panels/changes/*",

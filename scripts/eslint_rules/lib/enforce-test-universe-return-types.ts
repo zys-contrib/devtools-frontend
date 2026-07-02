@@ -23,6 +23,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl',
   'Logs.LogManager.LogManager',
   'Logs.NetworkLog.NetworkLog',
+  'Persistence.Persistence.PersistenceImpl',
   'SDK.CPUThrottlingManager.CPUThrottlingManager',
   'SDK.FrameManager.FrameManager',
   'SDK.NetworkManager.MultitargetNetworkManager',

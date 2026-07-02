@@ -17,6 +17,7 @@ devtools_foundation_module("foundation") {
     "../models/breakpoints:bundle",
     "../models/javascript_metadata:bundle",
     "../models/logs:bundle",
+    "../models/persistence:bundle",
     "../models/workspace:bundle",
   ]
 }

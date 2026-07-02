@@ -10,6 +10,7 @@ import * as Bindings from '../models/bindings/bindings.js';
 import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as Logs from '../models/logs/logs.js';
+import * as Persistence from '../models/persistence/persistence.js';
 import * as Workspace from '../models/workspace/workspace.js';
 
 export interface CreationOptions {
@@ -74,6 +75,9 @@ export class Universe {
                                                                                   debuggerWorkspaceBinding, settings);
     context.set(Breakpoints.BreakpointManager.BreakpointManager, breakpointManager);
 
+    const persistence = new Persistence.Persistence.PersistenceImpl(workspace, breakpointManager);
+    context.set(Persistence.Persistence.PersistenceImpl, persistence);
+
     const networkLog = new Logs.NetworkLog.NetworkLog(targetManager, settings);
     context.set(Logs.NetworkLog.NetworkLog, networkLog);
 
@@ -96,5 +100,9 @@ export class Universe {
 
   get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader {
     return this.context.get(SDK.PageResourceLoader.PageResourceLoader);
+  }
+
+  get persistence(): Persistence.Persistence.PersistenceImpl {
+    return this.context.get(Persistence.Persistence.PersistenceImpl);
   }
 }

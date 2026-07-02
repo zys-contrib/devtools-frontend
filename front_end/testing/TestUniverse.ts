@@ -14,6 +14,7 @@ import * as Bindings from '../models/bindings/bindings.js';
 import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as Logs from '../models/logs/logs.js';
+import * as Persistence from '../models/persistence/persistence.js';
 import * as Workspace from '../models/workspace/workspace.js';
 
 import {DEFAULT_SETTING_REGISTRATIONS_FOR_TEST} from './SettingsHelpers.js';
@@ -169,6 +170,14 @@ export class TestUniverse implements Foundation.Universe.Universe {
       this.#context.set(SDK.PageResourceLoader.PageResourceLoader, pageResourceLoader);
     }
     return this.#context.get(SDK.PageResourceLoader.PageResourceLoader);
+  }
+
+  get persistence(): Persistence.Persistence.PersistenceImpl {
+    if (!this.#context.has(Persistence.Persistence.PersistenceImpl)) {
+      this.#context.set(Persistence.Persistence.PersistenceImpl,
+                        new Persistence.Persistence.PersistenceImpl(this.workspace, this.breakpointManager));
+    }
+    return this.#context.get(Persistence.Persistence.PersistenceImpl);
   }
 
   get targetManager(): SDK.TargetManager.TargetManager {
