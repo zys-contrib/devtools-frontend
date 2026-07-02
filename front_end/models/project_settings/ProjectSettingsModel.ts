@@ -4,7 +4,7 @@
 
 import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
-import type * as Root from '../../core/root/root.js';
+import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 
 /** The security origin for all DevTools (front-end) resources. */
@@ -72,8 +72,6 @@ export type ProjectSettingsAvailability = 'available'|'unavailable';
 const EMPTY_PROJECT_SETTINGS: ProjectSettings = Object.freeze({});
 const IDLE_PROMISE: Promise<void> = Promise.resolve();
 
-let projectSettingsModelInstance: ProjectSettingsModel|undefined;
-
 export class ProjectSettingsModel extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
   readonly #pageResourceLoader: SDK.PageResourceLoader.PageResourceLoader;
   readonly #targetManager: SDK.TargetManager.TargetManager;
@@ -108,7 +106,7 @@ export class ProjectSettingsModel extends Common.ObjectWrapper.ObjectWrapper<Eve
     return this.#promise.then(() => this.#projectSettings);
   }
 
-  private constructor(
+  constructor(
       hostConfig: Root.Runtime.HostConfig,
       pageResourceLoader: SDK.PageResourceLoader.PageResourceLoader,
       targetManager: SDK.TargetManager.TargetManager,
@@ -140,24 +138,27 @@ export class ProjectSettingsModel extends Common.ObjectWrapper.ObjectWrapper<Eve
     pageResourceLoader: SDK.PageResourceLoader.PageResourceLoader|null,
     targetManager: SDK.TargetManager.TargetManager|null,
   }): ProjectSettingsModel {
-    if (!projectSettingsModelInstance || forceNew) {
+    if (!Root.DevToolsContext.globalInstance().has(ProjectSettingsModel) || forceNew) {
       if (!hostConfig || !pageResourceLoader || !targetManager) {
         throw new Error(
             'Unable to create ProjectSettingsModel: ' +
             'hostConfig, pageResourceLoader, and targetManager must be provided');
       }
-      projectSettingsModelInstance = new ProjectSettingsModel(hostConfig, pageResourceLoader, targetManager);
+      Root.DevToolsContext.globalInstance().set(
+          ProjectSettingsModel,
+          new ProjectSettingsModel(hostConfig, pageResourceLoader, targetManager),
+      );
     }
-    return projectSettingsModelInstance;
+    return Root.DevToolsContext.globalInstance().get(ProjectSettingsModel);
   }
 
   /**
-   * Clears the `ProjectSettingsModel` singleton (if any).
+   * Clears the `ProjectSettingsModel` singleton (if any);
    */
   static removeInstance(): void {
-    if (projectSettingsModelInstance) {
-      projectSettingsModelInstance.#dispose();
-      projectSettingsModelInstance = undefined;
+    if (Root.DevToolsContext.globalInstance().has(ProjectSettingsModel)) {
+      Root.DevToolsContext.globalInstance().get(ProjectSettingsModel).#dispose();
+      Root.DevToolsContext.globalInstance().delete(ProjectSettingsModel);
     }
   }
 
