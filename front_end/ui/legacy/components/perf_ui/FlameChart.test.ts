@@ -1323,7 +1323,8 @@ describeWithEnvironment('FlameChart', () => {
     await assertScreenshot('timeline/interactions_track_candystripe.png');
   });
 
-  it('renders the frames track with screenshots', async function() {
+  // Flaky
+  it.skip('[crbug.com/474036476]: renders the frames track with screenshots', async function() {
     const {flameChart} = await renderFlameChartIntoDOM(this, {
       dataProvider: 'MAIN',
       fileNameOrParsedTrace: 'web-dev-screenshot-source-ids.json.gz',
