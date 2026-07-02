@@ -7,6 +7,7 @@ import * as Root from '../core/root/root.js';
 import * as SDK from '../core/sdk/sdk.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
 import * as Bindings from '../models/bindings/bindings.js';
+import * as Logs from '../models/logs/logs.js';
 import * as Workspace from '../models/workspace/workspace.js';
 import { DEFAULT_SETTING_REGISTRATIONS_FOR_TEST } from './SettingsHelpers.js';
 import { createTarget } from './TargetHelpers.js';
@@ -34,7 +35,7 @@ export class TestUniverse {
     }
     get autofillManager() {
         if (!this.#context.has(AutofillManager.AutofillManager.AutofillManager)) {
-            this.#context.set(AutofillManager.AutofillManager.AutofillManager, new AutofillManager.AutofillManager.AutofillManager(this.targetManager));
+            this.#context.set(AutofillManager.AutofillManager.AutofillManager, new AutofillManager.AutofillManager.AutofillManager(this.targetManager, this.frameManager));
         }
         return this.#context.get(AutofillManager.AutofillManager.AutofillManager);
     }
@@ -47,6 +48,12 @@ export class TestUniverse {
     // eslint-disable-next-line @devtools/enforce-test-universe-return-types
     get context() {
         return this.#context;
+    }
+    get cpuThrottlingManager() {
+        if (!this.#context.has(SDK.CPUThrottlingManager.CPUThrottlingManager)) {
+            this.#context.set(SDK.CPUThrottlingManager.CPUThrottlingManager, new SDK.CPUThrottlingManager.CPUThrottlingManager(this.settings, this.targetManager));
+        }
+        return this.#context.get(SDK.CPUThrottlingManager.CPUThrottlingManager);
     }
     get cssWorkspaceBinding() {
         if (!this.#context.has(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding)) {
@@ -72,12 +79,24 @@ export class TestUniverse {
         }
         return this.#context.get(Workspace.IgnoreListManager.IgnoreListManager);
     }
+    get logManager() {
+        if (!this.#context.has(Logs.LogManager.LogManager)) {
+            this.#context.set(Logs.LogManager.LogManager, new Logs.LogManager.LogManager(this.targetManager, this.networkLog));
+        }
+        return this.#context.get(Logs.LogManager.LogManager);
+    }
     get multitargetNetworkManager() {
         if (!this.#context.has(SDK.NetworkManager.MultitargetNetworkManager)) {
             const multitargetNetworkManager = new SDK.NetworkManager.MultitargetNetworkManager(this.targetManager);
             this.#context.set(SDK.NetworkManager.MultitargetNetworkManager, multitargetNetworkManager);
         }
         return this.#context.get(SDK.NetworkManager.MultitargetNetworkManager);
+    }
+    get networkLog() {
+        if (!this.#context.has(Logs.NetworkLog.NetworkLog)) {
+            this.#context.set(Logs.NetworkLog.NetworkLog, new Logs.NetworkLog.NetworkLog(this.targetManager, this.settings));
+        }
+        return this.#context.get(Logs.NetworkLog.NetworkLog);
     }
     get pageResourceLoader() {
         if (!this.#context.has(SDK.PageResourceLoader.PageResourceLoader)) {
