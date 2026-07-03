@@ -16,6 +16,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'AutofillManager.AutofillManager.AutofillManager',
   'Common.Console.Console',
   'Common.Settings.Settings',
+  'CrUXManager.CrUXManager',
   'Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding',
   'Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding',
   'Bindings.ResourceMapping.ResourceMapping',

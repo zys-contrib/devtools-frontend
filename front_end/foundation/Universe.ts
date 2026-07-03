@@ -9,6 +9,7 @@ import * as SDK from '../core/sdk/sdk.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
 import * as Bindings from '../models/bindings/bindings.js';
 import * as Breakpoints from '../models/breakpoints/breakpoints.js';
+import * as CrUXManager from '../models/crux-manager/crux-manager.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as Logs from '../models/logs/logs.js';
 import * as Persistence from '../models/persistence/persistence.js';
@@ -80,6 +81,9 @@ export class Universe {
     const domDebuggerManager = new SDK.DOMDebuggerModel.DOMDebuggerManager(targetManager);
     context.set(SDK.DOMDebuggerModel.DOMDebuggerManager, domDebuggerManager);
 
+    const cruxManager = new CrUXManager.CrUXManager(targetManager, settings);
+    context.set(CrUXManager.CrUXManager, cruxManager);
+
     const workspace = new Workspace.Workspace.WorkspaceImpl();
     context.set(Workspace.Workspace.WorkspaceImpl, workspace);
 
@@ -150,6 +154,10 @@ export class Universe {
 
   get cpuThrottlingManager(): SDK.CPUThrottlingManager.CPUThrottlingManager {
     return this.context.get(SDK.CPUThrottlingManager.CPUThrottlingManager);
+  }
+
+  get cruxManager(): CrUXManager.CrUXManager {
+    return this.context.get(CrUXManager.CrUXManager);
   }
 
   get domDebuggerManager(): SDK.DOMDebuggerModel.DOMDebuggerManager {

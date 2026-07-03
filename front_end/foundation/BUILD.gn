@@ -16,6 +16,7 @@ devtools_foundation_module("foundation") {
     "../models/autofill_manager:bundle",
     "../models/bindings:bundle",
     "../models/breakpoints:bundle",
+    "../models/crux-manager:bundle",
     "../models/javascript_metadata:bundle",
     "../models/logs:bundle",
     "../models/persistence:bundle",

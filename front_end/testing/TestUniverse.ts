@@ -12,6 +12,7 @@ import type * as Foundation from '../foundation/foundation.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
 import * as Bindings from '../models/bindings/bindings.js';
 import * as Breakpoints from '../models/breakpoints/breakpoints.js';
+import * as CrUXManager from '../models/crux-manager/crux-manager.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as Logs from '../models/logs/logs.js';
 import * as Persistence from '../models/persistence/persistence.js';
@@ -117,6 +118,13 @@ export class TestUniverse implements Foundation.Universe.Universe {
                         new SDK.CPUThrottlingManager.CPUThrottlingManager(this.settings, this.targetManager));
     }
     return this.#context.get(SDK.CPUThrottlingManager.CPUThrottlingManager);
+  }
+
+  get cruxManager(): CrUXManager.CrUXManager {
+    if (!this.#context.has(CrUXManager.CrUXManager)) {
+      this.#context.set(CrUXManager.CrUXManager, new CrUXManager.CrUXManager(this.targetManager, this.settings));
+    }
+    return this.#context.get(CrUXManager.CrUXManager);
   }
 
   get cssWorkspaceBinding(): Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding {

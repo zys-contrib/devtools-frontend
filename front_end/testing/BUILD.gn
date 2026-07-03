@@ -77,6 +77,7 @@ ts_library("testing") {
     "../models/bindings:bundle",
     "../models/breakpoints:bundle",
     "../models/cpu_profile:bundle",
+    "../models/crux-manager:bundle",
     "../models/extensions:bundle",
     "../models/formatter:bundle",
     "../models/issues_manager:bundle",
