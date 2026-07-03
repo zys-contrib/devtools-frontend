@@ -542,7 +542,7 @@ export class MainImpl {
         Host.InspectorFrontendHostAPI.Events.RevealSourceLine, this.#revealSourceLine, this);
 
     const inspectorView = UI.InspectorView.InspectorView.instance();
-    Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance().addEventListener(
+    this.#universe.networkPersistenceManager.addEventListener(
         Persistence.NetworkPersistenceManager.Events.LOCAL_OVERRIDES_REQUESTED, event => {
           inspectorView.displaySelectOverrideFolderInfobar(event.data);
         });

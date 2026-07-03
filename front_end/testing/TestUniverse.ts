@@ -204,6 +204,22 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(Logs.NetworkLog.NetworkLog);
   }
 
+  get networkPersistenceManager(): Persistence.NetworkPersistenceManager.NetworkPersistenceManager {
+    if (!this.#context.has(Persistence.NetworkPersistenceManager.NetworkPersistenceManager)) {
+      this.#context.set(Persistence.NetworkPersistenceManager.NetworkPersistenceManager,
+                        new Persistence.NetworkPersistenceManager.NetworkPersistenceManager(
+                            this.workspace,
+                            this.persistence,
+                            this.breakpointManager,
+                            this.targetManager,
+                            this.settings,
+                            this.isolatedFileSystemManager,
+                            this.multitargetNetworkManager,
+                            ));
+    }
+    return this.#context.get(Persistence.NetworkPersistenceManager.NetworkPersistenceManager);
+  }
+
   get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader {
     if (!this.#context.has(SDK.PageResourceLoader.PageResourceLoader)) {
       const options = this.#creationOptions?.pageResourceLoaderOptions ?? {

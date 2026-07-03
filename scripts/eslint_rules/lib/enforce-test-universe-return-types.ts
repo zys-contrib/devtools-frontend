@@ -26,6 +26,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager',
   'Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding',
   'Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager',
+  'Persistence.NetworkPersistenceManager.NetworkPersistenceManager',
   'Persistence.Persistence.PersistenceImpl',
   'ProjectSettings.ProjectSettingsModel.ProjectSettingsModel',
   'SDK.CPUThrottlingManager.CPUThrottlingManager',

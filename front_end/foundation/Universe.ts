@@ -111,6 +111,17 @@ export class Universe {
     const persistence = new Persistence.Persistence.PersistenceImpl(workspace, breakpointManager);
     context.set(Persistence.Persistence.PersistenceImpl, persistence);
 
+    const networkPersistenceManager = new Persistence.NetworkPersistenceManager.NetworkPersistenceManager(
+        workspace,
+        persistence,
+        breakpointManager,
+        targetManager,
+        settings,
+        isolatedFileSystemManager,
+        multitargetNetworkManager,
+    );
+    context.set(Persistence.NetworkPersistenceManager.NetworkPersistenceManager, networkPersistenceManager);
+
     const networkLog = new Logs.NetworkLog.NetworkLog(targetManager, settings);
     context.set(Logs.NetworkLog.NetworkLog, networkLog);
 
@@ -146,6 +157,10 @@ export class Universe {
 
   get isolatedFileSystemManager(): Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager {
     return this.context.get(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager);
+  }
+
+  get networkPersistenceManager(): Persistence.NetworkPersistenceManager.NetworkPersistenceManager {
+    return this.context.get(Persistence.NetworkPersistenceManager.NetworkPersistenceManager);
   }
 
   get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader {
