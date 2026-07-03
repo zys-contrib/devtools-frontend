@@ -13,20 +13,7 @@ export class SimpleApp implements UI.App.App {
   }
 }
 
-let simpleAppProviderInstance: SimpleAppProvider;
-
 export class SimpleAppProvider implements UI.AppProvider.AppProvider {
-  static instance(opts: {
-    forceNew: boolean|null,
-  } = {forceNew: null}): SimpleAppProvider {
-    const {forceNew} = opts;
-    if (!simpleAppProviderInstance || forceNew) {
-      simpleAppProviderInstance = new SimpleAppProvider();
-    }
-
-    return simpleAppProviderInstance;
-  }
-
   createApp(): UI.App.App {
     return new SimpleApp();
   }

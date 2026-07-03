@@ -949,7 +949,7 @@ UI.Toolbar.registerToolbarItem({
 UI.AppProvider.registerAppProvider({
   async loadAppProvider() {
     const Main = await loadMainModule();
-    return Main.SimpleApp.SimpleAppProvider.instance();
+    return new Main.SimpleApp.SimpleAppProvider();
   },
   order: 10,
 });
