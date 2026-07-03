@@ -178,6 +178,13 @@ export class MainImpl {
     console.timeEnd(label);
   }
 
+  static get universeForTest(): Foundation.Universe.Universe {
+    if (!MainImpl.instanceForTest) {
+      throw new Error('MainImpl not initialized yet!');
+    }
+    return MainImpl.instanceForTest.#universe;
+  }
+
   async #loaded(): Promise<void> {
     console.timeStamp('Main._loaded');
     Root.Runtime.Runtime.setPlatform(Host.Platform.platform());

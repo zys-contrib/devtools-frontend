@@ -175,4 +175,8 @@ export class Universe {
   get projectSettingsModel(): ProjectSettings.ProjectSettingsModel.ProjectSettingsModel {
     return this.context.get(ProjectSettings.ProjectSettingsModel.ProjectSettingsModel);
   }
+
+  get settings(): Common.Settings.Settings {
+    return this.context.get(Common.Settings.Settings);
+  }
 }
