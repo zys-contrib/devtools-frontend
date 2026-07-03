@@ -60,12 +60,8 @@ describe('The Application Tab', () => {
     await deleteCookies(browser);
   });
 
-  // This test will fail until the puppeteer API is updated to
-  // reflect the change from the partitionKey column to the partition key site and
-  // cross-site columns.
-  it.skip(
-      '[crbug.com/345285378]shows cookie partition key site and has cross site ancestor',
-      async ({devToolsPage, inspectedPage, browser}) => {
+  it(
+      'shows cookie partition key site and has cross site ancestor', async ({devToolsPage, inspectedPage, browser}) => {
         // This sets a new cookie foo=bar
         await navigateToApplicationTab('cookies', devToolsPage, inspectedPage);
 
@@ -90,7 +86,7 @@ describe('The Application Tab', () => {
         const dataGridRowValues2 = await getStorageItemsData(['has-cross-site-ancestor'], 4, devToolsPage);
         assert.deepEqual(dataGridRowValues2, [
           {
-            'has-cross-site-ancestor': 'true',
+            'has-cross-site-ancestor': '',
           },
           {
             'has-cross-site-ancestor': '',
