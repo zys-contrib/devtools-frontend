@@ -4382,7 +4382,7 @@ import * as Bindings2 from "./../../models/bindings/bindings.js";
 import * as Logs3 from "./../../models/logs/logs.js";
 import * as Components2 from "./../../ui/legacy/components/utils/utils.js";
 import * as UI10 from "./../../ui/legacy/legacy.js";
-import { html as html6, nothing as nothing6, render as render7 } from "./../../ui/lit/lit.js";
+import { Directives as Directives2, html as html6, nothing as nothing6, render as render7 } from "./../../ui/lit/lit.js";
 import * as VisualLogging7 from "./../../ui/visual_logging/visual_logging.js";
 
 // gen/front_end/panels/network/requestInitiatorView.css.js
@@ -4451,6 +4451,14 @@ var UIStrings10 = {
 };
 var str_10 = i18n19.i18n.registerUIStrings("panels/network/RequestInitiatorView.ts", UIStrings10);
 var i18nString10 = i18n19.i18n.getLocalizedString.bind(void 0, str_10);
+var MAX_URL_LENGTH = 150;
+function trimUrl(url) {
+  if (url.length <= MAX_URL_LENGTH) {
+    return url;
+  }
+  const halfMaxLength = Math.floor(MAX_URL_LENGTH / 2);
+  return url.substring(0, halfMaxLength) + "\u2026" + url.substring(url.length - halfMaxLength);
+}
 var DEFAULT_VIEW6 = (input, _output, target) => {
   const hasInitiatorData = input.initiatorGraph.initiators.size > 1 || input.initiatorGraph.initiated.size > 1 || input.stackTrace;
   if (!hasInitiatorData) {
@@ -4487,9 +4495,13 @@ var DEFAULT_VIEW6 = (input, _output, target) => {
     const isCurrentRequest = index === initiators.length - 1;
     const hasFurtherInitiatedNodes = index + 1 < initiators.length;
     const renderedChildren = isCurrentRequest ? renderInitiatedNodes(initiated, request, visited) : nothing6;
+    const url = request.url();
+    const title = url.length < 2e3 ? url : void 0;
     return html6`
           <li role="treeitem" ?selected=${isCurrentRequest} aria-expanded="true" open>
-            <span style=${isCurrentRequest ? "font-weight: bold" : ""}>${request.url()}</span>
+            <span style=${isCurrentRequest ? "font-weight: bold" : ""} title=${Directives2.ifDefined(title)}>
+              ${trimUrl(url)}
+            </span>
             ${hasFurtherInitiatedNodes || renderedChildren !== nothing6 ? html6`
               <ul role="group">
                 ${renderInitiatorNodes(initiators, index + 1, initiated, visited)}
@@ -4514,9 +4526,13 @@ var DEFAULT_VIEW6 = (input, _output, target) => {
         visited.add(child);
       }
       const renderedChildren = shouldRecurse ? renderInitiatedNodes(initiated, child, visited) : nothing6;
+      const url = child.url();
+      const title = url.length < 2e3 ? url : void 0;
       return html6`
         <li role="treeitem" aria-expanded="true" open>
-          <span>${child.url()}</span>
+          <span title=${Directives2.ifDefined(title)}>
+            ${trimUrl(url)}
+          </span>
           ${renderedChildren !== nothing6 ? html6`<ul role="group">${renderedChildren}</ul>` : nothing6}
         </li>
       `;
@@ -4854,7 +4870,7 @@ var objectValue_css_default = `/*
 
 // gen/front_end/panels/network/RequestPayloadView.js
 import * as UI11 from "./../../ui/legacy/legacy.js";
-import { Directives as Directives2, html as html7, render as render8 } from "./../../ui/lit/lit.js";
+import { Directives as Directives3, html as html7, render as render8 } from "./../../ui/lit/lit.js";
 import * as VisualLogging8 from "./../../ui/visual_logging/visual_logging.js";
 
 // gen/front_end/panels/network/requestPayloadTree.css.js
@@ -5003,7 +5019,7 @@ var requestPayloadView_css_default = `/*
 /*# sourceURL=${import.meta.resolve("./requestPayloadView.css")} */`;
 
 // gen/front_end/panels/network/RequestPayloadView.js
-var { classMap } = Directives2;
+var { classMap } = Directives3;
 var { widget: widget5 } = UI11.Widget;
 var { ifExpanded } = UI11.TreeOutline;
 var UIStrings11 = {
@@ -5959,7 +5975,7 @@ import * as NetworkTimeCalculator from "./../../models/network_time_calculator/n
 import * as uiI18n3 from "./../../ui/i18n/i18n.js";
 import * as ObjectUI2 from "./../../ui/legacy/components/object_ui/object_ui.js";
 import * as UI16 from "./../../ui/legacy/legacy.js";
-import { Directives as Directives3, html as html10, nothing as nothing8, render as render11 } from "./../../ui/lit/lit.js";
+import { Directives as Directives4, html as html10, nothing as nothing8, render as render11 } from "./../../ui/lit/lit.js";
 import * as VisualLogging10 from "./../../ui/visual_logging/visual_logging.js";
 
 // gen/front_end/panels/network/networkTimingTable.css.js
@@ -6234,7 +6250,7 @@ tr.synthetic {
 /*# sourceURL=${import.meta.resolve("./networkTimingTable.css")} */`;
 
 // gen/front_end/panels/network/RequestTimingView.js
-var { repeat, classMap: classMap2, ifDefined: ifDefined2 } = Directives3;
+var { repeat, classMap: classMap2, ifDefined: ifDefined2 } = Directives4;
 var UIStrings15 = {
   /**
    * @description Text used to label the time taken to receive an HTTP/2 Push message.
@@ -7855,7 +7871,6 @@ import * as Host10 from "./../../core/host/host.js";
 import * as i18n43 from "./../../core/i18n/i18n.js";
 import * as Platform11 from "./../../core/platform/platform.js";
 import * as SDK16 from "./../../core/sdk/sdk.js";
-import * as Annotations from "./../../models/annotations/annotations.js";
 import * as Bindings3 from "./../../models/bindings/bindings.js";
 import * as HAR from "./../../models/har/har.js";
 import * as Logs5 from "./../../models/logs/logs.js";
@@ -11492,12 +11507,6 @@ var NetworkLogView = class _NetworkLogView extends Common18.ObjectWrapper.eventM
   summaryToolbar() {
     return this.summaryToolbarInternal;
   }
-  getDataGrid() {
-    if (Annotations.AnnotationRepository.annotationsEnabled()) {
-      return this.dataGrid;
-    }
-    return null;
-  }
   modelAdded(networkManager) {
     const target = networkManager.target();
     if (target.outermostTarget() !== target) {
@@ -13146,12 +13155,10 @@ import * as Host11 from "./../../core/host/host.js";
 import * as i18n47 from "./../../core/i18n/i18n.js";
 import * as Platform13 from "./../../core/platform/platform.js";
 import * as SDK17 from "./../../core/sdk/sdk.js";
-import * as Annotations2 from "./../../models/annotations/annotations.js";
 import * as Logs6 from "./../../models/logs/logs.js";
 import * as NetworkTimeCalculator5 from "./../../models/network_time_calculator/network_time_calculator.js";
 import * as Trace2 from "./../../models/trace/trace.js";
 import * as Workspace3 from "./../../models/workspace/workspace.js";
-import * as PanelCommon from "./../common/common.js";
 import * as NetworkForward6 from "./forward/forward.js";
 import * as Tracing from "./../../services/tracing/tracing.js";
 import * as PerfUI5 from "./../../ui/legacy/components/perf_ui/perf_ui.js";
@@ -13578,12 +13585,6 @@ var NetworkPanel = class _NetworkPanel extends UI26.Panel.Panel {
     this.splitWidget.setSidebarWidget(this.networkLogView);
     this.fileSelectorElement = UI26.UIUtils.createFileSelectorElement(this.networkLogView.onLoadFromFile.bind(this.networkLogView));
     panel3.element.appendChild(this.fileSelectorElement);
-    if (Annotations2.AnnotationRepository.annotationsEnabled()) {
-      const dataGrid = this.networkLogView.getDataGrid();
-      if (dataGrid) {
-        PanelCommon.AnnotationManager.instance().initializePlacementForAnnotationType(Annotations2.AnnotationType.NETWORK_REQUEST, this.resolveInitialState.bind(this), dataGrid.scrollContainer);
-      }
-    }
     this.detailsWidget = new UI26.Widget.VBox();
     this.detailsWidget.element.classList.add("network-details-view");
     this.splitWidget.setMainWidget(this.detailsWidget);
@@ -13822,9 +13823,6 @@ var NetworkPanel = class _NetworkPanel extends UI26.Panel.Panel {
     super.wasShown();
     UI26.Context.Context.instance().setFlavor(_NetworkPanel, this);
     UI26.UIUserMetrics.UIUserMetrics.instance().panelLoaded("network", "DevTools.Launch.Network");
-    if (Annotations2.AnnotationRepository.annotationsEnabled()) {
-      void PanelCommon.AnnotationManager.instance().resolveAnnotationsOfType(Annotations2.AnnotationType.NETWORK_REQUEST);
-    }
   }
   willHide() {
     UI26.Context.Context.instance().setFlavor(_NetworkPanel, null);
@@ -13908,38 +13906,6 @@ var NetworkPanel = class _NetworkPanel extends UI26.Panel.Panel {
     this.splitWidget.showBoth();
     return this.networkItemView;
   }
-  async resolveInitialState(parentElement, reveal, lookupId, anchor) {
-    let request = anchor;
-    if (!this.isShowing()) {
-      return null;
-    }
-    if (!request) {
-      const networkManager = SDK17.TargetManager.TargetManager.instance().scopeTarget()?.model(SDK17.NetworkManager.NetworkManager);
-      if (!networkManager) {
-        return null;
-      }
-      const requests = Logs6.NetworkLog.NetworkLog.instance().requestsForId(lookupId);
-      if (requests.length === 0) {
-        console.warn("Network Request list is empty");
-        return null;
-      }
-      request = requests[0];
-    }
-    if (reveal) {
-      await Common19.Revealer.reveal(request);
-      await this.selectAndActivateRequest(request);
-    }
-    const requestNode = this.networkLogView?.nodeForRequest(request);
-    if (requestNode?.element()) {
-      const targetRect = requestNode.element().getBoundingClientRect();
-      const parentRect = parentElement.getBoundingClientRect();
-      const relativeX = 4;
-      const relativeY = targetRect.y - parentRect.y + parentElement.scrollTop;
-      return { x: relativeX, y: relativeY };
-    }
-    console.warn("Could not find element for request:", anchor);
-    return null;
-  }
   updateUI() {
     if (this.detailsWidget) {
       this.detailsWidget.element.classList.toggle("network-details-view-tall-header", this.networkLogLargeRowsSetting.get());
@@ -14015,11 +13981,6 @@ var NetworkPanel = class _NetworkPanel extends UI26.Panel.Panel {
     this.calculator.updateBoundaries(request);
     this.overviewPane.setBounds(Trace2.Types.Timing.Milli(this.calculator.minimumBoundary() * 1e3), Trace2.Types.Timing.Milli(this.calculator.maximumBoundary() * 1e3));
     this.networkOverview.updateRequest(request);
-    if (Annotations2.AnnotationRepository.annotationsEnabled()) {
-      requestAnimationFrame(() => {
-        void PanelCommon.AnnotationManager.instance().resolveAnnotationsOfType(Annotations2.AnnotationType.NETWORK_REQUEST);
-      });
-    }
   }
   resolveLocation(locationName) {
     if (locationName === "network-sidebar") {
