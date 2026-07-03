@@ -5,6 +5,7 @@
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import type * as Platform from '../../core/platform/platform.js';
+import * as Root from '../../core/root/root.js';
 import type {ContentDataOrError} from '../text_utils/ContentData.js';
 import type {SearchMatch} from '../text_utils/ContentProvider.js';
 import * as Workspace from '../workspace/workspace.js';
@@ -169,8 +170,6 @@ export class FileSystem implements Workspace.Workspace.Project {
   }
 }
 
-let automaticFileSystemWorkspaceBindingInstance: AutomaticFileSystemWorkspaceBinding|undefined;
-
 /**
  * Provides a transient workspace `Project` that doesn't contain any `UISourceCode`s,
  * and only acts as a placeholder for the automatic file system, while it's not
@@ -186,7 +185,7 @@ export class AutomaticFileSystemWorkspaceBinding {
   /**
    * @internal
    */
-  private constructor(
+  constructor(
       automaticFileSystemManager: AutomaticFileSystemManager,
       isolatedFileSystemManager: IsolatedFileSystemManager,
       workspace: Workspace.Workspace.WorkspaceImpl,
@@ -219,29 +218,33 @@ export class AutomaticFileSystemWorkspaceBinding {
     isolatedFileSystemManager: null,
     workspace: null,
   }): AutomaticFileSystemWorkspaceBinding {
-    if (!automaticFileSystemWorkspaceBindingInstance || forceNew) {
+    if (!Root.DevToolsContext.globalInstance().has(AutomaticFileSystemWorkspaceBinding) || forceNew) {
       if (!automaticFileSystemManager || !isolatedFileSystemManager || !workspace) {
         throw new Error(
             'Unable to create AutomaticFileSystemWorkspaceBinding: ' +
             'automaticFileSystemManager, isolatedFileSystemManager, ' +
             'and workspace must be provided');
       }
-      automaticFileSystemWorkspaceBindingInstance = new AutomaticFileSystemWorkspaceBinding(
+      const automaticFileSystemWorkspaceBinding = new AutomaticFileSystemWorkspaceBinding(
           automaticFileSystemManager,
           isolatedFileSystemManager,
           workspace,
       );
+      Root.DevToolsContext.globalInstance().set(AutomaticFileSystemWorkspaceBinding,
+                                                automaticFileSystemWorkspaceBinding);
     }
-    return automaticFileSystemWorkspaceBindingInstance;
+    return Root.DevToolsContext.globalInstance().get(AutomaticFileSystemWorkspaceBinding);
   }
 
   /**
    * Clears the `AutomaticFileSystemWorkspaceBinding` singleton (if any);
    */
   static removeInstance(): void {
-    if (automaticFileSystemWorkspaceBindingInstance) {
-      automaticFileSystemWorkspaceBindingInstance.#dispose();
-      automaticFileSystemWorkspaceBindingInstance = undefined;
+    if (Root.DevToolsContext.globalInstance().has(AutomaticFileSystemWorkspaceBinding)) {
+      const automaticFileSystemWorkspaceBinding =
+          Root.DevToolsContext.globalInstance().get(AutomaticFileSystemWorkspaceBinding);
+      automaticFileSystemWorkspaceBinding.#dispose();
+      Root.DevToolsContext.globalInstance().delete(AutomaticFileSystemWorkspaceBinding);
     }
   }
 
