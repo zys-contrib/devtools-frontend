@@ -77,6 +77,19 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager);
   }
 
+  get automaticFileSystemWorkspaceBinding():
+      Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding {
+    if (!this.#context.has(Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding)) {
+      this.#context.set(Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding,
+                        new Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding(
+                            this.automaticFileSystemManager,
+                            this.isolatedFileSystemManager,
+                            this.workspace,
+                            ));
+    }
+    return this.#context.get(Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding);
+  }
+
   get breakpointManager(): Breakpoints.BreakpointManager.BreakpointManager {
     if (!this.#context.has(Breakpoints.BreakpointManager.BreakpointManager)) {
       this.#context.set(Breakpoints.BreakpointManager.BreakpointManager,

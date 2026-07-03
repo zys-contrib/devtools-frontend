@@ -24,6 +24,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Logs.LogManager.LogManager',
   'Logs.NetworkLog.NetworkLog',
   'Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager',
+  'Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding',
   'Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager',
   'Persistence.Persistence.PersistenceImpl',
   'ProjectSettings.ProjectSettingsModel.ProjectSettingsModel',

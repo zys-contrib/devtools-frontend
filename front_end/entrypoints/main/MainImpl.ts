@@ -470,14 +470,6 @@ export class MainImpl {
 
     new ExecutionContextSelector(targetManager, UI.Context.Context.instance());
 
-    const automaticFileSystemManager = this.#universe.automaticFileSystemManager;
-    Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding.instance({
-      forceNew: true,
-      automaticFileSystemManager,
-      isolatedFileSystemManager,
-      workspace: Workspace.Workspace.WorkspaceImpl.instance(),
-    });
-
     LiveMetrics.LiveMetrics.instance();
     CrUXManager.CrUXManager.instance();
 

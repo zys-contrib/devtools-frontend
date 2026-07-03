@@ -82,6 +82,17 @@ export class Universe {
     const workspace = new Workspace.Workspace.WorkspaceImpl();
     context.set(Workspace.Workspace.WorkspaceImpl, workspace);
 
+    const automaticFileSystemWorkspaceBinding =
+        new Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding(
+            automaticFileSystemManager,
+            isolatedFileSystemManager,
+            workspace,
+        );
+    context.set(
+        Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding,
+        automaticFileSystemWorkspaceBinding,
+    );
+
     const ignoreListManager = new Workspace.IgnoreListManager.IgnoreListManager(settings, targetManager);
     context.set(Workspace.IgnoreListManager.IgnoreListManager, ignoreListManager);
 
@@ -114,6 +125,11 @@ export class Universe {
 
   get automaticFileSystemManager(): Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager {
     return this.context.get(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager);
+  }
+
+  get automaticFileSystemWorkspaceBinding():
+      Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding {
+    return this.context.get(Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding);
   }
 
   get breakpointManager(): Breakpoints.BreakpointManager.BreakpointManager {
