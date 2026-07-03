@@ -10,6 +10,7 @@ import {navigateToCssOverviewTab, startCaptureCSSOverview} from '../helpers/css-
 import {
   editCSSProperty,
   focusElementsTree,
+  getStyleRule,
   navigateToSidePane,
   waitForContentOfSelectedElementsNode,
   waitForElementsStyleSection,
@@ -714,13 +715,14 @@ describe('User Metrics for CSS custom properties in the Styles pane', () => {
     await focusElementsTree(devToolsPage);
   }
 
-  it('dispatch events when capture overview button hit', async ({devToolsPage, inspectedPage}) => {
+  it('dispatch events when custom property link is clicked', async ({devToolsPage, inspectedPage}) => {
     await setupTest(devToolsPage, inspectedPage);
     await devToolsPage.page.keyboard.press('ArrowRight');
     await waitForContentOfSelectedElementsNode(
         '<div id=\u200B"properties-to-inspect">\u200B</div>\u200B', devToolsPage);
 
-    await devToolsPage.click('.link-swatch-link');
+    const testElementRule = await getStyleRule('#properties-to-inspect', devToolsPage);
+    await devToolsPage.click('.link-swatch-link', {root: testElementRule});
     await assertHistogramEventsInclude(
         [
           {

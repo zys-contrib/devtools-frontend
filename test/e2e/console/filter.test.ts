@@ -15,10 +15,8 @@ import {
 
 describe('The Console Tab', () => {
   it('shows messages from all levels', async ({devToolsPage, inspectedPage}) => {
-    await Promise.all([
-      inspectedPage.goToResource('console/console-filter.html'),
-      navigateToConsoleTab(devToolsPage),
-    ]);
+    await inspectedPage.goToResource('console/console-filter.html');
+    await navigateToConsoleTab(devToolsPage);
 
     await showVerboseMessages(devToolsPage);
     await waitForConsoleMessagesToBeNonEmpty(19, devToolsPage);
@@ -51,11 +49,9 @@ describe('The Console Tab', () => {
   });
 
   it('resets the filter', async ({devToolsPage, inspectedPage}) => {
-    await Promise.all([
-      inspectedPage.goToResource('console/console-filter.html'),
-      navigateToConsoleTab(devToolsPage),
-      waitForConsoleMessagesToBeNonEmpty(18, devToolsPage),
-    ]);
+    await inspectedPage.goToResource('console/console-filter.html');
+    await navigateToConsoleTab(devToolsPage);
+    await waitForConsoleMessagesToBeNonEmpty(18, devToolsPage);
 
     await filterConsoleMessages('outer', devToolsPage);
     await waitForConsoleMessagesToBeNonEmpty(3, devToolsPage);
