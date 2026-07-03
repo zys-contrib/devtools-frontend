@@ -89,6 +89,7 @@ export async function deinitializeGlobalVars() {
   SDK.TargetManager.TargetManager.removeInstance();
   SDK.CPUThrottlingManager.CPUThrottlingManager.removeInstance();
   SDK.FrameManager.FrameManager.removeInstance();
+  SDK.EventBreakpointsModel.EventBreakpointsManager.removeInstance();
   Common.Settings.Settings.removeInstance();
   Common.Revealer.RevealerRegistry.removeInstance();
   Common.Console.Console.removeInstance();
