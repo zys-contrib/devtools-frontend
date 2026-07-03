@@ -18,6 +18,7 @@ devtools_ui_module("data_grid") {
   sources = [
     "DataGrid.ts",
     "DataGridElement.ts",
+    "DataGridExporter.ts",
     "ShowMoreDataGridNode.ts",
     "SortableDataGrid.ts",
     "ViewportDataGrid.ts",
@@ -64,6 +65,7 @@ devtools_ui_module("unittests") {
   sources = [
     "DataGrid.test.ts",
     "DataGridElement.test.ts",
+    "DataGridExporter.test.ts",
     "ViewportDataGrid.test.ts",
   ]
 

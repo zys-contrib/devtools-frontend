@@ -225,6 +225,18 @@ const UIStrings = {
    * @description Element title in Object Properties Section
    */
   invokePropertyGetter: 'Invoke property getter',
+  /**
+   * @description Context menu item to copy table data
+   */
+  copyTableAs: 'Copy table as',
+  /**
+   * @description Submenu item to copy table as Markdown
+   */
+  copyAsMarkdown: 'Copy as Markdown',
+  /**
+   * @description Submenu item to copy table as CSV
+   */
+  copyAsCsv: 'Copy as CSV',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/console/ConsoleViewMessage.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -2180,6 +2192,7 @@ export class ConsoleTableMessageView extends ConsoleViewMessage {
       if (this.dataGrid) {
         this.dataGrid.setStriped(true);
         this.dataGrid.setFocusable(false);
+        this.dataGrid.setTableContextMenuCallback(this.populateTableContextMenu.bind(this));
 
         const formattedResult = document.createElement('span');
         formattedResult.classList.add('console-message-text');
@@ -2204,6 +2217,38 @@ export class ConsoleTableMessageView extends ConsoleViewMessage {
       return defaultConsoleRowHeight * table.preview.properties.length;
     }
     return defaultConsoleRowHeight;
+  }
+
+  private populateTableContextMenu(contextMenu: UI.ContextMenu.ContextMenu): void {
+    const copySubMenu = contextMenu.clipboardSection().appendSubMenuItem(i18nString(UIStrings.copyTableAs));
+    copySubMenu.defaultSection().appendItem(i18nString(UIStrings.copyAsMarkdown), this.copyTableAsMarkdown.bind(this),
+                                            {jslogContext: 'copy-as-markdown'});
+    copySubMenu.defaultSection().appendItem(i18nString(UIStrings.copyAsCsv), this.copyTableAsCSV.bind(this),
+                                            {jslogContext: 'copy-as-csv'});
+  }
+
+  private copyTableAsMarkdown(): void {
+    if (!this.dataGrid) {
+      return;
+    }
+    const markdown = DataGrid.DataGridExporter.exportToMarkdown(this.dataGrid);
+    UI.UIUtils.copyTextToClipboard(markdown);
+  }
+
+  private copyTableAsCSV(): void {
+    if (!this.dataGrid) {
+      return;
+    }
+    const csv = DataGrid.DataGridExporter.exportToCSV(this.dataGrid);
+    UI.UIUtils.copyTextToClipboard(csv);
+  }
+
+  getDataGridForTest(): DataGrid.SortableDataGrid.SortableDataGrid<unknown>|null {
+    return this.dataGrid;
+  }
+
+  populateTableContextMenuForTest(contextMenu: UI.ContextMenu.ContextMenu): void {
+    this.populateTableContextMenu(contextMenu);
   }
 }
 

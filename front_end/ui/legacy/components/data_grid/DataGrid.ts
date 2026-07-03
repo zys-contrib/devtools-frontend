@@ -162,6 +162,7 @@ export class DataGridImpl<T> extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   private resizeMethod: ResizeMethod;
   private headerContextMenuCallback: ((arg0: UI.ContextMenu.SubMenu) => void)|null;
   private rowContextMenuCallback: ((arg0: UI.ContextMenu.ContextMenu, arg1: DataGridNode<T>) => void)|null;
+  private tableContextMenuCallback: ((arg0: UI.ContextMenu.ContextMenu) => void)|null;
   elementToDataGridNode: WeakMap<Node, DataGridNode<T>>;
   disclosureColumnId?: string;
   private sortColumnCell?: Element;
@@ -246,6 +247,7 @@ export class DataGridImpl<T> extends Common.ObjectWrapper.ObjectWrapper<EventTyp
 
     this.headerContextMenuCallback = null;
     this.rowContextMenuCallback = null;
+    this.tableContextMenuCallback = null;
 
     this.elementToDataGridNode = new WeakMap();
   }
@@ -1407,6 +1409,10 @@ export class DataGridImpl<T> extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     }
   }
 
+  setTableContextMenuCallback(callback: ((arg0: UI.ContextMenu.ContextMenu) => void)|null): void {
+    this.tableContextMenuCallback = callback;
+  }
+
   setHeaderContextMenuCallback(callback: ((arg0: UI.ContextMenu.SubMenu) => void)|null): void {
     this.headerContextMenuCallback = callback;
   }
@@ -1420,6 +1426,9 @@ export class DataGridImpl<T> extends Common.ObjectWrapper.ObjectWrapper<EventTyp
       return;
     }
     const contextMenu = new UI.ContextMenu.ContextMenu(event);
+    if (this.tableContextMenuCallback) {
+      this.tableContextMenuCallback(contextMenu);
+    }
     const target = (event.target as Node);
 
     const sortableVisibleColumns = this.visibleColumnsArray.filter(column => {
