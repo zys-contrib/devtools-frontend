@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import * as Common from '../core/common/common.js';
+import * as Host from '../core/host/host.js';
 import type * as Root from '../core/root/root.js';
 
 import * as Foundation from './foundation.js';
@@ -31,6 +32,7 @@ describe('Universe', () => {
         ],
       },
       hostConfig: {} as Root.Runtime.HostConfig,
+      inspectorFrontendHost: Host.InspectorFrontendHost.InspectorFrontendHostInstance,
     });
   });
 });

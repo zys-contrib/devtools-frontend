@@ -10,6 +10,7 @@ devtools_foundation_module("foundation") {
 
   deps = [
     "../core/common:bundle",
+    "../core/host:bundle",
     "../core/root:bundle",
     "../core/sdk:bundle",
     "../models/autofill_manager:bundle",

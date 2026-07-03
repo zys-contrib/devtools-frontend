@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import * as Common from '../core/common/common.js';
+import type * as Host from '../core/host/host.js';
 import * as Root from '../core/root/root.js';
 import * as SDK from '../core/sdk/sdk.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
@@ -18,6 +19,7 @@ export interface CreationOptions {
   settingsCreationOptions: Common.Settings.SettingsCreationOptions;
   overrideAutoStartModels?: Set<SDK.SDKModel.SDKModelConstructor>;
   hostConfig: Root.Runtime.HostConfig;
+  inspectorFrontendHost: Host.InspectorFrontendHostAPI.InspectorFrontendHostAPI;
 }
 
 export class Universe {
@@ -63,6 +65,10 @@ export class Universe {
     );
     context.set(ProjectSettings.ProjectSettingsModel.ProjectSettingsModel, projectSettingsModel);
 
+    const automaticFileSystemManager = new Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager(
+        options.inspectorFrontendHost, projectSettingsModel);
+    context.set(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager, automaticFileSystemManager);
+
     const cpuThrottlingManager = new SDK.CPUThrottlingManager.CPUThrottlingManager(settings, targetManager);
     context.set(SDK.CPUThrottlingManager.CPUThrottlingManager, cpuThrottlingManager);
 
@@ -100,6 +106,10 @@ export class Universe {
     context.set(JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl, javaScriptMetadata);
 
     this.autofillManager = new AutofillManager.AutofillManager.AutofillManager(targetManager, frameManager);
+  }
+
+  get automaticFileSystemManager(): Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager {
+    return this.context.get(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager);
   }
 
   get breakpointManager(): Breakpoints.BreakpointManager.BreakpointManager {

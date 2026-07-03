@@ -5,7 +5,7 @@
 /* eslint @devtools/enforce-test-universe-return-types: "error" */
 
 import * as Common from '../core/common/common.js';
-import type * as Host from '../core/host/host.js';
+import * as Host from '../core/host/host.js';
 import * as Root from '../core/root/root.js';
 import * as SDK from '../core/sdk/sdk.js';
 import type * as Foundation from '../foundation/foundation.js';
@@ -63,6 +63,18 @@ export class TestUniverse implements Foundation.Universe.Universe {
                         new AutofillManager.AutofillManager.AutofillManager(this.targetManager, this.frameManager));
     }
     return this.#context.get(AutofillManager.AutofillManager.AutofillManager);
+  }
+
+  get automaticFileSystemManager(): Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager {
+    if (!this.#context.has(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager)) {
+      this.#context.set(
+          Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager,
+          new Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager(
+              this.#creationOptions?.inspectorFrontendHost ?? Host.InspectorFrontendHost.InspectorFrontendHostInstance,
+              this.projectSettingsModel,
+              ));
+    }
+    return this.#context.get(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager);
   }
 
   get breakpointManager(): Breakpoints.BreakpointManager.BreakpointManager {

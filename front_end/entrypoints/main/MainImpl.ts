@@ -201,6 +201,7 @@ export class MainImpl {
         runSettingsMigration: !Host.InspectorFrontendHost.isUnderTest(),
       },
       hostConfig: Root.Runtime.hostConfig,
+      inspectorFrontendHost: Host.InspectorFrontendHost.InspectorFrontendHostInstance,
     };
     this.#universe = new Foundation.Universe.Universe(creationOptions);
     Root.DevToolsContext.setGlobalInstance(this.#universe.context as Root.DevToolsContext.WritableDevToolsContext);
@@ -469,13 +470,7 @@ export class MainImpl {
 
     new ExecutionContextSelector(targetManager, UI.Context.Context.instance());
 
-    const projectSettingsModel = this.#universe.projectSettingsModel;
-
-    const automaticFileSystemManager = Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager.instance({
-      forceNew: true,
-      inspectorFrontendHost: Host.InspectorFrontendHost.InspectorFrontendHostInstance,
-      projectSettingsModel,
-    });
+    const automaticFileSystemManager = this.#universe.automaticFileSystemManager;
     Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding.instance({
       forceNew: true,
       automaticFileSystemManager,
