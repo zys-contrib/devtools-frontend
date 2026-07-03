@@ -250,7 +250,8 @@ export function setupSettings(reset: boolean) {
     syncedStorage: storage,
     globalStorage: storage,
     localStorage: storage,
-    settingRegistrations: Common.SettingRegistration.getRegisteredSettings()
+    settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
+    console: new Common.Console.Console(),
   });
 }
 
@@ -270,5 +271,6 @@ export function createSettingsForTest(settingRegistrations = DEFAULT_SETTING_REG
     globalStorage: storage,
     localStorage: storage,
     settingRegistrations,
+    console: new Common.Console.Console(),
   });
 }

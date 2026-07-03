@@ -79,6 +79,7 @@ describeWithEnvironment('MetricCard', () => {
       globalStorage: dummyStorage,
       localStorage: dummyStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
+      console: new Common.Console.Console(),
     });
 
     CrUXManager.CrUXManager.instance({forceNew: true});

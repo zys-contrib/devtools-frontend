@@ -65,6 +65,7 @@ describeWithEnvironment('NetworkLogView', () => {
       globalStorage: dummyStorage,
       localStorage: dummyStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
+      console: Common.Console.Console.instance(),
     });
     registerNoopActions(['network.toggle-recording', 'inspector-main.reload']);
 

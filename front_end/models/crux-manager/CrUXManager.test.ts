@@ -100,6 +100,7 @@ describe('CrUXManager', () => {
         globalStorage,
         localStorage: dummyStorage,
         settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
+        console: new Common.Console.Console(),
       });
       const manager = CrUXManager.CrUXManager.instance({forceNew: true});
       manager.getConfigSetting().set({enabled: true});
@@ -116,6 +117,7 @@ describe('CrUXManager', () => {
         globalStorage: dummyStorage,
         localStorage: dummyStorage,
         settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
+        console: new Common.Console.Console(),
       });
       const manager = CrUXManager.CrUXManager.instance({forceNew: true});
       manager.getConfigSetting().set({enabled: true});

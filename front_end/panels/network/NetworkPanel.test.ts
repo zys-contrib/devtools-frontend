@@ -85,6 +85,7 @@ describeWithEnvironment('NetworkPanel', () => {
       globalStorage: dummyStorage,
       localStorage: dummyStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
+      console: Common.Console.Console.instance(),
     });
     const actionRegistryInstance = UI.ActionRegistry.ActionRegistry.instance({forceNew: true});
     UI.ShortcutRegistry.ShortcutRegistry.instance({forceNew: true, actionRegistry: actionRegistryInstance});

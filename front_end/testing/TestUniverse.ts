@@ -290,11 +290,13 @@ export class TestUniverse implements Foundation.Universe.Universe {
   get settings(): Common.Settings.Settings {
     if (!this.#context.has(Common.Settings.Settings)) {
       const storage = new Common.Settings.SettingsStorage({}, undefined, 'test');
-      const options = this.#creationOptions?.settingsCreationOptions ?? {
+      const options = {
         syncedStorage: storage,
         globalStorage: storage,
         localStorage: storage,
         settingRegistrations: DEFAULT_SETTING_REGISTRATIONS_FOR_TEST,
+        console: this.console,
+        ...this.#creationOptions?.settingsCreationOptions,
       };
       const settings = new Common.Settings.Settings(options);
       this.#context.set(Common.Settings.Settings, settings);

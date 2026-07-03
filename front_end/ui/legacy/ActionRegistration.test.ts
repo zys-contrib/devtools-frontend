@@ -32,6 +32,7 @@ describeWithEnvironment('ActionRegistration', () => {
       globalStorage: dummyStorage,
       localStorage: dummyStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
+      console: Common.Console.Console.instance(),
     });
 
     UI.ActionRegistration.registerActionExtension({

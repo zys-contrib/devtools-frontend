@@ -28,6 +28,7 @@ describe('VersionController', () => {
       localStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
       runSettingsMigration: false,
+      console: new Common.Console.Console(),
     });
   });
 
@@ -361,6 +362,7 @@ describe('updateVersionFrom37To38', () => {
       localStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
       runSettingsMigration: false,
+      console: new Common.Console.Console(),
     });
   });
 
@@ -429,6 +431,7 @@ describe('updateVersionFrom38To39', () => {
       localStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
       runSettingsMigration: false,
+      console: new Common.Console.Console(),
     });
     setting = settings.createSetting('preferred-network-condition', {title: 'Offline', i18nTitleKey: 'Offline'});
   });
@@ -497,6 +500,7 @@ describe('updateVersionFrom38To39', () => {
         localStorage,
         settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
         runSettingsMigration: false,
+        console: new Common.Console.Console(),
       });
       customNetworkCondSetting = settings.moduleSetting('custom-network-conditions');
       preferredNetworkCondSetting = settings.createSetting('preferred-network-condition', {i18nTitleKey: 'Offline'});
@@ -633,6 +637,7 @@ describe('updateVersionFrom40To41', () => {
       localStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
       runSettingsMigration: false,
+      console: new Common.Console.Console(),
     });
     hideNetworkMessagesSetting =
         settings.createSetting('hide-network-messages', false, Common.Settings.SettingStorageType.SYNCED);
@@ -695,6 +700,7 @@ describe('updateVersionFrom41To42', () => {
       localStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
       runSettingsMigration: false,
+      console: new Common.Console.Console(),
     });
     recordingsSetting = settings.createSetting('recorder-recordings-ng', []);
   });
@@ -760,6 +766,7 @@ function describeExperimentMigration(
         localStorage,
         settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
         runSettingsMigration: false,
+        console: new Common.Console.Console(),
       });
     });
 
@@ -850,6 +857,7 @@ describe('access logging', () => {
       localStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
       logSettingAccess,
+      console: new Common.Console.Console(),
     });
   });
 

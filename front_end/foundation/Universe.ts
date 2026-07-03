@@ -16,7 +16,7 @@ import * as ProjectSettings from '../models/project_settings/project_settings.js
 import * as Workspace from '../models/workspace/workspace.js';
 
 export interface CreationOptions {
-  settingsCreationOptions: Common.Settings.SettingsCreationOptions;
+  settingsCreationOptions: Omit<Common.Settings.SettingsCreationOptions, 'console'>;
   overrideAutoStartModels?: Set<SDK.SDKModel.SDKModelConstructor>;
   hostConfig: Root.Runtime.HostConfig;
   inspectorFrontendHost: Host.InspectorFrontendHostAPI.InspectorFrontendHostAPI;
@@ -33,17 +33,18 @@ export class Universe {
     const context = new Root.DevToolsContext.WritableDevToolsContext();
     this.context = context;
 
+    const console = new Common.Console.Console();
+    context.set(Common.Console.Console, console);
+
     // TODO(crbug.com/458180550): Store instance only on this.context instead.
     //                            For now the global is required as not everything in foundation cleanly
     //                            reads from the scoped `Settings` instance.
     const settings = Common.Settings.Settings.instance({
       forceNew: true,
+      console,
       ...options.settingsCreationOptions,
     });
     context.set(Common.Settings.Settings, settings);
-
-    const console = new Common.Console.Console();
-    context.set(Common.Console.Console, console);
 
     const isolatedFileSystemManager =
         new Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager(settings, console);
