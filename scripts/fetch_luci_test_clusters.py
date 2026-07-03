@@ -32,9 +32,9 @@ def get_flaky_clusters(project_name: str) -> dict:
         "Content-Type": "application/json"
     }
 
-    # Calculate the time range (e.g., the last 7 days)
+    # Calculate the time range (e.g., the last 24 hours)
     now = datetime.datetime.utcnow()
-    earliest = now - datetime.timedelta(days=7)
+    earliest = now - datetime.timedelta(hours=24)
 
     # Request payload based on QueryClusterSummariesRequest proto
     payload = {
@@ -89,7 +89,8 @@ def main():
     is_json = args.format == "json"
 
     if not is_json:
-        print(f"Fetching flaky clusters for {project} over the last 7 days...")
+        print(
+            f"Fetching flaky clusters for {project} over the last 24 hours...")
 
     try:
         data = get_flaky_clusters(project)
@@ -106,7 +107,7 @@ def main():
 
         clusters = [
             c for c in clusters if int(
-                c.get("metrics", {}).get("failures", {}).get("value", 0)) > 25
+                c.get("metrics", {}).get("failures", {}).get("value", 0)) > 0
         ]
 
         if is_json:

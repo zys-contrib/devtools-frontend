@@ -62,7 +62,7 @@ async function main() {
   if (flakyError) {
     console.log(`- Flaky Tests: Error - ${flakyError.message}`);
   } else {
-    console.log(`- Flaky Tests: ${clusters.length} clusters found in the last 7 days.`);
+    console.log(`- Flaky Tests: ${clusters.length} clusters found in the last 24 hours.`);
   }
 
   if (disabledError) {
@@ -77,7 +77,7 @@ async function main() {
   console.log('='.repeat(80));
   console.log();
 
-  console.log('1. FLAKY TESTS (LUCI Analysis - Last 7 Days)');
+  console.log('1. FLAKY TESTS (LUCI Analysis - Last 24 Hours)');
   console.log('-'.repeat(80));
 
   if (flakyError) {
