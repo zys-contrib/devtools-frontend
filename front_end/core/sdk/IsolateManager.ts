@@ -3,12 +3,11 @@
 // found in the LICENSE file.
 
 import * as Common from '../common/common.js';
+import * as Root from '../root/root.js';
 
 import type {HeapProfilerModel} from './HeapProfilerModel.js';
 import {RuntimeModel} from './RuntimeModel.js';
 import {type SDKModelObserver, TargetManager} from './TargetManager.js';
-
-let isolateManagerInstance: IsolateManager;
 
 export class IsolateManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes> implements
     SDKModelObserver<RuntimeModel> {
@@ -28,15 +27,16 @@ export class IsolateManager extends Common.ObjectWrapper.ObjectWrapper<EventType
     this.#targetManager.observeModels(RuntimeModel, this);
   }
 
-  static instance({forceNew, targetManager}: {
+  static instance(opts: {
     forceNew: boolean,
     targetManager?: TargetManager,
   } = {forceNew: false}): IsolateManager {
-    if (!isolateManagerInstance || forceNew) {
-      isolateManagerInstance = new IsolateManager(targetManager);
+    const {forceNew, targetManager} = opts;
+    if (!Root.DevToolsContext.globalInstance().has(IsolateManager) || forceNew) {
+      Root.DevToolsContext.globalInstance().set(IsolateManager, new IsolateManager(targetManager));
     }
 
-    return isolateManagerInstance;
+    return Root.DevToolsContext.globalInstance().get(IsolateManager);
   }
 
   observeIsolates(observer: Observer): void {
