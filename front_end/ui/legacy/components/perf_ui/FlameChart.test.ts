@@ -1350,8 +1350,7 @@ describeWithEnvironment('FlameChart', () => {
     await assertScreenshot('timeline/frames_track_screenshots.png');
   });
 
-  // Flaky
-  it.skip('[crbug.com/474034100]: renders correctly with a vertical offset', async function() {
+  it('renders correctly with a vertical offset', async function() {
     const {flameChart, parsedTrace, dataProvider} = await renderFlameChartIntoDOM(this, {
       dataProvider: 'MAIN',
       fileNameOrParsedTrace: 'web-dev.json.gz',
@@ -1374,6 +1373,7 @@ describeWithEnvironment('FlameChart', () => {
     assert.isOk(index);
     flameChart.revealEntryVertically(index);
     await raf();
+    flameChart.blurCanvasForTesting();
     await assertScreenshot('timeline/flamechart_with_vertical_offset.png');
   });
 
