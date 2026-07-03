@@ -7255,7 +7255,7 @@ export const NativeFunctions = [
   },
   {
     name: "RTCEncodedAudioFrame",
-    signatures: [["originalFrame","?options"]]
+    signatures: [["init"],["originalFrame","?options"]]
   },
   {
     name: "setMetadata",

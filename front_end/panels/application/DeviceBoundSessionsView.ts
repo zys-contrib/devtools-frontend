@@ -218,11 +218,19 @@ const UIStrings = {
   /**
    *@description Explanation for an event outcome. Key refers to a cryptographic key.
    */
-  keyError: 'Key error',
+  signingKeyGenerationError: 'Signing key generation error',
+  /**
+   *@description Explanation for an event outcome. Key refers to a cryptographic key.
+   */
+  attestationKeyGenerationError: 'Attestation key generation error',
   /**
    *@description Explanation for an event outcome. Signing refers to cryptographic signing.
    */
   signingError: 'Signing error',
+  /**
+   *@description Explanation for an event outcome. Signing refers to cryptographic signing.
+   */
+  transientSigningError: 'Transient signing error',
   /**
    *@description Explanation for an event outcome.
    */
@@ -942,10 +950,14 @@ function fetchResultToString(fetchResult: Protocol.Network.DeviceBoundSessionFet
   switch (fetchResult) {
     case Protocol.Network.DeviceBoundSessionFetchResult.Success:
       return i18nString(UIStrings.success);
-    case Protocol.Network.DeviceBoundSessionFetchResult.KeyError:
-      return i18nString(UIStrings.keyError);
+    case Protocol.Network.DeviceBoundSessionFetchResult.SigningKeyGenerationError:
+      return i18nString(UIStrings.signingKeyGenerationError);
+    case Protocol.Network.DeviceBoundSessionFetchResult.AttestationKeyGenerationError:
+      return i18nString(UIStrings.attestationKeyGenerationError);
     case Protocol.Network.DeviceBoundSessionFetchResult.SigningError:
       return i18nString(UIStrings.signingError);
+    case Protocol.Network.DeviceBoundSessionFetchResult.TransientSigningError:
+      return i18nString(UIStrings.transientSigningError);
     case Protocol.Network.DeviceBoundSessionFetchResult.ServerRequestedTermination:
       return i18nString(UIStrings.serverRequestedTermination);
     case Protocol.Network.DeviceBoundSessionFetchResult.InvalidSessionId:

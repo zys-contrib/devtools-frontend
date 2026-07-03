@@ -107,7 +107,7 @@ describeWithEnvironment('DeviceBoundSessionsView', () => {
         site: mockSite,
         sessionId: mockSessionId,
         succeeded: false,
-        creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.KeyError}
+        creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.SigningKeyGenerationError}
       },
       timestamp: dates[0]
     });
