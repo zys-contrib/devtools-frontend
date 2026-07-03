@@ -947,7 +947,6 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
       mouseX = coordinate?.x ? coordinate.x - canvasViewportOffsetX : mouseX;
       mouseY = coordinate?.y ? coordinate.y - canvasViewportOffsetY : mouseY;
     }
-    // The parent dimensions are the maximum the popover can use.
     const parentWidth = this.popoverElement.parentElement ? this.popoverElement.parentElement.clientWidth : 0;
     const parentHeight = this.popoverElement.parentElement ? this.popoverElement.parentElement.clientHeight : 0;
     const infoWidth = this.popoverElement.clientWidth;
@@ -957,40 +956,18 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
     const offsetX = 10;
     // Incorporate any network flamechart height into dynamic positioning
     const offsetY = 6 + this.#tooltipPopoverYAdjustment;
-    let x;
-    let y;
 
-    /**
-     * Fancy positioning algorithm. It optimizes for consistent positioning, not obstructing any of the popover, and not positioning atop the mouse cursor.
-     *
-     * Take the mouse cursor position (mouseX/mouseY) and split up the area into four quadrants
-     *     0: bottom-right. 1: top-right. 2: bottom-left. 3: top-left.
-     *
-     * We attempt this in two passes, first is for keeping the whole popover visible, the second is slightly relaxed.
-     *   If we hit the second pass, its because the tooltip size is close to the size of the available (parent*) space.
-     * In each pass, we loop through the quadrants
-     *   If the tooltip can fit (after some adjustments) within a quadrant, we `break` and that x,y is used.
-     */
-    for (let pass = 0; pass < 2; ++pass) {
-      for (let quadrant = 0; quadrant < 4; ++quadrant) {
-        // The bitwise AND operator is used to generate the 4 unique combinations of two booleans. (true+false, true+true, etc)
-        const dx = quadrant & 2 ? -offsetX - infoWidth : offsetX;
-        const dy = quadrant & 1 ? -offsetY - infoHeight : offsetY;
-        // mouseX+dx is ideal, but clamp against the available space (It will be adapted to fit)
-        x = Platform.NumberUtilities.clamp(mouseX + dx, 0, parentWidth - infoWidth);
-        y = Platform.NumberUtilities.clamp(mouseY + dy, 0, parentHeight - infoHeight);
+    const {x, y} = calculatePopoverOffset({
+      mouseX,
+      mouseY,
+      parentWidth,
+      parentHeight,
+      infoWidth,
+      infoHeight,
+      offsetX,
+      offsetY,
+    });
 
-        const popoverFits = pass === 0 ?
-            // Will the whole popover be visible?
-            (x >= mouseX || mouseX >= x + infoWidth) && (y >= mouseY || mouseY >= y + infoHeight) :
-            // Will the popover fit well in 1 dimension? (Though we typically see it fit in both, here. Shrug.)
-            x >= mouseX || mouseX >= x + infoWidth || y >= mouseY || mouseY >= y + infoHeight;
-
-        if (popoverFits) {
-          break;
-        }
-      }
-    }
     this.popoverElement.style.left = x + 'px';
     this.popoverElement.style.top = y + 'px';
   }
@@ -4505,4 +4482,72 @@ export interface PersistedGroupConfig {
   expanded: boolean;
   originalIndex: number;
   visualIndex: number;
+}
+
+export interface PopoverOffsetOptions {
+  /** The horizontal offset of the mouse relative to the flame chart. */
+  mouseX: number;
+  /** The vertical offset of the mouse relative to the flame chart. */
+  mouseY: number;
+  /** The width of the parent container holding the popover. */
+  parentWidth: number;
+  /** The height of the parent container holding the popover. */
+  parentHeight: number;
+  /** The measured width of the popover element itself. */
+  infoWidth: number;
+  /** The measured height of the popover element itself. */
+  infoHeight: number;
+  /** The horizontal offset spacing to keep between the popover and the mouse position. */
+  offsetX: number;
+  /** The vertical offset spacing to keep between the popover and the mouse position. */
+  offsetY: number;
+}
+
+/**
+ * Calculates the positioning coordinates (x, y) for a popover window relative to the mouse.
+ *
+ * It uses a two-pass quadrant placement algorithm:
+ * - Pass 0: Tries to find a quadrant where the popover fits fully on screen without overlapping the mouse.
+ * - Pass 1: Relaxed fit; allows overlapping the mouse if the popover is too large for the available space,
+ *   clamping it strictly to remain within the parent bounds [0, parentWidth - infoWidth].
+ *
+ * Quadrants:
+ * 0: bottom-right (x + offsetX, y + offsetY)
+ * 1: top-right (x + offsetX, y - offsetY - height)
+ * 2: bottom-left (x - offsetX - width, y + offsetY)
+ * 3: top-left (x - offsetX - width, y - offsetY - height)
+ */
+export function calculatePopoverOffset(options: PopoverOffsetOptions): {x: number, y: number} {
+  const {mouseX, mouseY, parentWidth, parentHeight, infoWidth, infoHeight, offsetX, offsetY} = options;
+
+  const quadrants = [
+    {left: false, top: false},  // 0: Bottom-Right
+    {left: false, top: true},   // 1: Top-Right
+    {left: true, top: false},   // 2: Bottom-Left
+    {left: true, top: true},    // 3: Top-Left
+  ];
+
+  let x = 0;
+  let y = 0;
+
+  for (let pass = 0; pass < 2; ++pass) {
+    for (const {left, top} of quadrants) {
+      const dx = left ? -offsetX - infoWidth : offsetX;
+      const dy = top ? -offsetY - infoHeight : offsetY;
+
+      // Ensure upper bound of clamp is never negative (minimum of 0) to avoid errors when infoWidth/infoHeight > parent container bounds
+      x = Platform.NumberUtilities.clamp(mouseX + dx, 0, Math.max(0, parentWidth - infoWidth));
+      y = Platform.NumberUtilities.clamp(mouseY + dy, 0, Math.max(0, parentHeight - infoHeight));
+
+      const mouseOverlapsX = mouseX > x && mouseX < x + infoWidth;
+      const mouseOverlapsY = mouseY > y && mouseY < y + infoHeight;
+
+      const popoverFits = pass === 0 ? (!mouseOverlapsX && !mouseOverlapsY) : !(mouseOverlapsX && mouseOverlapsY);
+
+      if (popoverFits) {
+        return {x, y};
+      }
+    }
+  }
+  return {x, y};
 }
