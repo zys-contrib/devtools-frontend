@@ -343,7 +343,7 @@ describe('SourceMapManager', () => {
     let sourceMapCache: SDK.SourceMapCache.SourceMapCache;
 
     beforeEach(async () => {
-      sourceMapCache = SDK.SourceMapCache.SourceMapCache.instance();
+      sourceMapCache = SDK.SourceMapCache.SourceMapCache.create();
       await sourceMapCache.disposeForTest();
     });
 
