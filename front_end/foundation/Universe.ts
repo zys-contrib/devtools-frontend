@@ -45,6 +45,10 @@ export class Universe {
     const console = new Common.Console.Console();
     context.set(Common.Console.Console, console);
 
+    const isolatedFileSystemManager =
+        new Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager(settings, console);
+    context.set(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager, isolatedFileSystemManager);
+
     const targetManager = new SDK.TargetManager.TargetManager(context, options.overrideAutoStartModels);
     context.set(SDK.TargetManager.TargetManager, targetManager);
 
@@ -122,6 +126,10 @@ export class Universe {
 
   get domDebuggerManager(): SDK.DOMDebuggerModel.DOMDebuggerManager {
     return this.context.get(SDK.DOMDebuggerModel.DOMDebuggerManager);
+  }
+
+  get isolatedFileSystemManager(): Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager {
+    return this.context.get(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager);
   }
 
   get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader {

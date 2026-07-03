@@ -157,6 +157,17 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(Logs.LogManager.LogManager);
   }
 
+  get isolatedFileSystemManager(): Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager {
+    if (!this.#context.has(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager)) {
+      this.#context.set(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager,
+                        new Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager(
+                            this.settings,
+                            this.console,
+                            ));
+    }
+    return this.#context.get(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager);
+  }
+
   get javaScriptMetadata(): JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl {
     if (!this.#context.has(JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl)) {
       this.#context.set(JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl,

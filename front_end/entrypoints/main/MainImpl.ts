@@ -406,7 +406,7 @@ export class MainImpl {
     MainImpl.time('Main._createAppUI');
 
     // Request filesystems early, we won't create connections until callback is fired. Things will happen in parallel.
-    const isolatedFileSystemManager = Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager.instance();
+    const isolatedFileSystemManager = this.#universe.isolatedFileSystemManager;
     isolatedFileSystemManager.addEventListener(
         Persistence.IsolatedFileSystemManager.Events.FileSystemError,
         event => Snackbar.Snackbar.Snackbar.show({message: event.data}));
