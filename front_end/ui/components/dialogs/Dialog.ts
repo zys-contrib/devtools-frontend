@@ -118,6 +118,9 @@ type DialogAnchor = HTMLElement|DOMRect|DOMPoint;
 export const MODAL = 'MODAL';
 
 export type DialogOrigin = DialogAnchor|null|(() => DialogAnchor)|typeof MODAL;
+/**
+ * @deprecated in favor of UI.Dialog.Dialog.
+ */
 export class Dialog extends HTMLElement {
   readonly #shadow = this.attachShadow({mode: 'open'});
   readonly #forceDialogCloseInDevToolsBound = this.#forceDialogCloseInDevToolsMutation.bind(this);
