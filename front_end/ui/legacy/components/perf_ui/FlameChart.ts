@@ -2140,12 +2140,8 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
         if (y >= this.groupOffsets[groupIndex] && y < this.groupOffsets[nextIndex]) {
           // This section is used to calculate the position of current group's header
           // If we are in edit mode, the track label is pushed right to make room for the icons.
-          const context = this.context;
-          context.save();
-          context.font = this.#font;
           const headerRight = HEADER_LEFT_PADDING + (this.#inTrackConfigEditMode ? EDIT_MODE_TOTAL_ICON_WIDTH : 0) +
-              this.labelWidthForGroup(context, groups[groupIndex]);
-          context.restore();
+              this.labelWidthForGroup(this.context, groups[groupIndex]);
 
           const mouseInHeaderRow =
               y >= this.groupOffsets[groupIndex] && y < this.groupOffsets[groupIndex] + groups[groupIndex].style.height;
@@ -3147,8 +3143,12 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
    * @returns the width of the label of the group.
    */
   labelWidthForGroup(context: CanvasRenderingContext2D, group: Group): number {
-    return EXPANSION_ARROW_INDENT * (group.style.nestingLevel + 1) + ARROW_SIDE / 2 + HEADER_LABEL_X_PADDING +
+    context.save();
+    context.font = this.#font;
+    const width = EXPANSION_ARROW_INDENT * (group.style.nestingLevel + 1) + ARROW_SIDE / 2 + HEADER_LABEL_X_PADDING +
         UI.UIUtils.measureTextWidth(context, group.name) + HEADER_LABEL_X_PADDING - HEADER_LEFT_PADDING;
+    context.restore();
+    return width;
   }
 
   private drawCollapsedOverviewForGroup(group: Group, y: number, endLevel: number): void {
