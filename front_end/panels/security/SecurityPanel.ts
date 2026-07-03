@@ -12,7 +12,7 @@ import * as Protocol from '../../generated/protocol.js';
 import * as NetworkForward from '../../panels/network/forward/forward.js';
 import {createIcon, type Icon} from '../../ui/kit/kit.js';
 import * as UI from '../../ui/legacy/legacy.js';
-import {html, render} from '../../ui/lit/lit.js';
+import {html, render, type TemplateResult} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import lockIconStyles from './lockIcon.css.js';
@@ -510,26 +510,31 @@ export function getSecurityStateIconForOverview(
   return createIcon(iconName, className);
 }
 
-export function createHighlightedUrl(url: Platform.DevToolsPath.UrlString, securityState: string): Element {
+function renderHighlightedUrl(url: Platform.DevToolsPath.UrlString, securityState: string): TemplateResult {
   const schemeSeparator = '://';
   const index = url.indexOf(schemeSeparator);
 
   // If the separator is not found, just display the text without highlighting.
   if (index === -1) {
-    const text = document.createElement('span');
-    text.textContent = url;
-    return text;
+    return html`<span>${url}</span>`;
   }
 
-  const highlightedUrl = document.createElement('span');
-  highlightedUrl.classList.add('highlighted-url');
   const scheme = url.substr(0, index);
   const content = url.substr(index + schemeSeparator.length);
-  highlightedUrl.createChild('span', 'url-scheme-' + securityState).textContent = scheme;
-  highlightedUrl.createChild('span', 'url-scheme-separator').textContent = schemeSeparator;
-  highlightedUrl.createChild('span').textContent = content;
 
-  return highlightedUrl;
+  return html`
+    <span class="highlighted-url">
+      <span class=${`url-scheme-${securityState}`}>${scheme}</span>
+      <span class="url-scheme-separator">${schemeSeparator}</span>
+      <span>${content}</span>
+    </span>`;
+}
+
+export function createHighlightedUrl(url: Platform.DevToolsPath.UrlString, securityState: string): Element {
+  const fragment = document.createDocumentFragment();
+  // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+  render(renderHighlightedUrl(url, securityState), fragment);
+  return fragment.firstElementChild as Element;
 }
 
 export interface ViewInput {
@@ -1315,11 +1320,14 @@ export class SecurityMainView extends UI.Widget.VBox {
 }
 
 export class SecurityOriginView extends UI.Widget.VBox {
-  private readonly originLockIcon: HTMLElement;
+  readonly #origin: Platform.DevToolsPath.UrlString;
+  readonly #originDisplay: HTMLElement;
+
   constructor(origin: Platform.DevToolsPath.UrlString, originState: OriginState) {
     super({jslog: `${VisualLogging.pane('security.origin-view')}`});
     this.registerRequiredCSS(originViewStyles, lockIconStyles);
     this.setMinimumSize(200, 100);
+    this.#origin = origin;
 
     this.element.classList.add('security-origin-view');
 
@@ -1328,13 +1336,8 @@ export class SecurityOriginView extends UI.Widget.VBox {
     titleDiv.textContent = i18nString(UIStrings.origin);
     UI.ARIAUtils.markAsHeading(titleDiv, 1);
 
-    const originDisplay = titleSection.createChild('div', 'origin-display');
-    this.originLockIcon = originDisplay.createChild('span');
-    const icon = getSecurityStateIconForDetailedView(
-        originState.securityState, `security-property security-property-${originState.securityState}`);
-    this.originLockIcon.appendChild(icon);
-
-    originDisplay.appendChild(createHighlightedUrl(origin, originState.securityState));
+    this.#originDisplay = titleSection.createChild('div', 'origin-display');
+    this.#renderOriginDisplay(originState.securityState);
 
     const originNetworkDiv = titleSection.createChild('div', 'view-network-button');
     const originNetworkButton = UI.UIUtils.createTextButton(i18nString(UIStrings.viewRequestsInNetworkPanel), event => {
@@ -1573,10 +1576,20 @@ export class SecurityOriginView extends UI.Widget.VBox {
   }
 
   setSecurityState(newSecurityState: Protocol.Security.SecurityState): void {
-    this.originLockIcon.removeChildren();
-    const icon = getSecurityStateIconForDetailedView(
-        newSecurityState, `security-property security-property-${newSecurityState}`);
-    this.originLockIcon.appendChild(icon);
+    this.#renderOriginDisplay(newSecurityState);
+  }
+
+  #renderOriginDisplay(securityState: Protocol.Security.SecurityState): void {
+    const icon =
+        getSecurityStateIconForDetailedView(securityState, `security-property security-property-${securityState}`);
+
+    // clang-format off
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`
+      ${icon}
+      ${renderHighlightedUrl(this.#origin, securityState)}
+    `, this.#originDisplay);
+    // clang-format on
   }
 }
 

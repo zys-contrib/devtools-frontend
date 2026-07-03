@@ -15,6 +15,32 @@ import * as Security from './security.js';
 
 const {urlString} = Platform.DevToolsPath;
 
+describe('createHighlightedUrl', () => {
+  it('renders a URL without a scheme separator as plain text', () => {
+    const highlightedUrl =
+        Security.SecurityPanel.createHighlightedUrl(urlString`foo.bar`, Protocol.Security.SecurityState.Secure);
+
+    assert.strictEqual(highlightedUrl.textContent, 'foo.bar');
+    assert.isFalse(highlightedUrl.classList.contains('highlighted-url'));
+  });
+
+  it('renders a URL with a highlighted scheme', () => {
+    const highlightedUrl =
+        Security.SecurityPanel.createHighlightedUrl(urlString`https://foo.bar`, Protocol.Security.SecurityState.Secure);
+
+    assert.strictEqual(highlightedUrl.textContent, 'https://foo.bar');
+    assert.isTrue(highlightedUrl.classList.contains('highlighted-url'));
+
+    const scheme = highlightedUrl.querySelector('.url-scheme-secure');
+    assert.isNotNull(scheme);
+    assert.strictEqual(scheme.textContent, 'https');
+
+    const schemeSeparator = highlightedUrl.querySelector('.url-scheme-separator');
+    assert.isNotNull(schemeSeparator);
+    assert.strictEqual(schemeSeparator.textContent, '://');
+  });
+});
+
 describeWithEnvironment('SecurityPanelSidebarTree', () => {
   describe('updateOrigin', () => {
     it('correctly updates the URL scheme highlighting', () => {
