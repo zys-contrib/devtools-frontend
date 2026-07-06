@@ -477,7 +477,7 @@ export class MainImpl {
 
     new ExecutionContextSelector(targetManager, UI.Context.Context.instance());
 
-    LiveMetrics.LiveMetrics.instance();
+    void LiveMetrics.LiveMetrics.instance().enable();
     CrUXManager.CrUXManager.instance();
 
     const builtInAi = AiAssistanceModel.BuiltInAi.BuiltInAi.instance();

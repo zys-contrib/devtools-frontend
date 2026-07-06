@@ -47,6 +47,7 @@ export type InteractionMap = Map<InteractionId, Interaction>;
 
 export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> implements SDK.TargetManager.Observer {
   #enabled = false;
+  #isCollectingMetrics = false;
   #target?: SDK.Target.Target;
   #scriptIdentifier?: Protocol.Page.ScriptIdentifier;
   #lastResetContextId?: Protocol.Runtime.ExecutionContextId;
@@ -86,10 +87,10 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
 
   async #switchToTarget(newTarget: SDK.Target.Target): Promise<void> {
     if (this.#target) {
-      await this.disable();
+      await this.#stopCollectingMetrics();
     }
     this.#target = newTarget;
-    await this.enable();
+    await this.#startCollectingMetrics();
   }
 
   static instance(opts: {forceNew?: boolean} = {forceNew: false}): LiveMetrics {
@@ -485,7 +486,7 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
       return;
     }
     this.#target = target;
-    await this.enable();
+    await this.#startCollectingMetrics();
   }
 
   async targetRemoved(target: SDK.Target.Target): Promise<void> {
@@ -493,11 +494,29 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
     if (target !== this.#target) {
       return;
     }
-    await this.disable();
+    await this.#stopCollectingMetrics();
     this.#target = undefined;
   }
 
   async enable(): Promise<void> {
+    if (this.#enabled) {
+      return;
+    }
+    this.#enabled = true;
+    if (this.#target) {
+      await this.#startCollectingMetrics();
+    }
+  }
+
+  async disable(): Promise<void> {
+    if (!this.#enabled) {
+      return;
+    }
+    this.#enabled = false;
+    await this.#stopCollectingMetrics();
+  }
+
+  async #startCollectingMetrics(): Promise<void> {
     if (Host.InspectorFrontendHost.isUnderTest()) {
       // Enabling this impacts a lot of layout tests; we will work on fixing
       // them but for now it is easier to not run this page in layout tests.
@@ -505,7 +524,7 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
       return;
     }
 
-    if (!this.#target || this.#enabled) {
+    if (!this.#target || !this.#enabled || this.#isCollectingMetrics) {
       return;
     }
 
@@ -556,11 +575,11 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
     this.#deviceModeModel?.addEventListener(
         EmulationModel.DeviceModeModel.Events.UPDATED, this.#onEmulationChanged, this);
 
-    this.#enabled = true;
+    this.#isCollectingMetrics = true;
   }
 
-  async disable(): Promise<void> {
-    if (!this.#target || !this.#enabled) {
+  async #stopCollectingMetrics(): Promise<void> {
+    if (!this.#target || !this.#isCollectingMetrics) {
       return;
     }
 
@@ -594,7 +613,7 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
     this.#deviceModeModel?.removeEventListener(
         EmulationModel.DeviceModeModel.Events.UPDATED, this.#onEmulationChanged, this);
 
-    this.#enabled = false;
+    this.#isCollectingMetrics = false;
   }
 }
 

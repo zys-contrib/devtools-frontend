@@ -21,7 +21,7 @@ describeWithEnvironment('LiveMetrics', () => {
   let primaryTarget: SDK.Target.Target;
   let tabTarget: SDK.Target.Target;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     const connection = new MockCDPConnection([]);
     mockResourceTree(connection);
     tabTarget = createTarget({type: SDK.Target.Type.TAB, connection});
@@ -30,6 +30,7 @@ describeWithEnvironment('LiveMetrics', () => {
       type: SDK.Target.Type.FRAME,
     });
     liveMetrics = LiveMetrics.LiveMetrics.instance({forceNew: true});
+    await liveMetrics.enable();
   });
 
   describe('prerender navigation', () => {
