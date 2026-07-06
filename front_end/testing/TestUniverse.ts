@@ -170,6 +170,13 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(Workspace.IgnoreListManager.IgnoreListManager);
   }
 
+  get isolateManager(): SDK.IsolateManager.IsolateManager {
+    if (!this.#context.has(SDK.IsolateManager.IsolateManager)) {
+      this.#context.set(SDK.IsolateManager.IsolateManager, new SDK.IsolateManager.IsolateManager(this.targetManager));
+    }
+    return this.#context.get(SDK.IsolateManager.IsolateManager);
+  }
+
   get logManager(): Logs.LogManager.LogManager {
     if (!this.#context.has(Logs.LogManager.LogManager)) {
       this.#context.set(Logs.LogManager.LogManager,
@@ -283,6 +290,9 @@ export class TestUniverse implements Foundation.Universe.Universe {
           }
           if (ctor === SDK.PageResourceLoader.PageResourceLoader.prototype.constructor) {
             return universe.pageResourceLoader as T;
+          }
+          if (ctor === SDK.IsolateManager.IsolateManager.prototype.constructor) {
+            return universe.isolateManager as T;
           }
           throw new Error(`Class ${
               ctor.name} not set-up as a dependency for SDKModels in TestUniverse.ts. Add it to LazyContext#get in TestUniverse.ts`);

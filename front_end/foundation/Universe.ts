@@ -77,12 +77,14 @@ export class Universe {
 
     const cpuThrottlingManager = new SDK.CPUThrottlingManager.CPUThrottlingManager(settings, targetManager);
     context.set(SDK.CPUThrottlingManager.CPUThrottlingManager, cpuThrottlingManager);
-
     const domDebuggerManager = new SDK.DOMDebuggerModel.DOMDebuggerManager(targetManager);
     context.set(SDK.DOMDebuggerModel.DOMDebuggerManager, domDebuggerManager);
 
     const cruxManager = new CrUXManager.CrUXManager(targetManager, settings);
     context.set(CrUXManager.CrUXManager, cruxManager);
+
+    const isolateManager = new SDK.IsolateManager.IsolateManager(targetManager);
+    context.set(SDK.IsolateManager.IsolateManager, isolateManager);
 
     const workspace = new Workspace.Workspace.WorkspaceImpl();
     context.set(Workspace.Workspace.WorkspaceImpl, workspace);
@@ -155,7 +157,6 @@ export class Universe {
   get cpuThrottlingManager(): SDK.CPUThrottlingManager.CPUThrottlingManager {
     return this.context.get(SDK.CPUThrottlingManager.CPUThrottlingManager);
   }
-
   get cruxManager(): CrUXManager.CrUXManager {
     return this.context.get(CrUXManager.CrUXManager);
   }
@@ -166,6 +167,10 @@ export class Universe {
 
   get isolatedFileSystemManager(): Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager {
     return this.context.get(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager);
+  }
+
+  get isolateManager(): SDK.IsolateManager.IsolateManager {
+    return this.context.get(SDK.IsolateManager.IsolateManager);
   }
 
   get networkPersistenceManager(): Persistence.NetworkPersistenceManager.NetworkPersistenceManager {

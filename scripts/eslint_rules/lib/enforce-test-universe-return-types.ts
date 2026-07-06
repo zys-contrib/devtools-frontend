@@ -33,6 +33,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'SDK.CPUThrottlingManager.CPUThrottlingManager',
   'SDK.DOMDebuggerModel.DOMDebuggerManager',
   'SDK.FrameManager.FrameManager',
+  'SDK.IsolateManager.IsolateManager',
   'SDK.NetworkManager.MultitargetNetworkManager',
   'SDK.PageResourceLoader.PageResourceLoader',
   'SDK.Target.Target',
