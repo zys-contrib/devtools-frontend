@@ -404,4 +404,29 @@ describeWithEnvironment('DeviceModeModel', () => {
       clock.restore();
     }
   });
+
+  it('returns whether device frame can be shown for current mode', () => {
+    const deviceModeModel = EmulationModel.DeviceModeModel.DeviceModeModel.instance({forceNew: true});
+    try {
+      assert.isFalse(deviceModeModel.canShowDeviceFrame(), 'Should be false initially');
+
+      const deviceWithFrame = new EmulationModel.EmulatedDevices.EmulatedDevice();
+      deviceWithFrame.vertical = {width: 400, height: 800, outlineInsets: null, outlineImage: 'test.png', hinge: null};
+      const mode: EmulationModel.EmulatedDevices.Mode = {
+        title: 'default',
+        orientation: EmulationModel.EmulatedDevices.Vertical,
+        insets: new EmulationModel.DeviceModeModel.Insets(0, 0, 0, 0),
+        image: null,
+      };
+      deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.Device, deviceWithFrame, mode);
+      assert.isTrue(deviceModeModel.canShowDeviceFrame(), 'Should be true when outlineImage is present');
+
+      const deviceWithoutFrame = new EmulationModel.EmulatedDevices.EmulatedDevice();
+      deviceWithoutFrame.vertical = {width: 400, height: 800, outlineInsets: null, outlineImage: null, hinge: null};
+      deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.Device, deviceWithoutFrame, mode);
+      assert.isFalse(deviceModeModel.canShowDeviceFrame(), 'Should be false when outlineImage is null');
+    } finally {
+      deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.None, null, null);
+    }
+  });
 });

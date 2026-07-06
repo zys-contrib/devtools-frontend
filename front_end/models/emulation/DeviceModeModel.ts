@@ -379,6 +379,10 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
                                                                               '';
   }
 
+  canShowDeviceFrame(): boolean {
+    return Boolean(this.#device && this.#mode && this.#device.outlineImage(this.#mode));
+  }
+
   outlineRect(): Rect|null {
     return this.#outlineRect || null;
   }

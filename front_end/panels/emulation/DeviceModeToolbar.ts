@@ -760,10 +760,8 @@ export class DeviceModeToolbar extends UI.Widget.Widget {
 
   private appendOptionsMenuItems(contextMenu: UI.ContextMenu.ContextMenu): void {
     const model = this.model;
-    appendToggleItem(
-        contextMenu.headerSection(), this.deviceOutlineSetting, i18nString(UIStrings.hideDeviceFrame),
-        i18nString(UIStrings.showDeviceFrame), model.type() !== EmulationModel.DeviceModeModel.Type.Device,
-        'device-frame');
+    appendToggleItem(contextMenu.headerSection(), this.deviceOutlineSetting, i18nString(UIStrings.hideDeviceFrame),
+                     i18nString(UIStrings.showDeviceFrame), !model.canShowDeviceFrame(), 'device-frame');
     appendToggleItem(
         contextMenu.headerSection(), this.showMediaInspectorSetting, i18nString(UIStrings.hideMediaQueries),
         i18nString(UIStrings.showMediaQueries), undefined, 'media-queries');
@@ -792,7 +790,7 @@ export class DeviceModeToolbar extends UI.Widget.Widget {
         disabled = model.type() === EmulationModel.DeviceModeModel.Type.None;
       }
 
-      const isEnabled = setting.get();
+      const isEnabled = Boolean(setting.get() && !disabled);
       const jslogContext = `${context}-${isEnabled ? 'disable' : 'enable'}`;
       section.appendItem(
           isEnabled ? title1 : title2, setting.set.bind(setting, !setting.get()), {disabled, jslogContext});
