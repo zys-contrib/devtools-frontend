@@ -252,7 +252,7 @@ export class HTMLModel {
 
   #build(text: string): void {
     const tokenizer = createTokenizer('text/html');
-    let baseOffset = 0, lastOffset = 0;
+    let lastOffset = 0;
     let pendingToken: Token|null = null;
 
     const pushToken = (token: Token): Object|undefined => {
@@ -274,8 +274,6 @@ export class HTMLModel {
         tokenStart: number,
         tokenEnd: number,
         ): Object|undefined => {
-      tokenStart += baseOffset;
-      tokenEnd += baseOffset;
       lastOffset = tokenEnd;
 
       const tokenType = type ? new Set<string>(type.split(' ')) : new Set<string>();
@@ -321,8 +319,7 @@ export class HTMLModel {
     };
 
     while (true) {
-      baseOffset = lastOffset;
-      tokenizer(text.substring(lastOffset), processToken);
+      tokenizer(text, processToken, lastOffset);
       if (pendingToken) {
         pushToken(pendingToken);
         pendingToken = null;
@@ -341,7 +338,11 @@ export class HTMLModel {
           lastOffset = text.length;
           break;
         }
-        if (text.substring(lastOffset + 2).toLowerCase().startsWith(element.name)) {
+        // Check if the tag at lastOffset matches the current element name (e.g. </script>).
+        // Slice only the length of the tag name to avoid allocating a large substring
+        // of the remainder of the document.
+        const sliced = text.slice(lastOffset + 2, lastOffset + 2 + element.name.length);
+        if (sliced.toLowerCase() === element.name) {
           break;
         }
         lastOffset += 2;
