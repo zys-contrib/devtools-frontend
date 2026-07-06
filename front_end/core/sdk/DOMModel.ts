@@ -47,7 +47,7 @@ import {Events as ResourceTreeModelEvents, type ResourceTreeFrame, ResourceTreeM
 import {RuntimeModel} from './RuntimeModel.js';
 import {SDKModel} from './SDKModel.js';
 import {Capability, type Target} from './Target.js';
-import {TargetManager} from './TargetManager.js';
+import type {TargetManager} from './TargetManager.js';
 
 /** Keep this list in sync with https://w3c.github.io/aria/#state_prop_def **/
 export const ARIA_ATTRIBUTES = new Set<string>([
@@ -1480,7 +1480,7 @@ export class DOMModel extends SDKModel<EventTypes> {
     return this.target().model(OverlayModel) as OverlayModel;
   }
 
-  static cancelSearch(targetManager: TargetManager = TargetManager.instance()): void {
+  static cancelSearch(targetManager: TargetManager): void {
     for (const domModel of targetManager.models(DOMModel)) {
       domModel.cancelSearch();
     }

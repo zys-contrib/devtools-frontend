@@ -187,4 +187,8 @@ export class Universe {
   get settings(): Common.Settings.Settings {
     return this.context.get(Common.Settings.Settings);
   }
+
+  get targetManager(): SDK.TargetManager.TargetManager {
+    return this.context.get(SDK.TargetManager.TargetManager);
+  }
 }

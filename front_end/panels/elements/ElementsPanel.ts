@@ -214,13 +214,25 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
   private cssStyleTrackerByCSSModel: Map<SDK.CSSModel.CSSModel, SDK.CSSModel.CSSPropertyTracker>;
   #domTreeWidget: DOMTreeWidget;
   #computedStyleModel: ComputedStyle.ComputedStyleModel.ComputedStyleModel;
+  readonly #targetManager: SDK.TargetManager.TargetManager;
+  readonly #settings: Common.Settings.Settings;
+
+  get settings(): Common.Settings.Settings {
+    return this.#settings;
+  }
+
+  get targetManager(): SDK.TargetManager.TargetManager {
+    return this.#targetManager;
+  }
 
   getTreeOutlineForTesting(): ElementsTreeOutline|undefined {
     return this.#domTreeWidget.getTreeOutlineForTesting();
   }
 
-  constructor() {
+  constructor(targetManager?: SDK.TargetManager.TargetManager, settings?: Common.Settings.Settings) {
     super('elements');
+    this.#targetManager = targetManager ?? SDK.TargetManager.TargetManager.instance();
+    this.#settings = settings ?? Common.Settings.Settings.instance();
     this.registerRequiredCSS(elementsPanelStyles);
 
     this.splitWidget = new UI.SplitWidget.SplitWidget(true, true, 'elements-panel-split-view-state', 325, 325);
@@ -251,12 +263,10 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     this.domTreeContainer.id = 'elements-content';
     this.domTreeContainer.tabIndex = -1;
     // FIXME: crbug.com/425984
-    if (Common.Settings.Settings.instance().moduleSetting('dom-word-wrap').get()) {
+    if (this.#settings.moduleSetting('dom-word-wrap').get()) {
       this.domTreeContainer.classList.add('elements-wrap');
     }
-    Common.Settings.Settings.instance()
-        .moduleSetting('dom-word-wrap')
-        .addChangeListener(this.domWordWrapSettingChanged.bind(this));
+    this.#settings.moduleSetting('dom-word-wrap').addChangeListener(this.domWordWrapSettingChanged.bind(this));
 
     crumbsContainer.id = 'elements-crumbs';
     this.accessibilityTreeView = new AccessibilityTreeView(new TreeOutline.TreeOutline.TreeOutline<AXTreeNodeData>());
@@ -286,9 +296,7 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
 
     this.metricsWidget = new MetricsSidebarPane(this.#computedStyleModel);
 
-    Common.Settings.Settings.instance()
-        .moduleSetting('sidebar-position')
-        .addChangeListener(this.updateSidebarPosition.bind(this));
+    this.#settings.moduleSetting('sidebar-position').addChangeListener(this.updateSidebarPosition.bind(this));
     this.updateSidebarPosition();
 
     this.cssStyleTrackerByCSSModel = new Map();
@@ -296,8 +304,8 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
 
     this.pendingNodeReveal = false;
 
-    this.adornerManager = new ElementsComponents.AdornerManager.AdornerManager(
-        Common.Settings.Settings.instance().moduleSetting('adorner-settings'));
+    this.adornerManager =
+        new ElementsComponents.AdornerManager.AdornerManager(this.#settings.moduleSetting('adorner-settings'));
     this.adornersByName = new Map();
 
     this.#domTreeWidget = new DOMTreeWidget();
@@ -306,14 +314,12 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     this.#domTreeWidget.onSelectedNodeChanged = this.selectedNodeChanged.bind(this);
     this.#domTreeWidget.onElementsTreeUpdated = this.updateBreadcrumbIfNeeded.bind(this);
     this.#domTreeWidget.onDocumentUpdated = this.documentUpdated.bind(this);
-    this.#domTreeWidget.setWordWrap(Common.Settings.Settings.instance().moduleSetting('dom-word-wrap').get());
+    this.#domTreeWidget.setWordWrap(this.#settings.moduleSetting('dom-word-wrap').get());
 
-    SDK.TargetManager.TargetManager.instance().observeModels(SDK.DOMModel.DOMModel, this, {scoped: true});
-    SDK.TargetManager.TargetManager.instance().addEventListener(
-        SDK.TargetManager.Events.NAME_CHANGED, event => this.targetNameChanged(event.data));
-    Common.Settings.Settings.instance()
-        .moduleSetting('show-ua-shadow-dom')
-        .addChangeListener(this.showUAShadowDOMChanged.bind(this));
+    this.#targetManager.observeModels(SDK.DOMModel.DOMModel, this, {scoped: true});
+    this.#targetManager.addEventListener(SDK.TargetManager.Events.NAME_CHANGED,
+                                         event => this.targetNameChanged(event.data));
+    this.#settings.moduleSetting('show-ua-shadow-dom').addChangeListener(this.showUAShadowDOMChanged.bind(this));
     PanelCommon.ExtensionServer.ExtensionServer.instance().addEventListener(
         PanelCommon.ExtensionServer.Events.SidebarPaneAdded, this.extensionSidebarPaneAdded, this);
   }
@@ -378,10 +384,12 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
 
   static instance(opts: {
     forceNew: boolean|null,
+    targetManager?: SDK.TargetManager.TargetManager,
+    settings?: Common.Settings.Settings,
   }|undefined = {forceNew: null}): ElementsPanel {
-    const {forceNew} = opts;
+    const {forceNew, targetManager, settings} = opts || {};
     if (!elementsPanelInstance || forceNew) {
-      elementsPanelInstance = new ElementsPanel();
+      elementsPanelInstance = new ElementsPanel(targetManager, settings);
     }
 
     return elementsPanelInstance;
@@ -734,7 +742,7 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     this.currentSearchResultIndex = -1;
     delete this.searchResults;
 
-    SDK.DOMModel.DOMModel.cancelSearch();
+    SDK.DOMModel.DOMModel.cancelSearch(this.#targetManager);
   }
 
   performSearch(searchConfig: UI.SearchableView.SearchConfig, shouldJump: boolean, jumpBackwards?: boolean): void {
@@ -753,8 +761,8 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
 
     this.searchConfig = searchConfig;
 
-    const showUAShadowDOM = Common.Settings.Settings.instance().moduleSetting('show-ua-shadow-dom').get();
-    const domModels = SDK.TargetManager.TargetManager.instance().models(SDK.DOMModel.DOMModel, {scoped: true});
+    const showUAShadowDOM = this.#settings.moduleSetting('show-ua-shadow-dom').get();
+    const domModels = this.#targetManager.models(SDK.DOMModel.DOMModel, {scoped: true});
     const promises = domModels.map(domModel => domModel.performSearch(whitespaceTrimmedQuery, showUAShadowDOM));
     void Promise.all(promises).then(resultCounts => {
       this.searchResults = [];
@@ -952,9 +960,8 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     const {showPanel = true, focusNode = false, highlightInOverlay = true} = opts ?? {};
     this.omitDefaultSelection = true;
 
-    const node = Common.Settings.Settings.instance().moduleSetting('show-ua-shadow-dom').get() ?
-        nodeToReveal :
-        this.leaveUserAgentShadowDOM(nodeToReveal);
+    const node = this.#settings.moduleSetting('show-ua-shadow-dom').get() ? nodeToReveal :
+                                                                            this.leaveUserAgentShadowDOM(nodeToReveal);
     if (highlightInOverlay) {
       node.highlightForTwoSeconds();
     }
@@ -1167,7 +1174,7 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
       return;
     }  // We can't reparent extension iframes.
 
-    const position = Common.Settings.Settings.instance().moduleSetting('sidebar-position').get();
+    const position = this.#settings.moduleSetting('sidebar-position').get();
     let splitMode = SplitMode.HORIZONTAL;
     if (position === 'right' || (position === 'auto' && this.splitWidget.element.offsetWidth > 680)) {
       splitMode = SplitMode.VERTICAL;
@@ -1508,7 +1515,7 @@ export class ElementsActionDelegate implements UI.ActionRegistration.ActionDeleg
         ElementsPanel.instance().toggleAccessibilityTree();
         return true;
       case 'elements.toggle-word-wrap': {
-        const setting = Common.Settings.Settings.instance().moduleSetting<boolean>('dom-word-wrap');
+        const setting = ElementsPanel.instance().settings.moduleSetting<boolean>('dom-word-wrap');
         setting.set(!setting.get());
         return true;
       }
