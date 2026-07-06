@@ -294,6 +294,9 @@ export class TestUniverse implements Foundation.Universe.Universe {
           if (ctor === SDK.IsolateManager.IsolateManager.prototype.constructor) {
             return universe.isolateManager as T;
           }
+          if (ctor === SDK.NetworkManager.MultitargetNetworkManager.prototype.constructor) {
+            return universe.multitargetNetworkManager as T;
+          }
           throw new Error(`Class ${
               ctor.name} not set-up as a dependency for SDKModels in TestUniverse.ts. Add it to LazyContext#get in TestUniverse.ts`);
         }

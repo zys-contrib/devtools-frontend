@@ -11,6 +11,7 @@ import type * as ProtocolClient from '../protocol_client/protocol_client.js';
 import * as Root from '../root/root.js';
 
 import {FrameManager} from './FrameManager.js';
+import {MultitargetNetworkManager} from './NetworkManager.js';
 import {type RegistrationInfo, SDKModel, type SDKModelConstructor} from './SDKModel.js';
 import {Target, Type as TargetType} from './Target.js';
 
@@ -46,6 +47,15 @@ export class TargetManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
       return FrameManager.instance();
     }
     return this.context.get(FrameManager);
+  }
+
+  // TODO(crbug.com/493763857): Remove fallback once all unit tests use TestUniverse.
+  getNetworkManager(): MultitargetNetworkManager {
+    if ('has' in this.context && typeof this.context.has === 'function' &&
+        !this.context.has(MultitargetNetworkManager)) {
+      return MultitargetNetworkManager.instance();
+    }
+    return this.context.get(MultitargetNetworkManager);
   }
 
   /* eslint-disable @typescript-eslint/no-explicit-any */
