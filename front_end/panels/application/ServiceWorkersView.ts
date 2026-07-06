@@ -509,9 +509,12 @@ export class Section {
     this.section.appendButtonToHeader(this.deleteButton);
 
     // Preserve the order.
-    this.sourceField = this.wrapWidget(this.section.appendField(i18nString(UIStrings.source)));
-    this.statusField = this.wrapWidget(this.section.appendField(i18nString(UIStrings.status)));
-    this.clientsField = this.wrapWidget(this.section.appendField(i18nString(UIStrings.clients)));
+    this.sourceField = this.section.appendField(i18nString(UIStrings.source));
+    this.statusField = this.section.appendField(i18nString(UIStrings.status));
+    this.clientsField = this.section.appendField(i18nString(UIStrings.clients));
+
+    UI.DOMUtilities.appendStyle(this.section.getFieldElement(), serviceWorkersViewStyles,
+                                serviceWorkerUpdateCycleViewStyles);
     this.createSyncNotificationField(i18nString(UIStrings.pushString), this.pushNotificationDataSetting.get(),
                                      i18nString(UIStrings.pushData), this.push.bind(this), 'push-message');
     this.createSyncNotificationField(i18nString(UIStrings.syncString), this.syncTagNameSetting.get(),
@@ -528,7 +531,7 @@ export class Section {
 
   private createSyncNotificationField(label: string, initialValue: string, placeholder: string,
                                       callback: (arg0: string) => void, jslogContext: string): void {
-    const fieldElement = this.wrapWidget(this.section.appendField(label));
+    const fieldElement = this.section.appendField(label);
 
     // clang-format off
     // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
@@ -714,7 +717,7 @@ export class Section {
   }
 
   private createUpdateCycleField(): void {
-    this.updateCycleField = this.wrapWidget(this.section.appendField(i18nString(UIStrings.updateCycle)));
+    this.updateCycleField = this.section.appendField(i18nString(UIStrings.updateCycle));
     this.updateCycleField.appendChild(this.updateCycleView.tableElement);
   }
 
@@ -725,7 +728,7 @@ export class Section {
     if (active?.routerRules && active.routerRules.length > 0) {
       // If there is at least one registered rule in the active version, append the router filed.
       if (!this.routerField) {
-        this.routerField = this.wrapWidget(this.section.appendField(title));
+        this.routerField = this.section.appendField(title);
       }
       if (!this.routerField.lastElementChild) {
         this.routerView.show(this.routerField);
@@ -818,19 +821,5 @@ export class Section {
 
   private stopButtonClicked(versionId: string): void {
     void this.manager.stopWorker(versionId);
-  }
-
-  private wrapWidget(container: Element): HTMLElement {
-    const shadowRoot = UI.UIUtils.createShadowRootWithCoreStyles(container, {
-      cssFile: [
-        serviceWorkersViewStyles,
-        /* These styles are for the timing table in serviceWorkerUpdateCycleView but this is the widget that it is rendered
-           * inside so we are registering the files here. */
-        serviceWorkerUpdateCycleViewStyles,
-      ],
-    });
-    const contentElement = document.createElement('div');
-    shadowRoot.appendChild(contentElement);
-    return contentElement;
   }
 }
