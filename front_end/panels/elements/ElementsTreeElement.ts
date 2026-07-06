@@ -146,6 +146,11 @@ const UIStrings = {
    */
   paste: 'Paste',
   /**
+   * @description Context menu item in the Edit as HTML editor that selects the editor's entire
+   * contents. "Select all" should be used as a verb.
+   */
+  selectAll: 'Select all',
+  /**
    * @description Text in Elements Tree Element of the Elements panel, copy should be used as a verb
    */
   copyOuterhtml: 'Copy outerHTML',
@@ -1212,6 +1217,9 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
   #hovered: boolean;
   private editing: EditorHandles|null;
   #editorRef?: TextEditor.TextEditor.TextEditor;
+  // True while the Edit as HTML editor's own context menu is open, so that the
+  // focusout caused by the menu taking focus does not commit the edit.
+  #editAsHtmlMenuOpen = false;
   #editorState: CodeMirror.EditorState|null = null;
   #editorWidth: number|null = null;
   expandAllButtonElement: UI.TreeOutline.TreeElement|null;
@@ -2691,7 +2699,7 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
         }),
         CodeMirror.EditorView.domEventHandlers({
           focusout: event => {
-            if (!this.#editorRef) {
+            if (!this.#editorRef || this.#editAsHtmlMenuOpen) {
               return;
             }
             // The relatedTarget is null when no element gains focus, e.g. switching windows.
@@ -2699,6 +2707,42 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
             if (relatedTarget && !relatedTarget.isSelfOrDescendant(this.#editorRef)) {
               this.editing?.commit();
             }
+          },
+          contextmenu: (event, view) => {
+            // The editor virtualizes its content, so the browser's native
+            // "Select all" only reaches the rendered lines. Show a menu whose
+            // "Select all" spans the whole document, like Ctrl/Cmd+A.
+            event.consume(true);
+            const {from, to, empty} = view.state.selection.main;
+            const copy = (): void =>
+                Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(view.state.sliceDoc(from, to));
+            const contextMenu = new UI.ContextMenu.ContextMenu(event, {
+              onSoftMenuClosed: () => {
+                this.#editAsHtmlMenuOpen = false;
+              },
+            });
+            contextMenu.clipboardSection().appendItem(i18nString(UIStrings.cut), () => {
+              copy();
+              view.dispatch({changes: {from, to, insert: ''}});
+              view.focus();
+            }, {disabled: empty, jslogContext: 'cut'});
+            contextMenu.clipboardSection().appendItem(i18nString(UIStrings.copy), () => {
+              copy();
+              view.focus();
+            }, {disabled: empty, jslogContext: 'copy'});
+            contextMenu.clipboardSection().appendItem(i18nString(UIStrings.paste), () => {
+              void navigator.clipboard.readText().then(text => {
+                view.dispatch(view.state.replaceSelection(text));
+                view.focus();
+              });
+            }, {jslogContext: 'paste'});
+            contextMenu.editSection().appendItem(i18nString(UIStrings.selectAll), () => {
+              view.dispatch({selection: {anchor: 0, head: view.state.doc.length}});
+              view.focus();
+            }, {jslogContext: 'select-all'});
+            this.#editAsHtmlMenuOpen = true;
+            void contextMenu.show();
+            return true;
           },
         }),
       ],
