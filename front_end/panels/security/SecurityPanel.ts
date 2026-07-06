@@ -10,9 +10,10 @@ import type * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as NetworkForward from '../../panels/network/forward/forward.js';
+import * as Buttons from '../../ui/components/buttons/buttons.js';
 import {createIcon, type Icon} from '../../ui/kit/kit.js';
 import * as UI from '../../ui/legacy/legacy.js';
-import {html, render, type TemplateResult} from '../../ui/lit/lit.js';
+import {Directives, html, nothing, render, type TemplateResult} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import lockIconStyles from './lockIcon.css.js';
@@ -1311,6 +1312,39 @@ export class SecurityMainView extends UI.Widget.VBox {
   }
 }
 
+const SAN_NUM_SHOWN_WHEN_TRUNCATED = 2;
+
+function renderSan(sanList: string[], isSanListTruncatable: boolean, isSanListTruncated: boolean,
+                   onToggleTruncation: () => void): TemplateResult {
+  if (sanList.length === 0) {
+    return html`<div class="san empty-san">${i18nString(UIStrings.na)}</div>`;
+  }
+
+  const toggleButtonText =
+      isSanListTruncated ? i18nString(UIStrings.showMoreSTotal, {PH1: sanList.length}) : i18nString(UIStrings.showLess);
+
+  // clang-format off
+  return html`
+    <div class=${Directives.classMap({ san: true, 'truncated-san': isSanListTruncated })}>
+      ${sanList.map((san, index) => {
+        return html`
+          <span class=${Directives.classMap({
+            'san-entry': true,
+            'truncated-entry': isSanListTruncatable && index >= SAN_NUM_SHOWN_WHEN_TRUNCATED,
+          })}>${san}</span>`;
+      })}
+      ${isSanListTruncatable ? html`
+        <devtools-button
+          .variant=${Buttons.Button.Variant.OUTLINED}
+          .accessibleLabel=${toggleButtonText}
+          .accessibleExpanded=${!isSanListTruncated}
+          .jslogContext=${'security.toggle-san-truncation'}
+          @click=${onToggleTruncation}>${toggleButtonText}
+        </devtools-button>` : nothing}
+    </div>`;
+  // clang-format on
+}
+
 export class SecurityOriginView extends UI.Widget.VBox {
   readonly #origin: Platform.DevToolsPath.UrlString;
   readonly #originDisplay: HTMLElement;
@@ -1415,7 +1449,7 @@ export class SecurityOriginView extends UI.Widget.VBox {
         UI.ARIAUtils.markAsHeading(sctDiv, 2);
       }
 
-      const sanDiv = this.createSanDiv(originState.securityDetails.sanList);
+      const sanDiv = this.#createSanDiv(originState.securityDetails.sanList);
       const validFromString = new Date(1000 * originState.securityDetails.validFrom).toUTCString();
       const validUntilString = new Date(1000 * originState.securityDetails.validTo).toUTCString();
 
@@ -1527,44 +1561,23 @@ export class SecurityOriginView extends UI.Widget.VBox {
     }
   }
 
-  private createSanDiv(sanList: string[]): Element {
-    const sanDiv = document.createElement('div');
-    if (sanList.length === 0) {
-      sanDiv.textContent = i18nString(UIStrings.na);
-      sanDiv.classList.add('empty-san');
-    } else {
-      const truncatedNumToShow = 2;
-      const listIsTruncated = sanList.length > truncatedNumToShow + 1;
-      for (let i = 0; i < sanList.length; i++) {
-        const span = sanDiv.createChild('span', 'san-entry');
-        span.textContent = sanList[i];
-        if (listIsTruncated && i >= truncatedNumToShow) {
-          span.classList.add('truncated-entry');
-        }
-      }
-      if (listIsTruncated) {
-        function toggleSANTruncation(): void {
-          const isTruncated = sanDiv.classList.contains('truncated-san');
-          let buttonText;
-          if (isTruncated) {
-            sanDiv.classList.remove('truncated-san');
-            buttonText = i18nString(UIStrings.showLess);
-          } else {
-            sanDiv.classList.add('truncated-san');
-            buttonText = i18nString(UIStrings.showMoreSTotal, {PH1: sanList.length});
-          }
-          truncatedSANToggle.textContent = buttonText;
-          UI.ARIAUtils.setLabel(truncatedSANToggle, buttonText);
-          UI.ARIAUtils.setExpanded(truncatedSANToggle, isTruncated);
-        }
-        const truncatedSANToggle = UI.UIUtils.createTextButton(
-            i18nString(UIStrings.showMoreSTotal, {PH1: sanList.length}), toggleSANTruncation,
-            {jslogContext: 'security.toggle-san-truncation'});
-        sanDiv.appendChild(truncatedSANToggle);
-        toggleSANTruncation();
-      }
-    }
-    return sanDiv;
+  #createSanDiv(sanList: string[]): Element {
+    const container = document.createElement('div');
+    const isSanListTruncatable = sanList.length > SAN_NUM_SHOWN_WHEN_TRUNCATED + 1;
+    let isSanListTruncated = isSanListTruncatable;
+
+    const onToggleTruncation = (): void => {
+      isSanListTruncated = !isSanListTruncated;
+      updateSan();
+    };
+
+    const updateSan = (): void => {
+      // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+      render(renderSan(sanList, isSanListTruncatable, isSanListTruncated, onToggleTruncation), container);
+    };
+
+    updateSan();
+    return container;
   }
 
   setSecurityState(newSecurityState: Protocol.Security.SecurityState): void {

@@ -8,6 +8,7 @@ import sinon from 'sinon';
 import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
+import {renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {getMainFrame, navigate} from '../../testing/ResourceTreeHelpers.js';
 
@@ -38,6 +39,85 @@ describe('createHighlightedUrl', () => {
     const schemeSeparator = highlightedUrl.querySelector('.url-scheme-separator');
     assert.isNotNull(schemeSeparator);
     assert.strictEqual(schemeSeparator.textContent, '://');
+  });
+});
+
+describeWithEnvironment('SecurityOriginView', () => {
+  function createOriginState(sanList: string[]): Security.SecurityPanel.OriginState {
+    return {
+      securityState: Protocol.Security.SecurityState.Secure,
+      securityDetails: {
+        protocol: 'TLS 1.3',
+        keyExchange: '',
+        cipher: 'AES_128_GCM',
+        certificateId: 0 as Protocol.Security.CertificateId,
+        subjectName: 'example.com',
+        sanList,
+        issuer: 'Test CA',
+        validFrom: 0,
+        validTo: 1,
+        signedCertificateTimestampList: [],
+        certificateTransparencyCompliance: Protocol.Network.CertificateTransparencyCompliance.Unknown,
+        encryptedClientHello: false,
+      },
+      loadedFromCache: false,
+    };
+  }
+
+  it('renders an empty SAN', () => {
+    const view = new Security.SecurityPanel.SecurityOriginView(urlString`https://foo.bar`, createOriginState([]));
+
+    const sanElement = view.element.querySelector('.san');
+    assert.instanceOf(sanElement, HTMLElement);
+    assert.strictEqual(sanElement.textContent, '(n/a)');
+  });
+
+  it('renders a SAN without truncation button', () => {
+    const view = new Security.SecurityPanel.SecurityOriginView(urlString`https://foo.bar`,
+                                                               createOriginState(['a.test', 'b.test', 'c.test']));
+    renderElementIntoDOM(view);
+
+    const sanElement = view.element.querySelector('.san');
+    assert.instanceOf(sanElement, HTMLElement);
+
+    const sanEntries = [...sanElement.querySelectorAll<HTMLElement>('.san-entry')];
+    assert.deepEqual(sanEntries.map(entry => entry.textContent), ['a.test', 'b.test', 'c.test']);
+    assert.isTrue(sanEntries.every(entry => entry.checkVisibility()));
+
+    const truncationToggle = sanElement.querySelector('devtools-button');
+    assert.notExists(truncationToggle);
+  });
+
+  it('renders a SAN with truncation button and updates on truncation toggle', () => {
+    const view = new Security.SecurityPanel.SecurityOriginView(
+        urlString`https://foo.bar`, createOriginState(['a.test', 'b.test', 'c.test', 'd.test']));
+    renderElementIntoDOM(view);
+
+    const sanElement = view.element.querySelector('.san');
+    assert.instanceOf(sanElement, HTMLElement);
+
+    const visibleSanEntries = () => [...sanElement.querySelectorAll<HTMLElement>('.san-entry')]
+                                        .filter(entry => entry.checkVisibility())
+                                        .map(entry => entry.textContent);
+
+    assert.deepEqual(visibleSanEntries(), ['a.test', 'b.test']);
+
+    const toggleButton = sanElement.querySelector('devtools-button');
+    assert.instanceOf(toggleButton, HTMLElement);
+    assert.strictEqual(toggleButton.textContent, 'Show more (4 total)');
+    assert.isFalse(toggleButton.accessibleExpanded);
+
+    toggleButton.click();
+
+    assert.deepEqual(visibleSanEntries(), ['a.test', 'b.test', 'c.test', 'd.test']);
+    assert.strictEqual(toggleButton.textContent, 'Show less');
+    assert.isTrue(toggleButton.accessibleExpanded);
+
+    toggleButton.click();
+
+    assert.deepEqual(visibleSanEntries(), ['a.test', 'b.test']);
+    assert.strictEqual(toggleButton.textContent, 'Show more (4 total)');
+    assert.isFalse(toggleButton.accessibleExpanded);
   });
 });
 
