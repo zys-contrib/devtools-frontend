@@ -40,7 +40,7 @@ import * as Common from '../common/common.js';
 import * as Platform from '../platform/platform.js';
 
 import {CSSModel} from './CSSModel.js';
-import {FrameManager} from './FrameManager.js';
+import type {FrameManager} from './FrameManager.js';
 import {OverlayModel} from './OverlayModel.js';
 import {RemoteObject} from './RemoteObject.js';
 import {Events as ResourceTreeModelEvents, type ResourceTreeFrame, ResourceTreeModel} from './ResourceTreeModel.js';
@@ -129,6 +129,7 @@ export interface DOMNodeEventTypes {
 
 export class DOMNode extends Common.ObjectWrapper.ObjectWrapper<DOMNodeEventTypes> {
   #domModel: DOMModel;
+  readonly #frameManager: FrameManager;
   #agent: ProtocolProxyApi.DOMApi;
   ownerDocument!: DOMDocument|null;
   #isInShadowTree!: boolean;
@@ -194,6 +195,7 @@ export class DOMNode extends Common.ObjectWrapper.ObjectWrapper<DOMNodeEventType
   constructor(domModel: DOMModel) {
     super();
     this.#domModel = domModel;
+    this.#frameManager = domModel.target().targetManager().getFrameManager();
     this.#agent = this.#domModel.getAgent();
   }
 
@@ -313,7 +315,7 @@ export class DOMNode extends Common.ObjectWrapper.ObjectWrapper<DOMNodeEventType
   }
 
   private async requestChildDocument(frameId: Protocol.Page.FrameId, notInTarget: Target): Promise<DOMDocument|null> {
-    const frame = await FrameManager.instance().getOrWaitForFrame(frameId, notInTarget);
+    const frame = await this.#frameManager.getOrWaitForFrame(frameId, notInTarget);
     const childModel = frame.resourceTreeModel()?.target().model(DOMModel);
     return await (childModel?.requestDocument() || null);
   }
@@ -341,7 +343,7 @@ export class DOMNode extends Common.ObjectWrapper.ObjectWrapper<DOMNodeEventType
       return undefined;
     }
 
-    const frame = FrameManager.instance().getFrame(this.#frameOwnerFrameId);
+    const frame = this.#frameManager.getFrame(this.#frameOwnerFrameId);
     if (frame && frame.adFrameType() !== Protocol.Page.AdFrameType.None) {
       // The frame is ad-related, but provenance information is unavailable.
       return {};
