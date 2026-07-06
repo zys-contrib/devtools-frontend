@@ -86,6 +86,8 @@ export class Universe {
 
     const isolateManager = new SDK.IsolateManager.IsolateManager(targetManager);
     context.set(SDK.IsolateManager.IsolateManager, isolateManager);
+    const eventBreakpointsManager = new SDK.EventBreakpointsModel.EventBreakpointsManager(targetManager);
+    context.set(SDK.EventBreakpointsModel.EventBreakpointsManager, eventBreakpointsManager);
 
     const domModelUndoStack = new SDK.DOMModel.DOMModelUndoStack();
     context.set(SDK.DOMModel.DOMModelUndoStack, domModelUndoStack);
@@ -171,6 +173,10 @@ export class Universe {
 
   get domModelUndoStack(): SDK.DOMModel.DOMModelUndoStack {
     return this.context.get(SDK.DOMModel.DOMModelUndoStack);
+  }
+
+  get eventBreakpointsManager(): SDK.EventBreakpointsModel.EventBreakpointsManager {
+    return this.context.get(SDK.EventBreakpointsModel.EventBreakpointsManager);
   }
 
   get isolatedFileSystemManager(): Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager {
