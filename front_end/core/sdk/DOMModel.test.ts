@@ -371,6 +371,107 @@ describeWithEnvironment('DOMModel', () => {
         assert.strictEqual(domNode.simpleSelector(), '::view-transition-new(root)');
       });
     });
+
+    describe('isCustomElement', () => {
+      let target: SDK.Target.Target;
+      let model: SDK.DOMModel.DOMModel;
+      beforeEach(() => {
+        target = createTarget();
+        const modelBeforeAssertion = target.model(SDK.DOMModel.DOMModel);
+        assert.exists(modelBeforeAssertion);
+        model = modelBeforeAssertion;
+      });
+
+      afterEach(() => {
+        target.dispose('NO_REASON');
+      });
+
+      it('should return true for a custom element with a hyphen in localName', () => {
+        const domNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+          nodeId: 1 as Protocol.DOM.NodeId,
+          backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'my-widget',
+          localName: 'my-widget',
+          nodeValue: '',
+        });
+        assert.isTrue(domNode.isCustomElement());
+      });
+
+      it('should return true for an element with an is attribute', () => {
+        const domNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+          nodeId: 1 as Protocol.DOM.NodeId,
+          backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'button',
+          localName: 'button',
+          attributes: ['is', 'my-button'],
+          nodeValue: '',
+        });
+        assert.isTrue(domNode.isCustomElement());
+      });
+
+      it('should return false for excluded built-in elements with hyphens like font-face-src', () => {
+        const domNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+          nodeId: 1 as Protocol.DOM.NodeId,
+          backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'font-face-src',
+          localName: 'font-face-src',
+          nodeValue: '',
+        });
+        assert.isFalse(domNode.isCustomElement());
+      });
+
+      it('should return false for excluded built-in elements with hyphens like annotation-xml', () => {
+        const domNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+          nodeId: 3 as Protocol.DOM.NodeId,
+          backendNodeId: 4 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'annotation-xml',
+          localName: 'annotation-xml',
+          nodeValue: '',
+        });
+        assert.isFalse(domNode.isCustomElement());
+      });
+
+      it('should return false for XML elements with hyphens', () => {
+        const domNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+          nodeId: 1 as Protocol.DOM.NodeId,
+          backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'custom-xml-tag',
+          localName: 'custom-xml-tag',
+          xmlVersion: '1.0',
+          nodeValue: '',
+        });
+        assert.isFalse(domNode.isCustomElement());
+      });
+
+      it('should return false for standard HTML tags without hyphens or is attribute', () => {
+        const domNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+          nodeId: 1 as Protocol.DOM.NodeId,
+          backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'div',
+          localName: 'div',
+          nodeValue: '',
+        });
+        assert.isFalse(domNode.isCustomElement());
+      });
+
+      it('should return false for non-element nodes', () => {
+        const domNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+          nodeId: 1 as Protocol.DOM.NodeId,
+          backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.TEXT_NODE,
+          nodeName: '#text',
+          localName: '',
+          nodeValue: 'some text',
+        });
+        assert.isFalse(domNode.isCustomElement());
+      });
+    });
   });
 
   describe('document.open() URL update (crbug.com/370690261)', () => {

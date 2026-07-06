@@ -45,6 +45,7 @@ import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as AIAssistance from '../../models/ai_assistance/ai_assistance.js';
 import * as Badges from '../../models/badges/badges.js';
+import * as Bindings from '../../models/bindings/bindings.js';
 import type * as Elements from '../../models/elements/elements.js';
 import type * as IssuesManager from '../../models/issues_manager/issues_manager.js';
 import * as TextUtils from '../../models/text_utils/text_utils.js';
@@ -303,6 +304,11 @@ const UIStrings = {
    */
   viewSourceCode: 'View source code',
   /**
+   * @description Label of an adorner in the Elements panel. When clicked, it reveals
+   * the definition of the custom element in the Sources panel.
+   */
+  showCustomElementDefinition: 'Show custom element definition',
+  /**
    * @description Context menu item in Elements panel to assess visibility of an element via AI.
    */
   assessVisibility: 'Assess visibility',
@@ -444,6 +450,8 @@ export interface ViewInput {
   onViewSourceAdornerClick: () => void;
   onSlotAdornerClick: (e: Event) => void;
   showSlotAdorner: boolean;
+  showCustomElementAdorner: boolean;
+  onCustomElementAdornerClick: (e: Event) => void;
   slotName?: string;
   showStartingStyleAdorner: boolean;
   startingStyleAdornerActive: boolean;
@@ -961,7 +969,8 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
   const hasAdorners = !!input.adProvenance || input.showContainerAdorner || input.showFlexAdorner ||
       input.showGridAdorner || input.showGridLanesAdorner || input.showMediaAdorner || input.showPopoverAdorner ||
       input.showTopLayerAdorner || input.showViewSourceAdorner || input.showScrollAdorner ||
-      input.showScrollSnapAdorner || input.showSlotAdorner || input.showStartingStyleAdorner;
+      input.showScrollSnapAdorner || input.showSlotAdorner || input.showStartingStyleAdorner ||
+      input.showCustomElementAdorner;
   const gutterContainerClasses = {
     'has-decorations': input.decorations.length || input.descendantDecorations.length,
     'gutter-container': true,
@@ -1003,6 +1012,18 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
           @click=${input.onViewSourceAdornerClick}
           ${adornerRef()}>
           <span>${ElementsComponents.AdornerManager.RegisteredAdorners.VIEW_SOURCE}</span>
+        </devtools-adorner>` : nothing}
+        ${input.showCustomElementAdorner ? html`<devtools-adorner
+          class="custom-element clickable"
+          role=button
+          tabindex=0
+          .name=${ElementsComponents.AdornerManager.RegisteredAdorners.CUSTOM_ELEMENT}
+          jslog=${VisualLogging.adorner(ElementsComponents.AdornerManager.RegisteredAdorners.CUSTOM_ELEMENT).track({ click: true })}
+          aria-label=${i18nString(UIStrings.showCustomElementDefinition)}
+          @click=${input.onCustomElementAdornerClick}
+          @keydown=${handleAdornerKeydown(input.onCustomElementAdornerClick)}
+          ${adornerRef()}>
+          <span>${ElementsComponents.AdornerManager.RegisteredAdorners.CUSTOM_ELEMENT}</span>
         </devtools-adorner>` : nothing}
         ${input.showContainerAdorner ? html`<devtools-adorner
           class=clickable
@@ -1333,50 +1354,53 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
       return;
     }
     const output: ViewOutput = {};
-    DEFAULT_VIEW(
-        {
-          node: !clearNode ? this.nodeInternal : null,
-          isClosingTag: this.isClosingTag(),
-          expanded: this.expanded,
-          isExpandable: this.isExpandable(),
-          isXMLMimeType: Boolean(this.treeOutline?.isXMLMimeType),
-          updateRecord: this.#updateRecord,
-          onHighlightSearchResults: () => this.#highlightSearchResults(),
-          onExpand: () => this.expand(),
+    DEFAULT_VIEW({
+      node: !clearNode ? this.nodeInternal : null,
+      isClosingTag: this.isClosingTag(),
+      expanded: this.expanded,
+      isExpandable: this.isExpandable(),
+      isXMLMimeType: Boolean(this.treeOutline?.isXMLMimeType),
+      updateRecord: this.#updateRecord,
+      onHighlightSearchResults: () => this.#highlightSearchResults(),
+      onExpand: () => this.expand(),
 
-          containerAdornerActive: this.#containerAdornerActive,
-          adProvenance: this.nodeInternal.adProvenance(),
-          adTooltipId: this.#adTooltipId,
-          target: this.nodeInternal.domModel().target(),
-          showContainerAdorner: Boolean(this.#layout?.containerType) && !this.isClosingTag(),
-          containerType: this.#layout?.containerType,
-          showFlexAdorner: Boolean(this.#layout?.isFlex) && !this.isClosingTag(),
-          flexAdornerActive: this.#flexAdornerActive,
-          showGridAdorner: Boolean(this.#layout?.isGrid) && !this.isClosingTag(),
-          showGridLanesAdorner: Boolean(this.#layout?.isGridLanes) && !this.isClosingTag(),
-          showMediaAdorner: this.node().isMediaNode() && !this.isClosingTag(),
-          showPopoverAdorner: Boolean(Root.Runtime.hostConfig.devToolsAllowPopoverForcing?.enabled) &&
-              Boolean(this.node().attributes().find(attr => attr.name === 'popover')) && !this.isClosingTag(),
-          showTopLayerAdorner: this.node().topLayerIndex() !== -1 && !this.isClosingTag(),
-          gridAdornerActive: this.#gridAdornerActive,
-          popoverAdornerActive: this.#popoverAdornerActive,
-          isSubgrid: Boolean(this.#layout?.isSubgrid),
-          showViewSourceAdorner: this.nodeInternal.isRootNode() && isOpeningTag(this.tagTypeContext),
-          showScrollAdorner: ((this.node().nodeName() === 'HTML' && this.node().ownerDocument?.isScrollable()) ||
-                              (this.node().nodeName() !== '#document' && this.node().isScrollable())) &&
-              !this.isClosingTag(),
-          decorations: this.#decorations,
-          descendantDecorations: this.expanded ? [] : this.#descendantDecorations,
-          decorationsTooltip: this.#decorationsTooltip,
-          indent: this.computeLeftIndent(),
-          showScrollSnapAdorner: Boolean(this.#layout?.hasScroll) && !this.isClosingTag(),
-          scrollSnapAdornerActive: this.#scrollSnapAdornerActive,
-          showSlotAdorner: Boolean(this.nodeInternal.assignedSlot) && !this.isClosingTag(),
-          showStartingStyleAdorner: this.nodeInternal.affectedByStartingStyles() && !this.isClosingTag(),
-          startingStyleAdornerActive: this.#startingStyleAdornerActive,
-          onStartingStyleAdornerClick:
-              this.treeOutline?.disableEdits ? () => {} : (event: Event) => this.#onStartingStyleAdornerClick(event),
-          onSlotAdornerClick: () => {
+      containerAdornerActive: this.#containerAdornerActive,
+      adProvenance: this.nodeInternal.adProvenance(),
+      adTooltipId: this.#adTooltipId,
+      target: this.nodeInternal.domModel().target(),
+      showContainerAdorner: Boolean(this.#layout?.containerType) && !this.isClosingTag(),
+      containerType: this.#layout?.containerType,
+      showFlexAdorner: Boolean(this.#layout?.isFlex) && !this.isClosingTag(),
+      flexAdornerActive: this.#flexAdornerActive,
+      showGridAdorner: Boolean(this.#layout?.isGrid) && !this.isClosingTag(),
+      showGridLanesAdorner: Boolean(this.#layout?.isGridLanes) && !this.isClosingTag(),
+      showMediaAdorner: this.node().isMediaNode() && !this.isClosingTag(),
+      showPopoverAdorner: Boolean(Root.Runtime.hostConfig.devToolsAllowPopoverForcing?.enabled) &&
+          Boolean(this.node().attributes().find(attr => attr.name === 'popover')) && !this.isClosingTag(),
+      showTopLayerAdorner: this.node().topLayerIndex() !== -1 && !this.isClosingTag(),
+      gridAdornerActive: this.#gridAdornerActive,
+      popoverAdornerActive: this.#popoverAdornerActive,
+      isSubgrid: Boolean(this.#layout?.isSubgrid),
+      showViewSourceAdorner: this.nodeInternal.isRootNode() && isOpeningTag(this.tagTypeContext),
+      showScrollAdorner: ((this.node().nodeName() === 'HTML' && this.node().ownerDocument?.isScrollable()) ||
+                          (this.node().nodeName() !== '#document' && this.node().isScrollable())) &&
+          !this.isClosingTag(),
+      decorations: this.#decorations,
+      descendantDecorations: this.expanded ? [] : this.#descendantDecorations,
+      decorationsTooltip: this.#decorationsTooltip,
+      indent: this.computeLeftIndent(),
+      showScrollSnapAdorner: Boolean(this.#layout?.hasScroll) && !this.isClosingTag(),
+      scrollSnapAdornerActive: this.#scrollSnapAdornerActive,
+      showSlotAdorner: Boolean(this.nodeInternal.assignedSlot) && !this.isClosingTag(),
+      showCustomElementAdorner: this.node().isCustomElement() && !this.isClosingTag(),
+      onCustomElementAdornerClick:
+          this.treeOutline?.disableEdits ? () => {} : (event: Event) => void this.#onCustomElementAdornerClick(event),
+      showStartingStyleAdorner: this.nodeInternal.affectedByStartingStyles() && !this.isClosingTag(),
+      startingStyleAdornerActive: this.#startingStyleAdornerActive,
+      onStartingStyleAdornerClick:
+          this.treeOutline?.disableEdits ? () => {} : (event: Event) => this.#onStartingStyleAdornerClick(event),
+      onSlotAdornerClick:
+          () => {
             if (this.nodeInternal.assignedSlot) {
               const deferredNode = this.nodeInternal.assignedSlot.deferredNode;
               deferredNode.resolve(node => {
@@ -1384,47 +1408,45 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
               });
             }
           },
-          topLayerIndex: this.node().topLayerIndex(),
-          onViewSourceAdornerClick: this.treeOutline?.disableEdits ? () => {} : this.revealHTMLInSources.bind(this),
-          onGutterClick: this.showContextMenu.bind(this),
-          onContainerAdornerClick:
-              this.treeOutline?.disableEdits ? () => {} : (event: Event) => this.#onContainerAdornerClick(event),
-          onFlexAdornerClick: this.treeOutline?.disableEdits ? () => {} :
-                                                               (event: Event) => this.#onFlexAdornerClick(event),
-          onGridAdornerClick: this.treeOutline?.disableEdits ? () => {} :
-                                                               (event: Event) => this.#onGridAdornerClick(event),
-          onMediaAdornerClick: this.treeOutline?.disableEdits ? () => {} :
-                                                                (event: Event) => this.#onMediaAdornerClick(event),
-          onPopoverAdornerClick: this.treeOutline?.disableEdits ? () => {} :
-                                                                  (event: Event) => this.#onPopoverAdornerClick(event),
-          onScrollSnapAdornerClick:
-              this.treeOutline?.disableEdits ? () => {} : (event: Event) => this.#onScrollSnapAdornerClick(event),
-          onTopLayerAdornerClick: this.treeOutline?.disableEdits ? () => {} :
-                                                                   () => {
-                                                                     if (!this.treeOutline) {
-                                                                       return;
-                                                                     }
-                                                                     this.treeOutline.revealInTopLayer(this.node());
-                                                                   },
-          isHovered: this.#hovered,
-          isSelected: this.selected,
-          showAiButton: Boolean(this.#hovered || this.selected) && this.node().nodeType() === Node.ELEMENT_NODE &&
-              this.isAiButtonEnabled() && (this.treeOutline as ElementsTreeOutline)?.showAIButton,
-          aiButtonTitle: this.isAiButtonEnabled() ?
-              UI.ActionRegistry.ActionRegistry.instance().getAction('freestyler.elements-floating-button').title() :
-              undefined,
-          onAiButtonClick: (ev: Event) => {
-            ev.stopPropagation();
-            this.select(true, false);
-            const action = UI.ActionRegistry.ActionRegistry.instance().getAction('freestyler.elements-floating-button');
-            if (action) {
-              void action.execute();
-            }
-          },
-          editorState: this.#editorState,
-          editorWidth: this.#editorWidth,
-        },
-        output, this.listItemElement);
+      topLayerIndex: this.node().topLayerIndex(),
+      onViewSourceAdornerClick: this.treeOutline?.disableEdits ? () => {} : this.revealHTMLInSources.bind(this),
+      onGutterClick: this.showContextMenu.bind(this),
+      onContainerAdornerClick: this.treeOutline?.disableEdits ? () => {} :
+                                                                (event: Event) => this.#onContainerAdornerClick(event),
+      onFlexAdornerClick: this.treeOutline?.disableEdits ? () => {} : (event: Event) => this.#onFlexAdornerClick(event),
+      onGridAdornerClick: this.treeOutline?.disableEdits ? () => {} : (event: Event) => this.#onGridAdornerClick(event),
+      onMediaAdornerClick: this.treeOutline?.disableEdits ? () => {} :
+                                                            (event: Event) => this.#onMediaAdornerClick(event),
+      onPopoverAdornerClick: this.treeOutline?.disableEdits ? () => {} :
+                                                              (event: Event) => this.#onPopoverAdornerClick(event),
+      onScrollSnapAdornerClick:
+          this.treeOutline?.disableEdits ? () => {} : (event: Event) => this.#onScrollSnapAdornerClick(event),
+      onTopLayerAdornerClick: this.treeOutline?.disableEdits ? () => {} :
+                                                               () => {
+                                                                 if (!this.treeOutline) {
+                                                                   return;
+                                                                 }
+                                                                 this.treeOutline.revealInTopLayer(this.node());
+                                                               },
+      isHovered: this.#hovered,
+      isSelected: this.selected,
+      showAiButton: Boolean(this.#hovered || this.selected) && this.node().nodeType() === Node.ELEMENT_NODE &&
+          this.isAiButtonEnabled() && (this.treeOutline as ElementsTreeOutline)?.showAIButton,
+      aiButtonTitle: this.isAiButtonEnabled() ?
+          UI.ActionRegistry.ActionRegistry.instance().getAction('freestyler.elements-floating-button').title() :
+          undefined,
+      onAiButtonClick: (ev: Event) => {
+        ev.stopPropagation();
+        this.select(true, false);
+        const action = UI.ActionRegistry.ActionRegistry.instance().getAction('freestyler.elements-floating-button');
+        if (action) {
+          void action.execute();
+        }
+      },
+      editorState: this.#editorState,
+      editorWidth: this.#editorWidth,
+    },
+                 output, this.listItemElement);
 
     this.#contentElement = output.contentElement;
     this.#editorRef = output.editorRef;
@@ -1732,63 +1754,64 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
     // ElementsPanel.
     // We do not change the ElementsTreeElement state in case the
     // element is bound again.
-    DEFAULT_VIEW(
-        {
-          node: null,
-          isClosingTag: false,
-          expanded: false,
-          isExpandable: false,
-          isXMLMimeType: false,
-          updateRecord: null,
-          onHighlightSearchResults: () => {},
-          onExpand: () => {},
-          containerAdornerActive: false,
-          adProvenance: undefined,
-          target: undefined,
-          adTooltipId: '',
-          showContainerAdorner: false,
-          containerType: this.#layout?.containerType,
-          showFlexAdorner: false,
-          flexAdornerActive: false,
-          showGridAdorner: false,
-          showGridLanesAdorner: false,
-          showMediaAdorner: false,
-          showPopoverAdorner: false,
-          showTopLayerAdorner: false,
-          gridAdornerActive: false,
-          popoverAdornerActive: false,
-          isSubgrid: false,
-          showViewSourceAdorner: false,
-          showScrollAdorner: false,
-          showScrollSnapAdorner: false,
-          scrollSnapAdornerActive: false,
-          showSlotAdorner: false,
-          showStartingStyleAdorner: false,
-          startingStyleAdornerActive: false,
-          onStartingStyleAdornerClick: () => {},
-          onSlotAdornerClick: () => {},
-          topLayerIndex: -1,
-          onViewSourceAdornerClick: () => {},
-          onGutterClick: () => {},
-          onContainerAdornerClick: () => {},
-          onFlexAdornerClick: () => {},
-          onGridAdornerClick: () => {},
-          onMediaAdornerClick: () => {},
-          onPopoverAdornerClick: () => {},
-          onScrollSnapAdornerClick: () => {},
-          onTopLayerAdornerClick: () => {},
-          isHovered: false,
-          isSelected: false,
-          showAiButton: false,
-          onAiButtonClick: () => {},
-          decorations: [],
-          descendantDecorations: [],
-          decorationsTooltip: '',
-          indent: 0,
-          editorState: null,
-          editorWidth: null,
-        },
-        {}, this.listItemElement);
+    DEFAULT_VIEW({
+      node: null,
+      isClosingTag: false,
+      expanded: false,
+      isExpandable: false,
+      isXMLMimeType: false,
+      updateRecord: null,
+      onHighlightSearchResults: () => {},
+      onExpand: () => {},
+      containerAdornerActive: false,
+      adProvenance: undefined,
+      target: undefined,
+      adTooltipId: '',
+      showContainerAdorner: false,
+      containerType: this.#layout?.containerType,
+      showFlexAdorner: false,
+      flexAdornerActive: false,
+      showGridAdorner: false,
+      showGridLanesAdorner: false,
+      showMediaAdorner: false,
+      showPopoverAdorner: false,
+      showTopLayerAdorner: false,
+      gridAdornerActive: false,
+      popoverAdornerActive: false,
+      isSubgrid: false,
+      showViewSourceAdorner: false,
+      showScrollAdorner: false,
+      showScrollSnapAdorner: false,
+      scrollSnapAdornerActive: false,
+      showSlotAdorner: false,
+      showCustomElementAdorner: false,
+      showStartingStyleAdorner: false,
+      startingStyleAdornerActive: false,
+      onStartingStyleAdornerClick: () => {},
+      onSlotAdornerClick: () => {},
+      onCustomElementAdornerClick: () => {},
+      topLayerIndex: -1,
+      onViewSourceAdornerClick: () => {},
+      onGutterClick: () => {},
+      onContainerAdornerClick: () => {},
+      onFlexAdornerClick: () => {},
+      onGridAdornerClick: () => {},
+      onMediaAdornerClick: () => {},
+      onPopoverAdornerClick: () => {},
+      onScrollSnapAdornerClick: () => {},
+      onTopLayerAdornerClick: () => {},
+      isHovered: false,
+      isSelected: false,
+      showAiButton: false,
+      onAiButtonClick: () => {},
+      decorations: [],
+      descendantDecorations: [],
+      decorationsTooltip: '',
+      indent: 0,
+      editorState: null,
+      editorWidth: null,
+    },
+                 {}, this.listItemElement);
   }
 
   override onunbind(): void {
@@ -3210,6 +3233,44 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
     }
     this.#startingStyleAdornerActive = !this.#startingStyleAdornerActive;
     this.performUpdate();
+  }
+
+  async #onCustomElementAdornerClick(event: Event): Promise<void> {
+    event.stopPropagation();
+    const node = this.node();
+    const object = await node.resolveToObject('');
+    if (!object) {
+      return;
+    }
+    let constructorObject: SDK.RemoteObject.RemoteObject|null = null;
+    try {
+      const result = await object.callFunction(function(this: Element): unknown {
+        const selector = this.getAttribute('is') || this.tagName.toLowerCase();
+        return (typeof customElements !== 'undefined' && customElements.get(selector)) || this.constructor;
+      });
+      constructorObject = result.object;
+    } finally {
+      object.release();
+    }
+    if (!constructorObject) {
+      return;
+    }
+    try {
+      if (constructorObject.type === 'function') {
+        const functionDetails =
+            await SDK.RemoteObject.RemoteFunction.objectAsFunction(constructorObject).targetFunctionDetails();
+        if (functionDetails?.location) {
+          const uiLocation =
+              await Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance().rawLocationToUILocation(
+                  functionDetails.location);
+          if (uiLocation) {
+            void Common.Revealer.reveal(uiLocation);
+          }
+        }
+      }
+    } finally {
+      constructorObject.release();
+    }
   }
 }
 

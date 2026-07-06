@@ -168,6 +168,26 @@ describe('Adornment in the Elements Tab', function() {
        await devToolsPage.waitFor('[aria-label="adornment-view-source.html"][aria-selected="true"]');
      });
 
+  it('displays custom-element adorner and opens definition in sources panel when clicked',
+     async ({devToolsPage, inspectedPage}) => {
+       await inspectedPage.goToResource('elements/adornment-custom-element.html');
+       await prepareElementsTab(devToolsPage);
+
+       await waitForAdorners(
+           [
+             {textContent: 'view-source', isActive: false},
+             {textContent: 'custom-element', isActive: false},
+             {textContent: 'custom-element', isActive: false},
+           ],
+           devToolsPage);
+
+       const customElementAdorner = await devToolsPage.waitFor('devtools-adorner.custom-element');
+       await customElementAdorner.click();
+
+       await devToolsPage.waitFor('div[aria-label="Sources panel"]');
+       await devToolsPage.waitFor('[aria-label="adornment-custom-element.html"][aria-selected="true"]');
+     });
+
   it('displays container query adorners', async ({devToolsPage, inspectedPage}) => {
     await inspectedPage.goToResource('elements/adornment-container-query.html');
     await prepareElementsTab(devToolsPage);
