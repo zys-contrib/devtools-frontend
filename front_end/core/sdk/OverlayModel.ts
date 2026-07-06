@@ -49,6 +49,19 @@ export interface Hinge {
   contentColor: HighlightColor;
   outlineColor: HighlightColor;
 }
+export interface BaseDisplayCutout {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  shape: Protocol.Overlay.DisplayCutoutShape;
+  contentColor?: HighlightColor;
+}
+export type DisplayCutout =
+    BaseDisplayCutout&({shape: Protocol.Overlay.DisplayCutoutShape.Rectangle}|
+                       {shape: Protocol.Overlay.DisplayCutoutShape.Pill, borderRadius: number}|
+                       {shape: Protocol.Overlay.DisplayCutoutShape.Notch, upperRadius: number, lowerRadius: number}|
+                       {shape: Protocol.Overlay.DisplayCutoutShape.Circle, cx: number, cy: number, radius: number});
 
 export const enum EmulatedOSType {
   WINDOWS = 'Windows',
@@ -494,6 +507,32 @@ export class OverlayModel extends SDKModel<EventTypes> implements ProtocolProxyA
       });
     } else {
       void this.overlayAgent.invoke_setShowHinge({});
+    }
+  }
+
+  showDisplayCutout(cutout: DisplayCutout|null): void {
+    if (cutout) {
+      const {x, y, width, height, shape, contentColor} = cutout;
+      const displayCutoutConfig: Protocol.Overlay.DisplayCutoutConfig = {
+        rect: {x, y, width, height},
+        shape,
+        contentColor,
+      };
+      if (shape === Protocol.Overlay.DisplayCutoutShape.Pill) {
+        displayCutoutConfig.borderRadius = cutout.borderRadius;
+      } else if (shape === Protocol.Overlay.DisplayCutoutShape.Notch) {
+        displayCutoutConfig.upperRadius = cutout.upperRadius;
+        displayCutoutConfig.lowerRadius = cutout.lowerRadius;
+      } else if (shape === Protocol.Overlay.DisplayCutoutShape.Circle) {
+        displayCutoutConfig.cx = cutout.cx;
+        displayCutoutConfig.cy = cutout.cy;
+        displayCutoutConfig.radius = cutout.radius;
+      }
+      void this.overlayAgent.invoke_setShowDisplayCutout({
+        displayCutoutConfig,
+      });
+    } else {
+      void this.overlayAgent.invoke_setShowDisplayCutout({});
     }
   }
 
