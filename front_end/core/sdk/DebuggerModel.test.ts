@@ -13,6 +13,7 @@ import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
 import {setupSettingsHooks} from '../../testing/SettingsHelpers.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as Common from '../common/common.js';
 import * as Platform from '../platform/platform.js';
 
@@ -388,18 +389,21 @@ describe('DebuggerModel', () => {
     const sourceMapSymbols:
         Protocol.Debugger.DebugSymbols = {type: Protocol.Debugger.DebugSymbolsType.SourceMap, externalURL: 'abc'};
 
+    let targetManager: SDK.TargetManager.TargetManager;
     beforeEach(() => {
-      Common.Console.Console.instance({forceNew: true});
+      const universe = new TestUniverse();
+      targetManager = universe.targetManager;
     });
 
     function testSelectSymbolSource(
         debugSymbols: Protocol.Debugger.DebugSymbols[]|null, expectedSymbolType: Protocol.Debugger.DebugSymbolsType,
         expectedWarning?: string) {
-      const selectedSymbol = SDK.DebuggerModel.DebuggerModel.selectSymbolSource(debugSymbols);
+      const devToolsConsole = targetManager.getConsole();
+      const selectedSymbol = SDK.DebuggerModel.DebuggerModel.selectSymbolSource(debugSymbols, devToolsConsole);
       assert.isNotNull(selectedSymbol);
       assert.strictEqual(selectedSymbol.type, expectedSymbolType);
 
-      const consoleMessages = Common.Console.Console.instance().messages();
+      const consoleMessages = devToolsConsole.messages();
       if (!expectedWarning) {
         assert.lengthOf(consoleMessages, 0);
         return;
@@ -430,10 +434,11 @@ describe('DebuggerModel', () => {
     });
 
     it('returns null if nothing is available', () => {
-      const selectedSymbol = SDK.DebuggerModel.DebuggerModel.selectSymbolSource([]);
+      const devToolsConsole = targetManager.getConsole();
+      const selectedSymbol = SDK.DebuggerModel.DebuggerModel.selectSymbolSource([], devToolsConsole);
       assert.isNull(selectedSymbol);
 
-      const consoleMessages = Common.Console.Console.instance().messages();
+      const consoleMessages = devToolsConsole.messages();
       assert.lengthOf(consoleMessages, 0);
     });
   });

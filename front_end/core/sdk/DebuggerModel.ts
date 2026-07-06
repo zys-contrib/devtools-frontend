@@ -194,7 +194,8 @@ export class DebuggerModel extends SDKModel<EventTypes> {
     }
   }
 
-  static selectSymbolSource(debugSymbols: Protocol.Debugger.DebugSymbols[]|null): Protocol.Debugger.DebugSymbols|null {
+  static selectSymbolSource(debugSymbols: Protocol.Debugger.DebugSymbols[]|null,
+                            devToolsConsole: Common.Console.Console): Protocol.Debugger.DebugSymbols|null {
     if (!debugSymbols || debugSymbols.length === 0) {
       return null;
     }
@@ -221,8 +222,7 @@ export class DebuggerModel extends SDKModel<EventTypes> {
         debugSymbolsSource !== null,
         'Unknown symbol types. Front-end and back-end should be kept in sync regarding Protocol.Debugger.DebugSymbolTypes');
     if (debugSymbolsSource && debugSymbols.length > 1) {
-      Common.Console.Console.instance().warn(
-          `Multiple debug symbols for script were found. Using ${debugSymbolsSource.type}`);
+      devToolsConsole.warn(`Multiple debug symbols for script were found. Using ${debugSymbolsSource.type}`);
     }
     return debugSymbolsSource;
   }
@@ -661,7 +661,8 @@ export class DebuggerModel extends SDKModel<EventTypes> {
       isContentScript = !executionContextAuxData['isDefault'];
     }
 
-    const selectedDebugSymbol = DebuggerModel.selectSymbolSource(debugSymbols);
+    const selectedDebugSymbol =
+        DebuggerModel.selectSymbolSource(debugSymbols, this.target().targetManager().getConsole());
     const script = new Script(
         this, scriptId, sourceURL, startLine, startColumn, endLine, endColumn, executionContextId, hash,
         isContentScript, isLiveEdit, sourceMapURL, hasSourceURLComment, length, isModule, originStackTrace, codeOffset,
