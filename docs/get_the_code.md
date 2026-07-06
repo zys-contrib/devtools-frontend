@@ -53,10 +53,10 @@ a build time cost. If you want an even fast fast build, you might want to opt
 out of bundling by setting `devtools_bundle` to `false`
 
 ```bash
-gn gen out/fast-build --args="devtools_skip_typecheck=true devtools_bundle=false"
+gn gen out/Fast --args="devtools_skip_typecheck=true devtools_bundle=false"
 ```
 
-and use `npm run build -- -t fast-build` to build this target.
+and use `npm run build -- -t Fast` to build this target.
 
 ### Rebuilding automatically
 
@@ -111,10 +111,10 @@ The `.env.template` file lists all supported variables. Copy it to `.env` to get
 cp .env.template .env
 ```
 
-As mentioned earlier, you might create a fast build target. Instead of always typing `npm run build -- -t fast-build`, to remove the flag repetition you simple run `npm run build` you can set the following variable in your `.env` file:
+As mentioned earlier, you might create a fast build target. Instead of always typing `npm run build -- -t Fast`, to remove the flag repetition you simple run `npm run build` you can set the following variable in your `.env` file:
 
 ```shell
-DEVTOOLS_TARGET=fast-build
+DEVTOOLS_TARGET=Fast
 ```
 
 Another example - by default running `npm start` auto-opens DevTools for new Tabs.
@@ -468,8 +468,8 @@ In the `custom_deps` section, insert this line:
 "src/third_party/devtools-frontend/src": None,
 ```
 
-For the integrated checkout, create a single gclient project that automatically gclient sync's all dependencies for both
-repositories. After checking out chromium, modify the .gclient file for `chromium/src` to add the DevTools project:
+For the integrated checkout, create a single gclient project that automatically `gclient sync`s all dependencies for both
+repositories. After checking out chromium, modify the `.gclient` file for `chromium/src` to add the DevTools project:
 
 ```python
 solutions = [
