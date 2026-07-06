@@ -203,12 +203,11 @@ export class GlobalAiButton extends UI.Widget.Widget {
   }
 }
 
-let globalAiButtonToolbarProviderInstance: GlobalAiButtonToolbarProvider;
 export class GlobalAiButtonToolbarProvider implements UI.Toolbar.Provider {
   #toolbarItem: UI.Toolbar.ToolbarItemWithCompactLayout;
   #widgetElement: UI.Widget.WidgetElement<GlobalAiButton>;
 
-  private constructor() {
+  constructor() {
     this.#widgetElement = document.createElement('devtools-widget') as UI.Widget.WidgetElement<GlobalAiButton>;
     new GlobalAiButton(this.#widgetElement);
 
@@ -218,14 +217,5 @@ export class GlobalAiButtonToolbarProvider implements UI.Toolbar.Provider {
 
   item(): UI.Toolbar.ToolbarItem|null {
     return this.#toolbarItem;
-  }
-
-  static instance(opts: {forceNew: boolean|null} = {forceNew: null}): GlobalAiButtonToolbarProvider {
-    const {forceNew} = opts;
-    if (!globalAiButtonToolbarProviderInstance || forceNew) {
-      globalAiButtonToolbarProviderInstance = new GlobalAiButtonToolbarProvider();
-    }
-
-    return globalAiButtonToolbarProviderInstance;
   }
 }

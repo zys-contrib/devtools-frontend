@@ -913,7 +913,7 @@ UI.Toolbar.registerToolbarItem({
   },
   async loadItem() {
     const Main = await loadMainModule();
-    return Main.GlobalAiButton.GlobalAiButtonToolbarProvider.instance();
+    return new Main.GlobalAiButton.GlobalAiButtonToolbarProvider();
   },
   order: 98,
   location: UI.Toolbar.ToolbarItemLocation.MAIN_TOOLBAR_RIGHT,
