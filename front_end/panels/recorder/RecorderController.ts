@@ -691,6 +691,7 @@ export class RecorderController extends LitElement {
     this.#setCurrentRecording(await this.#storage.upsertRecording(Models.SchemaUtils.parse(json)));
     this.#setCurrentPage(Pages.RECORDING_PAGE);
     this.#clearError();
+    this.dispatchEvent(new Events.SetRecordingFinishedEvent());
   }
 
   // Used by e2e tests to inspect the current recording.

@@ -234,8 +234,10 @@ export const processAndVerifyBaseRecording = (
 
 async function setCode(flow: string, devToolsPage: DevToolsPage) {
   const view = await getRecordingController(devToolsPage);
-  await view.evaluate((el, flow) => {
+  await view.evaluate(async (el, flow) => {
+    const promise = new Promise(resolve => el.addEventListener('setrecordingfinished', resolve, {once: true}));
     el.dispatchEvent(new CustomEvent('setrecording', {detail: flow}));
+    await promise;
   }, flow);
 }
 
