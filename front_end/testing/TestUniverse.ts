@@ -154,6 +154,13 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(SDK.DOMDebuggerModel.DOMDebuggerManager);
   }
 
+  get domModelUndoStack(): SDK.DOMModel.DOMModelUndoStack {
+    if (!this.#context.has(SDK.DOMModel.DOMModelUndoStack)) {
+      this.#context.set(SDK.DOMModel.DOMModelUndoStack, new SDK.DOMModel.DOMModelUndoStack());
+    }
+    return this.#context.get(SDK.DOMModel.DOMModelUndoStack);
+  }
+
   get frameManager(): SDK.FrameManager.FrameManager {
     if (!this.#context.has(SDK.FrameManager.FrameManager)) {
       this.#context.set(SDK.FrameManager.FrameManager, new SDK.FrameManager.FrameManager(this.targetManager));
@@ -287,6 +294,9 @@ export class TestUniverse implements Foundation.Universe.Universe {
           }
           if (ctor === SDK.FrameManager.FrameManager.prototype.constructor) {
             return universe.frameManager as T;
+          }
+          if (ctor === SDK.DOMModel.DOMModelUndoStack.prototype.constructor) {
+            return universe.domModelUndoStack as T;
           }
           if (ctor === SDK.PageResourceLoader.PageResourceLoader.prototype.constructor) {
             return universe.pageResourceLoader as T;

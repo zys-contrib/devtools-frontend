@@ -38,6 +38,7 @@ import type * as ProtocolProxyApi from '../../generated/protocol-proxy-api.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as Common from '../common/common.js';
 import * as Platform from '../platform/platform.js';
+import * as Root from '../root/root.js';
 
 import {CSSModel} from './CSSModel.js';
 import type {FrameManager} from './FrameManager.js';
@@ -1698,7 +1699,7 @@ export class DOMModel extends SDKModel<EventTypes> {
     } else {
       this.#document = null;
     }
-    DOMModelUndoStack.instance().dispose(this);
+    this.#undoStack().dispose(this);
 
     if (!this.parentModel()) {
       this.dispatchEventToListeners(Events.DocumentUpdated, this);
@@ -2034,7 +2035,7 @@ export class DOMModel extends SDKModel<EventTypes> {
   }
 
   markUndoableState(minorChange?: boolean): void {
-    void DOMModelUndoStack.instance().markUndoableState(this, minorChange || false);
+    void this.#undoStack().markUndoableState(this, minorChange || false);
   }
 
   async nodeForLocation(x: number, y: number, includeUserAgentShadowDOM: boolean): Promise<DOMNode|null> {
@@ -2071,7 +2072,16 @@ export class DOMModel extends SDKModel<EventTypes> {
 
   override dispose(): void {
     this.#resourceTreeModel?.removeEventListener(ResourceTreeModelEvents.DocumentOpened, this.onDocumentOpened, this);
-    DOMModelUndoStack.instance().dispose(this);
+    this.#undoStack().dispose(this);
+  }
+
+  // TODO(crbug.com/493763857): Remove fallback once all unit tests use TestUniverse.
+  #undoStack(): DOMModelUndoStack {
+    const context = this.target().targetManager().context;
+    if ('has' in context && typeof context.has === 'function' && context.has(DOMModelUndoStack)) {
+      return context.get(DOMModelUndoStack);
+    }
+    return DOMModelUndoStack.instance();
   }
 
   parentModel(): DOMModel|null {
@@ -2212,8 +2222,6 @@ class DOMDispatcher implements ProtocolProxyApi.DOMDispatcher {
   }
 }
 
-let domModelUndoStackInstance: DOMModelUndoStack|null = null;
-
 export class DOMModelUndoStack {
   #stack: DOMModel[];
   #index: number;
@@ -2228,11 +2236,11 @@ export class DOMModelUndoStack {
     forceNew: boolean|null,
   } = {forceNew: null}): DOMModelUndoStack {
     const {forceNew} = opts;
-    if (!domModelUndoStackInstance || forceNew) {
-      domModelUndoStackInstance = new DOMModelUndoStack();
+    if (!Root.DevToolsContext.globalInstance().has(DOMModelUndoStack) || forceNew) {
+      Root.DevToolsContext.globalInstance().set(DOMModelUndoStack, new DOMModelUndoStack());
     }
 
-    return domModelUndoStackInstance;
+    return Root.DevToolsContext.globalInstance().get(DOMModelUndoStack);
   }
 
   async markUndoableState(model: DOMModel, minorChange: boolean): Promise<void> {

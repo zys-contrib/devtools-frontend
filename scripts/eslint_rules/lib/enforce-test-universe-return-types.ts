@@ -32,6 +32,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'ProjectSettings.ProjectSettingsModel.ProjectSettingsModel',
   'SDK.CPUThrottlingManager.CPUThrottlingManager',
   'SDK.DOMDebuggerModel.DOMDebuggerManager',
+  'SDK.DOMModel.DOMModelUndoStack',
   'SDK.FrameManager.FrameManager',
   'SDK.IsolateManager.IsolateManager',
   'SDK.NetworkManager.MultitargetNetworkManager',
