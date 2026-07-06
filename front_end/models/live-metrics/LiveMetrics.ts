@@ -6,6 +6,7 @@ import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
 import * as Platform from '../../core/platform/platform.js';
+import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 import * as EmulationModel from '../../models/emulation/emulation.js';
@@ -28,8 +29,6 @@ const str_ = i18n.i18n.registerUIStrings('models/live-metrics/LiveMetrics.ts', U
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 const LIVE_METRICS_WORLD_NAME = 'DevTools Performance Metrics';
-
-let liveMetricsInstance: LiveMetrics;
 
 class InjectedScript {
   static #injectedScript?: string;
@@ -59,21 +58,24 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
   #layoutShifts: LayoutShift[] = [];
   #lastEmulationChangeTime?: number;
   #mutex = new Common.Mutex.Mutex();
-  #deviceModeModel = EmulationModel.DeviceModeModel.DeviceModeModel.tryInstance();
+  readonly #targetManager: SDK.TargetManager.TargetManager;
+  readonly #deviceModeModel: EmulationModel.DeviceModeModel.DeviceModeModel|null;
 
-  private constructor() {
+  constructor(targetManager: SDK.TargetManager.TargetManager,
+              deviceModeModel: EmulationModel.DeviceModeModel.DeviceModeModel|null) {
     super();
-    const targetManager = SDK.TargetManager.TargetManager.instance();
-    targetManager.observeTargets(this, {scoped: true});
-    targetManager.addModelListener(
-        SDK.ResourceTreeModel.ResourceTreeModel, SDK.ResourceTreeModel.Events.PrimaryPageChanged,
-        this.#onPrimaryPageChanged, this);
+    this.#targetManager = targetManager;
+    this.#deviceModeModel = deviceModeModel;
+    this.#targetManager.observeTargets(this, {scoped: true});
+    this.#targetManager.addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
+                                         SDK.ResourceTreeModel.Events.PrimaryPageChanged, this.#onPrimaryPageChanged,
+                                         this);
   }
 
   #onPrimaryPageChanged(
       event: Common.EventTarget.EventTargetEvent<
           {frame: SDK.ResourceTreeModel.ResourceTreeFrame, type: SDK.ResourceTreeModel.PrimaryPageChangeType}>): void {
-    const primaryTarget = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+    const primaryTarget = this.#targetManager.primaryPageTarget();
     if (!primaryTarget) {
       return;
     }
@@ -95,11 +97,14 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
 
   static instance(opts: {forceNew?: boolean} = {forceNew: false}): LiveMetrics {
     const {forceNew} = opts;
-    if (!liveMetricsInstance || forceNew) {
-      liveMetricsInstance = new LiveMetrics();
+    if (!Root.DevToolsContext.globalInstance().has(LiveMetrics) || forceNew) {
+      Root.DevToolsContext.globalInstance().set(
+          LiveMetrics,
+          new LiveMetrics(SDK.TargetManager.TargetManager.instance(),
+                          EmulationModel.DeviceModeModel.DeviceModeModel.tryInstance()));
     }
 
-    return liveMetricsInstance;
+    return Root.DevToolsContext.globalInstance().get(LiveMetrics);
   }
 
   get lcpValue(): LcpValue|undefined {
@@ -482,7 +487,7 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
 
   async targetAdded(target: SDK.Target.Target): Promise<void> {
     // Scoped observers can also receive events for OOPIFs and workers.
-    if (target !== SDK.TargetManager.TargetManager.instance().primaryPageTarget()) {
+    if (target !== this.#targetManager.primaryPageTarget()) {
       return;
     }
     this.#target = target;
