@@ -1086,6 +1086,58 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     return this.evaluate(expression, true, true, evaluateOptions, this.getExtensionOrigin(port), callback.bind(this));
   }
 
+  private harEntryReferencesBlockedURL(entry: HAR.Log.EntryDTO, extension: RegisteredExtension): boolean {
+    const baseURL = entry.request.url;
+
+    // Helper to cleanly resolve and check permission
+    const isBlocked = (url: string|undefined): boolean => {
+      if (!url) {
+        return false;
+      }
+      try {
+        const absoluteURL = new URL(url, baseURL).toString() as Platform.DevToolsPath.UrlString;
+        return !extension.isAllowedOnTarget(absoluteURL);
+      } catch {
+        return true;  // Fallback safely: treat unparsable URLs as blocked
+      }
+    };
+
+    if (isBlocked(entry.response.redirectURL)) {
+      return true;
+    }
+    if (entry._initiator) {
+      if (isBlocked(entry._initiator.url)) {
+        return true;
+      }
+      let stack = entry._initiator.stack;
+      while (stack) {
+        if (stack.callFrames.some(f => isBlocked(f.url))) {
+          return true;
+        }
+        stack = stack.parent;
+      }
+    }
+    for (const header of entry.response.headers) {
+      const name = header.name.toLowerCase();
+      if (name === 'location' || name === 'content-location') {
+        if (isBlocked(header.value)) {
+          return true;
+        }
+      } else if (name === 'refresh') {
+        const match = header.value.match(/;\s*url\s*=\s*(.+)$/i);
+        if (isBlocked(match?.[1]?.trim())) {
+          return true;
+        }
+      } else if (name === 'link') {
+        const urls = [...header.value.matchAll(/<([^>]+)>/g)].map(m => m[1]);
+        if (urls.some(url => isBlocked(url))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private async onGetHAR(message: Extensions.ExtensionAPI.PrivateAPI.ExtensionServerRequestMessage, port: MessagePort):
       Promise<Record|HAR.Log.LogDTO> {
     if (message.command !== Extensions.ExtensionAPI.PrivateAPI.Commands.GetHAR) {
@@ -1094,10 +1146,16 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     const requests =
         Logs.NetworkLog.NetworkLog.instance().requests().filter(r => this.extensionAllowedOnContentProvider(r, port));
     const harLog = await HAR.Log.Log.build(requests, {sanitize: false});
+    const extension = this.registeredExtensions.get(this.getExtensionOrigin(port));
+    if (!extension) {
+      return this.status.E_FAILED('Extension disconnected');
+    }
+
     for (let i = 0; i < harLog.entries.length; ++i) {
       // @ts-expect-error
       harLog.entries[i]._requestId = this.requestId(requests[i]);
     }
+    harLog.entries = harLog.entries.filter(entry => !this.harEntryReferencesBlockedURL(entry, extension));
     return harLog;
   }
 
@@ -1362,6 +1420,13 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
 
   private async notifyRequestFinished(event: Common.EventTarget.EventTargetEvent<SDK.NetworkRequest.NetworkRequest>):
       Promise<void> {
+    if (!this.extensionsEnabled) {
+      return;
+    }
+    if (!this.subscribers.has(Extensions.ExtensionAPI.PrivateAPI.Events.NetworkRequestFinished)) {
+      return;
+    }
+
     const request = event.data;
     const entry = await HAR.Log.Entry.build(request, {sanitize: false});
     const networkManager = SDK.NetworkManager.NetworkManager.forRequest(request);
@@ -1369,7 +1434,8 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     this.postNotification(
         Extensions.ExtensionAPI.PrivateAPI.Events.NetworkRequestFinished, [this.requestId(request), entry],
         extension => extension.isAllowedOnTarget(entry.request.url as Platform.DevToolsPath.UrlString) &&
-            (!targetUrl || extension.isAllowedOnTarget(targetUrl)));
+            (!targetUrl || extension.isAllowedOnTarget(targetUrl)) &&
+            !this.harEntryReferencesBlockedURL(entry, extension));
   }
 
   private notifyElementsSelectionChanged(): void {

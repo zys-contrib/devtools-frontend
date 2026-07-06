@@ -13,9 +13,10 @@ import * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as Extensions from '../../models/extensions/extensions.js';
 import type * as HAR from '../../models/har/har.js';
+import * as Logs from '../../models/logs/logs.js';
 import * as TextUtils from '../../models/text_utils/text_utils.js';
 import * as Workspace from '../../models/workspace/workspace.js';
-import {expectConsoleLogs} from '../../testing/EnvironmentHelpers.js';
+import {createTarget, expectConsoleLogs} from '../../testing/EnvironmentHelpers.js';
 import {spyCall} from '../../testing/ExpectStubCall.js';
 import {
   type ExtensionContext,
@@ -1012,14 +1013,21 @@ describe('Runtime hosts policy', () => {
 
   const requestToManager = new Map<SDK.NetworkRequest.NetworkRequest, SDK.NetworkManager.NetworkManager>();
 
-  function createRequest(networkManager: SDK.NetworkManager.NetworkManager, frameId: Protocol.Page.FrameId,
-                         requestId: Protocol.Network.RequestId, url: Platform.DevToolsPath.UrlString): void {
+  function createRequest(
+      networkManager: SDK.NetworkManager.NetworkManager,
+      frameId: Protocol.Page.FrameId,
+      requestId: Protocol.Network.RequestId,
+      url: Platform.DevToolsPath.UrlString,
+      responseHeaders: SDK.NetworkRequest.NameValue[] = [],
+      initiator: Protocol.Network.Initiator|null = null,
+      ): void {
     if (!(SDK.NetworkManager.NetworkManager.forRequest as unknown as {isSinonProxy?: boolean}).isSinonProxy) {
       requestToManager.clear();
       sinon.stub(SDK.NetworkManager.NetworkManager, 'forRequest')
           .callsFake(request => requestToManager.get(request) || null);
     }
-    const request = SDK.NetworkRequest.NetworkRequest.create(requestId, url, url, frameId, null, null, undefined);
+    const request = SDK.NetworkRequest.NetworkRequest.create(requestId, url, url, frameId, null, initiator, undefined);
+    request.responseHeaders = responseHeaders;
     requestToManager.set(request, networkManager);
     const dataProvider = () =>
         Promise.resolve(new TextUtils.ContentData.ContentData('content', false, request.mimeType));
@@ -1078,6 +1086,132 @@ describe('Runtime hosts policy', () => {
     assert.lengthOf(requests, 1);
     assert.exists(requests.find(e => e.request.url === allowedUrl));
     assert.notExists(requests.find(e => e.request.url === blockedUrl));
+  });
+
+  it('omits getHAR entries whose redirectURL references a blocked host', async () => {
+    Logs.NetworkLog.NetworkLog.instance();
+    const frameId = 'frame-id' as Protocol.Page.FrameId;
+    const target = createTarget({id: 'target' as Protocol.Target.TargetID});
+    target.setInspectedURL(allowedUrl);
+
+    const networkManager = target.model(SDK.NetworkManager.NetworkManager);
+    assert.exists(networkManager);
+
+    const blockedRedirectUrl = urlString`${`${blockedUrl}/secret?token=abc`}`;
+    // Entry with a redirect to a blocked URL — should be omitted.
+    createRequest(networkManager, frameId, 'redirect-to-blocked' as Protocol.Network.RequestId, allowedUrl,
+                  [{name: 'Location', value: `${blockedRedirectUrl}`}]);
+    // Entry with no blocked references — should be kept.
+    createRequest(networkManager, frameId, 'clean-entry' as Protocol.Network.RequestId, allowedUrl);
+
+    const result = await context.chrome.devtools!.network.getHAR() as HAR.Log.LogDTO;
+    assert.lengthOf(result.entries, 1);
+    assert.notExists(result.entries.find(e => e.response.headers.some(h => h.name === 'Location')));
+  });
+
+  it('omits getHAR entries whose initiator references a blocked host', async () => {
+    Logs.NetworkLog.NetworkLog.instance();
+    const frameId = 'frame-id' as Protocol.Page.FrameId;
+    const target = createTarget({id: 'target' as Protocol.Target.TargetID});
+    target.setInspectedURL(allowedUrl);
+
+    const networkManager = target.model(SDK.NetworkManager.NetworkManager);
+    assert.exists(networkManager);
+
+    const blockedScriptUrl = urlString`${`${blockedUrl}/app.js`}`;
+    // Entry whose initiator URL is blocked — should be omitted.
+    createRequest(networkManager, frameId, 'blocked-initiator' as Protocol.Network.RequestId, allowedUrl, [], {
+      type: Protocol.Network.InitiatorType.Script,
+      url: blockedScriptUrl,
+      stack: {
+        callFrames: [{
+          functionName: 'leakyFn',
+          scriptId: '1' as Protocol.Runtime.ScriptId,
+          url: blockedScriptUrl,
+          lineNumber: 1,
+          columnNumber: 0,
+        }]
+      },
+    });
+    // Entry with no blocked references — should be kept.
+    createRequest(networkManager, frameId, 'clean-entry' as Protocol.Network.RequestId, allowedUrl);
+
+    const result = await context.chrome.devtools!.network.getHAR() as HAR.Log.LogDTO;
+    assert.lengthOf(result.entries, 1);
+    assert.isNull(result.entries[0]._initiator);
+  });
+
+  it('omits getHAR entries with Location, Content-Location, Refresh, or Link headers referencing blocked hosts',
+     async () => {
+       Logs.NetworkLog.NetworkLog.instance();
+       const frameId = 'frame-id' as Protocol.Page.FrameId;
+       const target = createTarget({id: 'target' as Protocol.Target.TargetID});
+       target.setInspectedURL(allowedUrl);
+
+       const networkManager = target.model(SDK.NetworkManager.NetworkManager);
+       assert.exists(networkManager);
+
+       const blockedRedirectUrl = urlString`${`${blockedUrl}/target-page`}`;
+       // Each of these should cause the entry to be omitted.
+       createRequest(networkManager, frameId, 'content-loc' as Protocol.Network.RequestId, allowedUrl,
+                     [{name: 'Content-Location', value: `${blockedRedirectUrl}`}]);
+       createRequest(networkManager, frameId, 'refresh' as Protocol.Network.RequestId, allowedUrl,
+                     [{name: 'Refresh', value: `5; url=${blockedRedirectUrl}`}]);
+       createRequest(networkManager, frameId, 'link' as Protocol.Network.RequestId, allowedUrl,
+                     [{name: 'Link', value: `<${blockedRedirectUrl}>; rel=preload`}]);
+       // This entry references only allowed URLs — should be kept.
+       createRequest(networkManager, frameId, 'clean' as Protocol.Network.RequestId, allowedUrl,
+                     [{name: 'Link', value: `<${allowedUrl}>; rel=stylesheet`}]);
+
+       const result = await context.chrome.devtools!.network.getHAR() as HAR.Log.LogDTO;
+       assert.lengthOf(result.entries, 1);
+       assert.strictEqual(result.entries[0].response.headers.find(h => h.name === 'Link')?.value,
+                          `<${allowedUrl}>; rel=stylesheet`);
+     });
+
+  it('omits onRequestFinished entries that reference blocked hosts in redirectURL or initiator', async () => {
+    const frameId = 'frame-id' as Protocol.Page.FrameId;
+    const target = createTarget({id: 'target' as Protocol.Target.TargetID});
+    target.setInspectedURL(allowedUrl);
+
+    const requests: HAR.Log.EntryDTO[] = [];
+    context.chrome.devtools?.network.onRequestFinished.addListener(r =>
+                                                                       requests.push(r as unknown as HAR.Log.EntryDTO));
+    await waitForFunction(() => PanelCommon.ExtensionServer.ExtensionServer.instance().hasSubscribers(
+                              Extensions.ExtensionAPI.PrivateAPI.Events.NetworkRequestFinished));
+
+    const networkManager = target.model(SDK.NetworkManager.NetworkManager);
+    assert.exists(networkManager);
+
+    const blockedRedirectUrl = urlString`${`${blockedUrl}/redirect-target?code=xyz`}`;
+    const blockedScriptUrl = urlString`${`${blockedUrl}/subframe.js`}`;
+    // Entry redirecting to blocked URL — should be omitted.
+    createRequest(networkManager, frameId, 'redirect-blocked' as Protocol.Network.RequestId, allowedUrl,
+                  [{name: 'Location', value: `${blockedRedirectUrl}`}]);
+    // Entry with blocked initiator — should be omitted.
+    createRequest(networkManager, frameId, 'initiator-blocked' as Protocol.Network.RequestId, allowedUrl, [], {
+      type: Protocol.Network.InitiatorType.Script,
+      url: blockedScriptUrl,
+      stack: {
+        callFrames: [{
+          functionName: 'fn',
+          scriptId: '1' as Protocol.Runtime.ScriptId,
+          url: blockedScriptUrl,
+          lineNumber: 10,
+          columnNumber: 1,
+        }]
+      },
+    });
+    // Clean entry — should be delivered.
+    createRequest(networkManager, frameId, 'clean-entry' as Protocol.Network.RequestId, allowedUrl);
+
+    await waitForFunction(() => requests.length >= 1);
+    // Give a tick for any additional events to arrive.
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    assert.lengthOf(requests, 1);
+    assert.strictEqual(requests[0].request.url, allowedUrl);
+    assert.strictEqual(requests[0].response.redirectURL, '');
   });
 
   it('does not include requests from blocked targets in onRequestFinished event listener even if request URL is allowed',
