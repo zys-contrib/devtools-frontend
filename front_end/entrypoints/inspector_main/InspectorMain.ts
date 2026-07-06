@@ -207,12 +207,11 @@ export class NodeIndicator extends UI.Widget.Widget {
   }
 }
 
-let nodeIndicatorProviderInstance: NodeIndicatorProvider;
 export class NodeIndicatorProvider implements UI.Toolbar.Provider {
   #toolbarItem: UI.Toolbar.ToolbarItem;
   #widgetElement: UI.Widget.WidgetElement<NodeIndicator>;
 
-  private constructor() {
+  constructor() {
     this.#widgetElement = document.createElement('devtools-widget') as UI.Widget.WidgetElement<NodeIndicator>;
     new NodeIndicator(this.#widgetElement);
 
@@ -222,15 +221,6 @@ export class NodeIndicatorProvider implements UI.Toolbar.Provider {
 
   item(): UI.Toolbar.ToolbarItem|null {
     return this.#toolbarItem;
-  }
-
-  static instance(opts: {forceNew: boolean|null} = {forceNew: null}): NodeIndicatorProvider {
-    const {forceNew} = opts;
-    if (!nodeIndicatorProviderInstance || forceNew) {
-      nodeIndicatorProviderInstance = new NodeIndicatorProvider();
-    }
-
-    return nodeIndicatorProviderInstance;
   }
 }
 
