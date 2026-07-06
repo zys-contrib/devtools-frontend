@@ -133,14 +133,13 @@ const CONNECTION_TYPES = new Map([
  * to in multiple places, and this ensures we don't have accidental typos which
  * mean extra settings get mistakenly created.
  */
-export function customUserNetworkConditionsSetting(
-    settings: Common.Settings.Settings = Common.Settings.Settings.instance()): Common.Settings.Setting<Conditions[]> {
+export function customUserNetworkConditionsSetting(settings: Common.Settings.Settings):
+    Common.Settings.Setting<Conditions[]> {
   return settings.moduleSetting<Conditions[]>('custom-network-conditions');
 }
 
-export function activeNetworkThrottlingKeySetting(
-    settings: Common.Settings.Settings =
-        Common.Settings.Settings.instance()): Common.Settings.Setting<ThrottlingConditionKey> {
+export function activeNetworkThrottlingKeySetting(settings: Common.Settings.Settings):
+    Common.Settings.Setting<ThrottlingConditionKey> {
   return settings.createSetting('active-network-condition-key', PredefinedThrottlingConditionKey.NO_THROTTLING);
 }
 
