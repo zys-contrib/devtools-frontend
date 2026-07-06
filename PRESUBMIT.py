@@ -365,7 +365,7 @@ def CheckObsoleteScreenshotGoldens(input_api, output_api):
 _UPDATE_NODE_DEPENDENCIES_FOOTER = 'Update-Node-Dependencies'
 
 def CheckNodeModules(input_api, output_api):
-    files = ['.clang-format', 'OWNERS', 'README.chromium']
+    files = ['.clang-format', 'OWNERS', 'README.md']
     results = []
     for file in files:
         file_path = input_api.os_path.join(input_api.PresubmitLocalPath(),
