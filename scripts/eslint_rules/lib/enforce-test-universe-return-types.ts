@@ -17,6 +17,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Common.Console.Console',
   'Common.Settings.Settings',
   'CrUXManager.CrUXManager',
+  'Emulation.DeviceModeModel.DeviceModeModel',
   'Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding',
   'Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding',
   'Bindings.ResourceMapping.ResourceMapping',
