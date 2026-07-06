@@ -259,4 +259,5 @@ describeWithEnvironment('emulatedDevices', () => {
     const json = device?.toJSON();
     assert.deepEqual(json.modes[0].cutout, {shape: 'rectangle', x: 126, y: 0, width: 141, height: 45});
   });
+
 });
