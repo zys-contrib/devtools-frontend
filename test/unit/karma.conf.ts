@@ -131,6 +131,7 @@ const CustomChrome = function(this: any, _baseBrowserDecorator: unknown, args: B
       '--disable-gpu',
       '--disable-font-subpixel-positioning',
       '--disable-lcd-text',
+      '--force-color-profile=srgb',
       '--disable-device-discovery-notifications',
       '--window-size=1280,768',
       '--enable-crash-reporter-for-testing',  // Works only on linux

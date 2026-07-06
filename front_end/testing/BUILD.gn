@@ -98,6 +98,7 @@ ts_library("testing") {
     "../panels/network:bundle",
     "../panels/timeline:bundle",
     "../services/trace_bounds:bundle",
+    "../third_party/chromium/ahem",
     "../third_party/codemirror.next:bundle",
     "../ui/components/buttons:bundle",
     "../ui/components/node_text:bundle",

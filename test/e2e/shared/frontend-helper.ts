@@ -562,7 +562,7 @@ async function setDockingSide(devToolsPage: DevToolsPage, side: string) {
 
 async function setupTestFonts(devToolsPage: DevToolsPage) {
   await devToolsPage.evaluate(async () => {
-    document.documentElement.classList.add('platform-screenshot-test');
+    document.documentElement.classList.add('platform-screenshot-e2e-test');
 
     await new Promise((resolve, reject) => {
       const timer = window.setTimeout(
