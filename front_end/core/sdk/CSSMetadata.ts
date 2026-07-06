@@ -1518,6 +1518,17 @@ const extraPropertyValues = new Map<string, Set<string>>([
     ]),
   ],
   [
+    'text-wrap',
+    new Set([
+      'auto',
+      'wrap',
+      'nowrap',
+      'balance',
+      'pretty',
+      'stable',
+    ]),
+  ],
+  [
     'corner-shape',
     new Set([
       'round',

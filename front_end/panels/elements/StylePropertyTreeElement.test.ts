@@ -2301,6 +2301,29 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
         'unset',
       ]);
     });
+
+    it('includes text-wrap keyword suggestions', async () => {
+      setParentComputedStyle({});
+      const stylePropertyTreeElement = getTreeElement('text-wrap', '');
+      await stylePropertyTreeElement.onpopulate();
+      stylePropertyTreeElement.updateTitle();
+      stylePropertyTreeElement.startEditingValue();
+      const autocompletions = await suggestions();
+      assert.deepEqual(autocompletions.map(({text}) => text), [
+        'auto',
+        'balance',
+        'nowrap',
+        'pretty',
+        'stable',
+        'wrap',
+        'inherit',
+        'initial',
+        'revert',
+        'revert-layer',
+        'revert-rule',
+        'unset',
+      ]);
+    });
   });
 
   it('reopens open tooltips on updates', async () => {
