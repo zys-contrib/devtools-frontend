@@ -38,6 +38,7 @@ export interface LayoutProperties {
   isGrid: boolean;
   isSubgrid: boolean;
   isGridLanes: boolean;
+  isContents?: boolean;
   containerType?: string;
   hasScroll: boolean;
 }
@@ -392,6 +393,7 @@ export class CSSModel extends SDKModel<EventTypes> {
     }
 
     const display = styles.get('display');
+    const isContents = display === 'contents';
     const isFlex = display === 'flex' || display === 'inline-flex';
     const isGrid = display === 'grid' || display === 'inline-grid';
     const isSubgrid = (isGrid &&
@@ -408,6 +410,7 @@ export class CSSModel extends SDKModel<EventTypes> {
       isGrid,
       isSubgrid,
       isGridLanes,
+      isContents,
       containerType: isContainer ? containerType : undefined,
       hasScroll,
     };

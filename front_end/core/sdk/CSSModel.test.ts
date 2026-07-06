@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
 
 import * as ProtocolClient from '../../core/protocol_client/protocol_client.js';
 import * as Protocol from '../../generated/protocol.js';
@@ -134,6 +135,18 @@ describe('CSSModel', () => {
       const cssModel = target.model(SDK.CSSModel.CSSModel)!;
 
       assert.isNull(await cssModel.getStyleSheetText('id' as Protocol.DOM.StyleSheetId));
+    });
+  });
+
+  describe('getLayoutPropertiesFromComputedStyle', () => {
+    it('correctly identifies display: contents', async () => {
+      const target = universe.createTarget();
+      const cssModel = target.model(SDK.CSSModel.CSSModel)!;
+      sinon.stub(cssModel, 'getComputedStyle').resolves(new Map([['display', 'contents']]));
+
+      const layoutProperties = await cssModel.getLayoutPropertiesFromComputedStyle(1 as Protocol.DOM.NodeId);
+      assert.isNotNull(layoutProperties);
+      assert.isTrue(layoutProperties?.isContents);
     });
   });
 });

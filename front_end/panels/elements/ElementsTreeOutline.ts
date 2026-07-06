@@ -1387,8 +1387,9 @@ export class ElementsTreeOutline extends
 
   private highlightTreeElement(element: UI.TreeOutline.TreeElement, showInfo: boolean): void {
     if (element instanceof ElementsTreeElement) {
-      element.node().domModel().overlayModel().highlightInOverlay(
-          {node: element.node(), selectorList: undefined}, 'all', showInfo);
+      const selectorList = element.isDisplayContents() ? '*' : undefined;
+      element.node().domModel().overlayModel().highlightInOverlay({node: element.node(), selectorList}, 'all',
+                                                                  showInfo);
       return;
     }
 

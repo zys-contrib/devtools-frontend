@@ -1549,6 +1549,10 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
     return !isOpeningTag(this.tagTypeContext);
   }
 
+  isDisplayContents(): boolean {
+    return Boolean(this.#layout?.isContents);
+  }
+
   node(): SDK.DOMModel.DOMNode {
     return this.nodeInternal;
   }
