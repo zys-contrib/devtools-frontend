@@ -564,6 +564,7 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
       return;
     }
     this.requests = new Map();
+    this.clearExtensionHeaders(event.data.inspectedURL());
     this.enableExtensions();
     const url = event.data.inspectedURL();
     this.postNotification(Extensions.ExtensionAPI.PrivateAPI.Events.InspectedURLChanged, [url]);
@@ -665,16 +666,7 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     for (const name in message.headers) {
       extensionHeaders.set(name, message.headers[name]);
     }
-    const allHeaders = ({} as Protocol.Network.Headers);
-    for (const headers of this.extraHeaders.values()) {
-      for (const [name, value] of headers) {
-        if (name !== '__proto__' && typeof value === 'string') {
-          allHeaders[name] = value;
-        }
-      }
-    }
-
-    SDK.NetworkManager.MultitargetNetworkManager.instance().setExtraHTTPHeaders(allHeaders);
+    this.syncExtraHeaders();
     return undefined;
   }
 
@@ -1787,10 +1779,55 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
 
   private disableExtensions(): void {
     this.extensionsEnabled = false;
+    this.clearExtensionHeaders();
   }
 
   private enableExtensions(): void {
     this.extensionsEnabled = true;
+  }
+
+  /**
+   * Clear extension-injected HTTP headers that should not persist after
+   * navigation to a disallowed URL. Optionally pass the new inspected URL
+   * to selectively clear only headers from extensions not allowed on that URL;
+   * when omitted, all extension headers are cleared unconditionally.
+   */
+  private clearExtensionHeaders(inspectedURL?: Platform.DevToolsPath.UrlString): void {
+    if (this.extraHeaders.size === 0) {
+      return;
+    }
+    let cleared = false;
+    if (inspectedURL) {
+      for (const id of this.extraHeaders.keys()) {
+        const extension = this.registeredExtensions.get(id);
+        if (!extension || !extension.isAllowedOnTarget(inspectedURL)) {
+          this.extraHeaders.delete(id);
+          cleared = true;
+        }
+      }
+    } else {
+      this.extraHeaders.clear();
+      cleared = true;
+    }
+    if (cleared) {
+      this.syncExtraHeaders();
+    }
+  }
+
+  /**
+   * Collect all extension-injected headers into a single object and push
+   * them to the network layer.
+   */
+  private syncExtraHeaders(): void {
+    const allHeaders: Protocol.Network.Headers = Object.create(null);
+    for (const headers of this.extraHeaders.values()) {
+      for (const [name, value] of headers) {
+        if (typeof value === 'string') {
+          allHeaders[name] = value;
+        }
+      }
+    }
+    SDK.NetworkManager.MultitargetNetworkManager.instance().setExtraHTTPHeaders(allHeaders);
   }
 }
 

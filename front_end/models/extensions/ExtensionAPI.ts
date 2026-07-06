@@ -374,6 +374,10 @@ export namespace PrivateAPI {
   }
 
   export type RecorderExtensionRequests = StringifyRequest|StringifyStepRequest|ReplayRequest;
+
+  export interface Network extends PublicAPI.Chrome.DevTools.Network {
+    addRequestHeaders(headers: Record<string, string>): void;
+  }
 }
 
 declare global {
@@ -436,10 +440,6 @@ namespace APIImpl {
 
     _fire(..._vararg: Parameters<ListenerT>): void;
     _dispatch(request: {arguments: unknown[]}): void;
-  }
-
-  export interface Network extends PublicAPI.Chrome.DevTools.Network {
-    addRequestHeaders(headers: Record<string, string>): void;
   }
 
   export interface Request extends PublicAPI.Chrome.DevTools.Request, HAR.Log.EntryDTO {
@@ -589,7 +589,7 @@ self.injectedExtensionAPI = function(
     defineDeprecatedProperty(this, 'webInspector', 'resources', 'network');
   }
 
-  function Network(this: APIImpl.Network): void {
+  function Network(this: PrivateAPI.Network): void {
     function dispatchRequestEvent(
         this: APIImpl.EventSink<(request: PublicAPI.Chrome.DevTools.Request) => unknown>,
         message: {arguments: unknown[]}): void {
@@ -606,7 +606,7 @@ self.injectedExtensionAPI = function(
     this.onNavigated = new (Constructor(EventSink))(PrivateAPI.Events.InspectedURLChanged);
   }
 
-  (Network.prototype as Pick<APIImpl.Network, 'getHAR'|'addRequestHeaders'>) = {
+  (Network.prototype as Pick<PrivateAPI.Network, 'getHAR'|'addRequestHeaders'>) = {
     getHAR: function(this: PublicAPI.Chrome.DevTools.Network, _callback?: (harLog: object) => unknown): Promise<object>|
         void {
           const {callback: callbackArg, promise, resolve, reject} = callbackOrPromise<object>(arguments);

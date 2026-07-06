@@ -76,8 +76,7 @@ describe('Extensions', () => {
 
     const headersCall = spyCall(SDK.NetworkManager.MultitargetNetworkManager.instance(), 'setExtraHTTPHeaders');
 
-    const networkApi =
-        context.chrome.devtools?.network as unknown as {addRequestHeaders(headers: Record<string, string>): void};
+    const networkApi = context.chrome.devtools?.network as Extensions.ExtensionAPI.PrivateAPI.Network;
     networkApi.addRequestHeaders({'X-Test': 'v'});
 
     const {args} = await headersCall;
@@ -1294,14 +1293,85 @@ describe('Runtime hosts policy', () => {
 
     const setHeadersSpy = sinon.spy(SDK.NetworkManager.MultitargetNetworkManager.instance(), 'setExtraHTTPHeaders');
 
-    const networkApi =
-        context.chrome.devtools?.network as unknown as {addRequestHeaders(headers: Record<string, string>): void};
+    const networkApi = context.chrome.devtools?.network as Extensions.ExtensionAPI.PrivateAPI.Network;
     networkApi.addRequestHeaders({'X-Test': '1'});
-    // Round-trip a callback command on the same MessagePort to ensure the
+    // Round-trip a command on the same MessagePort to ensure the
     // addRequestHeaders message has been processed before we assert.
     await context.chrome.devtools!.network.getHAR();
 
     sinon.assert.notCalled(setHeadersSpy);
+  });
+});
+
+describe('addRequestHeaders security', () => {
+  const context = setupDevtoolsExtensionHooks();
+  // Helper: sets headers on a permitted page, navigates to the given URL, then
+  // manually triggers modelAdded on a new target and verifies that the injected
+  // headers are NOT applied via CDP.
+  async function assertHeadersNotAppliedAfterNavigation(
+      navigateToUrl: Platform.DevToolsPath.UrlString,
+      injectedHeaders: Record<string, string>,
+      ): Promise<void> {
+    const target = createTarget({type: SDK.Target.Type.FRAME});
+    target.setInspectedURL(urlString`http://example.com`);
+    assert.exists(context.chrome.devtools);
+
+    const multitargetManager = SDK.NetworkManager.MultitargetNetworkManager.instance();
+
+    // Set headers while on a permitted page.
+    const networkApi = context.chrome.devtools?.network as Extensions.ExtensionAPI.PrivateAPI.Network;
+    networkApi.addRequestHeaders(injectedHeaders);
+    await context.chrome.devtools?.network.getHAR(() => {});
+
+    // Navigate to a URL where the extension should NOT have access.
+    target.setInspectedURL(navigateToUrl);
+
+    // Simulate a new target attaching (e.g., OOPIF or service worker).
+    // Set up the spy before manually calling modelAdded so we capture exactly
+    // what headers get pushed via CDP.
+    const newTarget = createTarget({type: SDK.Target.Type.FRAME, parentTarget: target});
+    const networkAgent = newTarget.networkAgent();
+    const cdpSpy = sinon.spy(networkAgent, 'invoke_setExtraHTTPHeaders');
+    const networkManager = newTarget.model(SDK.NetworkManager.NetworkManager);
+    assert.exists(cdpSpy);
+    assert.exists(networkManager);
+    assert.exists(multitargetManager);
+    multitargetManager.modelAdded(networkManager);
+
+    // Confirm invoke_setExtraHTTPHeaders was called by modelAdded.
+    sinon.assert.called(cdpSpy);
+    const appliedHeaders = cdpSpy.lastCall.args[0].headers;
+    for (const key of Object.keys(injectedHeaders)) {
+      assert.notProperty(appliedHeaders, key,
+                         `Header "${key}" was applied to a target on ${navigateToUrl} — ` +
+                             `extension-set headers persisted across navigation to a disallowed URL`);
+    }
+  }
+
+  it('extension-injected headers must not leak to chrome:// targets after navigation', async () => {
+    await assertHeadersNotAppliedAfterNavigation(
+        urlString`chrome://settings`,
+        {Cookie: 'session=attacker', 'X-CSRF-Token': 'injected'},
+    );
+  });
+
+  it('extension-injected headers must not leak to forbidden-origin targets after navigation', async () => {
+    // Simulate getOriginsForbiddenForExtensions returning a forbidden origin.
+    window.DevToolsAPI = {
+      getOriginsForbiddenForExtensions: () => ['https://addons.example.com'],
+    };
+
+    await assertHeadersNotAppliedAfterNavigation(
+        urlString`https://addons.example.com/extensions`,
+        {Authorization: 'Bearer attacker'},
+    );
+  });
+
+  it('extension-injected headers must not leak to file:// targets without file access', async () => {
+    await assertHeadersNotAppliedAfterNavigation(
+        urlString`file:///etc/passwd`,
+        {'X-Injected': 'value'},
+    );
   });
 });
 
