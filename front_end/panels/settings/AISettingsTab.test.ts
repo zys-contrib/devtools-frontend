@@ -66,10 +66,10 @@ describeWithEnvironment('AISettingsTab', () => {
   }
 
   it('renders disclaimers and settings', async () => {
-    Common.Settings.moduleSetting('console-insights-enabled').set(true);
-    Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
-    Common.Settings.moduleSetting('ai-annotations-enabled').set(true);
-    Common.Settings.moduleSetting('ai-code-completion-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-annotations-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-code-completion-enabled').set(true);
 
     const {view} = await setupWidget();
 
@@ -93,10 +93,10 @@ describeWithEnvironment('AISettingsTab', () => {
   });
 
   it('has different dislaimers for managed users which have logging disabled', async () => {
-    Common.Settings.moduleSetting('console-insights-enabled').set(true);
-    Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
-    Common.Settings.moduleSetting('ai-annotations-enabled').set(true);
-    Common.Settings.moduleSetting('ai-code-completion-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-annotations-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-code-completion-enabled').set(true);
     updateHostConfig({
       aidaAvailability: {
         enabled: true,
@@ -122,8 +122,8 @@ describeWithEnvironment('AISettingsTab', () => {
   });
 
   it('has explain this resource enabled', async () => {
-    Common.Settings.moduleSetting('console-insights-enabled').set(true);
-    Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
     mockHostConfigWithExplainThisResourceEnabled();
 
     const {view} = await setupWidget();
@@ -139,39 +139,39 @@ describeWithEnvironment('AISettingsTab', () => {
   });
 
   it('can turn feature on, which automatically expands it', async () => {
-    Common.Settings.moduleSetting('console-insights-enabled').set(false);
+    Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').set(false);
     const {view} = await setupWidget();
 
-    assert.isFalse(Common.Settings.moduleSetting('console-insights-enabled').get());
+    assert.isFalse(Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').get());
     const setting = view.input.settingToParams.entries().next();
     assert.exists(setting.value);
     assert.isFalse(setting.value[1].settingExpandState.isSettingExpanded);
 
     view.input.toggleSetting(setting.value[0], new Switch.Switch.SwitchChangeEvent(true));
-    assert.isTrue(Common.Settings.moduleSetting('console-insights-enabled').get());
+    assert.isTrue(Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').get());
     assert.isTrue(setting.value[1].settingExpandState.isSettingExpanded);
   });
 
   it('can expand and collapse details via click', async () => {
-    Common.Settings.moduleSetting('console-insights-enabled').set(false);
+    Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').set(false);
     const {view} = await setupWidget();
 
     const setting = view.input.settingToParams.entries().next();
     assert.exists(setting.value);
     assert.isFalse(setting.value[1].settingExpandState.isSettingExpanded);
-    assert.isFalse(Common.Settings.moduleSetting('console-insights-enabled').get());
+    assert.isFalse(Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').get());
 
     view.input.expandSetting(setting.value[0]);
-    assert.isFalse(Common.Settings.moduleSetting('console-insights-enabled').get());
+    assert.isFalse(Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').get());
     assert.isTrue(setting.value[1].settingExpandState.isSettingExpanded);
 
     view.input.expandSetting(setting.value[0]);
-    assert.isFalse(Common.Settings.moduleSetting('console-insights-enabled').get());
+    assert.isFalse(Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').get());
     assert.isFalse(setting.value[1].settingExpandState.isSettingExpanded);
   });
 
   it('can turn feature off without collapsing it', async () => {
-    Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
     const {view} = await setupWidget();
 
     const settingToParams = view.input.settingToParams.entries();
@@ -180,11 +180,11 @@ describeWithEnvironment('AISettingsTab', () => {
     assert.exists(setting.value);
 
     view.input.expandSetting(setting.value[0]);
-    assert.isTrue(Common.Settings.moduleSetting('ai-assistance-enabled').get());
+    assert.isTrue(Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').get());
     assert.isTrue(setting.value[1].settingExpandState.isSettingExpanded);
 
     view.input.toggleSetting(setting.value[0], new MouseEvent('click'));
-    assert.isFalse(Common.Settings.moduleSetting('ai-assistance-enabled').get());
+    assert.isFalse(Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').get());
     assert.isTrue(setting.value[1].settingExpandState.isSettingExpanded);
   });
 
@@ -224,7 +224,7 @@ describeWithEnvironment('AISettingsTab', () => {
   });
 
   it('updates disabled reason', async () => {
-    Common.Settings.moduleSetting('console-insights-enabled').setRegistration({
+    Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').setRegistration({
       settingName: 'console-insights-enabled',
       settingType: Common.Settings.SettingType.BOOLEAN,
       defaultValue: false,
@@ -232,7 +232,7 @@ describeWithEnvironment('AISettingsTab', () => {
         return {disabled: true, reasons: ['some reason' as Platform.UIString.LocalizedString]};
       },
     });
-    Common.Settings.moduleSetting('ai-assistance-enabled').setRegistration({
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').setRegistration({
       settingName: 'ai-assistance-enabled',
       settingType: Common.Settings.SettingType.BOOLEAN,
       defaultValue: true,
@@ -247,8 +247,8 @@ describeWithEnvironment('AISettingsTab', () => {
   });
 
   it('can turn feature off and clear history', async () => {
-    Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
-    Common.Settings.moduleSetting('ai-assistance-history-entries').set([{}, {}]);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-history-entries').set([{}, {}]);
     const {view} = await setupWidget();
 
     const settingToParams = view.input.settingToParams.entries();
@@ -257,7 +257,7 @@ describeWithEnvironment('AISettingsTab', () => {
     assert.exists(setting.value);
 
     view.input.toggleSetting(setting.value[0], new MouseEvent('click'));
-    assert.isFalse(Common.Settings.moduleSetting('ai-assistance-enabled').get());
+    assert.isFalse(Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').get());
     assert.isTrue(
         deleteAiAssistanceHistoryStub.called, 'Expected AiHistoryStorage deleteAll to be called but it is not called');
   });
@@ -268,7 +268,7 @@ describeWithEnvironment('AISettingsTab', () => {
         enabled: true,
       },
     });
-    Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
 
     const {view} = await setupWidget();
 
@@ -296,7 +296,7 @@ describeWithEnvironment('AISettingsTab', () => {
         enterprisePolicyValue: 1,  // ALLOW_WITHOUT_LOGGING
       },
     });
-    Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
 
     const {view} = await setupWidget();
 
@@ -314,7 +314,7 @@ describeWithEnvironment('AISettingsTab', () => {
         enabled: false,
       },
     });
-    Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
 
     const {view} = await setupWidget();
 
@@ -330,9 +330,10 @@ describeWithEnvironment('AISettingsTab', () => {
         enabled: true,
       },
     });
-    const aiAssistanceEnabledSetting = Common.Settings.moduleSetting('ai-assistance-enabled');
+    const aiAssistanceEnabledSetting = Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled');
     aiAssistanceEnabledSetting.set(false);
-    const v2OptInSeenSetting = Common.Settings.moduleSetting('ai-assistance-v2-opt-in-change-dialog-seen');
+    const v2OptInSeenSetting =
+        Common.Settings.Settings.instance().moduleSetting('ai-assistance-v2-opt-in-change-dialog-seen');
     v2OptInSeenSetting.set(false);
 
     const {view} = await setupWidget();
@@ -353,9 +354,10 @@ describeWithEnvironment('AISettingsTab', () => {
         enabled: false,
       },
     });
-    const aiAssistanceEnabledSetting = Common.Settings.moduleSetting('ai-assistance-enabled');
+    const aiAssistanceEnabledSetting = Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled');
     aiAssistanceEnabledSetting.set(false);
-    const v2OptInSeenSetting = Common.Settings.moduleSetting('ai-assistance-v2-opt-in-change-dialog-seen');
+    const v2OptInSeenSetting =
+        Common.Settings.Settings.instance().moduleSetting('ai-assistance-v2-opt-in-change-dialog-seen');
     v2OptInSeenSetting.set(false);
 
     const {view} = await setupWidget();

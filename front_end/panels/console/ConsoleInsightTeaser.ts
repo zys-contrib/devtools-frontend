@@ -437,7 +437,8 @@ export class ConsoleInsightTeaser extends UI.Widget.Widget {
 
   #getConsoleInsightsEnabledSetting(): Common.Settings.Setting<boolean>|undefined {
     try {
-      return Common.Settings.moduleSetting('console-insights-enabled') as Common.Settings.Setting<boolean>;
+      return Common.Settings.Settings.instance().moduleSetting('console-insights-enabled') as
+          Common.Settings.Setting<boolean>;
     } catch {
       return;
     }

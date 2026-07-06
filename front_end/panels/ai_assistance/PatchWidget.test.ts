@@ -32,7 +32,7 @@ import * as AiAssistance from './ai_assistance.js';
 describeWithEnvironment('PatchWidget', () => {
   let showFreDialogStub: sinon.SinonStub<Parameters<typeof PanelCommon.FreDialog.show>, Promise<boolean>>;
   beforeEach(() => {
-    Common.Settings.moduleSetting('ai-assistance-patching-fre-completed').set(true);
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-patching-fre-completed').set(true);
     showFreDialogStub = sinon.stub(PanelCommon.FreDialog, 'show');
 
     initializePersistenceImplForTests();
@@ -58,7 +58,7 @@ describeWithEnvironment('PatchWidget', () => {
     describe('enterprise text cases', () => {
       it('should FRE text include no logging case when the enterprise policy value is ALLOW_WITHOUT_LOGGING',
          async () => {
-           Common.Settings.moduleSetting('ai-assistance-patching-fre-completed').set(false);
+           Common.Settings.Settings.instance().moduleSetting('ai-assistance-patching-fre-completed').set(false);
            updateHostConfig({
              devToolsFreestyler: {
                enabled: true,
@@ -79,7 +79,7 @@ describeWithEnvironment('PatchWidget', () => {
 
       it('should FRE text not include no logging case when the enterprise policy value is ALLOW_WITHOUT_LOGGING',
          async () => {
-           Common.Settings.moduleSetting('ai-assistance-patching-fre-completed').set(false);
+           Common.Settings.Settings.instance().moduleSetting('ai-assistance-patching-fre-completed').set(false);
            updateHostConfig({
              devToolsFreestyler: {
                enabled: true,
@@ -100,7 +100,7 @@ describeWithEnvironment('PatchWidget', () => {
 
       it('should tooltip text include no logging case when the enterprise policy value is ALLOW_WITHOUT_LOGGING',
          async () => {
-           Common.Settings.moduleSetting('ai-assistance-patching-fre-completed').set(false);
+           Common.Settings.Settings.instance().moduleSetting('ai-assistance-patching-fre-completed').set(false);
            updateHostConfig({
              devToolsFreestyler: {
                enabled: true,
@@ -115,7 +115,7 @@ describeWithEnvironment('PatchWidget', () => {
          });
 
       it('should tooltip text not include no logging case when the enterprise policy value is ALLOW', async () => {
-        Common.Settings.moduleSetting('ai-assistance-patching-fre-completed').set(false);
+        Common.Settings.Settings.instance().moduleSetting('ai-assistance-patching-fre-completed').set(false);
         updateHostConfig({
           devToolsFreestyler: {
             enabled: true,
@@ -131,7 +131,7 @@ describeWithEnvironment('PatchWidget', () => {
     });
 
     it('should show FRE dialog on applyToWorkspace click if the setting is false', async () => {
-      Common.Settings.moduleSetting('ai-assistance-patching-fre-completed').set(false);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-patching-fre-completed').set(false);
       const {view, widget} = await createPatchWidget();
       widget.changeSummary = 'body { background-color: red; }';
 
@@ -141,7 +141,7 @@ describeWithEnvironment('PatchWidget', () => {
     });
 
     it('should not show FRE dialog on applyToWorkspace click if the setting is true', async () => {
-      Common.Settings.moduleSetting('ai-assistance-patching-fre-completed').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-patching-fre-completed').set(true);
       const {view, widget} = await createPatchWidget();
       widget.changeSummary = 'body { background-color: red; }';
 

@@ -92,7 +92,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
 
   it('clears visible sites and dispatches CLEAR_VISIBLE_SITES event if preserving log', () => {
     // Not cleared when preserving the log.
-    Common.Settings.moduleSetting('device-bound-sessions-preserve-log').set(true);
+    Common.Settings.Settings.instance().moduleSetting('device-bound-sessions-preserve-log').set(true);
     model.addVisibleSite('example.com');
     assert.isTrue(model.isSiteVisible('example.com'));
     const listener = sinon.spy();
@@ -103,7 +103,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
     sinon.assert.notCalled(listener);
 
     // Cleared when not preserving the log.
-    Common.Settings.moduleSetting('device-bound-sessions-preserve-log').set(false);
+    Common.Settings.Settings.instance().moduleSetting('device-bound-sessions-preserve-log').set(false);
     assert.isTrue(model.isSiteVisible('example.com'));
     model.clearVisibleSites();
     assert.isFalse(model.isSiteVisible('example.com'));
@@ -162,7 +162,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
     model.addEventListener(Application.DeviceBoundSessionsModel.DeviceBoundSessionModelEvents.CLEAR_EVENTS, listener);
 
     // Events are not cleared when preserving the log.
-    Common.Settings.moduleSetting('device-bound-sessions-preserve-log').set(true);
+    Common.Settings.Settings.instance().moduleSetting('device-bound-sessions-preserve-log').set(true);
     model.clearEvents();
     sinon.assert.notCalled(listener);
     assert.exists(model.getSession(site, undefined));
@@ -175,7 +175,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
     assert.strictEqual(session4.eventsById.size, 1);
 
     // Events are cleared when not preserving the log.
-    Common.Settings.moduleSetting('device-bound-sessions-preserve-log').set(false);
+    Common.Settings.Settings.instance().moduleSetting('device-bound-sessions-preserve-log').set(false);
     model.clearEvents();
     sinon.assert.calledOnce(listener);
     assert.isUndefined(model.getSession(site, undefined));
@@ -425,14 +425,14 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
     model.addEventListener(Application.DeviceBoundSessionsModel.DeviceBoundSessionModelEvents.CLEAR_EVENTS, listener);
 
     // Errors are not cleared when clearEvents is called when preserving the log.
-    Common.Settings.moduleSetting('device-bound-sessions-preserve-log').set(true);
+    Common.Settings.Settings.instance().moduleSetting('device-bound-sessions-preserve-log').set(true);
     model.clearEvents();
     sinon.assert.notCalled(listener);
     assert.isTrue(model.sessionHasErrors(site, sessionId));
     assert.isTrue(session?.hasErrors);
 
     // Errors are cleared when clearEvents is called when not preserving the log.
-    Common.Settings.moduleSetting('device-bound-sessions-preserve-log').set(false);
+    Common.Settings.Settings.instance().moduleSetting('device-bound-sessions-preserve-log').set(false);
     model.clearEvents();
     sinon.assert.calledOnce(listener);
     const noLongerFailedSessions = listener.firstCall.args[0].data.noLongerFailedSessions;

@@ -950,7 +950,8 @@ export class AiAssistancePanel extends UI.Panel.Panel {
 
   #getAiAssistanceEnabledSetting(): Common.Settings.Setting<boolean>|undefined {
     try {
-      return Common.Settings.moduleSetting('ai-assistance-enabled') as Common.Settings.Setting<boolean>;
+      return Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled') as
+          Common.Settings.Setting<boolean>;
     } catch {
       return;
     }

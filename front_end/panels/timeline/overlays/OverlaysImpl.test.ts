@@ -499,7 +499,7 @@ describeWithEnvironment('Overlays', () => {
              enabled: true,
            },
          });
-         Common.Settings.moduleSetting('ai-annotations-enabled').set(false);
+         Common.Settings.Settings.instance().moduleSetting('ai-annotations-enabled').set(false);
          const {elementsWrapper, inputField} = await createAnnotationsLabelElement(this, 'web-dev.json.gz', 50);
 
          // Double click on the label box to make it editable and focus on it
@@ -536,7 +536,7 @@ describeWithEnvironment('Overlays', () => {
              enabled: true,
            },
          });
-         Common.Settings.moduleSetting('ai-annotations-enabled').set(true);
+         Common.Settings.Settings.instance().moduleSetting('ai-annotations-enabled').set(true);
          const {elementsWrapper, inputField} = await createAnnotationsLabelElement(this, 'web-dev.json.gz', 50);
 
          // Double click on the label box to make it editable and focus on it
@@ -605,7 +605,7 @@ describeWithEnvironment('Overlays', () => {
       });
 
       const {elementsWrapper, inputField, component} = await createAnnotationsLabelElement(this, 'web-dev.json.gz', 50);
-      Common.Settings.moduleSetting('ai-annotations-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-annotations-enabled').set(true);
 
       const generateButton = elementsWrapper.querySelector<HTMLElement>('.ai-label-button');
       assert.isOk(generateButton, 'could not find "Generate label" button');

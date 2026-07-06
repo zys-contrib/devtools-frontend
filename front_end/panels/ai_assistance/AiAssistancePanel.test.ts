@@ -55,8 +55,8 @@ describeWithEnvironment('AI Assistance Panel', () => {
   async function enableAllFeatureAndSetting() {
     viewManagerIsViewVisibleStub.callsFake(viewName => viewName === 'elements');
     await createNetworkPanelForMockConnection();
-    Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
-    Common.Settings
+    Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
+    Common.Settings.Settings.instance()
         .moduleSetting(
             'ai-assistance-v2-opt-in-change-dialog-seen',
             )
@@ -154,27 +154,27 @@ describeWithEnvironment('AI Assistance Panel', () => {
     it('should switch from disabled view to empty state when enabling setting', async () => {
       const {view} = await createAiAssistancePanel();
       assert(view.input.state === AiAssistancePanel.ViewState.DISABLED_VIEW);
-      Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
       const nextInput = await view.nextInput;
       assert(nextInput.state === AiAssistancePanel.ViewState.EXPLORE_VIEW);
     });
 
     it('should render empty state when the consent is given before', async () => {
-      Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
       const {view} = await createAiAssistancePanel();
       assert(view.input.state === AiAssistancePanel.ViewState.EXPLORE_VIEW);
     });
 
     it('should render the disabled view when the setting is disabled', async () => {
-      Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
-      Common.Settings.moduleSetting('ai-assistance-enabled').setDisabled(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').setDisabled(true);
       const {view} = await createAiAssistancePanel();
       assert(view.input.state === AiAssistancePanel.ViewState.DISABLED_VIEW);
-      Common.Settings.moduleSetting('ai-assistance-enabled').setDisabled(false);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').setDisabled(false);
     });
 
     it('should render the disabled view when blocked by age', async () => {
-      Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
       updateHostConfig({
         aidaAvailability: {
           blockedByAge: true,
@@ -188,7 +188,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
     });
 
     it('updates when the user logs in', async () => {
-      Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
 
       const {view, stubAidaCheckAccessPreconditions} = await createAiAssistancePanel({
         aidaAvailability: Host.AidaClient.AidaAccessPreconditions.NO_ACCOUNT_EMAIL,
@@ -760,7 +760,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
       });
       UI.Context.Context.instance().setFlavor(SDK.DOMModel.DOMNode, node);
 
-      Common.Settings
+      Common.Settings.Settings.instance()
           .moduleSetting(
               'ai-assistance-v2-opt-in-change-dialog-seen',
               )
@@ -786,7 +786,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
       });
       UI.Context.Context.instance().setFlavor(SDK.DOMModel.DOMNode, node);
 
-      Common.Settings
+      Common.Settings.Settings.instance()
           .moduleSetting(
               'ai-assistance-v2-opt-in-change-dialog-seen',
               )
@@ -826,7 +826,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
       });
       UI.Context.Context.instance().setFlavor(SDK.DOMModel.DOMNode, node);
 
-      Common.Settings
+      Common.Settings.Settings.instance()
           .moduleSetting(
               'ai-assistance-v2-opt-in-change-dialog-seen',
               )
@@ -852,7 +852,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
       });
       UI.Context.Context.instance().setFlavor(SDK.DOMModel.DOMNode, node);
 
-      Common.Settings
+      Common.Settings.Settings.instance()
           .moduleSetting(
               'ai-assistance-v2-opt-in-change-dialog-seen',
               )
@@ -885,7 +885,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
 
     it('should not show chat, delete history and export conversation actions when ai assistance enabled setting is disabled',
        async () => {
-         Common.Settings.moduleSetting('ai-assistance-enabled').setDisabled(true);
+         Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').setDisabled(true);
 
          const {view} = await createAiAssistancePanel();
 
@@ -895,7 +895,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
 
     it('should not show chat, delete history and export conversation actions when ai assistance setting is marked as false',
        async () => {
-         Common.Settings.moduleSetting('ai-assistance-enabled').set(false);
+         Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(false);
 
          const {view} = await createAiAssistancePanel();
 
@@ -905,7 +905,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
 
     it('should not show chat, delete history and export conversation actions when the user is blocked by age',
        async () => {
-         Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+         Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
          updateHostConfig({
            aidaAvailability: {
              blockedByAge: true,
@@ -920,7 +920,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
 
     it('should not show chat, delete history and export conversation actions when Aida availability status is SYNC IS PAUSED',
        async () => {
-         Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+         Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
 
          const {view} = await createAiAssistancePanel({
            aidaAvailability: Host.AidaClient.AidaAccessPreconditions.SYNC_IS_PAUSED,
@@ -1265,7 +1265,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
           },
         });
 
-        Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+        Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
         const {panel, view} = await createAiAssistancePanel({
           aidaClient: mockAidaClient([[{explanation: 'test'}]]),
         });
@@ -1340,7 +1340,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
 
       it('does not run when user has not opted-in', async () => {
         const aidaClientStub = mockAidaClient();
-        Common.Settings.moduleSetting('ai-assistance-enabled').set(false);
+        Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(false);
         const {panel} = await createAiAssistancePanel({
           aidaClient: aidaClientStub,
         });
@@ -1361,7 +1361,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
         },
       });
 
-      Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
       const aidaClient = sinon.createStubInstance(Host.AidaClient.AidaClient);
       aidaClient.doConversation.onFirstCall().callsFake(async function*(_request, options) {
         yield {
@@ -2106,7 +2106,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
         ];
 
     beforeEach(() => {
-      Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
     });
 
     for (const test of tests) {
@@ -2362,7 +2362,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
     describe('disabled state', () => {
       it('should be disabled when the next message is blocked by cross origin and show crossOriginError placeholder',
          async () => {
-           Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+           Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
            const networkRequest = createNetworkRequest({
              url: urlString`https://a.test`,
              documentURL: urlString`https://a.test`,
@@ -2420,7 +2420,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
                enabled: true,
              },
            });
-           Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+           Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
            const {panel, view} = await createAiAssistancePanel({
              aidaAvailability: Host.AidaClient.AidaAccessPreconditions.AVAILABLE,
            });
@@ -2449,7 +2449,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
             Timeline.TimelinePanel.TimelinePanel,
             sinon.createStubInstance(Timeline.TimelinePanel.TimelinePanel),
         );
-        Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+        Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
         const {panel, view} = await createAiAssistancePanel({
           aidaAvailability: Host.AidaClient.AidaAccessPreconditions.AVAILABLE,
         });
@@ -2484,7 +2484,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
                Timeline.TimelinePanel.TimelinePanel,
                timelinePanel,
            );
-           Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+           Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
            const {panel, view} = await createAiAssistancePanel({
              aidaAvailability: Host.AidaClient.AidaAccessPreconditions.AVAILABLE,
            });
@@ -2534,7 +2534,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
                focus,
            );
 
-           Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+           Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
            const {panel, view} = await createAiAssistancePanel({
              aidaAvailability: Host.AidaClient.AidaAccessPreconditions.AVAILABLE,
            });
@@ -2785,7 +2785,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
   describe('a11y announcements', () => {
     let liveAnnouncerStatusStub: sinon.SinonStub;
     beforeEach(() => {
-      Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
       liveAnnouncerStatusStub = sinon.stub(UI.ARIAUtils.LiveAnnouncer, 'status').returns();
     });
 
@@ -3365,7 +3365,7 @@ describe('AiAssistancePanel.ActionDelegate', () => {
 
   describe('Export conversation button', () => {
     beforeEach(() => {
-      Common.Settings.moduleSetting('ai-assistance-enabled').set(true);
+      Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').set(true);
     });
 
     it('is not visible for empty conversation', async () => {

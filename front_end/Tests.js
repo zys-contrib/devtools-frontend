@@ -761,7 +761,7 @@
       this.releaseControl();
     });
 
-    Common.Settings.moduleSetting('active-keybind-set').set('vsCode');
+    Common.Settings.Settings.instance().moduleSetting('active-keybind-set').set('vsCode');
   };
 
   TestSuite.prototype.testDispatchKeyEventDoesNotCrash = function() {

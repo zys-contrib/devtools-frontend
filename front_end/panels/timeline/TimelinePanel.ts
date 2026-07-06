@@ -1162,7 +1162,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
   }
 
   #setupNavigationSetting(): HTMLElement {
-    const currentNavSetting = Common.Settings.moduleSetting('flamechart-selected-navigation').get();
+    const currentNavSetting = Common.Settings.Settings.instance().moduleSetting('flamechart-selected-navigation').get();
     const hideTheDialogForTests: string|null = localStorage.getItem('hide-shortcuts-dialog-for-test');
     const userHadShortcutsDialogOpenedOnce = this.#userHadShortcutsDialogOpenedOnce.get();
 
@@ -1189,11 +1189,11 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
     // Change EventListener is only triggered when the radio button is selected
     this.#modernNavRadioButton.radio.addEventListener('change', () => {
       this.#shortcutsDialog.data = {shortcuts: this.#getShortcutsInfo(/* isNavClassic */ false)};
-      Common.Settings.moduleSetting('flamechart-selected-navigation').set('modern');
+      Common.Settings.Settings.instance().moduleSetting('flamechart-selected-navigation').set('modern');
     });
     this.#classicNavRadioButton.radio.addEventListener('change', () => {
       this.#shortcutsDialog.data = {shortcuts: this.#getShortcutsInfo(/* isNavClassic */ true)};
-      Common.Settings.moduleSetting('flamechart-selected-navigation').set('classic');
+      Common.Settings.Settings.instance().moduleSetting('flamechart-selected-navigation').set('classic');
     });
 
     this.#navigationRadioButtons.appendChild(this.#modernNavRadioButton.label);
@@ -1204,7 +1204,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
   }
 
   #updateNavigationSettingSelection(): void {
-    const currentNavSetting = Common.Settings.moduleSetting('flamechart-selected-navigation').get();
+    const currentNavSetting = Common.Settings.Settings.instance().moduleSetting('flamechart-selected-navigation').get();
     if (currentNavSetting === 'classic') {
       this.#classicNavRadioButton.radio.checked = true;
       Host.userMetrics.navigationSettingAtFirstTimelineLoad(
@@ -2237,7 +2237,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
     // Logging the setting on the first timeline load will allow us to get an estimate number of people using each option.
     if (this.#traceEngineModel.size() === 1) {
       this.#setupNavigationSetting();
-      if (Common.Settings.moduleSetting('flamechart-selected-navigation').get() === 'classic') {
+      if (Common.Settings.Settings.instance().moduleSetting('flamechart-selected-navigation').get() === 'classic') {
         Host.userMetrics.navigationSettingAtFirstTimelineLoad(
             Host.UserMetrics.TimelineNavigationSetting.CLASSIC_AT_SESSION_FIRST_TRACE);
       } else {

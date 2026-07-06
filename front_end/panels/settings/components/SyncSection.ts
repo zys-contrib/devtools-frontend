@@ -276,7 +276,8 @@ export class SyncSection extends UI.Widget.Widget {
     super(element);
     this.#view = view;
     this.#receiveBadgesSetting = Common.Settings.Settings.instance().moduleSetting('receive-gdp-badges');
-    this.#syncSetting = Common.Settings.moduleSetting('sync-preferences') as Common.Settings.Setting<boolean>;
+    this.#syncSetting =
+        Common.Settings.Settings.instance().moduleSetting('sync-preferences') as Common.Settings.Setting<boolean>;
   }
 
   override wasShown(): void {

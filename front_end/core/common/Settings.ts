@@ -715,10 +715,16 @@ export const enum SettingStorageType {
   SESSION = 'Session',
 }
 
+/**
+ * @deprecated Use `Common.Settings.Settings.instance().moduleSetting(settingName)` instead.
+ */
 export function moduleSetting(settingName: string): Setting<unknown> {
   return Settings.instance().moduleSetting(settingName);
 }
 
+/**
+ * @deprecated Use `Common.Settings.Settings.instance().settingForTest(settingName)` instead.
+ */
 export function settingForTest(settingName: string): Setting<unknown> {
   return Settings.instance().settingForTest(settingName);
 }
