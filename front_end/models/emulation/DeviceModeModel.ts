@@ -5,6 +5,7 @@
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
+import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as Geometry from '../geometry/geometry.js';
@@ -84,8 +85,6 @@ const UIStrings = {
 const str_ = i18n.i18n.registerUIStrings('models/emulation/DeviceModeModel.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
-let deviceModeModelInstance: DeviceModeModel|null;
-
 export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTypes> implements
     SDK.TargetManager.SDKModelObserver<SDK.EmulationModel.EmulationModel> {
   #screenRect: Rect;
@@ -114,9 +113,19 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   #onModelAvailable: (() => void)|null;
   #outlineRect?: Rect;
   #screenOrientationLocked: boolean;
+  readonly #targetManager: SDK.TargetManager.TargetManager;
+  readonly #settings: Common.Settings.Settings;
+  readonly #multitargetNetworkManager: SDK.NetworkManager.MultitargetNetworkManager;
 
-  private constructor() {
+  constructor(
+      targetManager: SDK.TargetManager.TargetManager,
+      settings: Common.Settings.Settings,
+      multitargetNetworkManager: SDK.NetworkManager.MultitargetNetworkManager,
+  ) {
     super();
+    this.#targetManager = targetManager;
+    this.#settings = settings;
+    this.#multitargetNetworkManager = multitargetNetworkManager;
     this.#screenRect = new Rect(0, 0, 1, 1);
     this.#visiblePageRect = new Rect(0, 0, 1, 1);
     this.#availableSize = new Geometry.Size(1, 1);
@@ -126,7 +135,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     this.#appliedDeviceScaleFactor = globalThis.devicePixelRatio;
     this.#appliedUserAgentType = UA.DESKTOP;
 
-    this.#scaleSetting = Common.Settings.Settings.instance().createSetting('emulation.device-scale', 1);
+    this.#scaleSetting = this.#settings.createSetting('emulation.device-scale', 1);
     // We've used to allow zero before.
     if (!this.#scaleSetting.get()) {
       this.#scaleSetting.set(1);
@@ -134,7 +143,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     this.#scaleSetting.addChangeListener(this.scaleSettingChanged, this);
     this.#scale = 1;
 
-    this.#widthSetting = Common.Settings.Settings.instance().createSetting('emulation.device-width', 400);
+    this.#widthSetting = this.#settings.createSetting('emulation.device-width', 400);
     if (this.#widthSetting.get() < MinDeviceSize) {
       this.#widthSetting.set(MinDeviceSize);
     }
@@ -143,7 +152,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     }
     this.#widthSetting.addChangeListener(this.widthSettingChanged, this);
 
-    this.#heightSetting = Common.Settings.Settings.instance().createSetting('emulation.device-height', 0);
+    this.#heightSetting = this.#settings.createSetting('emulation.device-height', 0);
     if (this.#heightSetting.get() && this.#heightSetting.get() < MinDeviceSize) {
       this.#heightSetting.set(MinDeviceSize);
     }
@@ -152,17 +161,16 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     }
     this.#heightSetting.addChangeListener(this.heightSettingChanged, this);
 
-    this.#uaSetting = Common.Settings.Settings.instance().createSetting('emulation.device-ua', UA.MOBILE);
+    this.#uaSetting = this.#settings.createSetting('emulation.device-ua', UA.MOBILE);
     this.#uaSetting.addChangeListener(this.uaSettingChanged, this);
-    this.#deviceScaleFactorSetting =
-        Common.Settings.Settings.instance().createSetting('emulation.device-scale-factor', 0);
+    this.#deviceScaleFactorSetting = this.#settings.createSetting('emulation.device-scale-factor', 0);
     this.#deviceScaleFactorSetting.addChangeListener(this.deviceScaleFactorSettingChanged, this);
 
-    this.#deviceOutlineSetting = Common.Settings.Settings.instance().moduleSetting('emulation.show-device-outline');
+    this.#deviceOutlineSetting = this.#settings.createSetting('emulation.show-device-outline', false);
     this.#deviceOutlineSetting.addChangeListener(this.deviceOutlineSettingChanged, this);
 
-    this.#toolbarControlsEnabledSetting = Common.Settings.Settings.instance().createSetting(
-        'emulation.toolbar-controls-enabled', true, Common.Settings.SettingStorageType.SESSION);
+    this.#toolbarControlsEnabledSetting = this.#settings.createSetting('emulation.toolbar-controls-enabled', true,
+                                                                       Common.Settings.SettingStorageType.SESSION);
 
     this.#type = Type.None;
     this.#device = null;
@@ -174,15 +182,20 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     this.#emulationModel = null;
     this.#onModelAvailable = null;
     this.#screenOrientationLocked = false;
-    SDK.TargetManager.TargetManager.instance().observeModels(SDK.EmulationModel.EmulationModel, this);
+    this.#targetManager.observeModels(SDK.EmulationModel.EmulationModel, this);
   }
 
   static instance(opts?: {forceNew: boolean}): DeviceModeModel {
-    if (!deviceModeModelInstance || opts?.forceNew) {
-      deviceModeModelInstance = new DeviceModeModel();
+    if (!Root.DevToolsContext.globalInstance().has(DeviceModeModel) || opts?.forceNew) {
+      Root.DevToolsContext.globalInstance().set(DeviceModeModel,
+                                                new DeviceModeModel(
+                                                    SDK.TargetManager.TargetManager.instance(),
+                                                    Common.Settings.Settings.instance(),
+                                                    SDK.NetworkManager.MultitargetNetworkManager.instance(),
+                                                    ));
     }
 
-    return deviceModeModelInstance;
+    return Root.DevToolsContext.globalInstance().get(DeviceModeModel);
   }
 
   /**
@@ -201,11 +214,14 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   }
 
   static removeInstance(): void {
-    deviceModeModelInstance = null;
+    if (Root.DevToolsContext.globalInstance().has(DeviceModeModel)) {
+      Root.DevToolsContext.globalInstance().get(DeviceModeModel).dispose();
+    }
+    Root.DevToolsContext.globalInstance().delete(DeviceModeModel);
   }
 
   dispose(): void {
-    SDK.TargetManager.TargetManager.instance().unobserveModels(SDK.EmulationModel.EmulationModel, this);
+    this.#targetManager.unobserveModels(SDK.EmulationModel.EmulationModel, this);
   }
 
   static widthValidator(value: string): {
@@ -412,7 +428,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   }
 
   enabledSetting(): Common.Settings.Setting<boolean> {
-    return Common.Settings.Settings.instance().createSetting('emulation.show-device-mode', false);
+    return this.#settings.createSetting('emulation.show-device-mode', false);
   }
 
   scaleSetting(): Common.Settings.Setting<number> {
@@ -444,7 +460,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   }
 
   modelAdded(emulationModel: SDK.EmulationModel.EmulationModel): void {
-    if (emulationModel.target() === SDK.TargetManager.TargetManager.instance().primaryPageTarget() &&
+    if (emulationModel.target() === this.#targetManager.primaryPageTarget() &&
         emulationModel.supportsDeviceEmulation()) {
       this.#emulationModel = emulationModel;
       if (this.#onModelAvailable) {
@@ -713,8 +729,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     // When the user agent string is empty (e.g. custom desktop device without
     // a UA override), metadata must also be cleared. The backend rejects
     // setUserAgentOverride calls that provide metadata without a UA string.
-    SDK.NetworkManager.MultitargetNetworkManager.instance().setUserAgentOverride(
-        userAgent, userAgent ? userAgentMetadata : null);
+    this.#multitargetNetworkManager.setUserAgentOverride(userAgent, userAgent ? userAgentMetadata : null);
   }
 
   private applyDeviceMetrics(
@@ -854,7 +869,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   private applyTouch(touchEnabled: boolean, mobile: boolean): void {
     this.#touchEnabled = touchEnabled;
     this.#touchMobile = mobile;
-    for (const emulationModel of SDK.TargetManager.TargetManager.instance().models(SDK.EmulationModel.EmulationModel)) {
+    for (const emulationModel of this.#targetManager.models(SDK.EmulationModel.EmulationModel)) {
       void emulationModel.emulateTouch(touchEnabled, mobile);
     }
   }
