@@ -4,7 +4,7 @@
 
 import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
-import * as Root from '../../core/root/root.js';
+import type * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 
 /** The security origin for all DevTools (front-end) resources. */
@@ -127,42 +127,7 @@ export class ProjectSettingsModel extends Common.ObjectWrapper.ObjectWrapper<Eve
     }
   }
 
-  /**
-   * Yields the `ProjectSettingsModel` singleton.
-   *
-   * @returns the singleton.
-   */
-  static instance({forceNew, hostConfig, pageResourceLoader, targetManager}: {
-    forceNew: boolean|null,
-    hostConfig: Root.Runtime.HostConfig|null,
-    pageResourceLoader: SDK.PageResourceLoader.PageResourceLoader|null,
-    targetManager: SDK.TargetManager.TargetManager|null,
-  }): ProjectSettingsModel {
-    if (!Root.DevToolsContext.globalInstance().has(ProjectSettingsModel) || forceNew) {
-      if (!hostConfig || !pageResourceLoader || !targetManager) {
-        throw new Error(
-            'Unable to create ProjectSettingsModel: ' +
-            'hostConfig, pageResourceLoader, and targetManager must be provided');
-      }
-      Root.DevToolsContext.globalInstance().set(
-          ProjectSettingsModel,
-          new ProjectSettingsModel(hostConfig, pageResourceLoader, targetManager),
-      );
-    }
-    return Root.DevToolsContext.globalInstance().get(ProjectSettingsModel);
-  }
-
-  /**
-   * Clears the `ProjectSettingsModel` singleton (if any);
-   */
-  static removeInstance(): void {
-    if (Root.DevToolsContext.globalInstance().has(ProjectSettingsModel)) {
-      Root.DevToolsContext.globalInstance().get(ProjectSettingsModel).#dispose();
-      Root.DevToolsContext.globalInstance().delete(ProjectSettingsModel);
-    }
-  }
-
-  #dispose(): void {
+  disposeForTest(): void {
     this.#targetManager.removeEventListener(
         SDK.TargetManager.Events.INSPECTED_URL_CHANGED,
         this.#inspectedURLChanged,
