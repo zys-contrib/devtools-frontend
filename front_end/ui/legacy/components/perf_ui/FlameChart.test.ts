@@ -6,9 +6,11 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 
 import type * as Common from '../../../../core/common/common.js';
+import * as Host from '../../../../core/host/host.js';
 import type * as Platform from '../../../../core/platform/platform.js';
 import * as Trace from '../../../../models/trace/trace.js';
 import * as Extensions from '../../../../panels/timeline/extensions/extensions.js';
+import {findMenuItemWithLabel} from '../../../../testing/ContextMenuHelpers.js';
 import {assertScreenshot, raf, renderElementIntoDOM} from '../../../../testing/DOMHelpers.js';
 import {describeWithEnvironment} from '../../../../testing/EnvironmentHelpers.js';
 import {
@@ -20,6 +22,7 @@ import {
 } from '../../../../testing/TraceHelpers.js';
 import {TraceLoader} from '../../../../testing/TraceLoader.js';
 import * as VisualLogging from '../../../../ui/visual_logging/visual_logging.js';
+import * as UI from '../../legacy.js';
 
 import * as PerfUI from './perf_ui.js';
 
@@ -663,6 +666,94 @@ describeWithEnvironment('FlameChart', () => {
         assert.strictEqual(chartInstance.groupIndexToOffsetForTest(3), 123);
         assert.strictEqual(chartInstance.levelToOffset(3), 123);
       });
+    });
+  });
+
+  describe('track header interactions', () => {
+    class TooltipTestProvider extends FakeFlameChartProvider {
+      override timelineData(): PerfUI.FlameChart.FlameChartTimelineData {
+        return PerfUI.FlameChart.FlameChartTimelineData.create({
+          entryLevels: [0],
+          entryTotalTimes: [10],
+          entryStartTimes: [10],
+          groups: [{
+            name: 'Very Long Header Name That Won\'t Fit' as Platform.UIString.LocalizedString,
+            startLevel: 0,
+            style: defaultGroupStyle,
+            fullTrackName: 'Very Long Header Name That Won\'t Fit',
+          }],
+        });
+      }
+    }
+
+    it('shows popover tooltip when hovering a truncated track header', () => {
+      const provider = new TooltipTestProvider();
+      const delegate = new MockFlameChartDelegate();
+      chartInstance = new PerfUI.FlameChart.FlameChart(provider, delegate);
+      chartInstance.element.style.width = '100px';
+      chartInstance.element.style.height = '400px';
+      chartInstance.setWindowTimes(0, 100);
+      renderChart(chartInstance);
+
+      const event = new MouseEvent('mousemove');
+      Object.defineProperty(event, 'offsetX', {value: 22, writable: true});
+      Object.defineProperty(event, 'offsetY', {value: 17, writable: true});
+      chartInstance.getCanvas().dispatchEvent(event);
+
+      assert.strictEqual(chartInstance.getPopoverElementForTest().innerText, 'Very Long Header Name That Won\'t Fit');
+    });
+
+    class ContextMenuTestProvider extends FakeFlameChartProvider {
+      override timelineData(): PerfUI.FlameChart.FlameChartTimelineData {
+        return PerfUI.FlameChart.FlameChartTimelineData.create({
+          entryLevels: [0],
+          entryTotalTimes: [10],
+          entryStartTimes: [10],
+          groups: [{
+            name: 'Main Thread' as Platform.UIString.LocalizedString,
+            startLevel: 0,
+            style: defaultGroupStyle,
+            url: 'https://example.com/main.js',
+          }],
+        });
+      }
+    }
+
+    it('shows context menu with copy actions when right clicking a track header', () => {
+      const provider = new ContextMenuTestProvider();
+      const delegate = new MockFlameChartDelegate();
+      chartInstance = new PerfUI.FlameChart.FlameChart(provider, delegate);
+      chartInstance.element.style.width = '100px';
+      chartInstance.element.style.height = '400px';
+      chartInstance.setWindowTimes(0, 100);
+      renderChart(chartInstance);
+
+      const event = new MouseEvent('contextmenu', {bubbles: true});
+      Object.defineProperty(event, 'offsetX', {value: 22, writable: true});
+      Object.defineProperty(event, 'offsetY', {value: 17, writable: true});
+
+      const showStub = sinon.stub(UI.ContextMenu.ContextMenu.prototype, 'show').resolves();
+      const copyTextStub = sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'copyText');
+
+      chartInstance.getCanvas().dispatchEvent(event);
+
+      const menu = chartInstance.getContextMenu();
+      assert.exists(menu);
+
+      // Verify Copy track name item
+      const copyNameItem = findMenuItemWithLabel(menu.defaultSection(), 'Copy track name');
+      assert.exists(copyNameItem);
+      menu.invokeHandler(copyNameItem.id());
+      sinon.assert.calledWith(copyTextStub, 'Main Thread');
+
+      // Verify Copy track URL item
+      const copyUrlItem = findMenuItemWithLabel(menu.defaultSection(), 'Copy track URL');
+      assert.exists(copyUrlItem);
+      menu.invokeHandler(copyUrlItem.id());
+      sinon.assert.calledWith(copyTextStub, 'https://example.com/main.js');
+
+      showStub.restore();
+      copyTextStub.restore();
     });
   });
 

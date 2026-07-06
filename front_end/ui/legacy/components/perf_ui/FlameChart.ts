@@ -5,6 +5,7 @@
 /* eslint-disable @devtools/no-imperative-dom-api */
 
 import * as Common from '../../../../core/common/common.js';
+import * as Host from '../../../../core/host/host.js';
 import * as i18n from '../../../../core/i18n/i18n.js';
 import * as Platform from '../../../../core/platform/platform.js';
 import type * as NetworkTimeCalculator from '../../../../models/network_time_calculator/network_time_calculator.js';
@@ -80,6 +81,14 @@ const UIStrings = {
    * @description Shown in the context menu when right clicking on a track header to allow the user to exit track configuration mode.
    */
   exitTrackConfigurationMode: 'Finish configuring tracks',
+  /**
+   * @description Context menu option to copy the name of the track.
+   */
+  copyTrackName: 'Copy track name',
+  /**
+   * @description Context menu option to copy the URL of the track.
+   */
+  copyTrackUrl: 'Copy track URL',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('ui/legacy/components/perf_ui/FlameChart.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -314,6 +323,18 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
 
   #indexToDrawOverride = new Map<number, DrawOverride>();
   #persistedGroupConfig: PersistedGroupConfig[]|null = null;
+  /**
+   * Caches the middle-truncated display names of track header labels to avoid recalculating
+   * truncation during draw operations. The cache is invalidated when the panel is resized,
+   * when track configuration edit mode is toggled, or when the trace data is reset.
+   *
+   * The `names` map uses the static `groupIndex` (which is invariant to track reordering)
+   * as the key, and maps it to the truncated string drawn on the canvas.
+   */
+  #urlTruncations = {
+    names: new Map<number, string>(),
+    lastWidth: 0,
+  };
   readonly #boundOnThemeChanged = this.#onThemeChanged.bind(this);
 
   constructor(
@@ -925,8 +946,16 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
       return;
     }
     const group = data.groups.at(groupIndex);
-    if (group?.description) {
-      this.popoverElement.innerText = (group?.description);
+    if (!group) {
+      return;
+    }
+    // Only show a popover tooltip if the group has a pre-defined `fullTrackName`
+    // (e.g. main thread tracks that are named after their URL, which are middle-truncated on the canvas).
+    // All other tracks have short, static titles that fit without truncation and do not need a tooltip.
+    const fullTrackName = group.fullTrackName;
+
+    if (fullTrackName) {
+      this.popoverElement.innerText = fullTrackName;
       this.updatePopoverOffset();
     }
     this.lastPopoverState = {
@@ -1411,21 +1440,6 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
     this.update();
   }
 
-  #buildEnterEditModeContextMenu(event: MouseEvent): void {
-    if (this.#inTrackConfigEditMode) {
-      return;
-    }
-
-    this.contextMenu = new UI.ContextMenu.ContextMenu(event);
-    const label = i18nString(UIStrings.enterTrackConfigurationMode);
-    this.contextMenu.defaultSection().appendItem(label, () => {
-      this.enterTrackConfigurationMode();
-    }, {
-      jslogContext: 'track-configuration-enter',
-    });
-    void this.contextMenu.show();
-  }
-
   #buildExitEditModeContextMenu(event: MouseEvent): void {
     if (this.#inTrackConfigEditMode === false) {
       return;
@@ -1437,6 +1451,45 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
     }, {
       jslogContext: 'track-configuration-exit',
     });
+    void this.contextMenu.show();
+  }
+
+  #buildTrackHeaderContextMenu(event: MouseEvent, groupIndex: number): void {
+    const data = this.timelineData();
+    if (!data) {
+      return;
+    }
+    const group = data.groups.at(groupIndex);
+    if (!group) {
+      return;
+    }
+
+    this.contextMenu = new UI.ContextMenu.ContextMenu(event);
+
+    this.contextMenu.defaultSection().appendItem(i18nString(UIStrings.copyTrackName), () => {
+      Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(group.name);
+    }, {
+      jslogContext: 'timeline.copy-track-name',
+    });
+
+    if (group.url) {
+      this.contextMenu.defaultSection().appendItem(i18nString(UIStrings.copyTrackUrl), () => {
+        Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(group.url);
+      }, {
+        jslogContext: 'timeline.copy-track-url',
+      });
+    }
+
+    if (this.#hasTrackConfigurationMode()) {
+      this.contextMenu.defaultSection().appendSeparator();
+      const label = i18nString(UIStrings.enterTrackConfigurationMode);
+      this.contextMenu.defaultSection().appendItem(label, () => {
+        this.enterTrackConfigurationMode();
+      }, {
+        jslogContext: 'track-configuration-enter',
+      });
+    }
+
     void this.contextMenu.show();
   }
 
@@ -1461,8 +1514,9 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
     // extra check. For example, in the DevTools Performance Panel the network
     // data provider & flame chart does not support this mode, but the main one
     // does.
-    if (hoverType === HoverType.INSIDE_TRACK_HEADER && this.#hasTrackConfigurationMode()) {
-      this.#buildEnterEditModeContextMenu(event);
+    if (hoverType === HoverType.INSIDE_TRACK_HEADER) {
+      this.#buildTrackHeaderContextMenu(event, groupIndex);
+      return;
     }
 
     // The user can create context menus in two ways:
@@ -2162,6 +2216,7 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
     if (!this.#hasTrackConfigurationMode()) {
       return;
     }
+    this.#urlTruncations.names.clear();
     const div = document.createElement('div');
     div.classList.add('flame-chart-edit-confirm');
     const button = new Buttons.Button.Button();
@@ -2195,6 +2250,7 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
   }
 
   #exitEditMode(): void {
+    this.#urlTruncations.names.clear();
     this.#removeEditModeButton();
     this.#inTrackConfigEditMode = false;
     this.dispatchEventToListeners(Events.TRACKS_REORDER_STATE_CHANGED, false);
@@ -2694,6 +2750,11 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
       return;
     }
 
+    if (width !== this.#urlTruncations.lastWidth) {
+      this.#urlTruncations.names.clear();
+      this.#urlTruncations.lastWidth = width;
+    }
+
     const groups = this.rawTimelineData.groups || [];
     if (!groups.length) {
       return;
@@ -2787,20 +2848,35 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
       // |ICON_WIDTH|expansionArrowIndent * (nesting level + 1)|
       // |headerLeftPadding|EDIT  ICON|                     |Arrow|LabelXPadding|Title|LabelXPadding|
       //                                                                        ^ titleStart
-      const titleStart = iconsWidth + EXPANSION_ARROW_INDENT * (group.style.nestingLevel + 1) + ARROW_SIDE / 2 +
-          HEADER_LABEL_X_PADDING;
+      const nestingLevel = group.style.nestingLevel || 0;
+      const titleStart =
+          iconsWidth + EXPANSION_ARROW_INDENT * (nestingLevel + 1) + ARROW_SIDE / 2 + HEADER_LABEL_X_PADDING;
       const y = offset + group.style.height - this.textBaseline;
-      context.fillText(group.name, titleStart, y);
+      let displayName = this.#urlTruncations.names.get(groupIndex);
+      if (displayName === undefined) {
+        displayName = group.name;
+        // Calculate the maximum width available for the text. We subtract the X coordinate where the text starts
+        // (titleStart) and the padding at the end of the line (HEADER_LABEL_X_PADDING) from the total width of the canvas.
+        // We then apply a 0.85 (85%) factor as a safety margin to prevent the text from running too close to the edge of
+        // the canvas or overlapping other potential visual elements on the right.
+        const maxTextWidth = (width - titleStart - HEADER_LABEL_X_PADDING) * 0.85;
+        if (context.measureText(displayName).width > maxTextWidth) {
+          displayName = UI.UIUtils.trimTextMiddle(context, displayName, maxTextWidth);
+        }
+        this.#urlTruncations.names.set(groupIndex, displayName);
+      }
+
+      context.fillText(displayName, titleStart, y);
       if (group.subtitle) {
-        const titleMetrics = context.measureText(group.name);
+        const titleMetrics = context.measureText(displayName);
         context.font = this.#subtitleFont;
         context.fillText(group.subtitle, titleStart + titleMetrics.width + PADDING_BETWEEN_TITLE_AND_SUBTITLE, y - 1);
         context.font = this.#font;
       }
       if (this.#inTrackConfigEditMode && group.hidden) {
         // Draw a strikethrough line for the hidden tracks.
-        context.fillRect(
-            titleStart, offset + group.style.height / 2, UI.UIUtils.measureTextWidth(context, group.name), 1);
+        context.fillRect(titleStart, offset + group.style.height / 2, UI.UIUtils.measureTextWidth(context, displayName),
+                         1);
       }
 
       // The icon and track title will look like this
@@ -3406,6 +3482,7 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
   }
 
   private processTimelineData(timelineData: FlameChartTimelineData|null): void {
+    this.#urlTruncations.names.clear();
     if (!timelineData) {
       this.timelineLevels = null;
       this.visibleLevelOffsets = null;
@@ -3999,6 +4076,10 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
     this.#inTrackConfigEditMode = editMode;
   }
 
+  getPopoverElementForTest(): HTMLElement {
+    return this.popoverElement;
+  }
+
   /**
    * Returns the visibility of a level in the.
    * flame chart.
@@ -4079,6 +4160,8 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
       this.#removeEditModeButton();
       this.#inTrackConfigEditMode = false;
     }
+    this.#urlTruncations.names.clear();
+    this.#urlTruncations.lastWidth = 0;
 
     this.chartViewport.reset();
     this.rawTimelineData = null;
@@ -4448,7 +4531,10 @@ export interface Group {
   /** Should be turned on if the track supports user editable stacks. */
   showStackContextMenu?: boolean;
   jslogContext?: string;
-  description?: string;
+  /** A full, non-truncated description of the track (e.g. full title with URL) to be shown in the tooltip on hover. */
+  fullTrackName?: string;
+  /** The raw URL of the track, if applicable, used for right-click copy actions. */
+  url?: string;
 }
 
 export interface GroupStyle {

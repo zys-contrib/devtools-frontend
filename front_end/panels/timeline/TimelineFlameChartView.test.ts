@@ -665,6 +665,12 @@ describe('TimelineFlameChartView', function() {
       flameChartView.detach();
     });
 
+    function getContextMenuItems(menu: UI.ContextMenu.ContextMenu): readonly string[] {
+      return menu.defaultSection()
+          .items.map(item => item.buildDescriptor().label)
+          .filter((label): label is string => typeof label === 'string');
+    }
+
     it('Does not create customized Context Menu for network track', async function() {
       // The mouse event passed to the Context Menu is used to indicate where the menu should appear. Since we don't
       // need it to actually appear for this test, pass an event with coordinates that is not in the track header.
@@ -672,11 +678,13 @@ describe('TimelineFlameChartView', function() {
       assert.isUndefined(flameChartView.getNetworkFlameChart().getContextMenu());
     });
 
-    it('Does not create Context Menu for Network track header', async function() {
+    it('Creates Context Menu for Network track header with copy action', async function() {
       // So for the first track header, its x will start from beginning.
       // And its y will start after the ruler (ruler's height is 17).
       flameChartView.getNetworkFlameChart().onContextMenu(new MouseEvent('contextmenu', {clientX: 0, clientY: 17}));
-      assert.isUndefined(flameChartView.getNetworkFlameChart().getContextMenu());
+      const menu = flameChartView.getNetworkFlameChart().getContextMenu();
+      assert.exists(menu);
+      assert.deepEqual(getContextMenuItems(menu), ['Copy track name']);
     });
 
     it('Create correct Context Menu for track headers in main flame chart', async function() {
@@ -684,10 +692,9 @@ describe('TimelineFlameChartView', function() {
       // And its y will start after the ruler (ruler's height is 17).
       flameChartView.getMainFlameChart().onContextMenu(new MouseEvent('contextmenu', {clientX: 0, clientY: 17}));
 
-      assert.strictEqual(flameChartView.getMainFlameChart().getContextMenu()?.defaultSection().items.length, 1);
-      assert.strictEqual(
-          flameChartView.getMainFlameChart().getContextMenu()?.defaultSection().items.at(0)?.buildDescriptor().label,
-          'Configure tracks');
+      const menu = flameChartView.getMainFlameChart().getContextMenu();
+      assert.exists(menu);
+      assert.deepEqual(getContextMenuItems(menu), ['Copy track name', 'Configure tracks']);
     });
 
     describe('Context Menu Actions For Thread tracks', function() {

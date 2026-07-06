@@ -4136,6 +4136,8 @@ export const knownContextValues = new Set([
   'timeline.breadcrumb-select',
   'timeline.clear',
   'timeline.configure',
+  'timeline.copy-track-name',
+  'timeline.copy-track-url',
   'timeline.create-breadcrumb',
   'timeline.disable',
   'timeline.download-after-error',

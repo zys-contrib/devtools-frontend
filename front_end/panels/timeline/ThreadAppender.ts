@@ -265,9 +265,9 @@ export class ThreadAppender implements TrackAppender {
       style.nestingLevel = this.#headerNestingLevel;
     }
     const visualLoggingName = this.#visualLoggingNameForThread();
-    const group = buildTrackHeader(
-        visualLoggingName, currentLevel, this.trackName(), style, /* selectable= */ true, this.#expanded,
-        /* showStackContextMenu= */ true);
+    const group = buildTrackHeader(visualLoggingName, currentLevel, this.trackName(), style, /* selectable= */ true,
+                                   this.#expanded,
+                                   /* showStackContextMenu= */ true, this.trackName(), this.#url || undefined);
     this.#compatibilityBuilder.registerTrackForGroup(group, this);
   }
 
