@@ -7018,7 +7018,7 @@ export namespace DigitalCredentials {
   /**
    * The type of virtual wallet action.
    */
-  export const enum VirtualWalletBehavior {
+  export const enum VirtualWalletAction {
     Respond = 'respond',
     Decline = 'decline',
     Wait = 'wait',
@@ -7027,17 +7027,17 @@ export namespace DigitalCredentials {
 
   export interface SetVirtualWalletBehaviorRequest {
     /**
-     * The behavior of the virtual wallet.
+     * The action of the virtual wallet.
      */
-    behavior: VirtualWalletBehavior;
+    action: VirtualWalletAction;
     /**
-     * The protocol identifier (e.g. "openid4vp"). Required when |behavior| is
+     * The protocol identifier (e.g. "openid4vp"). Required when |action| is
      * "respond", forbidden otherwise.
      */
     protocol?: string;
     /**
      * The response data object returned by the wallet.
-     * Required when |behavior| is "respond", forbidden otherwise.
+     * Required when |action| is "respond", forbidden otherwise.
      */
     response?: any;
   }
