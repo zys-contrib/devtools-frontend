@@ -230,10 +230,9 @@ export class CPUThrottlingCard {
   private state: 'cta'|'prompting'|'calibrating' = 'cta';
   private warnings: string[] = [];
 
-  constructor() {
-    this.setting =
-        Common.Settings.Settings.instance().createSetting<PanelsCommon.CPUThrottlingOption.CalibratedCPUThrottling>(
-            'calibrated-cpu-throttling', {}, Common.Settings.SettingStorageType.GLOBAL);
+  constructor(settings: Common.Settings.Settings) {
+    this.setting = settings.createSetting<PanelsCommon.CPUThrottlingOption.CalibratedCPUThrottling>(
+        'calibrated-cpu-throttling', {}, Common.Settings.SettingStorageType.GLOBAL);
 
     this.element = document.createElement('devtools-card');
     this.element.heading = i18nString(UIStrings.cpuThrottlingPresets);
@@ -475,7 +474,7 @@ export class ThrottlingSettingsTab extends UI.Widget.VBox implements
    */
   #customUserConditionsCount: number;
 
-  constructor() {
+  constructor(settings: Common.Settings.Settings) {
     super({
       jslog: `${VisualLogging.pane('throttling-conditions')}`,
       useShadowDom: true,
@@ -486,7 +485,7 @@ export class ThrottlingSettingsTab extends UI.Widget.VBox implements
         this.contentElement.createChild('div', 'settings-card-container-wrapper').createChild('div');
     settingsContent.classList.add('settings-card-container', 'throttling-conditions-settings');
 
-    this.cpuThrottlingCard = new CPUThrottlingCard();
+    this.cpuThrottlingCard = new CPUThrottlingCard(settings);
     settingsContent.append(this.cpuThrottlingCard.element);
 
     const addButton = new Buttons.Button.Button();
@@ -512,7 +511,7 @@ export class ThrottlingSettingsTab extends UI.Widget.VBox implements
     const customContainer = createProfilesCard(i18nString(UIStrings.customProfiles), this.customList, settingsContent);
     customContainer.appendChild(addButton);
 
-    this.customUserConditions = SDK.NetworkManager.customUserNetworkConditionsSetting();
+    this.customUserConditions = SDK.NetworkManager.customUserNetworkConditionsSetting(settings);
     this.customUserConditions.addChangeListener(this.conditionsUpdated, this);
 
     const customConditions = this.customUserConditions.get();
