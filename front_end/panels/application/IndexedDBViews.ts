@@ -249,6 +249,13 @@ export class IDBDataView extends UI.View.SimpleView {
   private skipCount: number;
   // Used in Web Tests
   protected entries: Entry[];
+  #hasMore = false;
+  #selectedRowNumber = 0;
+  #needsRefreshVisible = false;
+  #clearButtonEnabled = true;
+  #metadata: ObjectStoreMetadata|null = null;
+  #lastRenderedEntries: Entry[]|null = null;
+
   private objectStore!: ObjectStore;
   private index!: Index|null;
   private keyInput!: UI.Toolbar.ToolbarInput;
@@ -311,9 +318,9 @@ export class IDBDataView extends UI.View.SimpleView {
 
     this.pageSize = 50;
     this.skipCount = 0;
+    this.entries = [];
 
     this.update(objectStore, index);
-    this.entries = [];
   }
 
   private createDataGrid(): DataGrid.DataGrid.DataGridImpl<unknown> {
@@ -469,6 +476,9 @@ export class IDBDataView extends UI.View.SimpleView {
     this.dataGrid = this.createDataGrid();
     this.dataGrid.setRowContextMenuCallback(this.populateContextMenu.bind(this));
     this.dataGrid.asWidget().show(this.element);
+    if (this.summaryBarElement) {
+      this.element.appendChild(this.summaryBarElement);
+    }
 
     this.skipCount = 0;
     this.updateData(true);
@@ -490,9 +500,8 @@ export class IDBDataView extends UI.View.SimpleView {
     const key = this.parseKey(this.keyInput.value());
     const pageSize = this.pageSize;
     let skipCount: 0|number = this.skipCount;
-    let selected = this.dataGrid.selectedNode ? this.dataGrid.selectedNode.data['number'] : 0;
-    selected = Math.max(selected, this.skipCount);  // Page forward should select top entry
-    this.clearButton.setEnabled(!this.isIndex);
+    const selected = this.dataGrid.selectedNode ? this.dataGrid.selectedNode.data['number'] : 0;
+    this.#selectedRowNumber = Math.max(selected, this.skipCount);  // Page forward should select top entry
 
     if (!force && this.lastKey === key && this.lastPageSize === pageSize && this.lastSkipCount === skipCount) {
       return;
@@ -507,13 +516,10 @@ export class IDBDataView extends UI.View.SimpleView {
     this.lastSkipCount = skipCount;
 
     function callback(this: IDBDataView, entries: Entry[], hasMore: boolean): void {
-      this.clear();
       this.entries = entries;
-      this.populateDataGrid(entries, skipCount, selected);
-      this.pageBackButton.setEnabled(Boolean(skipCount));
-      this.pageForwardButton.setEnabled(hasMore);
-      this.needsRefresh.setVisible(false);
-      this.updateToolbarEnablement();
+      this.#hasMore = hasMore;
+      this.#needsRefreshVisible = false;
+      this.performUpdate();
       this.updatedDataForTests();
     }
 
@@ -525,23 +531,30 @@ export class IDBDataView extends UI.View.SimpleView {
       this.model.loadObjectStoreData(this.databaseId, this.objectStore.name, idbKeyRange, skipCount, pageSize,
                                      callback.bind(this));
     }
-    void this.model.getMetadata(this.databaseId, this.objectStore).then(this.updateSummaryBar.bind(this));
+    void this.model.getMetadata(this.databaseId, this.objectStore).then(metadata => {
+      this.#metadata = metadata;
+      this.performUpdate();
+    });
   }
 
-  private populateDataGrid(entries: Entry[], skipCount: number, selected: number): void {
+  private populateDataGrid(): void {
+    if (this.entries === this.#lastRenderedEntries) {
+      return;
+    }
+    this.dataGrid.rootNode().removeChildren();
     let selectedNode: IDBDataGridNode|null = null;
-    for (let i = 0; i < entries.length; ++i) {
+    for (let i = 0; i < this.entries.length; ++i) {
       // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = {};
-      data['number'] = i + skipCount;
-      data['key'] = entries[i].key;
-      data['primary-key'] = entries[i].primaryKey;
-      data['value'] = entries[i].value;
+      data['number'] = i + this.skipCount;
+      data['key'] = this.entries[i].key;
+      data['primary-key'] = this.entries[i].primaryKey;
+      data['value'] = this.entries[i].value;
 
       const node = new IDBDataGridNode(data);
       this.dataGrid.rootNode().appendChild(node);
-      if (data['number'] <= selected) {
+      if (data['number'] <= this.#selectedRowNumber) {
         selectedNode = node;
       }
     }
@@ -549,13 +562,15 @@ export class IDBDataView extends UI.View.SimpleView {
     if (selectedNode) {
       selectedNode.select();
     }
+    this.#lastRenderedEntries = this.entries;
   }
 
-  private updateSummaryBar(metadata: ObjectStoreMetadata|null): void {
+  private updateSummaryBar(): void {
     if (!this.summaryBarElement) {
       this.summaryBarElement = this.element.createChild('div', 'object-store-summary-bar');
     }
     this.summaryBarElement.removeChildren();
+    const metadata = this.#metadata;
     if (!metadata) {
       return;
     }
@@ -585,11 +600,13 @@ export class IDBDataView extends UI.View.SimpleView {
                                             i18nString(UIStrings.confirmClearObjectStore, {PH1: this.objectStore.name}),
                                             this.element, {jslogContext: 'clear-object-store-confirmation'});
     if (ok) {
-      this.clearButton.setEnabled(false);
+      this.#clearButtonEnabled = false;
+      this.performUpdate();
       this.clearingObjectStore = true;
       await this.model.clearObjectStore(this.databaseId, this.objectStore.name);
       this.clearingObjectStore = false;
-      this.clearButton.setEnabled(true);
+      this.#clearButtonEnabled = true;
+      this.performUpdate();
       this.updateData(true);
     }
   }
@@ -599,7 +616,8 @@ export class IDBDataView extends UI.View.SimpleView {
     if (this.clearingObjectStore) {
       return;
     }
-    this.needsRefresh.setVisible(true);
+    this.#needsRefreshVisible = true;
+    this.performUpdate();
   }
 
   private async resolveArrayKey(key: SDK.RemoteObject.RemoteObject): Promise<IDBKeyValue> {
@@ -639,13 +657,24 @@ export class IDBDataView extends UI.View.SimpleView {
   }
 
   clear(): void {
-    this.dataGrid.rootNode().removeChildren();
     this.entries = [];
+    this.performUpdate();
   }
 
   private updateToolbarEnablement(): void {
     const empty = !this.dataGrid || this.dataGrid.rootNode().children.length === 0;
     this.deleteSelectedButton.setEnabled(!empty && this.dataGrid.selectedNode !== null);
+  }
+
+  override performUpdate(): void {
+    this.populateDataGrid();
+    this.updateSummaryBar();
+
+    this.pageBackButton.setEnabled(this.skipCount > 0);
+    this.pageForwardButton.setEnabled(this.#hasMore);
+    this.needsRefresh.setVisible(this.#needsRefreshVisible);
+    this.clearButton.setEnabled(!this.isIndex && this.#clearButtonEnabled);
+    this.updateToolbarEnablement();
   }
 }
 
