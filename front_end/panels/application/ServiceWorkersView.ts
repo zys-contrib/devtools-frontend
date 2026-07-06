@@ -13,6 +13,7 @@ import * as Buttons from '../../ui/components/buttons/buttons.js';
 import {Link} from '../../ui/kit/kit.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
 import * as UI from '../../ui/legacy/legacy.js';
+import {html, type LitTemplate, nothing, render} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 import * as MobileThrottling from '../mobile_throttling/mobile_throttling.js';
 
@@ -273,14 +274,14 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
     }
 
     this.eventListeners.set(serviceWorkerManager, [
-      this.manager.addEventListener(
-          SDK.ServiceWorkerManager.Events.REGISTRATION_UPDATED, this.registrationUpdated, this),
-      this.manager.addEventListener(
-          SDK.ServiceWorkerManager.Events.REGISTRATION_DELETED, this.registrationDeleted, this),
-      this.securityOriginManager.addEventListener(
-          SDK.SecurityOriginManager.Events.SecurityOriginAdded, this.updateSectionVisibility, this),
-      this.securityOriginManager.addEventListener(
-          SDK.SecurityOriginManager.Events.SecurityOriginRemoved, this.updateSectionVisibility, this),
+      this.manager.addEventListener(SDK.ServiceWorkerManager.Events.REGISTRATION_UPDATED, this.registrationUpdated,
+                                    this),
+      this.manager.addEventListener(SDK.ServiceWorkerManager.Events.REGISTRATION_DELETED, this.registrationDeleted,
+                                    this),
+      this.securityOriginManager.addEventListener(SDK.SecurityOriginManager.Events.SecurityOriginAdded,
+                                                  this.updateSectionVisibility, this),
+      this.securityOriginManager.addEventListener(SDK.SecurityOriginManager.Events.SecurityOriginRemoved,
+                                                  this.updateSectionVisibility, this),
     ]);
   }
 
@@ -331,7 +332,7 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
 
     for (const section of movedSections) {
       const registration = section.registration;
-      this.removeRegistrationFromList(registration);
+      this.removeRegistrationFromList(registration, true);
       this.updateRegistration(registration, true);
     }
 
@@ -399,8 +400,8 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
     return null;
   }
 
-  private updateRegistration(registration: SDK.ServiceWorkerManager.ServiceWorkerRegistration, skipUpdate?: boolean):
-      void {
+  private updateRegistration(registration: SDK.ServiceWorkerManager.ServiceWorkerRegistration,
+                             skipUpdate?: boolean): void {
     let section = this.sections.get(registration);
     if (!section) {
       const title = registration.scopeURL;
@@ -426,13 +427,16 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
     this.removeRegistrationFromList(event.data);
   }
 
-  private removeRegistrationFromList(registration: SDK.ServiceWorkerManager.ServiceWorkerRegistration): void {
+  private removeRegistrationFromList(registration: SDK.ServiceWorkerManager.ServiceWorkerRegistration,
+                                     skipVisibilityUpdate = false): void {
     const section = this.sections.get(registration);
     if (section) {
       section.section.detach();
     }
     this.sections.delete(registration);
-    this.updateSectionVisibility();
+    if (!skipVisibilityUpdate) {
+      this.updateSectionVisibility();
+    }
   }
 
   private isRegistrationVisible(registration: SDK.ServiceWorkerManager.ServiceWorkerRegistration): boolean {
@@ -468,9 +472,8 @@ export class Section {
   private updateCycleField?: HTMLElement;
   private routerField?: HTMLElement;
 
-  constructor(
-      manager: SDK.ServiceWorkerManager.ServiceWorkerManager, section: UI.ReportView.Section,
-      registration: SDK.ServiceWorkerManager.ServiceWorkerRegistration) {
+  constructor(manager: SDK.ServiceWorkerManager.ServiceWorkerManager, section: UI.ReportView.Section,
+              registration: SDK.ServiceWorkerManager.ServiceWorkerRegistration) {
     this.manager = manager;
     this.section = section;
     this.registration = registration;
@@ -509,15 +512,13 @@ export class Section {
     this.sourceField = this.wrapWidget(this.section.appendField(i18nString(UIStrings.source)));
     this.statusField = this.wrapWidget(this.section.appendField(i18nString(UIStrings.status)));
     this.clientsField = this.wrapWidget(this.section.appendField(i18nString(UIStrings.clients)));
-    this.createSyncNotificationField(
-        i18nString(UIStrings.pushString), this.pushNotificationDataSetting.get(), i18nString(UIStrings.pushData),
-        this.push.bind(this), 'push-message');
-    this.createSyncNotificationField(
-        i18nString(UIStrings.syncString), this.syncTagNameSetting.get(), i18nString(UIStrings.syncTag),
-        this.sync.bind(this), 'sync-tag');
-    this.createSyncNotificationField(
-        i18nString(UIStrings.periodicSync), this.periodicSyncTagNameSetting.get(),
-        i18nString(UIStrings.periodicSyncTag), tag => this.periodicSync(tag), 'periodic-sync-tag');
+    this.createSyncNotificationField(i18nString(UIStrings.pushString), this.pushNotificationDataSetting.get(),
+                                     i18nString(UIStrings.pushData), this.push.bind(this), 'push-message');
+    this.createSyncNotificationField(i18nString(UIStrings.syncString), this.syncTagNameSetting.get(),
+                                     i18nString(UIStrings.syncTag), this.sync.bind(this), 'sync-tag');
+    this.createSyncNotificationField(i18nString(UIStrings.periodicSync), this.periodicSyncTagNameSetting.get(),
+                                     i18nString(UIStrings.periodicSyncTag), tag => this.periodicSync(tag),
+                                     'periodic-sync-tag');
     this.createUpdateCycleField();
     this.maybeCreateRouterField();
 
@@ -525,26 +526,34 @@ export class Section {
     this.throttler = new Common.Throttler.Throttler(500);
   }
 
-  private createSyncNotificationField(
-      label: string, initialValue: string, placeholder: string, callback: (arg0: string) => void,
-      jslogContext: string): void {
-    const form =
-        this.wrapWidget(this.section.appendField(label)).createChild('form', 'service-worker-editor-with-button');
-    const editor = UI.UIUtils.createInput('source-code service-worker-notification-editor');
-    editor.setAttribute('jslog', `${VisualLogging.textField().track({change: true}).context(jslogContext)}`);
-    form.appendChild(editor);
-    const button = UI.UIUtils.createTextButton(label, undefined, {jslogContext});
-    button.type = 'submit';
-    form.appendChild(button);
+  private createSyncNotificationField(label: string, initialValue: string, placeholder: string,
+                                      callback: (arg0: string) => void, jslogContext: string): void {
+    const fieldElement = this.wrapWidget(this.section.appendField(label));
 
-    editor.value = initialValue;
-    editor.placeholder = placeholder;
-    UI.ARIAUtils.setLabel(editor, label);
-
-    form.addEventListener('submit', (e: Event) => {
-      callback(editor.value || '');
-      e.consume(true);
-    });
+    // clang-format off
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`
+      <form class="service-worker-editor-with-button" @submit=${(e: Event) => {
+        const {editor} = e.target as HTMLFormElement;
+        callback(editor.value || '');
+        e.consume(true);
+      }}>
+        <input name="editor" class="source-code service-worker-notification-editor harmony-input" type="text"
+          .value=${initialValue}
+          placeholder=${placeholder}
+          aria-label=${label}
+          .spellcheck=${false}
+          jslog=${VisualLogging.textField().track({change: true}).context(jslogContext)}
+        >
+        <devtools-button .data=${{
+            type: 'submit',
+            variant: Buttons.Button.Variant.OUTLINED,
+            jslogContext} as Buttons.Button.ButtonData}>
+          ${label}
+        </devtools-button>
+      </form>
+    `, fieldElement);
+    // clang-format on
   }
 
   scheduleUpdate(): void {
@@ -555,13 +564,17 @@ export class Section {
     void this.throttler.schedule(this.performUpdate.bind(this));
   }
 
-  private addVersion(versionsStack: Element, icon: string, label: string): Element {
-    const installingEntry = versionsStack.createChild('div', 'service-worker-version');
-    installingEntry.createChild('div', icon);
-    const statusString = installingEntry.createChild('span', 'service-worker-version-string');
-    statusString.textContent = label;
-    UI.ARIAUtils.markAsAlert(statusString);
-    return installingEntry;
+  private renderVersion(icon: string, label: string, content: LitTemplate = nothing): LitTemplate {
+    // clang-format off
+    return html`
+      <div class="service-worker-version">
+        <div class=${icon}></div>
+        <span class="service-worker-version-string" role="alert" aria-live="polite">
+          ${label}
+        </span>
+        ${content}
+      </div>`;
+    // clang-format on
   }
 
   private updateClientsField(version: SDK.ServiceWorkerManager.ServiceWorkerVersion): void {
@@ -571,7 +584,8 @@ export class Section {
       const clientLabelText = this.clientsField.createChild('div', 'service-worker-client') as HTMLElement;
       const info = this.clientInfoCache.get(client);
       if (info) {
-        this.updateClientInfo(clientLabelText, info);
+        // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+        render(this.renderClientInfo(info), clientLabelText);
       }
       void this.manager.target()
           .targetAgent()
@@ -581,31 +595,31 @@ export class Section {
   }
 
   private updateSourceField(version: SDK.ServiceWorkerManager.ServiceWorkerVersion): void {
-    this.sourceField.removeChildren();
     const fileName = Common.ParsedURL.ParsedURL.extractName(version.scriptURL);
-    const name = this.sourceField.createChild('div', 'report-field-value-filename');
-    const link = Components.Linkifier.Linkifier.linkifyURL(
-        version.scriptURL, ({text: fileName} as Components.Linkifier.LinkifyURLOptions));
-    link.tabIndex = 0;
-    link.setAttribute('jslog', `${VisualLogging.link('source-location').track({click: true})}`);
-    name.appendChild(link);
-    if (this.registration.errors.length) {
-      const errorsLabel = UI.UIUtils.createIconLabel({
-        title: String(this.registration.errors.length),
-        iconName: 'cross-circle-filled',
-        color: 'var(--icon-error)',
-      });
-      errorsLabel.classList.add('devtools-link', 'link');
-      errorsLabel.tabIndex = 0;
-      UI.ARIAUtils.setLabel(
-          errorsLabel, i18nString(UIStrings.sRegistrationErrors, {PH1: this.registration.errors.length}));
-      self.onInvokeElement(errorsLabel, () => Common.Console.Console.instance().show());
-      name.appendChild(errorsLabel);
-    }
-    if (version.scriptResponseTime !== undefined) {
-      this.sourceField.createChild('div', 'report-field-value-subtitle').textContent =
-          i18nString(UIStrings.receivedS, {PH1: new Date(version.scriptResponseTime * 1000).toLocaleString()});
-    }
+    // clang-format off
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`
+      <div class="report-field-value-filename">
+        ${Components.Linkifier.Linkifier.renderLinkifiedUrl(version.scriptURL, {
+          text: fileName, tabStop: true, jslogContext: 'source-location'})}
+        ${this.registration.errors.length ? html`
+            <button
+                class="devtools-link link"
+                tabindex="0"
+                aria-label=${i18nString(UIStrings.sRegistrationErrors, {PH1: this.registration.errors.length})}
+                @click=${() => Common.Console.Console.instance().show()}>
+              <devtools-icon name="cross-circle-filled" class="error-icon">
+              </devtools-icon>
+              ${this.registration.errors.length}
+            </button>` : nothing}
+      </div>
+      ${version.scriptResponseTime !== undefined ? html`
+        <div class="report-field-value-subtitle">
+          ${i18nString(UIStrings.receivedS, {PH1: new Date(version.scriptResponseTime * 1000).toLocaleString()})}
+        </div>
+      ` : nothing}
+    `, this.sourceField);
+    // clang-format on
   }
 
   private performUpdate(): Promise<void> {
@@ -627,60 +641,67 @@ export class Section {
     const installing = versions.get(SDK.ServiceWorkerManager.ServiceWorkerVersion.Modes.INSTALLING);
     const redundant = versions.get(SDK.ServiceWorkerManager.ServiceWorkerVersion.Modes.REDUNDANT);
 
-    this.statusField.removeChildren();
-    const versionsStack = this.statusField.createChild('div', 'service-worker-version-stack');
-    versionsStack.createChild('div', 'service-worker-version-stack-bar');
+    // clang-format off
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`
+      <div class="service-worker-version-stack">
+        <div class="service-worker-version-stack-bar"></div>
+        ${active ? this.renderVersion(
+            'service-worker-active-circle',
+            i18nString(UIStrings.sActivatedAndIsS, {
+              PH1: active.id,
+              PH2: SDK.ServiceWorkerManager.ServiceWorkerVersion.RunningStatus[active.currentState.runningStatus](),
+            }),
+            active.isRunning() || active.isStarting() ? html`
+              <devtools-button .data=${{jslogContext: 'stop', variant: Buttons.Button.Variant.OUTLINED} as Buttons.Button.ButtonData}
+                              @click=${this.stopButtonClicked.bind(this, active.id)}>
+                  ${i18nString(UIStrings.stopString)}
+              </devtools-button>`
+            : active.isStartable() ? html`
+              <devtools-button .data=${{jslogContext: 'start', variant: Buttons.Button.Variant.OUTLINED} as Buttons.Button.ButtonData}
+                              @click=${this.startButtonClicked.bind(this)}>
+                  ${i18nString(UIStrings.startString)}
+              </devtools-button>`
+            : nothing)
+        : redundant ? this.renderVersion(
+            'service-worker-redundant-circle',
+            i18nString(UIStrings.sIsRedundant, {PH1: redundant.id}))
+        : nothing}
+        ${waiting ? this.renderVersion(
+            'service-worker-waiting-circle',
+            i18nString(UIStrings.sWaitingToActivate, {PH1: waiting.id}), html`
+              <devtools-button .data=${{
+                    jslogContext: 'skip-waiting',
+                    title: i18n.i18n.lockedString('skipWaiting'),
+                    variant: Buttons.Button.Variant.OUTLINED} as Buttons.Button.ButtonData}
+                  @click=${this.skipButtonClicked.bind(this)}>
+                ${i18n.i18n.lockedString('skipWaiting')}
+              </devtools-button>
+              ${waiting.scriptResponseTime !== undefined ? html`
+                <div class="service-worker-subtitle">
+                  ${i18nString(UIStrings.receivedS, {PH1: new Date(waiting.scriptResponseTime * 1000).toLocaleString()})}
+                </div>
+              ` : nothing}
+          `,
+        ) : nothing}
+        ${installing ? this.renderVersion(
+          'service-worker-installing-circle',
+          i18nString(UIStrings.sTryingToInstall, {PH1: installing.id}),
+          installing.scriptResponseTime !== undefined ? html`
+            <div class="service-worker-subtitle">
+              ${i18nString(UIStrings.receivedS, {PH1: new Date(installing.scriptResponseTime * 1000).toLocaleString()})}
+            </div>` : nothing) : nothing}
+      </div>
+    `, this.statusField);
+    // clang-format on
 
     if (active) {
       this.updateSourceField(active);
-      const localizedRunningStatus =
-          SDK.ServiceWorkerManager.ServiceWorkerVersion.RunningStatus[active.currentState.runningStatus]();
-      // TODO(l10n): Don't concatenate strings here.
-      const activeEntry = this.addVersion(
-          versionsStack, 'service-worker-active-circle',
-          i18nString(UIStrings.sActivatedAndIsS, {PH1: active.id, PH2: localizedRunningStatus}));
-
-      if (active.isRunning() || active.isStarting()) {
-        const stopButton = UI.UIUtils.createTextButton(
-            i18nString(UIStrings.stopString), this.stopButtonClicked.bind(this, active.id), {jslogContext: 'stop'});
-        activeEntry.appendChild(stopButton);
-      } else if (active.isStartable()) {
-        const startButton = UI.UIUtils.createTextButton(
-            i18nString(UIStrings.startString), this.startButtonClicked.bind(this), {jslogContext: 'start'});
-        activeEntry.appendChild(startButton);
-      }
       this.updateClientsField(active);
       this.maybeCreateRouterField();
     } else if (redundant) {
       this.updateSourceField(redundant);
-      this.addVersion(
-          versionsStack, 'service-worker-redundant-circle', i18nString(UIStrings.sIsRedundant, {PH1: redundant.id}));
       this.updateClientsField(redundant);
-    }
-
-    if (waiting) {
-      const waitingEntry = this.addVersion(
-          versionsStack, 'service-worker-waiting-circle', i18nString(UIStrings.sWaitingToActivate, {PH1: waiting.id}));
-      const skipWaitingButton =
-          UI.UIUtils.createTextButton(i18n.i18n.lockedString('skipWaiting'), this.skipButtonClicked.bind(this), {
-            title: i18n.i18n.lockedString('skipWaiting'),
-            jslogContext: 'skip-waiting',
-          });
-      waitingEntry.appendChild(skipWaitingButton);
-      if (waiting.scriptResponseTime !== undefined) {
-        waitingEntry.createChild('div', 'service-worker-subtitle').textContent =
-            i18nString(UIStrings.receivedS, {PH1: new Date(waiting.scriptResponseTime * 1000).toLocaleString()});
-      }
-    }
-    if (installing) {
-      const installingEntry = this.addVersion(
-          versionsStack, 'service-worker-installing-circle',
-          i18nString(UIStrings.sTryingToInstall, {PH1: installing.id}));
-      if (installing.scriptResponseTime !== undefined) {
-        installingEntry.createChild('div', 'service-worker-subtitle').textContent = i18nString(UIStrings.receivedS, {
-          PH1: new Date(installing.scriptResponseTime * 1000).toLocaleString(),
-        });
-      }
     }
 
     this.updateCycleView.refresh();
@@ -753,30 +774,34 @@ export class Section {
       return;
     }
     this.clientInfoCache.set(targetInfo.targetId, targetInfo);
-    this.updateClientInfo(element, targetInfo);
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(this.renderClientInfo(targetInfo), element);
   }
 
-  private updateClientInfo(element: HTMLElement, targetInfo: Protocol.Target.TargetInfo): void {
-    if (targetInfo.type !== 'page' && targetInfo.type === 'iframe') {
-      const clientString = element.createChild('span', 'service-worker-client-string');
-      UI.UIUtils.createTextChild(clientString, i18nString(UIStrings.workerS, {PH1: targetInfo.url}));
-      return;
+  private renderClientInfo(targetInfo: Protocol.Target.TargetInfo): LitTemplate {
+    if (targetInfo.type !== 'page' && targetInfo.type !== 'iframe') {
+      // clang-format off
+      return html`<span class="service-worker-client-string">
+        ${i18nString(UIStrings.workerS, {PH1: targetInfo.url})}
+      </span>`;
+      // clang-format on
     }
-    element.removeChildren();
-    const clientString = element.createChild('span', 'service-worker-client-string');
-    UI.UIUtils.createTextChild(clientString, targetInfo.url);
 
-    const focusButton = new Buttons.Button.Button();
-    focusButton.data = {
-      iconName: 'select-element',
-      variant: Buttons.Button.Variant.ICON,
-      size: Buttons.Button.Size.SMALL,
-      title: i18nString(UIStrings.focus),
-      jslogContext: 'client-focus',
-    };
-    focusButton.className = 'service-worker-client-focus-link';
-    focusButton.addEventListener('click', this.activateTarget.bind(this, targetInfo.targetId));
-    element.appendChild(focusButton);
+    // clang-format off
+    return html`
+      <span class="service-worker-client-string">${targetInfo.url}</span>
+      <devtools-button
+        .data=${{
+          iconName: 'select-element',
+          variant: Buttons.Button.Variant.ICON,
+          size: Buttons.Button.Size.SMALL,
+          title: i18nString(UIStrings.focus),
+          jslogContext: 'client-focus',
+        } as Buttons.Button.ButtonData}
+        class="service-worker-client-focus-link"
+        @click=${this.activateTarget.bind(this, targetInfo.targetId)}
+      ></devtools-button>`;
+    // clang-format on
   }
 
   private activateTarget(targetId: Protocol.Target.TargetID): void {
