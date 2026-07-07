@@ -33,6 +33,8 @@ _EXCLUDED_PATHS = [
     r'^front_end[\\/]core[\\/]platform[\\/]UIString\.ts$',  # Apple copyright
     r'^front_end[\\/]core[\\/]sdk[\\/]Resource\.ts$',  # Apple copyright
     r'^front_end[\\/]core[\\/]sdk[\\/]Script\.ts$',  # Apple copyright
+    # Apple copyright
+    r'^front_end[\\/]panels[\\/]network[\\/]networkPanel\.css$',
     r'^front_end[\\/]third_party[\\/].*',  # 3rd party code
     # Apple copyright
     r'^front_end[\\/]ui[\\/]legacy[\\/]components[\\/]data_grid[\\/]DataGrid\.ts$',
