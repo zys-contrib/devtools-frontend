@@ -14,6 +14,10 @@ import * as DeveloperResources from './developer_resources.js';
 const {urlString} = Platform.DevToolsPath;
 
 describeWithEnvironment('DeveloperResourcesView', () => {
+  beforeEach(() => {
+    SDK.PageResourceLoader.PageResourceLoader.instance({forceNew: true, loadOverride: null, maxConcurrentLoads: 1});
+  });
+
   it('allows selecting resources', async () => {
     const extensionId = 'extensionId';
     const initiator = {target: null, frameId: null, extensionId, initiatorUrl: urlString`${extensionId}`};
