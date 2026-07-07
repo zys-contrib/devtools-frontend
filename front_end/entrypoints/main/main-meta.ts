@@ -911,10 +911,10 @@ UI.Toolbar.registerToolbarItem({
     const isPolicyRestricted = config?.aidaAvailability?.blockedByEnterprisePolicy === true;
     return Boolean(isFlagEnabled && !isGeoRestricted && !isPolicyRestricted);
   },
-  async loadItem() {
+  loadItem: Common.Lazy.lazy(async () => {
     const Main = await loadMainModule();
     return new Main.GlobalAiButton.GlobalAiButtonToolbarProvider();
-  },
+  }) as () => Promise<UI.Toolbar.Provider>,
   order: 98,
   location: UI.Toolbar.ToolbarItemLocation.MAIN_TOOLBAR_RIGHT,
 });
