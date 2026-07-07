@@ -158,9 +158,11 @@ export class MainImpl {
   #readyForTestPromise = Promise.withResolvers<void>();
   #veStartPromise!: Promise<void>;
   #universe!: Foundation.Universe.Universe;
+  #supportsEmulation = false;
 
-  constructor() {
+  constructor(opts?: {supportsEmulation: boolean}) {
     MainImpl.instanceForTest = this;
+    this.#supportsEmulation = opts?.supportsEmulation ?? false;
     void this.#loaded();
   }
 
@@ -209,6 +211,7 @@ export class MainImpl {
       },
       hostConfig: Root.Runtime.hostConfig,
       inspectorFrontendHost: Host.InspectorFrontendHost.InspectorFrontendHostInstance,
+      supportsEmulation: this.#supportsEmulation,
     };
     this.#universe = new Foundation.Universe.Universe(creationOptions);
     Root.DevToolsContext.setGlobalInstance(this.#universe.context as Root.DevToolsContext.WritableDevToolsContext);

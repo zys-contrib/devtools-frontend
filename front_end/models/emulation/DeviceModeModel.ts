@@ -166,7 +166,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     this.#deviceScaleFactorSetting = this.#settings.createSetting('emulation.device-scale-factor', 0);
     this.#deviceScaleFactorSetting.addChangeListener(this.deviceScaleFactorSettingChanged, this);
 
-    this.#deviceOutlineSetting = this.#settings.createSetting('emulation.show-device-outline', false);
+    this.#deviceOutlineSetting = this.#settings.moduleSetting('emulation.show-device-outline');
     this.#deviceOutlineSetting.addChangeListener(this.deviceOutlineSettingChanged, this);
 
     this.#toolbarControlsEnabledSetting = this.#settings.createSetting('emulation.toolbar-controls-enabled', true,

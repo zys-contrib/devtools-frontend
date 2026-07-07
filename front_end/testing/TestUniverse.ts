@@ -47,6 +47,7 @@ export interface CreationOptions extends Partial<Foundation.Universe.CreationOpt
 export class TestUniverse implements Foundation.Universe.Universe {
   readonly #context = new Root.DevToolsContext.WritableDevToolsContext();
   readonly #creationOptions?: CreationOptions;
+  readonly supportsEmulation = true;
 
   constructor(options?: CreationOptions) {
     this.#creationOptions = options;

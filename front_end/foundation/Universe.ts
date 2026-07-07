@@ -22,6 +22,7 @@ export interface CreationOptions {
   overrideAutoStartModels?: Set<SDK.SDKModel.SDKModelConstructor>;
   hostConfig: Root.Runtime.HostConfig;
   inspectorFrontendHost: Host.InspectorFrontendHostAPI.InspectorFrontendHostAPI;
+  supportsEmulation: boolean;
 }
 
 export class Universe {
@@ -30,6 +31,7 @@ export class Universe {
   //                            directly on the `Universe`.
   readonly context: Root.DevToolsContext.DevToolsContext;
   readonly autofillManager: AutofillManager.AutofillManager.AutofillManager;
+  readonly supportsEmulation: boolean;
 
   constructor(options: CreationOptions) {
     const context = new Root.DevToolsContext.WritableDevToolsContext();
@@ -61,9 +63,12 @@ export class Universe {
     const multitargetNetworkManager = new SDK.NetworkManager.MultitargetNetworkManager(targetManager);
     context.set(SDK.NetworkManager.MultitargetNetworkManager, multitargetNetworkManager);
 
-    const deviceModeModel =
-        new Emulation.DeviceModeModel.DeviceModeModel(targetManager, settings, multitargetNetworkManager);
-    context.set(Emulation.DeviceModeModel.DeviceModeModel, deviceModeModel);
+    this.supportsEmulation = options.supportsEmulation;
+    if (options.supportsEmulation) {
+      const deviceModeModel =
+          new Emulation.DeviceModeModel.DeviceModeModel(targetManager, settings, multitargetNetworkManager);
+      context.set(Emulation.DeviceModeModel.DeviceModeModel, deviceModeModel);
+    }
 
     const pageResourceLoader =
         new SDK.PageResourceLoader.PageResourceLoader(targetManager, settings, multitargetNetworkManager, null);
@@ -172,8 +177,9 @@ export class Universe {
     return this.context.get(CrUXManager.CrUXManager);
   }
 
-  get deviceModeModel(): Emulation.DeviceModeModel.DeviceModeModel {
-    return this.context.get(Emulation.DeviceModeModel.DeviceModeModel);
+  // The DeviceModeModel may not be present, as emulation is only present for the `devtools_app` entrypoint, but not for the others.
+  get deviceModeModel(): Emulation.DeviceModeModel.DeviceModeModel|null {
+    return this.supportsEmulation ? this.context.get(Emulation.DeviceModeModel.DeviceModeModel) : null;
   }
 
   get domDebuggerManager(): SDK.DOMDebuggerModel.DOMDebuggerManager {
