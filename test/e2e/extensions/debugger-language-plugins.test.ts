@@ -646,7 +646,7 @@ describe('The Debugger Language Plugins', () => {
 
     const dwoUrl = 'http://test.com/test.dwo';
     assert.deepEqual(selectedDetails, [
-      'failure',
+      'Failure',
       dwoUrl,
       inspectedPage.domain('extensions.test'),
       '',
