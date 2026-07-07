@@ -27,8 +27,6 @@ const UIStrings = {
 const str_ = i18n.i18n.registerUIStrings('entrypoints/inspector_main/OutermostTargetSelector.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
-let outermostTargetSelectorInstance: OutermostTargetSelector;
-
 export class OutermostTargetSelector implements SDK.TargetManager.Observer, UI.SoftDropDown.Delegate<SDK.Target.Target>,
                                                 UI.Toolbar.Provider {
   readonly listItems = new UI.ListModel.ListModel<SDK.Target.Target>();
@@ -52,17 +50,6 @@ export class OutermostTargetSelector implements SDK.TargetManager.Observer, UI.S
     targetManager.observeTargets(this);
 
     UI.Context.Context.instance().addFlavorChangeListener(SDK.Target.Target, this.#targetChanged, this);
-  }
-
-  static instance(opts: {
-    forceNew: boolean|null,
-  } = {forceNew: null}): OutermostTargetSelector {
-    const {forceNew} = opts;
-    if (!outermostTargetSelectorInstance || forceNew) {
-      outermostTargetSelectorInstance = new OutermostTargetSelector();
-    }
-
-    return outermostTargetSelectorInstance;
   }
 
   item(): UI.Toolbar.ToolbarItem {

@@ -246,10 +246,10 @@ UI.Toolbar.registerToolbarItem({
 });
 
 UI.Toolbar.registerToolbarItem({
-  async loadItem() {
+  loadItem: Common.Lazy.lazy(async () => {
     const InspectorMain = await loadInspectorMainModule();
-    return InspectorMain.OutermostTargetSelector.OutermostTargetSelector.instance();
-  },
+    return new InspectorMain.OutermostTargetSelector.OutermostTargetSelector();
+  }) as () => Promise<UI.Toolbar.Provider>,
   order: 97,
   location: UI.Toolbar.ToolbarItemLocation.MAIN_TOOLBAR_RIGHT,
 });
