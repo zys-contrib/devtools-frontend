@@ -7,6 +7,7 @@ import * as Host from '../../../core/host/host.js';
 import * as i18n from '../../../core/i18n/i18n.js';
 import * as Root from '../../../core/root/root.js';
 import * as SDK from '../../../core/sdk/sdk.js';
+import {bytes} from '../data_formatters/UnitFormatters.js';
 import {CookieItem, DOMStorageItem, type StorageItem} from '../StorageItem.js';
 
 import {
@@ -565,13 +566,13 @@ export class StorageAgent extends AiAgent<StorageItem> {
                                    .sort((a, b) => b.usage - a.usage)
                                    .map(entry => ({
                                           storageType: entry.storageType as string,
-                                          usage: i18n.ByteUtilities.bytesToString(entry.usage),
+                                          usage: bytes(entry.usage),
                                         }));
 
         return {
           result: {
-            totalUsage: i18n.ByteUtilities.bytesToString(response.usage),
-            totalQuota: i18n.ByteUtilities.bytesToString(response.quota),
+            totalUsage: bytes(response.usage),
+            totalQuota: bytes(response.quota),
             usageBreakdown,
           },
         };

@@ -180,6 +180,7 @@ ts_library("unittests") {
     "../text_utils:bundle",
     "../trace:bundle",
     "../workspace:bundle",
+    "./data_formatters:unittests",
   ]
 }
 

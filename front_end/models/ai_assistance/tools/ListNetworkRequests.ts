@@ -9,6 +9,7 @@ import * as Logs from '../../logs/logs.js';
 import type {FunctionCallHandlerResult} from '../agents/AiAgent.js';
 import {isOpaqueOrigin} from '../AiOrigins.js';
 import {getRequestContextOrigin} from '../contexts/RequestContext.js';
+import {formatBytesToKb, seconds} from '../data_formatters/UnitFormatters.js';
 
 import {
   type BaseToolCapability,
@@ -96,8 +97,8 @@ export class ListNetworkRequestsTool implements
         id: request.requestId(),
         url: request.url(),
         statusCode: request.statusCode,
-        duration: i18n.TimeUtilities.secondsToString(request.duration),
-        transferSize: i18n.ByteUtilities.formatBytesToKb(request.transferSize),
+        duration: seconds(request.duration),
+        transferSize: formatBytesToKb(request.transferSize),
       });
       requestsToShow.push(request);
     }

@@ -19,6 +19,7 @@ import {DOMNodeContext} from '../contexts/DOMNodeContext.js';
 import {FileContext} from '../contexts/FileContext.js';
 import {PerformanceTraceContext} from '../contexts/PerformanceTraceContext.js';
 import {getRequestContextOrigin, RequestContext} from '../contexts/RequestContext.js';
+import {formatBytesToKb, seconds} from '../data_formatters/UnitFormatters.js';
 import {debugLog} from '../debug.js';
 import {StorageItem} from '../StorageItem.js';
 
@@ -164,8 +165,8 @@ export class ContextSelectionAgent extends AiAgent<never> {
             id: request.requestId(),
             url: request.url(),
             statusCode: request.statusCode,
-            duration: i18n.TimeUtilities.secondsToString(request.duration),
-            transferSize: i18n.ByteUtilities.formatBytesToKb(request.transferSize),
+            duration: seconds(request.duration),
+            transferSize: formatBytesToKb(request.transferSize),
           });
           requestsToShow.push(request);
         }
