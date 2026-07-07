@@ -548,4 +548,51 @@ describeWithEnvironment('NetworkLogView', () => {
       assert.isAbove(Network.NetworkDataGridNode.NetworkRequestNode.OverrideTypesComparator(nodeA, nodeNull1), 0);
     });
   });
+
+  describe('IsPreloadedComparator', () => {
+    it('sorts nodes based on isLinkPreload status correctly', () => {
+      const createPreloadRequest = (isLinkPreload: boolean, id: string) => {
+        const req = SDK.NetworkRequest.NetworkRequest.create(
+            id as Protocol.Network.RequestId, urlString`https://www.example.com/${id}`, urlString``, null, null, null);
+        req.setIsLinkPreload(isLinkPreload);
+        return new Network.NetworkDataGridNode.NetworkRequestNode(
+            {} as Network.NetworkDataGridNode.NetworkLogViewInterface, req);
+      };
+
+      const nodePreloaded = createPreloadRequest(true, 'a');
+      const nodeNotPreloaded = createPreloadRequest(false, 'b');
+
+      assert.isAbove(
+          Network.NetworkDataGridNode.NetworkRequestNode.IsPreloadedComparator(nodePreloaded, nodeNotPreloaded), 0);
+      assert.isBelow(
+          Network.NetworkDataGridNode.NetworkRequestNode.IsPreloadedComparator(nodeNotPreloaded, nodePreloaded), 0);
+    });
+
+    it('handles nodes without requests symmetrically', () => {
+      const emptyNodeA =
+          new Network.NetworkDataGridNode.NetworkGroupNode({} as Network.NetworkDataGridNode.NetworkLogViewInterface);
+      const emptyNodeB =
+          new Network.NetworkDataGridNode.NetworkGroupNode({} as Network.NetworkDataGridNode.NetworkLogViewInterface);
+
+      assert.strictEqual(Network.NetworkDataGridNode.NetworkRequestNode.IsPreloadedComparator(emptyNodeA, emptyNodeB),
+                         0);
+    });
+  });
+
+  it('renders is-preloaded cell correctly', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create(
+        'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com`, urlString``, null, null, null);
+    request.setIsLinkPreload(true);
+
+    const networkRequestNode = new Network.NetworkDataGridNode.NetworkRequestNode(
+        {} as Network.NetworkDataGridNode.NetworkLogViewInterface, request);
+    const el = document.createElement('div');
+    networkRequestNode.renderCell(el, 'is-preloaded');
+    assert.strictEqual(el.textContent, 'true');
+
+    const el2 = document.createElement('div');
+    request.setIsLinkPreload(false);
+    networkRequestNode.renderCell(el2, 'is-preloaded');
+    assert.strictEqual(el2.textContent, 'false');
+  });
 });

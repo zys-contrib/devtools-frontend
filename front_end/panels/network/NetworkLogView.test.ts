@@ -875,6 +875,46 @@ describeWithEnvironment('NetworkLogView', () => {
     ]);
   });
 
+  it('can apply filter - is:preloaded', async () => {
+    const urlPreloaded = urlString`https://example.com/preloaded`;
+    const urlNotPreloaded = urlString`https://example.com/not-preloaded`;
+
+    const requestPreloaded = createNetworkRequest(urlPreloaded, {target});
+    requestPreloaded.setIsLinkPreload(true);
+    createNetworkRequest(urlNotPreloaded, {target});
+
+    const filterBar = new UI.FilterBar.FilterBar('network-panel', true);
+    networkLogView = createNetworkLogView(filterBar);
+    networkLogView.setTextFilterValue('is:preloaded');
+
+    renderElementIntoDOM(networkLogView);
+    const rootNode = networkLogView.columns().dataGrid().rootNode();
+
+    assert.deepEqual(rootNode.children.map(n => (n as Network.NetworkDataGridNode.NetworkNode).request()?.url()), [
+      urlPreloaded,
+    ]);
+  });
+
+  it('can apply negated filter - -is:preloaded', async () => {
+    const urlPreloaded = urlString`https://example.com/preloaded`;
+    const urlNotPreloaded = urlString`https://example.com/not-preloaded`;
+
+    const requestPreloaded = createNetworkRequest(urlPreloaded, {target});
+    requestPreloaded.setIsLinkPreload(true);
+    createNetworkRequest(urlNotPreloaded, {target});
+
+    const filterBar = new UI.FilterBar.FilterBar('network-panel', true);
+    networkLogView = createNetworkLogView(filterBar);
+    networkLogView.setTextFilterValue('-is:preloaded');
+
+    renderElementIntoDOM(networkLogView);
+    const rootNode = networkLogView.columns().dataGrid().rootNode();
+
+    assert.deepEqual(rootNode.children.map(n => (n as Network.NetworkDataGridNode.NetworkNode).request()?.url()), [
+      urlNotPreloaded,
+    ]);
+  });
+
   function createRequestsWithAndWithoutTestHeader() {
     const urlWithTestHeader = urlString`https://example.com/request-with-test-header`;
     const urlWithoutTestHeader = urlString`https://example.com/request-without-test-header`;
@@ -1422,6 +1462,19 @@ describeWithEnvironment('NetworkLogView', () => {
     assert.deepEqual(
         debugWithAiItem?.subItems?.map(item => item.label),
         ['Start a chat', 'Explain purpose', 'Explain slowness', 'Explain failures', 'Assess security headers']);
+  });
+
+  it('configures visual logging for preloaded column in header context menu', () => {
+    stubNoopSettings();
+    SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true});
+    const networkLogView = createNetworkLogView(new UI.FilterBar.FilterBar('network-test'));
+    renderElementIntoDOM(networkLogView);
+
+    const nameHeaderCell = networkLogView.columns().dataGrid().element.querySelector('th.name-column');
+    assert.instanceOf(nameHeaderCell, HTMLTableCellElement);
+    const contextMenu = getContextMenuForElement(nameHeaderCell);
+    const preloadedItem = contextMenu.buildDescriptor().subItems?.find(item => item.jslogContext === 'is-preloaded');
+    assert.exists(preloadedItem);
   });
 });
 

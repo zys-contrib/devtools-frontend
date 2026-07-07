@@ -13,6 +13,7 @@ import {
   selectRequestByName,
   setCacheDisabled,
   setPersistLog,
+  setTextFilter,
   setTimeWindow,
   waitForSelectedRequestChange,
   waitForSomeRequestsToAppear,
@@ -118,6 +119,26 @@ describe('The Network Tab', function() {
        // that the number of requests increased.
        await waitForSomeRequestsToAppear(numOfRequest + 1, devToolsPage);
      });
+
+  it('should display preloaded request column with correct value', async ({devToolsPage, inspectedPage}) => {
+    await navigateToNetworkTabEmptyPage(devToolsPage, inspectedPage);
+    await navigateToNetworkTab('preload.html', devToolsPage, inspectedPage);
+
+    await setTextFilter('is:preloaded', devToolsPage);
+    await waitForSomeRequestsToAppear(1, devToolsPage);
+
+    const names = await getAllRequestNames(devToolsPage);
+    assert.include(names, 'style.css');
+
+    await devToolsPage.click('pierce/thead .name-column', {clickOptions: {button: 'right'}});
+    await devToolsPage.click('aria/Preloaded, unchecked');
+
+    await devToolsPage.waitForFunction(async () => {
+      const values = await devToolsPage.page.$$eval('pierce/.is-preloaded-column',
+                                                    cells => cells.map(cell => cell.textContent?.trim()));
+      return values.includes('true');
+    });
+  });
 
   describe('with durable messages', function() {
     setup({enabledFeatures: ['DevToolsEnableDurableMessages']});

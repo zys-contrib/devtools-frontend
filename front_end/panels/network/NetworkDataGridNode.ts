@@ -823,6 +823,23 @@ export class NetworkRequestNode extends NetworkNode {
     return aRequest.identityCompare(bRequest);
   }
 
+  static IsPreloadedComparator(a: NetworkNode, b: NetworkNode): number {
+    const aRequest = a.requestOrFirstKnownChildRequest();
+    const bRequest = b.requestOrFirstKnownChildRequest();
+    if (!aRequest && !bRequest) {
+      return 0;
+    }
+    if (!aRequest || !bRequest) {
+      return !aRequest ? -1 : 1;
+    }
+    const aIsPreloaded = aRequest.isLinkPreload();
+    const bIsPreloaded = bRequest.isLinkPreload();
+    if (aIsPreloaded === bIsPreloaded) {
+      return aRequest.identityCompare(bRequest);
+    }
+    return aIsPreloaded ? 1 : -1;
+  }
+
   static RenderBlockingComparator(a: NetworkNode, b: NetworkNode): number {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
@@ -1135,6 +1152,10 @@ export class NetworkRequestNode extends NetworkNode {
       }
       case 'is-ad-related': {
         this.setTextAndTitle(cell, this.requestInternal.isAdRelated().toLocaleString());
+        break;
+      }
+      case 'is-preloaded': {
+        this.setTextAndTitle(cell, this.requestInternal.isLinkPreload().toLocaleString());
         break;
       }
       case 'render-blocking': {

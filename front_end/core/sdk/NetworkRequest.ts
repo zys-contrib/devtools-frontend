@@ -296,6 +296,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
   directSocketInfo?: DirectSocketInfo;
   readonly #directSocketChunks: DirectSocketChunk[] = [];
   #isAdRelated: boolean;
+  #isLinkPreload: boolean;
   #appliedNetworkConditionsId?: string;
 
   constructor(
@@ -319,6 +320,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
     this.#initiator = initiator;
     this.#hasUserGesture = hasUserGesture;
     this.#isAdRelated = false;
+    this.#isLinkPreload = false;
   }
 
   static create(
@@ -1835,6 +1837,14 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
 
   isAdRelated(): boolean {
     return this.#isAdRelated;
+  }
+
+  setIsLinkPreload(isLinkPreload: boolean): void {
+    this.#isLinkPreload = isLinkPreload;
+  }
+
+  isLinkPreload(): boolean {
+    return this.#isLinkPreload;
   }
 
   getAssociatedData(key: string): object|null {

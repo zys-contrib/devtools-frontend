@@ -777,6 +777,10 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin<EventTypes, 
     return request.initiatedByServiceWorker();
   }
 
+  private static linkPreloadRequestFilter(request: SDK.NetworkRequest.NetworkRequest): boolean {
+    return request.isLinkPreload();
+  }
+
   private static requestResponseHeaderFilter(value: string, request: SDK.NetworkRequest.NetworkRequest): boolean {
     return request.responseHeaderValue(value) !== undefined;
   }
@@ -1062,6 +1066,7 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin<EventTypes, 
         NetworkForward.UIFilter.FilterType.Is, NetworkForward.UIFilter.IsFilterType.SERVICE_WORKER_INTERCEPTED);
     this.suggestionBuilder.addItem(
         NetworkForward.UIFilter.FilterType.Is, NetworkForward.UIFilter.IsFilterType.SERVICE_WORKER_INITIATED);
+    this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.Is, NetworkForward.UIFilter.IsFilterType.PRELOAD);
     this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.LargerThan, '100');
     this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.LargerThan, '10k');
     this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.LargerThan, '1M');
@@ -2206,6 +2211,9 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin<EventTypes, 
         }
         if (value.toLowerCase() === NetworkForward.UIFilter.IsFilterType.SERVICE_WORKER_INITIATED) {
           return NetworkLogView.initiatedByServiceWorkerFilter;
+        }
+        if (value.toLowerCase() === NetworkForward.UIFilter.IsFilterType.PRELOAD) {
+          return NetworkLogView.linkPreloadRequestFilter;
         }
         break;
 
