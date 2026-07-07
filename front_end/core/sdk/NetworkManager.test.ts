@@ -60,7 +60,6 @@ describe('NetworkManager', () => {
     it('decodes gzip-compressed request form data', async () => {
       const universe = new TestUniverse();
       const connection = new MockCDPConnection();
-      SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true, targetManager: universe.targetManager});
       const expectedPostData = 'a=1&b=hello+world';
       const compressedPostData = await Common.Gzip.compress(expectedPostData);
       const encodedPostData = btoa(String.fromCharCode(...new Uint8Array(compressedPostData)));
@@ -1181,19 +1180,17 @@ describe('MultitargetNetworkManager', () => {
 
   beforeEach(() => {
     universe = new TestUniverse();
-    SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true, targetManager: universe.targetManager});
   });
 
   describe('Trust Token done event', () => {
     it('is not lost when arriving before the corresponding requestWillBeSent event', () => {
-      // 1) Setup a NetworkManager and listen to "RequestStarted" events.
-      const networkManager = new Common.ObjectWrapper.ObjectWrapper<SDK.NetworkManager.EventTypes>();
+      const target = universe.createTarget({});
+      const networkManager = target.model(SDK.NetworkManager.NetworkManager)!;
       const startedRequests: SDK.NetworkRequest.NetworkRequest[] = [];
       networkManager.addEventListener(SDK.NetworkManager.Events.RequestStarted, event => {
         startedRequests.push(event.data.request);
       });
-      const networkDispatcher =
-          new SDK.NetworkManager.NetworkDispatcher(networkManager as SDK.NetworkManager.NetworkManager);
+      const networkDispatcher = networkManager.dispatcher;
 
       // 2) Fire a trust token event, followed by a requestWillBeSent event.
       const mockEvent = {requestId: 'mockId'} as Protocol.Network.TrustTokenOperationDoneEvent;
@@ -1211,7 +1208,7 @@ describe('MultitargetNetworkManager', () => {
     const target = universe.createTarget({});
     const workerTarget = universe.createTarget({type: SDK.Target.Type.Worker});
 
-    const multiTargetNetworkManager = SDK.NetworkManager.MultitargetNetworkManager.instance();
+    const multiTargetNetworkManager = universe.multitargetNetworkManager;
     const initialNetworkManager = target.model(SDK.NetworkManager.NetworkManager)!;
 
     assert.strictEqual(multiTargetNetworkManager.inflightMainResourceRequests.size, 0);
@@ -1250,11 +1247,11 @@ describe('MultitargetNetworkManager', () => {
   });
 
   it('blocking settings are consistent after change', async () => {
-    const multitargetNetworkManager = SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true});
+    const multitargetNetworkManager = universe.multitargetNetworkManager;
     let eventCounter = 0;
     multitargetNetworkManager.addEventListener(
         SDK.NetworkManager.MultitargetNetworkManager.Events.BLOCKED_PATTERNS_CHANGED, () => eventCounter++);
-    const blockingEnabledSetting = Common.Settings.Settings.instance().moduleSetting('request-blocking-enabled');
+    const blockingEnabledSetting = universe.settings.moduleSetting('request-blocking-enabled');
 
     // Change blocking setting via Common.Settings.Settings.
     assert.isFalse(multitargetNetworkManager.isBlocking());
@@ -1300,7 +1297,7 @@ describe('MultitargetNetworkManager', () => {
   });
 
   it('blocking settings allow deleting an item in the middle of the list', () => {
-    const conditions = SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true}).requestConditions;
+    const conditions = universe.multitargetNetworkManager.requestConditions;
     const condition1 = SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url1', enabled: true});
     const condition2 = SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url2', enabled: true});
     const condition3 = SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url3', enabled: true});
@@ -1313,8 +1310,7 @@ describe('MultitargetNetworkManager', () => {
   it('applies global conditions if request conditions are disabled', () => {
     const connection = new MockCDPConnection();
     universe.createTarget({connection});
-    const manager =
-        SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true, targetManager: universe.targetManager});
+    const manager = universe.multitargetNetworkManager;
 
     const rules: Protocol.Network.EmulateNetworkConditionsByRuleRequest[] = [];
     connection.setSuccessHandler('Network.emulateNetworkConditionsByRule', request => {
@@ -1336,8 +1332,7 @@ describe('MultitargetNetworkManager', () => {
   });
 
   it('calls the request conditions model for global throttling if individual request throttling is enabled', () => {
-    const manager =
-        SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true, targetManager: universe.targetManager});
+    const manager = universe.multitargetNetworkManager;
     manager.setNetworkConditions(SDK.NetworkManager.Slow4GConditions);
 
     const targetManager = new SDK.NetworkManager.NetworkManager(universe.createTarget({}));
@@ -1666,9 +1661,7 @@ describe('RequestConditions', () => {
 
     it('disables throttling and blocking when the effect gets disabled globally', () => {
       const {universe, setBlockedURLs, emulateNetworkConditions, emulateNetworkConditionsByRule} = stubAgent();
-      const conditions =
-          SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true, targetManager: universe.targetManager})
-              .requestConditions;
+      const conditions = universe.multitargetNetworkManager.requestConditions;
       conditions.conditionsEnabled = true;
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({url: 'foo', enabled: true}));
 
@@ -1717,8 +1710,7 @@ describe('RequestConditions', () => {
 
     it('correctly maps ruleIds to conditions', async () => {
       const {universe, agent, emulateNetworkConditionsByRule} = stubAgent();
-      const multitargetNetworkManager = SDK.NetworkManager.MultitargetNetworkManager.instance(
-          {forceNew: true, targetManager: universe.targetManager});
+      const multitargetNetworkManager = universe.multitargetNetworkManager;
       const requestConditions = multitargetNetworkManager.requestConditions;
 
       const ruleId = 'mock-rule-id-1';
@@ -1781,18 +1773,14 @@ describe('NetworkDispatcher', () => {
   const loadingFinishedEvent = {requestId: 'mockId', timestamp: 42, encodedDataLength: 42} as
       Protocol.Network.LoadingFinishedEvent;
   describe('request', () => {
+    let universe: TestUniverse;
     let networkDispatcher: SDK.NetworkManager.NetworkDispatcher;
 
     beforeEach(() => {
-      const networkManager: Common.ObjectWrapper.ObjectWrapper<unknown>&{target?: () => void} =
-          new Common.ObjectWrapper.ObjectWrapper();
-      networkManager.target = () => ({
-        model: () => null,
-        targetManager: () => ({
-          settings: Common.Settings.Settings.instance(),
-        }),
-      });
-      networkDispatcher = new SDK.NetworkManager.NetworkDispatcher(networkManager as SDK.NetworkManager.NetworkManager);
+      universe = new TestUniverse();
+      const target = universe.createTarget({});
+      const networkManager = target.model(SDK.NetworkManager.NetworkManager)!;
+      networkDispatcher = networkManager.dispatcher;
     });
 
     it('is preserved after loadingFinished', () => {
@@ -1930,7 +1918,7 @@ describe('NetworkDispatcher', () => {
           networkDispatcher.requestForId('mockId')?.responseHeaders, [{name: 'test-header', value: 'first'}]);
 
       // ResponseReceived does overwrite response headers if request is marked as intercepted.
-      SDK.NetworkManager.MultitargetNetworkManager.instance().dispatchEventToListeners(
+      universe.multitargetNetworkManager.dispatchEventToListeners(
           SDK.NetworkManager.MultitargetNetworkManager.Events.REQUEST_INTERCEPTED, 'mockId');
       networkDispatcher.responseReceived(mockResponseReceivedEventWithHeaders({'test-header': 'third'}));
       assert.deepEqual(
@@ -2025,7 +2013,7 @@ describe('InterceptedRequest', () => {
       target: SDK.Target.Target, request: Protocol.Network.Request, requestId: Protocol.Fetch.RequestId,
       responseStatusCode: number, responseHeaders: Protocol.Fetch.HeaderEntry[], responseBody: string,
       expectedOverriddenResponse: OverriddenResponse, expectedSetCookieHeaders: Protocol.Fetch.HeaderEntry[] = []) {
-    const multitargetNetworkManager = SDK.NetworkManager.MultitargetNetworkManager.instance();
+    const multitargetNetworkManager = universe.multitargetNetworkManager;
     const fetchAgent = target.fetchAgent();
 
     const fulfilledRequest = new Promise(resolve => {
@@ -2044,8 +2032,8 @@ describe('InterceptedRequest', () => {
     // 'set-cookie' headers.
     const filteredResponseHeaders = responseHeaders.filter(header => header.name !== 'set-cookie');
     const interceptedRequest = new SDK.NetworkManager.InterceptedRequest(
-        fetchAgent, request, Protocol.Network.ResourceType.Document, requestId, networkRequest, responseStatusCode,
-        filteredResponseHeaders);
+        multitargetNetworkManager, fetchAgent, request, Protocol.Network.ResourceType.Document, requestId,
+        networkRequest, responseStatusCode, filteredResponseHeaders);
     interceptedRequest.responseBody = async () => {
       return new TextUtils.ContentData.ContentData(responseBody, false, 'text/html');
     };
@@ -2288,14 +2276,15 @@ describe('InterceptedRequest', () => {
         requestId as unknown as Protocol.Network.RequestId, urlString`${request.url}`, urlString`${request.url}`, null,
         null, null);
 
-    const interceptedRequest = new SDK.NetworkManager.InterceptedRequest(
-        fetchAgent, request, Protocol.Network.ResourceType.Document, requestId, networkRequest);
+    const interceptedRequest =
+        new SDK.NetworkManager.InterceptedRequest(universe.multitargetNetworkManager, fetchAgent, request,
+                                                  Protocol.Network.ResourceType.Document, requestId, networkRequest);
     interceptedRequest.responseBody = async () => {
       return new TextUtils.ContentData.ContentData('interceptedRequest content', false, 'text/html');
     };
 
     sinon.assert.notCalled(continueRequestSpy);
-    await SDK.NetworkManager.MultitargetNetworkManager.instance().requestIntercepted(interceptedRequest);
+    await universe.multitargetNetworkManager.requestIntercepted(interceptedRequest);
     sinon.assert.notCalled(fulfillRequestSpy);
     sinon.assert.calledOnce(continueRequestSpy);
   });
@@ -2345,8 +2334,8 @@ describe('InterceptedRequest', () => {
       networkProject.addUISourceCode(uiSourceCode);
 
       const interceptedRequest = new SDK.NetworkManager.InterceptedRequest(
-          fetchAgent, request, Protocol.Network.ResourceType.Document, requestId, networkRequest, 200,
-          [{name: 'content-type', value: 'text/html; charset-utf-16'}]);
+          universe.multitargetNetworkManager, fetchAgent, request, Protocol.Network.ResourceType.Document, requestId,
+          networkRequest, 200, [{name: 'content-type', value: 'text/html; charset-utf-16'}]);
       interceptedRequest.responseBody = async () => {
         // Very simple HTML doc base64 encoded.
         return new TextUtils.ContentData.ContentData(

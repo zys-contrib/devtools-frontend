@@ -577,10 +577,12 @@ const MAX_RESPONSE_BODY_TOTAL_BUFFER_LENGTH = 250 * 1024 * 1024;  // bytes
 export class FetchDispatcher implements ProtocolProxyApi.FetchDispatcher {
   readonly #fetchAgent: ProtocolProxyApi.FetchApi;
   readonly #manager: NetworkManager;
+  readonly #multitargetNetworkManager;
 
   constructor(agent: ProtocolProxyApi.FetchApi, manager: NetworkManager) {
     this.#fetchAgent = agent;
     this.#manager = manager;
+    this.#multitargetNetworkManager = this.#manager.target().targetManager().getNetworkManager();
   }
 
   requestPaused({requestId, request, resourceType, responseStatusCode, responseHeaders, networkId}:
@@ -591,8 +593,9 @@ export class FetchDispatcher implements ProtocolProxyApi.FetchDispatcher {
     if (networkRequest?.originalResponseHeaders.length === 0 && responseHeaders) {
       networkRequest.originalResponseHeaders = responseHeaders;
     }
-    void MultitargetNetworkManager.instance().requestIntercepted(new InterceptedRequest(
-        this.#fetchAgent, request, resourceType, requestId, networkRequest, responseStatusCode, responseHeaders));
+    void this.#multitargetNetworkManager.requestIntercepted(
+        new InterceptedRequest(this.#multitargetNetworkManager, this.#fetchAgent, request, resourceType, requestId,
+                               networkRequest, responseStatusCode, responseHeaders));
   }
 
   authRequired({}: Protocol.Fetch.AuthRequiredEvent): void {
@@ -601,6 +604,7 @@ export class FetchDispatcher implements ProtocolProxyApi.FetchDispatcher {
 
 export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
   readonly #manager: NetworkManager;
+  readonly #multitargetNetworkManager: MultitargetNetworkManager;
   readonly #requestsById = new Map<string, NetworkRequest>();
   readonly #requestsByURL = new Map<Platform.DevToolsPath.UrlString, NetworkRequest>();
   readonly #requestsByLoaderId = new Map<Protocol.Network.LoaderId, NetworkRequest>();
@@ -617,9 +621,10 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
 
   constructor(manager: NetworkManager) {
     this.#manager = manager;
+    this.#multitargetNetworkManager = this.#manager.target().targetManager().getNetworkManager();
 
-    MultitargetNetworkManager.instance().addEventListener(
-        MultitargetNetworkManager.Events.REQUEST_INTERCEPTED, this.#markAsIntercepted.bind(this));
+    this.#multitargetNetworkManager.addEventListener(MultitargetNetworkManager.Events.REQUEST_INTERCEPTED,
+                                                     this.#markAsIntercepted.bind(this));
   }
 
   #markAsIntercepted(event: Common.EventTarget.EventTargetEvent<string>): void {
@@ -1177,7 +1182,7 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
   }
 
   private maybeAdoptMainResourceRequest(requestId: string): NetworkRequest|null {
-    const request = MultitargetNetworkManager.instance().inflightMainResourceRequests.get(requestId);
+    const request = this.#multitargetNetworkManager.inflightMainResourceRequests.get(requestId);
     if (!request) {
       return null;
     }
@@ -1215,7 +1220,7 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
     // request to fetch the main worker script, the request ID is the future
     // worker target ID and, therefore, it is unique.
     if (networkRequest.loaderId === networkRequest.requestId() || networkRequest.loaderId === '') {
-      MultitargetNetworkManager.instance().inflightMainResourceRequests.set(networkRequest.requestId(), networkRequest);
+      this.#multitargetNetworkManager.inflightMainResourceRequests.set(networkRequest.requestId(), networkRequest);
     }
 
     this.#manager.dispatchEventToListeners(Events.RequestStarted, {request: networkRequest, originalRequest});
@@ -1243,7 +1248,7 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
       }
     }
     this.#manager.dispatchEventToListeners(Events.RequestFinished, networkRequest);
-    MultitargetNetworkManager.instance().inflightMainResourceRequests.delete(networkRequest.requestId());
+    this.#multitargetNetworkManager.inflightMainResourceRequests.delete(networkRequest.requestId());
 
     const settings = this.#manager.target().targetManager().settings;
     if (settings.moduleSetting('monitoring-xhr-enabled').get() &&
@@ -2384,6 +2389,7 @@ export namespace MultitargetNetworkManager {
 }
 
 export class InterceptedRequest {
+  readonly #multitargetNetworkManager: MultitargetNetworkManager;
   readonly #fetchAgent: ProtocolProxyApi.FetchApi;
   #hasResponded = false;
   request: Protocol.Network.Request;
@@ -2394,6 +2400,7 @@ export class InterceptedRequest {
   networkRequest: NetworkRequest|null;
 
   constructor(
+      multitargetNetworkManager: MultitargetNetworkManager,
       fetchAgent: ProtocolProxyApi.FetchApi,
       request: Protocol.Network.Request,
       resourceType: Protocol.Network.ResourceType,
@@ -2402,6 +2409,7 @@ export class InterceptedRequest {
       responseStatusCode?: number,
       responseHeaders?: Protocol.Fetch.HeaderEntry[],
   ) {
+    this.#multitargetNetworkManager = multitargetNetworkManager;
     this.#fetchAgent = fetchAgent;
     this.request = request;
     this.resourceType = resourceType;
@@ -2493,8 +2501,8 @@ export class InterceptedRequest {
     }
 
     void this.#fetchAgent.invoke_fulfillRequest({requestId: this.requestId, responseCode, body, responseHeaders});
-    MultitargetNetworkManager.instance().dispatchEventToListeners(
-        MultitargetNetworkManager.Events.REQUEST_FULFILLED, this.request.url as Platform.DevToolsPath.UrlString);
+    this.#multitargetNetworkManager.dispatchEventToListeners(MultitargetNetworkManager.Events.REQUEST_FULFILLED,
+                                                             this.request.url as Platform.DevToolsPath.UrlString);
   }
 
   continueRequestWithoutChange(): void {
