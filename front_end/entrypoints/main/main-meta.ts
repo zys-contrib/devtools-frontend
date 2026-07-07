@@ -920,10 +920,10 @@ UI.Toolbar.registerToolbarItem({
 });
 
 UI.Toolbar.registerToolbarItem({
-  async loadItem() {
+  loadItem: Common.Lazy.lazy(async () => {
     const Main = await loadMainModule();
-    return Main.MainImpl.SettingsButtonProvider.instance();
-  },
+    return new Main.MainImpl.SettingsButtonProvider();
+  }) as () => Promise<UI.Toolbar.Provider>,
   order: 99,
   location: UI.Toolbar.ToolbarItemLocation.MAIN_TOOLBAR_RIGHT,
 });

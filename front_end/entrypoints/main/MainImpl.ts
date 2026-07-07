@@ -948,23 +948,10 @@ export class MainMenuItem implements UI.Toolbar.Provider {
   }
 }
 
-let settingsButtonProviderInstance: SettingsButtonProvider;
-
 export class SettingsButtonProvider implements UI.Toolbar.Provider {
   readonly #settingsButton: UI.Toolbar.ToolbarButton;
-  private constructor() {
+  constructor() {
     this.#settingsButton = UI.Toolbar.Toolbar.createActionButton('settings.show');
-  }
-
-  static instance(opts: {
-    forceNew: boolean|null,
-  } = {forceNew: null}): SettingsButtonProvider {
-    const {forceNew} = opts;
-    if (!settingsButtonProviderInstance || forceNew) {
-      settingsButtonProviderInstance = new SettingsButtonProvider();
-    }
-
-    return settingsButtonProviderInstance;
   }
 
   item(): UI.Toolbar.ToolbarItem|null {
