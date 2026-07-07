@@ -955,12 +955,19 @@ describe('The Debugger Language Plugins', () => {
     });
     assert.deepEqual(watchTexts, ['foo: 23', 'bar: <not available>']);
 
-    const tooltipText = await watchResults[1].evaluate(e => {
-      const errorElement = e.querySelector('.watch-expression-error');
-      if (!errorElement) {
-        return 'NO ERROR COULD BE FOUND';
+    const tooltipText = await devToolsPage.waitForFunction(async () => {
+      const watchResults = await devToolsPage.$$('.watch-expression');
+      if (watchResults.length < 2) {
+        return null;
       }
-      return errorElement.getAttribute('title');
+      return await watchResults[1].evaluate(e => {
+        const errorElement = e.querySelector('.watch-expression-error');
+        if (!errorElement) {
+          return null;
+        }
+        const title = errorElement.getAttribute('title');
+        return title ? title : null;
+      });
     });
     assert.strictEqual(tooltipText, 'No typeinfo for bar');
 
