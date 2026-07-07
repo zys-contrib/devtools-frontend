@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as Common from '../../core/common/common.js';
+import type * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
@@ -34,6 +34,7 @@ export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObser
   readonly pluginManager: DebuggerLanguagePluginManager;
   readonly ignoreListManager: Workspace.IgnoreListManager.IgnoreListManager;
   readonly workspace: Workspace.Workspace.WorkspaceImpl;
+  readonly #settings: Common.Settings.Settings;
 
   constructor(
       resourceMapping: ResourceMapping, targetManager: SDK.TargetManager.TargetManager,
@@ -42,6 +43,7 @@ export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObser
     this.resourceMapping.debuggerWorkspaceBinding = this;
     this.ignoreListManager = ignoreListManager;
     this.workspace = workspace;
+    this.#settings = targetManager.settings;
 
     this.#debuggerModelToData = new Map();
     targetManager.observeModels(SDK.DebuggerModel.DebuggerModel, this);
@@ -489,8 +491,7 @@ export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObser
     }
     const functionLocation = frame.functionLocation();
     if (!autoSteppingContext || debuggerPausedDetails.reason !== Protocol.Debugger.PausedEventReason.Step ||
-        !functionLocation || !frame.script.isWasm() ||
-        !Common.Settings.Settings.instance().moduleSetting('wasm-auto-stepping').get() ||
+        !functionLocation || !frame.script.isWasm() || !this.#settings.moduleSetting('wasm-auto-stepping').get() ||
         !this.pluginManager.hasPluginForScript(frame.script)) {
       return true;
     }
