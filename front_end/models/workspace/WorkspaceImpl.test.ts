@@ -12,17 +12,8 @@ import * as Workspace from '../workspace/workspace.js';
 const {urlString} = Platform.DevToolsPath;
 
 describe('WorkspaceImpl', () => {
-  it('can remove the current instance', () => {
-    const sutBefore = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
-
-    Workspace.Workspace.WorkspaceImpl.removeInstance();
-
-    const sutAfter = Workspace.Workspace.WorkspaceImpl.instance();
-    assert.notStrictEqual(sutBefore, sutAfter);
-  });
-
   it('can retrieve UI source code with project Id and URL', () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
     const projectStub = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     const exampleProjectID = 'exampleProjectID';
     const exampleUrl = urlString`https://example.com/`;
@@ -37,7 +28,7 @@ describe('WorkspaceImpl', () => {
   });
 
   it('can return the UI source code from a URL', async () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
     const exampleUrl = urlString`https://example.com/`;
     const projectStub = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     sut.addProject(projectStub);
@@ -48,7 +39,7 @@ describe('WorkspaceImpl', () => {
   });
 
   it('can return the UI source code from project type', async () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
     const uiSourceCodeStub = sinon.createStubInstance(Workspace.UISourceCode.UISourceCode);
     const projectStub = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     projectStub.type.returns(Workspace.Workspace.projectTypes.Debugger);
@@ -61,7 +52,7 @@ describe('WorkspaceImpl', () => {
   });
 
   it('can remove a project', () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
     const projectStub = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     sut.addProject(projectStub);
 
@@ -71,7 +62,7 @@ describe('WorkspaceImpl', () => {
   });
 
   it('can retrieve a project by ID', () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
     const projectStub = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     const exampleProjectID = 'exampleProjectID';
     projectStub.id.returns(exampleProjectID);
@@ -83,7 +74,7 @@ describe('WorkspaceImpl', () => {
   });
 
   it('can retrieve all projects', () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
     const projectStub0 = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     const projectStub1 = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     projectStub0.id.returns('ID_0');
@@ -97,7 +88,7 @@ describe('WorkspaceImpl', () => {
   });
 
   it('can retrieve all projects for a certain type', () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
     const projectStub0 = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     const projectStub1 = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     projectStub0.id.returns('ID_0');
@@ -113,7 +104,7 @@ describe('WorkspaceImpl', () => {
   });
 
   it('can return the UI source code', async () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
     const uiSourceCodeStub = sinon.createStubInstance(Workspace.UISourceCode.UISourceCode);
     const projectStub = sinon.createStubInstance(Bindings.ContentProviderBasedProject.ContentProviderBasedProject);
     projectStub.uiSourceCodes.returns([uiSourceCodeStub]);
@@ -125,7 +116,7 @@ describe('WorkspaceImpl', () => {
   });
 
   it('can check if there are tracking extensions', async () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
 
     const result = sut.hasResourceContentTrackingExtensions();
 
@@ -133,7 +124,7 @@ describe('WorkspaceImpl', () => {
   });
 
   it('can set tracking extensions', async () => {
-    const sut = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+    const sut = new Workspace.Workspace.WorkspaceImpl();
 
     sut.setHasResourceContentTrackingExtensions(true);
 
