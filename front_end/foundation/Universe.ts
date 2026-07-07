@@ -219,4 +219,8 @@ export class Universe {
   get targetManager(): SDK.TargetManager.TargetManager {
     return this.context.get(SDK.TargetManager.TargetManager);
   }
+
+  get workspace(): Workspace.Workspace.WorkspaceImpl {
+    return this.context.get(Workspace.Workspace.WorkspaceImpl);
+  }
 }

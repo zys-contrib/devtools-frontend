@@ -8,6 +8,7 @@ import sinon from 'sinon';
 import * as Common from '../core/common/common.js';
 import * as Platform from '../core/platform/platform.js';
 import type * as SDK from '../core/sdk/sdk.js';
+import type * as Foundation from '../foundation/foundation.js';
 import * as Bindings from '../models/bindings/bindings.js';
 import * as Persistence from '../models/persistence/persistence.js';
 import * as TextUtils from '../models/text_utils/text_utils.js';
@@ -26,11 +27,12 @@ export function createContentProviderUISourceCodes(options: {
   projectType?: Workspace.Workspace.projectTypes,
   projectId?: string,
   target?: SDK.Target.Target,
+  universe?: Foundation.Universe.Universe,
 }): {
   project: Bindings.ContentProviderBasedProject.ContentProviderBasedProject,
   uiSourceCodes: Workspace.UISourceCode.UISourceCode[],
 } {
-  const workspace = Workspace.Workspace.WorkspaceImpl.instance();
+  const workspace = options.universe?.workspace || Workspace.Workspace.WorkspaceImpl.instance();
   const projectType = options.projectType || Workspace.Workspace.projectTypes.Formatter;
   assert.notEqual(
       projectType, Workspace.Workspace.projectTypes.FileSystem,
@@ -61,13 +63,14 @@ export function createContentProviderUISourceCode(options: {
   projectId?: string,
   metadata?: Workspace.UISourceCode.UISourceCodeMetadata,
   target?: SDK.Target.Target,
+  universe?: Foundation.Universe.Universe,
 }): {
   project: Bindings.ContentProviderBasedProject.ContentProviderBasedProject,
   uiSourceCode: Workspace.UISourceCode.UISourceCode,
 } {
-  const {url, content, mimeType, metadata, projectType, projectId, target} = options;
-  const {project, uiSourceCodes} =
-      createContentProviderUISourceCodes({items: [{url, content, mimeType, metadata}], projectType, projectId, target});
+  const {url, content, mimeType, metadata, projectType, projectId, target, universe} = options;
+  const {project, uiSourceCodes} = createContentProviderUISourceCodes(
+      {items: [{url, content, mimeType, metadata}], projectType, projectId, target, universe});
   return {project, uiSourceCode: uiSourceCodes[0]};
 }
 
@@ -128,9 +131,11 @@ export function createFileSystemUISourceCode(options: {
   autoMapping?: boolean,
   type?: Persistence.PlatformFileSystem.PlatformFileSystemType,
   metadata?: Workspace.UISourceCode.UISourceCodeMetadata,
+  universe?: Foundation.Universe.Universe,
 }): {uiSourceCode: Workspace.UISourceCode.UISourceCode, project: Persistence.FileSystemWorkspaceBinding.FileSystem} {
-  const workspace = Workspace.Workspace.WorkspaceImpl.instance();
-  const isolatedFileSystemManager = Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager.instance();
+  const workspace = options.universe?.workspace || Workspace.Workspace.WorkspaceImpl.instance();
+  const isolatedFileSystemManager = options.universe?.isolatedFileSystemManager ||
+      Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager.instance();
   const fileSystemWorkspaceBinding =
       new Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding(isolatedFileSystemManager, workspace);
   const fileSystemPath = urlString`${options.fileSystemPath || ''}`;
