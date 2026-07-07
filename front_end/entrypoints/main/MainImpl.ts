@@ -47,7 +47,6 @@ import * as Badges from '../../models/badges/badges.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as CrUXManager from '../../models/crux-manager/crux-manager.js';
 import * as IssuesManager from '../../models/issues_manager/issues_manager.js';
-import * as LiveMetrics from '../../models/live-metrics/live-metrics.js';
 import * as Persistence from '../../models/persistence/persistence.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import * as PanelCommon from '../../panels/common/common.js';
@@ -480,7 +479,7 @@ export class MainImpl {
 
     new ExecutionContextSelector(targetManager, UI.Context.Context.instance());
 
-    void LiveMetrics.LiveMetrics.instance().enable();
+    void this.#universe.liveMetrics.enable();
     CrUXManager.CrUXManager.instance();
 
     const builtInAi = AiAssistanceModel.BuiltInAi.BuiltInAi.instance();

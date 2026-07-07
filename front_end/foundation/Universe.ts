@@ -12,6 +12,7 @@ import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as CrUXManager from '../models/crux-manager/crux-manager.js';
 import * as Emulation from '../models/emulation/emulation.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
+import * as LiveMetrics from '../models/live-metrics/live-metrics.js';
 import * as Logs from '../models/logs/logs.js';
 import * as Persistence from '../models/persistence/persistence.js';
 import * as ProjectSettings from '../models/project_settings/project_settings.js';
@@ -64,8 +65,9 @@ export class Universe {
     context.set(SDK.NetworkManager.MultitargetNetworkManager, multitargetNetworkManager);
 
     this.supportsEmulation = options.supportsEmulation;
+    let deviceModeModel = null;
     if (options.supportsEmulation) {
-      const deviceModeModel =
+      deviceModeModel =
           new Emulation.DeviceModeModel.DeviceModeModel(targetManager, settings, multitargetNetworkManager);
       context.set(Emulation.DeviceModeModel.DeviceModeModel, deviceModeModel);
     }
@@ -154,6 +156,9 @@ export class Universe {
     const javaScriptMetadata = new JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl();
     context.set(JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl, javaScriptMetadata);
 
+    const liveMetrics = new LiveMetrics.LiveMetrics(targetManager, deviceModeModel);
+    context.set(LiveMetrics.LiveMetrics, liveMetrics);
+
     this.autofillManager = new AutofillManager.AutofillManager.AutofillManager(targetManager, frameManager);
   }
 
@@ -204,6 +209,10 @@ export class Universe {
 
   get networkPersistenceManager(): Persistence.NetworkPersistenceManager.NetworkPersistenceManager {
     return this.context.get(Persistence.NetworkPersistenceManager.NetworkPersistenceManager);
+  }
+
+  get liveMetrics(): LiveMetrics.LiveMetrics {
+    return this.context.get(LiveMetrics.LiveMetrics);
   }
 
   get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader {

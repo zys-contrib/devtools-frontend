@@ -24,6 +24,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Breakpoints.BreakpointManager.BreakpointManager',
   'JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl',
   'Logs.LogManager.LogManager',
+  'LiveMetrics.LiveMetrics',
   'Logs.NetworkLog.NetworkLog',
   'Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager',
   'Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding',
