@@ -27,7 +27,7 @@ export const ResultsDBReporter = function(
     this: any, baseReporterDecorator: (arg0: any) => void, formatError: any, _config: any) {
   baseReporterDecorator(this);
 
-  this.USE_COLORS = true;
+  this.USE_COLORS = false;
 
   const capturedLog: Array<{log: string, type: string}> = [];
   this.onBrowserLog = (_browser: any, log: string, type: string) => {
