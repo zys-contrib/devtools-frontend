@@ -24,7 +24,7 @@ const UIStrings = {
    * @description Error message shown on the Devices settings tab when the user enters an empty
    * width for a custom device.
    */
-  widthCannotBeEmpty: 'Width can\'t be empty.',
+  widthCannotBeEmpty: 'Width can’t be empty.',
   /**
    * @description Error message shown on the Devices settings tab when the user enters an invalid
    * width for a custom device.
@@ -46,7 +46,7 @@ const UIStrings = {
    * @description Error message shown on the Devices settings tab when the user enters an empty
    * height for a custom device.
    */
-  heightCannotBeEmpty: 'Height can\'t be empty.',
+  heightCannotBeEmpty: 'Height can’t be empty.',
   /**
    * @description Error message shown on the Devices settings tab when the user enters an invalid
    * height for a custom device.
