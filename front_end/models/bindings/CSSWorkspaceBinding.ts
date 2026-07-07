@@ -152,6 +152,7 @@ export interface SourceMapping {
 
 export class ModelInfo {
   readonly #eventListeners: Common.EventTarget.EventDescriptor[];
+  readonly #cssWorkspaceBinding: CSSWorkspaceBinding;
   readonly #resourceMapping: ResourceMapping;
   #stylesSourceMapping: StylesSourceMapping;
   #sassSourceMapping: SASSSourceMapping;
@@ -159,6 +160,7 @@ export class ModelInfo {
   readonly #unboundLocations: Platform.MapUtilities.Multimap<Platform.DevToolsPath.UrlString, LiveLocation>;
   constructor(
       cssModel: SDK.CSSModel.CSSModel, resourceMapping: ResourceMapping, cssWorkspaceBinding: CSSWorkspaceBinding) {
+    this.#cssWorkspaceBinding = cssWorkspaceBinding;
     this.#eventListeners = [
       cssModel.addEventListener(
           SDK.CSSModel.Events.StyleSheetAdded,
@@ -191,7 +193,7 @@ export class ModelInfo {
   async createLiveLocation(
       rawLocation: SDK.CSSModel.CSSLocation, updateDelegate: (arg0: LiveLocationInterface) => Promise<void>,
       locationPool: LiveLocationPool): Promise<LiveLocation> {
-    const location = new LiveLocation(rawLocation, this, updateDelegate, locationPool);
+    const location = new LiveLocation(rawLocation, this, this.#cssWorkspaceBinding, updateDelegate, locationPool);
     const header = rawLocation.header();
     if (header) {
       location.setHeader(header);
@@ -286,15 +288,16 @@ export class LiveLocation extends LiveLocationWithPool {
   readonly #lineNumber: number;
   readonly #columnNumber: number;
   readonly #info: ModelInfo;
+  readonly #cssWorkspaceBinding: CSSWorkspaceBinding;
   #header: SDK.CSSStyleSheetHeader.CSSStyleSheetHeader|null;
-  constructor(
-      rawLocation: SDK.CSSModel.CSSLocation, info: ModelInfo,
-      updateDelegate: (arg0: LiveLocationInterface) => Promise<void>, locationPool: LiveLocationPool) {
+  constructor(rawLocation: SDK.CSSModel.CSSLocation, info: ModelInfo, cssWorkspaceBinding: CSSWorkspaceBinding,
+              updateDelegate: (arg0: LiveLocationInterface) => Promise<void>, locationPool: LiveLocationPool) {
     super(updateDelegate, locationPool);
     this.url = rawLocation.url;
     this.#lineNumber = rawLocation.lineNumber;
     this.#columnNumber = rawLocation.columnNumber;
     this.#info = info;
+    this.#cssWorkspaceBinding = cssWorkspaceBinding;
     this.#header = null;
   }
 
@@ -311,7 +314,7 @@ export class LiveLocation extends LiveLocationWithPool {
       return null;
     }
     const rawLocation = new SDK.CSSModel.CSSLocation(this.#header, this.#lineNumber, this.#columnNumber);
-    return CSSWorkspaceBinding.instance().rawLocationToUILocation(rawLocation);
+    return this.#cssWorkspaceBinding.rawLocationToUILocation(rawLocation);
   }
 
   override dispose(): void {
