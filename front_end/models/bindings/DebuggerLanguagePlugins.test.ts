@@ -163,7 +163,7 @@ describe('DebuggerLanguagePluginManager', () => {
           sinon.createStubInstance(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding);
       const workspace = sinon.createStubInstance(Workspace.Workspace.WorkspaceImpl);
       const pluginManager = new Bindings.DebuggerLanguagePlugins.DebuggerLanguagePluginManager(
-          target.targetManager(), workspace, debuggerWorkspaceBinding);
+          target.targetManager(), workspace, debuggerWorkspaceBinding, target.targetManager().getConsole());
       return {target, backend, pluginManager, debuggerWorkspaceBinding};
     }
 

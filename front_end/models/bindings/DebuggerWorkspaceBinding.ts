@@ -52,7 +52,8 @@ export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObser
 
     this.#liveLocationPromises = new Set();
 
-    this.pluginManager = new DebuggerLanguagePluginManager(targetManager, resourceMapping.workspace, this);
+    this.pluginManager =
+        new DebuggerLanguagePluginManager(targetManager, resourceMapping.workspace, this, targetManager.getConsole());
   }
 
   setFunctionRanges(
