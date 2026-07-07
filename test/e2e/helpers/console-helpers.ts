@@ -315,12 +315,12 @@ export async function navigateToConsoleTab(devToolsPage: DevToolsPage) {
 }
 
 export async function openConsoleSidebar(devToolsPage: DevToolsPage) {
-  await devToolsPage.click('[aria-label="Show console sidebar"]');
+  await devToolsPage.click('[aria-label="Show Console sidebar"]');
   await devToolsPage.waitFor(CONSOLE_SIDEBAR_SELECTOR);
 }
 
 export async function closeConsoleSidebar(devToolsPage: DevToolsPage) {
-  await devToolsPage.click('[aria-label="Hide console sidebar"]');
+  await devToolsPage.click('[aria-label="Hide Console sidebar"]');
 }
 
 export async function selectConsoleSidebarItem(devToolsPage: DevToolsPage, itemPosition = SidebarItem.Info) {

@@ -44,7 +44,7 @@ describe('The Console Tab', function() {
     assert.strictEqual(clearResult, 'undefined', 'the result of clear was not undefined');
 
     // Check that the sidebar is also cleared.
-    await devToolsPage.click('[aria-label="Show console sidebar"]');
+    await devToolsPage.click('[aria-label="Show Console sidebar"]');
     const sideBar = await devToolsPage.waitFor('div[slot="sidebar"]');
     const treeOutline = await devToolsPage.waitFor('.tree-outline', sideBar);
     const entries = await devToolsPage.$$('li', treeOutline);

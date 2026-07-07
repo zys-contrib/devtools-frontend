@@ -147,7 +147,7 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     it('shows a hover button', () => {
       const messageElement =
           createMessage(Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Error, 'got here');
-      const button = messageElement.querySelector('[aria-label=\'Understand this error. Powered by AI.\']');
+      const button = messageElement.querySelector('[aria-label=\'Understand this error\']');
       assert.strictEqual(
           button?.querySelector('.button-label div')?.getAttribute('data-text'), 'Understand this error');
     });
@@ -168,14 +168,14 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     it('does not show a hover button if the console message text is empty', () => {
       const messageElement =
           createMessage(Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Error, '');
-      const button = messageElement.querySelector('[aria-label=\'Understand this error. Powered by AI.\']');
+      const button = messageElement.querySelector('[aria-label=\'Understand this error\']');
       assert.isNull(button);
     });
 
     it('does not show a hover button for the self-XSS warning message', () => {
       const messageElement = createMessage(
           Common.Console.FrontendMessageSource.SELF_XSS, Protocol.Log.LogEntryLevel.Warning, 'Don’t paste code...');
-      const button = messageElement.querySelector('[aria-label=\'Understand this warning. Powered by AI.\']');
+      const button = messageElement.querySelector('[aria-label=\'Understand this warning\']');
       assert.isNull(button);
     });
   });
