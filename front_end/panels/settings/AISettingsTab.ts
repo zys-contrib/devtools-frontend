@@ -7,7 +7,7 @@ import '../../ui/kit/kit.js';
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
-import type * as Platform from '../../core/platform/platform.js';
+import * as Platform from '../../core/platform/platform.js';
 import * as Root from '../../core/root/root.js';
 import * as AiAssistanceModel from '../../models/ai_assistance/ai_assistance.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
@@ -246,6 +246,22 @@ const UIStrings = {
    * @description Label for a toggle to enable the AI code suggestions feature
    */
   enableAiCodeSuggestions: 'Enable AI code suggestions',
+  /**
+   * @description Message shown to the user if the age check isn’t successful.
+   */
+  ageRestricted: 'This feature is only available to users 18 years or older.',
+  /**
+   * @description The error message when the user isn’t logged in to Chrome.
+   */
+  notLoggedIn: 'This feature is only available when you sign in to Chrome with your Google account.',
+  /**
+   * @description Message shown when the user is offline.
+   */
+  offline: 'This feature is only available with an active internet connection.',
+  /**
+   * @description Text informing the user that AI assistance isn’t available in Incognito mode or Guest mode.
+   */
+  notAvailableInIncognitoMode: 'AI assistance isn’t available in Incognito mode or Guest mode.',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/settings/AISettingsTab.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -443,10 +459,36 @@ export class AISettingsTab extends UI.Widget.VBox {
     this.#view = view ?? AI_SETTINGS_TAB_DEFAULT_VIEW;
   }
 
+  #getDisabledReasons(): Platform.UIString.LocalizedString[] {
+    const preconditions = AiAssistanceModel.AiUtils.getDisabledReasons(this.#aidaAvailability);
+    const mappedReasons: Platform.UIString.LocalizedString[] = [];
+    for (const precondition of preconditions) {
+      switch (precondition) {
+        case AiAssistanceModel.AiUtils.FrontendAccessPrecondition.IS_OFF_THE_RECORD:
+          mappedReasons.push(i18nString(UIStrings.notAvailableInIncognitoMode));
+          break;
+        case Host.AidaClient.AidaAccessPreconditions.NO_ACCOUNT_EMAIL:
+        case Host.AidaClient.AidaAccessPreconditions.SYNC_IS_PAUSED:
+          mappedReasons.push(i18nString(UIStrings.notLoggedIn));
+          break;
+        case Host.AidaClient.AidaAccessPreconditions.NO_INTERNET:
+          mappedReasons.push(i18nString(UIStrings.offline));
+          break;
+        case AiAssistanceModel.AiUtils.FrontendAccessPrecondition.AGE_RESTRICTED:
+          mappedReasons.push(i18nString(UIStrings.ageRestricted));
+          break;
+        default:
+          Platform.assertNever(precondition, `Unknown precondition: ${precondition}`);
+      }
+    }
+    const settingDisabledReasons =
+        Common.Settings.Settings.instance().moduleSetting('ai-assistance-enabled').disabledReasons();
+    return [...mappedReasons, ...settingDisabledReasons];
+  }
+
   override performUpdate(): void {
-    const disabledReasons = AiAssistanceModel.AiUtils.getDisabledReasons(this.#aidaAvailability);
     const viewInput: ViewInput = {
-      disabledReasons,
+      disabledReasons: this.#getDisabledReasons(),
       sharedDisclaimerBulletPoints: this.#getSharedDisclaimerBulletPoints(),
       settingToParams: this.#settingToParams,
       expandSetting: this.#expandSetting.bind(this),

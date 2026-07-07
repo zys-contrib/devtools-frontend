@@ -223,6 +223,35 @@ describeWithEnvironment('AISettingsTab', () => {
     assert.deepEqual(view.input.disabledReasons, []);
   });
 
+  it('disables switches if off the record (incognito)', async () => {
+    const incognitoExplainer = 'AI assistance isn’t available in Incognito mode or Guest mode.';
+    updateHostConfig({
+      isOffTheRecord: true,
+    });
+
+    const {view} = await setupWidget();
+
+    assert.deepEqual(view.input.disabledReasons, [incognitoExplainer]);
+  });
+
+  it('disables switches if offline', async () => {
+    const offlineExplainer = 'This feature is only available with an active internet connection.';
+    aidaAccessStub.returns(Promise.resolve(Host.AidaClient.AidaAccessPreconditions.NO_INTERNET));
+
+    const {view} = await setupWidget();
+
+    assert.deepEqual(view.input.disabledReasons, [offlineExplainer]);
+  });
+
+  it('disables switches if sync is paused', async () => {
+    const notLoggedInExplainer = 'This feature is only available when you sign in to Chrome with your Google account.';
+    aidaAccessStub.returns(Promise.resolve(Host.AidaClient.AidaAccessPreconditions.SYNC_IS_PAUSED));
+
+    const {view} = await setupWidget();
+
+    assert.deepEqual(view.input.disabledReasons, [notLoggedInExplainer]);
+  });
+
   it('updates disabled reason', async () => {
     Common.Settings.Settings.instance().moduleSetting('console-insights-enabled').setRegistration({
       settingName: 'console-insights-enabled',
