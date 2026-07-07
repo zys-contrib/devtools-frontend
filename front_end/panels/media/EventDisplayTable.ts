@@ -15,7 +15,7 @@ import type {PlayerEvent} from './MediaModel.js';
 
 const UIStrings = {
   /**
-   * @description Text for timestamps of items
+   * @description Text for timestamps of items.
    */
   timestamp: 'Timestamp',
   /**
@@ -23,7 +23,7 @@ const UIStrings = {
    */
   eventName: 'Event name',
   /**
-   * @description Text for the value of something
+   * @description Text for the value of something.
    */
   value: 'Value',
   /**
