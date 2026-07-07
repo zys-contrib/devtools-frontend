@@ -11,6 +11,7 @@ import type * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import type * as CPUProfile from '../../models/cpu_profile/cpu_profile.js';
+import * as Workspace from '../../models/workspace/workspace.js';
 import * as DataGrid from '../../ui/legacy/components/data_grid/data_grid.js';
 import * as PerfUI from '../../ui/legacy/components/perf_ui/perf_ui.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
@@ -552,7 +553,7 @@ export class WritableProfileHeader extends ProfileHeader implements Common.Strin
 
   override async saveToFile(): Promise<void> {
     await this.#profileReceivedPromise.promise;
-    const fileOutputStream = new Bindings.FileUtils.FileOutputStream();
+    const fileOutputStream = new Bindings.FileUtils.FileOutputStream(Workspace.FileManager.FileManager.instance());
     if (!this.fileName) {
       const now = Platform.DateUtilities.toISO8601Compact(new Date());
       const fileExtension = this.profileType().fileExtension();

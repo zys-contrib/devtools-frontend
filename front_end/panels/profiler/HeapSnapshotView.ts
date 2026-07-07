@@ -12,6 +12,7 @@ import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as HeapSnapshotModel from '../../models/heap_snapshot/heap_snapshot.js';
+import * as Workspace from '../../models/workspace/workspace.js';
 import * as DataGrid from '../../ui/legacy/components/data_grid/data_grid.js';
 import * as ObjectUI from '../../ui/legacy/components/object_ui/object_ui.js';
 import * as PerfUI from '../../ui/legacy/components/perf_ui/perf_ui.js';
@@ -1867,7 +1868,7 @@ export class HeapProfileHeader extends ProfileHeader {
 
   override async saveToFile(): Promise<void> {
     await this.loadPromise;
-    const fileOutputStream = new Bindings.FileUtils.FileOutputStream();
+    const fileOutputStream = new Bindings.FileUtils.FileOutputStream(Workspace.FileManager.FileManager.instance());
     this.fileName = this.fileName ||
         'Heap-' + Platform.DateUtilities.toISO8601Compact(new Date()) + this.profileType().fileExtension() as
             Platform.DevToolsPath.RawPathString;
