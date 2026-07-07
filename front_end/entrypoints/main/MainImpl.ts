@@ -471,11 +471,8 @@ export class MainImpl {
     isolatedFileSystemManager.addPlatformFileSystem(
         'snippet://' as Platform.DevToolsPath.UrlString, new Snippets.ScriptSnippetFileSystem.SnippetFileSystem());
 
-    const persistenceImpl = Persistence.Persistence.PersistenceImpl.instance();
-    const linkDecorator = new PanelCommon.PersistenceUtils.LinkDecorator(persistenceImpl);
+    const linkDecorator = new PanelCommon.PersistenceUtils.LinkDecorator(this.#universe.persistence);
     Components.Linkifier.Linkifier.setLinkDecorator(linkDecorator);
-    Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance(
-        {forceNew: true, workspace: Workspace.Workspace.WorkspaceImpl.instance()});
 
     new ExecutionContextSelector(targetManager, UI.Context.Context.instance());
 
