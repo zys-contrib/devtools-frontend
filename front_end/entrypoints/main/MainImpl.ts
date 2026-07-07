@@ -763,8 +763,6 @@ export class SearchActionDelegate implements UI.ActionRegistration.ActionDelegat
     return false;
   }
 }
-let mainMenuItemInstance: MainMenuItem;
-
 export class MainMenuItem implements UI.Toolbar.Provider {
   readonly #item: UI.Toolbar.ToolbarMenuButton;
   constructor() {
@@ -773,17 +771,6 @@ export class MainMenuItem implements UI.Toolbar.Provider {
         /* useSoftMenu */ true, 'main-menu', 'dots-vertical');
     this.#item.element.classList.add('main-menu');
     this.#item.setTitle(i18nString(UIStrings.customizeAndControlDevtools));
-  }
-
-  static instance(opts: {
-    forceNew: boolean|null,
-  } = {forceNew: null}): MainMenuItem {
-    const {forceNew} = opts;
-    if (!mainMenuItemInstance || forceNew) {
-      mainMenuItemInstance = new MainMenuItem();
-    }
-
-    return mainMenuItemInstance;
   }
 
   item(): UI.Toolbar.ToolbarItem|null {

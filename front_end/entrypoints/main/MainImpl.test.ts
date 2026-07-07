@@ -35,7 +35,7 @@ describeWithEnvironment('MainMenuItem', () => {
   it('includes focus debuggee item when undocked', async () => {
     UI.DockController.DockController.instance().setDockSide(UI.DockController.DockState.UNDOCKED);
 
-    const item = Main.MainImpl.MainMenuItem.instance({forceNew: true}).item() as UI.Toolbar.ToolbarMenuButton;
+    const item = new Main.MainImpl.MainMenuItem().item() as UI.Toolbar.ToolbarMenuButton;
     const menu = getMenuForToolbarButton(item);
     assert.exists(
         menu.defaultSection().items.find((item: UI.ContextMenu.Item) => item.buildDescriptor().label === 'Focus page'));
@@ -44,7 +44,7 @@ describeWithEnvironment('MainMenuItem', () => {
   it('does not include focus debuggee item when docked', async () => {
     UI.DockController.DockController.instance().setDockSide(UI.DockController.DockState.BOTTOM);
 
-    const item = Main.MainImpl.MainMenuItem.instance({forceNew: true}).item() as UI.Toolbar.ToolbarMenuButton;
+    const item = new Main.MainImpl.MainMenuItem().item() as UI.Toolbar.ToolbarMenuButton;
     assert.exists(item);
 
     const contextMenuShow = sinon.stub(UI.ContextMenu.ContextMenu.prototype, 'show').resolves();

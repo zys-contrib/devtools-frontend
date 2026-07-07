@@ -930,10 +930,10 @@ UI.Toolbar.registerToolbarItem({
 
 UI.Toolbar.registerToolbarItem({
   condition: () => !Root.Runtime.Runtime.isTraceApp(),
-  async loadItem() {
+  loadItem: Common.Lazy.lazy(async () => {
     const Main = await loadMainModule();
-    return Main.MainImpl.MainMenuItem.instance();
-  },
+    return new Main.MainImpl.MainMenuItem();
+  }) as () => Promise<UI.Toolbar.Provider>,
   order: 100,
   location: UI.Toolbar.ToolbarItemLocation.MAIN_TOOLBAR_RIGHT,
 });
