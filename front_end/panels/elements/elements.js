@@ -11893,6 +11893,7 @@ import * as Root4 from "./../../core/root/root.js";
 import * as SDK13 from "./../../core/sdk/sdk.js";
 import * as AIAssistance from "./../../models/ai_assistance/ai_assistance.js";
 import * as Badges3 from "./../../models/badges/badges.js";
+import * as Bindings5 from "./../../models/bindings/bindings.js";
 import * as TextUtils7 from "./../../models/text_utils/text_utils.js";
 import * as Workspace from "./../../models/workspace/workspace.js";
 import * as CodeMirror2 from "./../../third_party/codemirror.next/codemirror.next.js";
@@ -12468,6 +12469,11 @@ var UIStrings12 = {
    */
   viewSourceCode: "View source code",
   /**
+   * @description Label of an adorner in the Elements panel. When clicked, it reveals
+   * the definition of the custom element in the Sources panel.
+   */
+  showCustomElementDefinition: "Show custom element definition",
+  /**
    * @description Context menu item in Elements panel to assess visibility of an element via AI.
    */
   assessVisibility: "Assess visibility",
@@ -12934,7 +12940,7 @@ function maybeRenderAdAdorner(input) {
   `;
 }
 var DEFAULT_VIEW3 = (input, output, target) => {
-  const hasAdorners = !!input.adProvenance || input.showContainerAdorner || input.showFlexAdorner || input.showGridAdorner || input.showGridLanesAdorner || input.showMediaAdorner || input.showPopoverAdorner || input.showTopLayerAdorner || input.showViewSourceAdorner || input.showScrollAdorner || input.showScrollSnapAdorner || input.showSlotAdorner || input.showStartingStyleAdorner;
+  const hasAdorners = !!input.adProvenance || input.showContainerAdorner || input.showFlexAdorner || input.showGridAdorner || input.showGridLanesAdorner || input.showMediaAdorner || input.showPopoverAdorner || input.showTopLayerAdorner || input.showViewSourceAdorner || input.showScrollAdorner || input.showScrollSnapAdorner || input.showSlotAdorner || input.showStartingStyleAdorner || input.showCustomElementAdorner;
   const gutterContainerClasses = {
     "has-decorations": input.decorations.length || input.descendantDecorations.length,
     "gutter-container": true,
@@ -12968,6 +12974,18 @@ var DEFAULT_VIEW3 = (input, output, target) => {
           @click=${input.onViewSourceAdornerClick}
           ${adornerRef()}>
           <span>${ElementsComponents5.AdornerManager.RegisteredAdorners.VIEW_SOURCE}</span>
+        </devtools-adorner>` : nothing4}
+        ${input.showCustomElementAdorner ? html10`<devtools-adorner
+          class="custom-element clickable"
+          role=button
+          tabindex=0
+          .name=${ElementsComponents5.AdornerManager.RegisteredAdorners.CUSTOM_ELEMENT}
+          jslog=${VisualLogging8.adorner(ElementsComponents5.AdornerManager.RegisteredAdorners.CUSTOM_ELEMENT).track({ click: true })}
+          aria-label=${i18nString11(UIStrings12.showCustomElementDefinition)}
+          @click=${input.onCustomElementAdornerClick}
+          @keydown=${handleAdornerKeydown(input.onCustomElementAdornerClick)}
+          ${adornerRef()}>
+          <span>${ElementsComponents5.AdornerManager.RegisteredAdorners.CUSTOM_ELEMENT}</span>
         </devtools-adorner>` : nothing4}
         ${input.showContainerAdorner ? html10`<devtools-adorner
           class=clickable
@@ -13302,6 +13320,9 @@ var ElementsTreeElement = class _ElementsTreeElement extends UI14.TreeOutline.Tr
       showScrollSnapAdorner: Boolean(this.#layout?.hasScroll) && !this.isClosingTag(),
       scrollSnapAdornerActive: this.#scrollSnapAdornerActive,
       showSlotAdorner: Boolean(this.nodeInternal.assignedSlot) && !this.isClosingTag(),
+      showCustomElementAdorner: this.node().isCustomElement() && !this.isClosingTag(),
+      onCustomElementAdornerClick: this.treeOutline?.disableEdits ? () => {
+      } : (event) => void this.#onCustomElementAdornerClick(event),
       showStartingStyleAdorner: this.nodeInternal.affectedByStartingStyles() && !this.isClosingTag(),
       startingStyleAdornerActive: this.#startingStyleAdornerActive,
       onStartingStyleAdornerClick: this.treeOutline?.disableEdits ? () => {
@@ -13443,6 +13464,9 @@ var ElementsTreeElement = class _ElementsTreeElement extends UI14.TreeOutline.Tr
   }
   isClosingTag() {
     return !isOpeningTag(this.tagTypeContext);
+  }
+  isDisplayContents() {
+    return Boolean(this.#layout?.isContents);
   }
   node() {
     return this.nodeInternal;
@@ -13637,11 +13661,14 @@ var ElementsTreeElement = class _ElementsTreeElement extends UI14.TreeOutline.Tr
       showScrollSnapAdorner: false,
       scrollSnapAdornerActive: false,
       showSlotAdorner: false,
+      showCustomElementAdorner: false,
       showStartingStyleAdorner: false,
       startingStyleAdornerActive: false,
       onStartingStyleAdornerClick: () => {
       },
       onSlotAdornerClick: () => {
+      },
+      onCustomElementAdornerClick: () => {
       },
       topLayerIndex: -1,
       onViewSourceAdornerClick: () => {
@@ -14773,6 +14800,40 @@ var ElementsTreeElement = class _ElementsTreeElement extends UI14.TreeOutline.Tr
     }
     this.#startingStyleAdornerActive = !this.#startingStyleAdornerActive;
     this.performUpdate();
+  }
+  async #onCustomElementAdornerClick(event) {
+    event.stopPropagation();
+    const node = this.node();
+    const object = await node.resolveToObject("");
+    if (!object) {
+      return;
+    }
+    let constructorObject = null;
+    try {
+      const result = await object.callFunction(function() {
+        const selector = this.getAttribute("is") || this.tagName.toLowerCase();
+        return typeof customElements !== "undefined" && customElements.get(selector) || this.constructor;
+      });
+      constructorObject = result.object;
+    } finally {
+      object.release();
+    }
+    if (!constructorObject) {
+      return;
+    }
+    try {
+      if (constructorObject.type === "function") {
+        const functionDetails = await SDK13.RemoteObject.RemoteFunction.objectAsFunction(constructorObject).targetFunctionDetails();
+        if (functionDetails?.location) {
+          const uiLocation = await Bindings5.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance().rawLocationToUILocation(functionDetails.location);
+          if (uiLocation) {
+            void Common8.Revealer.reveal(uiLocation);
+          }
+        }
+      }
+    } finally {
+      constructorObject.release();
+    }
   }
 };
 var InitialChildrenLimit = 500;
@@ -16462,7 +16523,8 @@ var ElementsTreeOutline = class _ElementsTreeOutline extends Common10.ObjectWrap
   }
   highlightTreeElement(element, showInfo) {
     if (element instanceof ElementsTreeElement) {
-      element.node().domModel().overlayModel().highlightInOverlay({ node: element.node(), selectorList: void 0 }, "all", showInfo);
+      const selectorList = element.isDisplayContents() ? "*" : void 0;
+      element.node().domModel().overlayModel().highlightInOverlay({ node: element.node(), selectorList }, "all", showInfo);
       return;
     }
     if (element instanceof ShortcutTreeElement) {
@@ -18691,11 +18753,21 @@ var ElementsPanel = class _ElementsPanel extends UI21.Panel.Panel {
   cssStyleTrackerByCSSModel;
   #domTreeWidget;
   #computedStyleModel;
+  #targetManager;
+  #settings;
+  get settings() {
+    return this.#settings;
+  }
+  get targetManager() {
+    return this.#targetManager;
+  }
   getTreeOutlineForTesting() {
     return this.#domTreeWidget.getTreeOutlineForTesting();
   }
-  constructor() {
+  constructor(targetManager, settings) {
     super("elements");
+    this.#targetManager = targetManager ?? SDK18.TargetManager.TargetManager.instance();
+    this.#settings = settings ?? Common13.Settings.Settings.instance();
     this.registerRequiredCSS(elementsPanel_css_default);
     this.splitWidget = new UI21.SplitWidget.SplitWidget(true, true, "elements-panel-split-view-state", 325, 325);
     this.splitWidget.addEventListener("SidebarSizeChanged", this.updateTreeOutlineVisibleWidth.bind(this));
@@ -18718,10 +18790,10 @@ var ElementsPanel = class _ElementsPanel extends UI21.Panel.Panel {
     this.mainContainer.id = "main-content";
     this.domTreeContainer.id = "elements-content";
     this.domTreeContainer.tabIndex = -1;
-    if (Common13.Settings.Settings.instance().moduleSetting("dom-word-wrap").get()) {
+    if (this.#settings.moduleSetting("dom-word-wrap").get()) {
       this.domTreeContainer.classList.add("elements-wrap");
     }
-    Common13.Settings.Settings.instance().moduleSetting("dom-word-wrap").addChangeListener(this.domWordWrapSettingChanged.bind(this));
+    this.#settings.moduleSetting("dom-word-wrap").addChangeListener(this.domWordWrapSettingChanged.bind(this));
     crumbsContainer.id = "elements-crumbs";
     this.accessibilityTreeView = new AccessibilityTreeView(new TreeOutline13.TreeOutline.TreeOutline());
     this.breadcrumbs = new ElementsComponents7.ElementsBreadcrumbs.ElementsBreadcrumbs();
@@ -18740,12 +18812,12 @@ var ElementsPanel = class _ElementsPanel extends UI21.Panel.Panel {
     this.#computedStyleModel.addEventListener("ComputedStyleChanged", this.#updateComputedStyles, this);
     this.#computedStyleModel.addEventListener("CSSModelChanged", this.#updateComputedStyles, this);
     this.metricsWidget = new MetricsSidebarPane(this.#computedStyleModel);
-    Common13.Settings.Settings.instance().moduleSetting("sidebar-position").addChangeListener(this.updateSidebarPosition.bind(this));
+    this.#settings.moduleSetting("sidebar-position").addChangeListener(this.updateSidebarPosition.bind(this));
     this.updateSidebarPosition();
     this.cssStyleTrackerByCSSModel = /* @__PURE__ */ new Map();
     this.currentSearchResultIndex = -1;
     this.pendingNodeReveal = false;
-    this.adornerManager = new ElementsComponents7.AdornerManager.AdornerManager(Common13.Settings.Settings.instance().moduleSetting("adorner-settings"));
+    this.adornerManager = new ElementsComponents7.AdornerManager.AdornerManager(this.#settings.moduleSetting("adorner-settings"));
     this.adornersByName = /* @__PURE__ */ new Map();
     this.#domTreeWidget = new DOMTreeWidget();
     this.#domTreeWidget.omitRootDOMNode = true;
@@ -18753,10 +18825,10 @@ var ElementsPanel = class _ElementsPanel extends UI21.Panel.Panel {
     this.#domTreeWidget.onSelectedNodeChanged = this.selectedNodeChanged.bind(this);
     this.#domTreeWidget.onElementsTreeUpdated = this.updateBreadcrumbIfNeeded.bind(this);
     this.#domTreeWidget.onDocumentUpdated = this.documentUpdated.bind(this);
-    this.#domTreeWidget.setWordWrap(Common13.Settings.Settings.instance().moduleSetting("dom-word-wrap").get());
-    SDK18.TargetManager.TargetManager.instance().observeModels(SDK18.DOMModel.DOMModel, this, { scoped: true });
-    SDK18.TargetManager.TargetManager.instance().addEventListener("NameChanged", (event) => this.targetNameChanged(event.data));
-    Common13.Settings.Settings.instance().moduleSetting("show-ua-shadow-dom").addChangeListener(this.showUAShadowDOMChanged.bind(this));
+    this.#domTreeWidget.setWordWrap(this.#settings.moduleSetting("dom-word-wrap").get());
+    this.#targetManager.observeModels(SDK18.DOMModel.DOMModel, this, { scoped: true });
+    this.#targetManager.addEventListener("NameChanged", (event) => this.targetNameChanged(event.data));
+    this.#settings.moduleSetting("show-ua-shadow-dom").addChangeListener(this.showUAShadowDOMChanged.bind(this));
     PanelCommon.ExtensionServer.ExtensionServer.instance().addEventListener("SidebarPaneAdded", this.extensionSidebarPaneAdded, this);
   }
   // This is a debounced method because the user might be navigated from Styles tab to Computed Style tab and vice versa.
@@ -18809,9 +18881,9 @@ var ElementsPanel = class _ElementsPanel extends UI21.Panel.Panel {
     }
   }
   static instance(opts = { forceNew: null }) {
-    const { forceNew } = opts;
+    const { forceNew, targetManager, settings } = opts || {};
     if (!elementsPanelInstance || forceNew) {
-      elementsPanelInstance = new _ElementsPanel();
+      elementsPanelInstance = new _ElementsPanel(targetManager, settings);
     }
     return elementsPanelInstance;
   }
@@ -19076,7 +19148,7 @@ ${node.simpleSelector()} {}`, false);
     this.#searchableView.updateSearchMatchesCount(0);
     this.currentSearchResultIndex = -1;
     delete this.searchResults;
-    SDK18.DOMModel.DOMModel.cancelSearch();
+    SDK18.DOMModel.DOMModel.cancelSearch(this.#targetManager);
   }
   performSearch(searchConfig, shouldJump, jumpBackwards) {
     const query = searchConfig.query;
@@ -19090,8 +19162,8 @@ ${node.simpleSelector()} {}`, false);
       this.hideSearchHighlights();
     }
     this.searchConfig = searchConfig;
-    const showUAShadowDOM = Common13.Settings.Settings.instance().moduleSetting("show-ua-shadow-dom").get();
-    const domModels = SDK18.TargetManager.TargetManager.instance().models(SDK18.DOMModel.DOMModel, { scoped: true });
+    const showUAShadowDOM = this.#settings.moduleSetting("show-ua-shadow-dom").get();
+    const domModels = this.#targetManager.models(SDK18.DOMModel.DOMModel, { scoped: true });
     const promises = domModels.map((domModel) => domModel.performSearch(whitespaceTrimmedQuery, showUAShadowDOM));
     void Promise.all(promises).then((resultCounts) => {
       this.searchResults = [];
@@ -19243,7 +19315,7 @@ ${node.simpleSelector()} {}`, false);
   async revealAndSelectNode(nodeToReveal, opts) {
     const { showPanel = true, focusNode = false, highlightInOverlay = true } = opts ?? {};
     this.omitDefaultSelection = true;
-    const node = Common13.Settings.Settings.instance().moduleSetting("show-ua-shadow-dom").get() ? nodeToReveal : this.leaveUserAgentShadowDOM(nodeToReveal);
+    const node = this.#settings.moduleSetting("show-ua-shadow-dom").get() ? nodeToReveal : this.leaveUserAgentShadowDOM(nodeToReveal);
     if (highlightInOverlay) {
       node.highlightForTwoSeconds();
     }
@@ -19425,7 +19497,7 @@ ${node.simpleSelector()} {}`, false);
     if (this.sidebarPaneView?.tabbedPane().shouldHideOnDetach()) {
       return;
     }
-    const position = Common13.Settings.Settings.instance().moduleSetting("sidebar-position").get();
+    const position = this.#settings.moduleSetting("sidebar-position").get();
     let splitMode = "Horizontal";
     if (position === "right" || position === "auto" && this.splitWidget.element.offsetWidth > 680) {
       splitMode = "Vertical";
@@ -19702,7 +19774,7 @@ var ElementsActionDelegate = class {
         ElementsPanel.instance().toggleAccessibilityTree();
         return true;
       case "elements.toggle-word-wrap": {
-        const setting = Common13.Settings.Settings.instance().moduleSetting("dom-word-wrap");
+        const setting = ElementsPanel.instance().settings.moduleSetting("dom-word-wrap");
         setting.set(!setting.get());
         return true;
       }

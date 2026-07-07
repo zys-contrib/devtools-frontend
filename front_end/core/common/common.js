@@ -5394,11 +5394,9 @@ __export(Settings_exports, {
   SettingsStorage: () => SettingsStorage,
   getLocalizedSettingsCategory: () => getLocalizedSettingsCategory,
   maybeRemoveSettingExtension: () => maybeRemoveSettingExtension,
-  moduleSetting: () => moduleSetting,
   registerSettingExtension: () => registerSettingExtension,
   registerSettingsForTest: () => registerSettingsForTest,
-  resetSettings: () => resetSettings,
-  settingForTest: () => settingForTest
+  resetSettings: () => resetSettings
 });
 import * as Platform5 from "./../platform/platform.js";
 import * as Root4 from "./../root/root.js";
@@ -6712,12 +6710,6 @@ var RegExpSetting = class extends Setting {
     return this.#regex;
   }
 };
-function moduleSetting(settingName) {
-  return Settings.instance().moduleSetting(settingName);
-}
-function settingForTest(settingName) {
-  return Settings.instance().settingForTest(settingName);
-}
 
 // gen/front_end/core/common/SimpleHistoryManager.js
 var SimpleHistoryManager_exports = {};

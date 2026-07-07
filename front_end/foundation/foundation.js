@@ -15,6 +15,8 @@ import * as SDK from "./../core/sdk/sdk.js";
 import * as AutofillManager from "./../models/autofill_manager/autofill_manager.js";
 import * as Bindings from "./../models/bindings/bindings.js";
 import * as Breakpoints from "./../models/breakpoints/breakpoints.js";
+import * as CrUXManager from "./../models/crux-manager/crux-manager.js";
+import * as Emulation from "./../models/emulation/emulation.js";
 import * as JavaScriptMetadata from "./../models/javascript_metadata/javascript_metadata.js";
 import * as Logs from "./../models/logs/logs.js";
 import * as Persistence from "./../models/persistence/persistence.js";
@@ -45,6 +47,8 @@ var Universe = class {
     context.set(SDK.FrameManager.FrameManager, frameManager);
     const multitargetNetworkManager = new SDK.NetworkManager.MultitargetNetworkManager(targetManager);
     context.set(SDK.NetworkManager.MultitargetNetworkManager, multitargetNetworkManager);
+    const deviceModeModel = new Emulation.DeviceModeModel.DeviceModeModel(targetManager, settings, multitargetNetworkManager);
+    context.set(Emulation.DeviceModeModel.DeviceModeModel, deviceModeModel);
     const pageResourceLoader = new SDK.PageResourceLoader.PageResourceLoader(targetManager, settings, multitargetNetworkManager, null);
     context.set(SDK.PageResourceLoader.PageResourceLoader, pageResourceLoader);
     const projectSettingsModel = new ProjectSettings.ProjectSettingsModel.ProjectSettingsModel(options.hostConfig, pageResourceLoader, targetManager);
@@ -55,6 +59,14 @@ var Universe = class {
     context.set(SDK.CPUThrottlingManager.CPUThrottlingManager, cpuThrottlingManager);
     const domDebuggerManager = new SDK.DOMDebuggerModel.DOMDebuggerManager(targetManager);
     context.set(SDK.DOMDebuggerModel.DOMDebuggerManager, domDebuggerManager);
+    const cruxManager = new CrUXManager.CrUXManager(targetManager, settings);
+    context.set(CrUXManager.CrUXManager, cruxManager);
+    const isolateManager = new SDK.IsolateManager.IsolateManager(targetManager);
+    context.set(SDK.IsolateManager.IsolateManager, isolateManager);
+    const eventBreakpointsManager = new SDK.EventBreakpointsModel.EventBreakpointsManager(targetManager);
+    context.set(SDK.EventBreakpointsModel.EventBreakpointsManager, eventBreakpointsManager);
+    const domModelUndoStack = new SDK.DOMModel.DOMModelUndoStack();
+    context.set(SDK.DOMModel.DOMModelUndoStack, domModelUndoStack);
     const workspace = new Workspace.Workspace.WorkspaceImpl();
     context.set(Workspace.Workspace.WorkspaceImpl, workspace);
     const automaticFileSystemWorkspaceBinding = new Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding(automaticFileSystemManager, isolatedFileSystemManager, workspace);
@@ -92,11 +104,26 @@ var Universe = class {
   get cpuThrottlingManager() {
     return this.context.get(SDK.CPUThrottlingManager.CPUThrottlingManager);
   }
+  get cruxManager() {
+    return this.context.get(CrUXManager.CrUXManager);
+  }
+  get deviceModeModel() {
+    return this.context.get(Emulation.DeviceModeModel.DeviceModeModel);
+  }
   get domDebuggerManager() {
     return this.context.get(SDK.DOMDebuggerModel.DOMDebuggerManager);
   }
+  get domModelUndoStack() {
+    return this.context.get(SDK.DOMModel.DOMModelUndoStack);
+  }
+  get eventBreakpointsManager() {
+    return this.context.get(SDK.EventBreakpointsModel.EventBreakpointsManager);
+  }
   get isolatedFileSystemManager() {
     return this.context.get(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager);
+  }
+  get isolateManager() {
+    return this.context.get(SDK.IsolateManager.IsolateManager);
   }
   get networkPersistenceManager() {
     return this.context.get(Persistence.NetworkPersistenceManager.NetworkPersistenceManager);
@@ -112,6 +139,12 @@ var Universe = class {
   }
   get settings() {
     return this.context.get(Common.Settings.Settings);
+  }
+  get targetManager() {
+    return this.context.get(SDK.TargetManager.TargetManager);
+  }
+  get workspace() {
+    return this.context.get(Workspace.Workspace.WorkspaceImpl);
   }
 };
 export {
