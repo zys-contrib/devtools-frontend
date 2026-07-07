@@ -1172,7 +1172,8 @@ Invoke-WebRequest -UseBasicParsing -Uri "https://url-header-and-content-overridd
     it('can unblock a request URL', async () => {
       const showView = sinon.stub(UI.ViewManager.ViewManager.instance(), 'showView');
       const conditions = SDK.NetworkManager.MultitargetNetworkManager.instance().requestConditions;
-      conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({url: '*://foo.com/bar', enabled: true}));
+      conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({url: '*://foo.com/bar', enabled: true},
+                                                                           Common.Settings.Settings.instance()));
       await invokeMenuItem('Block requests', 'Unblock *://foo.com/bar');
       assert.strictEqual(conditions.count, 0);
       sinon.assert.calledOnceWithExactly(showView, 'network.blocked-urls');
@@ -1192,7 +1193,8 @@ Invoke-WebRequest -UseBasicParsing -Uri "https://url-header-and-content-overridd
     it('can unblock a request domain', async () => {
       const showView = sinon.stub(UI.ViewManager.ViewManager.instance(), 'showView');
       const conditions = SDK.NetworkManager.MultitargetNetworkManager.instance().requestConditions;
-      conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({url: '*://foo.com', enabled: true}));
+      conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({url: '*://foo.com', enabled: true},
+                                                                           Common.Settings.Settings.instance()));
       await invokeMenuItem('Block requests', 'Unblock *://foo.com');
       assert.strictEqual(conditions.count, 0);
       sinon.assert.calledOnceWithExactly(showView, 'network.blocked-urls');
@@ -1225,7 +1227,8 @@ Invoke-WebRequest -UseBasicParsing -Uri "https://url-header-and-content-overridd
     it('can change from blocking to throttling', async () => {
       const showView = sinon.stub(UI.ViewManager.ViewManager.instance(), 'showView');
       SDK.NetworkManager.MultitargetNetworkManager.instance().requestConditions.add(
-          SDK.NetworkManager.RequestCondition.createFromSetting({url: '*://foo.com/bar', enabled: true}));
+          SDK.NetworkManager.RequestCondition.createFromSetting({url: '*://foo.com/bar', enabled: true},
+                                                                Common.Settings.Settings.instance()));
       await invokeMenuItem('Throttle requests', 'Throttle request URL');
       assert.isTrue(SDK.NetworkManager.MultitargetNetworkManager.instance().requestConditions.conditionsEnabled);
       const conditions = SDK.NetworkManager.MultitargetNetworkManager.instance().requestConditions.conditions.toArray();

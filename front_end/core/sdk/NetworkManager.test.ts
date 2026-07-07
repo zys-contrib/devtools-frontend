@@ -14,7 +14,6 @@ import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {createWorkspaceProject} from '../../testing/OverridesHelpers.js';
 import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
-import {setupSettingsHooks} from '../../testing/SettingsHelpers.js';
 import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as Common from '../common/common.js';
 import * as Platform from '../platform/platform.js';
@@ -27,7 +26,6 @@ const LONG_URL_PART =
 
 describe('NetworkManager', () => {
   setupLocaleHooks();
-  setupSettingsHooks();
   setupRuntimeHooks();
 
   describe('request post data', () => {
@@ -1261,7 +1259,7 @@ describe('MultitargetNetworkManager', () => {
     assert.isFalse(multitargetNetworkManager.isBlocking());
     assert.isTrue(multitargetNetworkManager.requestConditions.conditionsEnabled);
     multitargetNetworkManager.requestConditions.add(
-        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'example.com', enabled: true}));
+        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'example.com', enabled: true}, universe.settings));
     assert.strictEqual(eventCounter, 2);
     assert.isTrue(multitargetNetworkManager.isBlocking());
     assert.isTrue(multitargetNetworkManager.requestConditions.conditionsEnabled);
@@ -1282,7 +1280,7 @@ describe('MultitargetNetworkManager', () => {
     assert.isFalse(multitargetNetworkManager.isBlocking());
     assert.isTrue(multitargetNetworkManager.requestConditions.conditionsEnabled);
     multitargetNetworkManager.requestConditions.add(
-        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'example.com', enabled: true}));
+        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'example.com', enabled: true}, universe.settings));
     assert.strictEqual(eventCounter, 6);
     assert.isTrue(multitargetNetworkManager.isBlocking());
     assert.isTrue(multitargetNetworkManager.requestConditions.conditionsEnabled);
@@ -1298,9 +1296,12 @@ describe('MultitargetNetworkManager', () => {
 
   it('blocking settings allow deleting an item in the middle of the list', () => {
     const conditions = universe.multitargetNetworkManager.requestConditions;
-    const condition1 = SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url1', enabled: true});
-    const condition2 = SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url2', enabled: true});
-    const condition3 = SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url3', enabled: true});
+    const condition1 =
+        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url1', enabled: true}, universe.settings);
+    const condition2 =
+        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url2', enabled: true}, universe.settings);
+    const condition3 =
+        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url3', enabled: true}, universe.settings);
     conditions.add(condition1, condition2, condition3);
     assert.deepEqual(conditions.conditions.toArray(), [condition1, condition2, condition3]);
     conditions.delete(condition2);
@@ -1352,9 +1353,12 @@ describe('MultitargetNetworkManager', () => {
 
   it('can reorder the conditions', () => {
     const requestConditions = new SDK.NetworkManager.RequestConditions(universe.settings);
-    const condition1 = SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url1', enabled: true});
-    const condition2 = SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url2', enabled: true});
-    const condition3 = SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url3', enabled: true});
+    const condition1 =
+        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url1', enabled: true}, universe.settings);
+    const condition2 =
+        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url2', enabled: true}, universe.settings);
+    const condition3 =
+        SDK.NetworkManager.RequestCondition.createFromSetting({url: 'url3', enabled: true}, universe.settings);
     requestConditions.add(condition1, condition2, condition3);
 
     const changedEventStub = sinon.stub<[]>();
@@ -1467,24 +1471,21 @@ describe('RequestURLPattern', () => {
 
 describe('RequestConditions', () => {
   setupLocaleHooks();
-  setupSettingsHooks();
   setupRuntimeHooks();
-  function getSetting(values: SDK.NetworkManager.RequestConditionsSetting[]) {
-    Common.Settings.Settings.instance().clearAll();
-    Common.Settings.Settings.instance().getRegistry().clear();
-    return Common.Settings.Settings.instance().createSetting<SDK.NetworkManager.RequestConditionsSetting[]>(
-        'network-blocked-patterns', values);
-  }
+  let universe: TestUniverse;
+  beforeEach(() => {
+    universe = new TestUniverse();
+  });
 
   it('loads settings with url pattern', () => {
-    getSetting([
+    universe.settings.createSetting<SDK.NetworkManager.RequestConditionsSetting[]>('network-blocked-patterns', []).set([
       {
         enabled: true,
         urlPattern: '*://example.com' as SDK.NetworkManager.URLPatternConstructorString,
         conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING,
       },
     ]);
-    const conditions = new SDK.NetworkManager.RequestConditions(Common.Settings.Settings.instance());
+    const conditions = new SDK.NetworkManager.RequestConditions(universe.settings);
     const condition = conditions.conditions.next().value as SDK.NetworkManager.RequestCondition;
     assert.exists(condition);
     assert.isUndefined(condition.wildcardURL);
@@ -1493,8 +1494,10 @@ describe('RequestConditions', () => {
   });
 
   it('loads settings with url', () => {
-    getSetting([{enabled: true, url: 'foo'}]);
-    const conditions = new SDK.NetworkManager.RequestConditions(Common.Settings.Settings.instance());
+    universe.settings.createSetting<SDK.NetworkManager.RequestConditionsSetting[]>('network-blocked-patterns', []).set([
+      {enabled: true, url: 'foo'}
+    ]);
+    const conditions = new SDK.NetworkManager.RequestConditions(universe.settings);
     const condition = conditions.conditions.next().value as SDK.NetworkManager.RequestCondition;
     assert.exists(condition);
     assert.strictEqual(condition.wildcardURL, 'foo');
@@ -1502,20 +1505,23 @@ describe('RequestConditions', () => {
   });
 
   it('stores settings correctly', () => {
-    const setting = getSetting([]);
-    const conditions = new SDK.NetworkManager.RequestConditions(Common.Settings.Settings.instance());
+    const setting =
+        universe.settings.createSetting<SDK.NetworkManager.RequestConditionsSetting[]>('network-blocked-patterns', []);
+    const conditions = new SDK.NetworkManager.RequestConditions(universe.settings);
     const patternCondition = SDK.NetworkManager.RequestCondition.createFromSetting({
       enabled: true,
       urlPattern: '*://example.com' as SDK.NetworkManager.URLPatternConstructorString,
       conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING,
-    });
+    },
+                                                                                   universe.settings);
     assert.strictEqual(patternCondition.conditions, SDK.NetworkManager.NoThrottlingConditions);
     conditions.add(patternCondition);
 
     const wildcardCondition = SDK.NetworkManager.RequestCondition.createFromSetting({
       enabled: true,
       url: 'foo',
-    });
+    },
+                                                                                    universe.settings);
     conditions.add(wildcardCondition);
     assert.strictEqual(wildcardCondition.conditions, SDK.NetworkManager.BlockingConditions);
 
@@ -1528,12 +1534,14 @@ describe('RequestConditions', () => {
   });
 
   it('upgrades url to url pattern', () => {
-    const setting = getSetting([]);
-    const conditions = new SDK.NetworkManager.RequestConditions(Common.Settings.Settings.instance());
+    const setting =
+        universe.settings.createSetting<SDK.NetworkManager.RequestConditionsSetting[]>('network-blocked-patterns', []);
+    const conditions = new SDK.NetworkManager.RequestConditions(universe.settings);
     const condition = SDK.NetworkManager.RequestCondition.createFromSetting({
       enabled: true,
       url: 'foo',
-    });
+    },
+                                                                            universe.settings);
     conditions.add(condition);
     condition.conditions = SDK.NetworkManager.NoThrottlingConditions;
     assert.deepEqual(setting.get()[0], {
@@ -1558,41 +1566,52 @@ describe('RequestConditions', () => {
     }
 
     it('applies blocking, global, and local throttling if individual request throttling is enabled', () => {
-      const {agent, setBlockedURLs, emulateNetworkConditions, emulateNetworkConditionsByRule} = stubAgent();
-      const conditions = new SDK.NetworkManager.RequestConditions(Common.Settings.Settings.instance());
+      const {universe, agent, setBlockedURLs, emulateNetworkConditions, emulateNetworkConditionsByRule} = stubAgent();
+      // Stub the background applyConditions on the multitarget manager's requestConditions
+      // to avoid settings listener side effects during this test.
+      sinon.stub(universe.multitargetNetworkManager.requestConditions, 'applyConditions');
+      const conditions = new SDK.NetworkManager.RequestConditions(universe.settings);
       conditions.conditionsEnabled = true;
-      conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({url: 'foo', enabled: true}));
-      conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({url: 'bar', enabled: false}));
+      conditions.add(
+          SDK.NetworkManager.RequestCondition.createFromSetting({url: 'foo', enabled: true}, universe.settings));
+      conditions.add(
+          SDK.NetworkManager.RequestCondition.createFromSetting({url: 'bar', enabled: false}, universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://nothrottle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: true,
         conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING
-      }));
+      },
+                                                                           universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://block:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: true,
         conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.BLOCKING
-      }));
+      },
+                                                                           universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://throttle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: true,
         conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G
-      }));
+      },
+                                                                           universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://disabled_nothrottle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: false,
         conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING
-      }));
+      },
+                                                                           universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://disabled_block:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: false,
         conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.BLOCKING
-      }));
+      },
+                                                                           universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://disabled_throttle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: false,
         conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G
-      }));
+      },
+                                                                           universe.settings));
 
       conditions.applyConditions(false, null, agent);
       sinon.assert.notCalled(emulateNetworkConditions);
@@ -1663,13 +1682,15 @@ describe('RequestConditions', () => {
       const {universe, setBlockedURLs, emulateNetworkConditions, emulateNetworkConditionsByRule} = stubAgent();
       const conditions = universe.multitargetNetworkManager.requestConditions;
       conditions.conditionsEnabled = true;
-      conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({url: 'foo', enabled: true}));
+      conditions.add(
+          SDK.NetworkManager.RequestCondition.createFromSetting({url: 'foo', enabled: true}, universe.settings));
 
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://throttle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: true,
         conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G
-      }));
+      },
+                                                                           universe.settings));
 
       emulateNetworkConditions.resetHistory();
       emulateNetworkConditionsByRule.resetHistory();
@@ -1720,7 +1741,8 @@ describe('RequestConditions', () => {
         urlPattern: '*://example.com:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: true,
         conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G,
-      });
+      },
+                                                                                        universe.settings);
       requestConditions.add(throttlingCondition);
       requestConditions.conditionsEnabled = true;
 
@@ -2004,7 +2026,6 @@ interface OverriddenResponse {
 
 describe('InterceptedRequest', () => {
   setupLocaleHooks();
-  setupSettingsHooks();
   setupRuntimeHooks();
   let target: SDK.Target.Target;
   let fulfillRequestSpy: sinon.SinonSpy;

@@ -4,6 +4,7 @@
 import {assert} from 'chai';
 import * as path from 'node:path';
 
+import type * as Common from '../../../front_end/core/common/common.js';
 import type * as SDK from '../../../front_end/core/sdk/sdk.js';
 import {expectError} from '../../conductor/events.js';
 import {getZoom, openDeviceToolbar, selectDevice, selectZoomLevel} from '../helpers/emulation-helpers.js';
@@ -47,10 +48,12 @@ async function blockCss(devToolsPage: DevToolsPage) {
   await devToolsPage.evaluate(async () => {
     // @ts-expect-error executed from DevTools
     const SDKModule: typeof SDK = await import('./core/sdk/sdk.js');
+    // @ts-expect-error executed from DevTools
+    const CommonModule: typeof Common = await import('./core/common/common.js');
     const networkManager = SDKModule.NetworkManager.MultitargetNetworkManager.instance();
     networkManager.requestConditions.conditionsEnabled = true;
-    networkManager.requestConditions.add(
-        SDKModule.NetworkManager.RequestCondition.createFromSetting({enabled: true, url: '*://*:*/*.css'}));
+    networkManager.requestConditions.add(SDKModule.NetworkManager.RequestCondition.createFromSetting(
+        {enabled: true, url: '*://*:*/*.css'}, CommonModule.Settings.Settings.instance()));
   });
 }
 

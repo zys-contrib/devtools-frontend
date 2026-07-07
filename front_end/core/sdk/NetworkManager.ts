@@ -1716,9 +1716,7 @@ export class RequestCondition extends Common.ObjectWrapper.ObjectWrapper<Request
   #conditions: ThrottlingConditions;
   #ruleIds = new Set<string>();
 
-  static createFromSetting(
-      setting: RequestConditionsSetting,
-      settings: Common.Settings.Settings = Common.Settings.Settings.instance()): RequestCondition {
+  static createFromSetting(setting: RequestConditionsSetting, settings: Common.Settings.Settings): RequestCondition {
     if ('urlPattern' in setting) {
       const pattern = RequestURLPattern.create(setting.urlPattern) ?? {
         wildcardURL: setting.urlPattern,
