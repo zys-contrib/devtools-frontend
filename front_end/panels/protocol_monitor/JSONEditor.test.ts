@@ -567,7 +567,7 @@ describeWithEnvironment('JSONEditor', () => {
       const param = jsonEditor.contentElement.querySelector('[data-paramId]');
       await renderHoveredElement(param);
 
-      const addParamButton = jsonEditor.contentElement.querySelector('devtools-button[title="Add a parameter"]');
+      const addParamButton = jsonEditor.contentElement.querySelector('devtools-button[title="Add parameter"]');
       if (!addParamButton) {
         throw new Error('No button');
       }
@@ -694,7 +694,7 @@ describeWithEnvironment('JSONEditor', () => {
          await renderHoveredElement(param);
 
          const showDefaultValuesButton =
-             jsonEditor.contentElement.querySelector('devtools-button[title="Add a parameter"]');
+             jsonEditor.contentElement.querySelector('devtools-button[title="Add parameter"]');
          if (!showDefaultValuesButton) {
            throw new Error('No button');
          }
@@ -819,8 +819,7 @@ describeWithEnvironment('JSONEditor', () => {
       const param = jsonEditor.contentElement.querySelector('[data-paramId]');
       await renderHoveredElement(param);
 
-      const showDefaultValuesButton =
-          jsonEditor.contentElement.querySelector('devtools-button[title="Add a parameter"]');
+      const showDefaultValuesButton = jsonEditor.contentElement.querySelector('devtools-button[title="Add parameter"]');
       if (!showDefaultValuesButton) {
         throw new Error('No button');
       }
@@ -902,7 +901,7 @@ describeWithEnvironment('JSONEditor', () => {
       const param = jsonEditor.contentElement.querySelector('[data-paramId]');
       await renderHoveredElement(param);
 
-      const addParamButton = jsonEditor.contentElement.querySelector('devtools-button[title="Add a parameter"]');
+      const addParamButton = jsonEditor.contentElement.querySelector('devtools-button[title="Add parameter"]');
       if (!addParamButton) {
         throw new Error('No button');
       }
@@ -1108,7 +1107,7 @@ describeWithEnvironment('JSONEditor', () => {
     await jsonEditor.updateComplete;
 
     const inputs = jsonEditor.contentElement.querySelectorAll('devtools-suggestion-input');
-    const addButtons = jsonEditor.contentElement.querySelectorAll('devtools-button[title="Add a parameter"]');
+    const addButtons = jsonEditor.contentElement.querySelectorAll('devtools-button[title="Add parameter"]');
 
     assert.lengthOf(inputs, 1);
     assert.lengthOf(addButtons, 0);
