@@ -61,7 +61,11 @@ Locate all TypeScript files in the target folder that define `const UIStrings = 
    * In some cases, ambiguity exists whether a word refers to a UX element in DevTools (such as a panel name) or a concept (such as developer terminology). For example, this occurs with `console`, `issue`, or `network`. Decide based on the surrounding context and code (for example, `Console view`, `Console sidebar`, and `Console prompt` versus `console message`, `console warning`, `console log`, `copy console`, `clear console`, and `console history`; `Show Network` versus `network log` and `network filter`).
 6. **Punctuation and actionability:** Remove trailing periods from single-sentence labels or titles. Ensure that error messages instruct the user how to recover (for example, `Shorten filename to 64 characters or less` instead of `Invalid filename`). Ensure that ARIA labels and multi-sentence tooltips have consistent terminal punctuation.
 7. **Terminology (glossary):** Strictly follow standard DevTools UI terminology and letter casing (`panel`, `tab`, `drawer`, `sidebar`, `datagrid` or `table`, `action bar`, `status bar`, and `live expressions section`). Never use `pane` or call tabs `panes` in UI strings or localization (L10n) comments.
-8. **Localization (L10n) comments:** Ensure that every string in `UIStrings` has a preceding `@description` comment that explains where and when it appears. Use precise terminology and correct letter casing (see rule 7). Ensure that the description is easy to understand and provides enough information for translators. Every `@description` comment must end with a period (`.`). You must explicitly document all standard placeholders (`{PH1}`, `{url}`, `{index}`) with runtime data examples (for example, `@example {https://example.com} url`).
+8. **Localization (L10n) comments:** Ensure that every string in `UIStrings` has a preceding `@description` comment that explains where and when it appears. This information is used for translators who need to understand the context in which the string is used.
+   * Use precise terminology and correct letter casing (see rule 7). Ensure that the description is easy to understand and provides enough context for translators. For descriptions that are underspecified or
+   ambiguous, figure out the context by looking at the use site of the
+   string and come up with a better description.
+   * You must explicitly document all standard placeholders (`{PH1}`, `{url}`, `{index}`) with runtime data examples (for example, `@example {https://example.com} url`).
    * *ICU plural variables:* The i18n tool automatically parses variables in ICU plural format (such as `n` in `{n, plural, =0 {No issues} ...}`) as numeric counts, so they don’t require an `@example` tag in the `@description` comment.
    * *Terminal punctuation:* Every `@description` comment must end with a period (`.`), even if it is a single phrase or sentence.
 
@@ -69,10 +73,14 @@ Locate all TypeScript files in the target folder that define `const UIStrings = 
 
 Also consult the style guides at `google3/experimental/users/rachelandrew/tools/chrome_writing/knowledge/style/` for applicable guidelines.
 
-## 5. Mandatory verification and testing
+## 5. Pause for confirmation
+
+Ask the user for a preliminary review of the proposed changes before proceeding. If the user has feedback, address feedback and pause again for confirmation.
+
+## 6. Mandatory verification and testing
 
 Don’t finish an edit without running the linter and test suite. In DevTools, i18n placeholder changes or string edits can easily break tests or linter rules.
-0. **Ask the user to review the diff and confirm**
+
 1. **Update sibling unit tests**
    Unit test files (`*.test.ts`) alongside the implementation often assert exact UIString values (such as error messages or warnings). When you refactor a string, check sibling `*.test.ts` files for assertions that match the old string value, and update them to prevent test failures.
 2. **Run the linter and auto-fix errors**
@@ -91,7 +99,7 @@ Don’t finish an edit without running the linter and test suite. In DevTools, i
    git cl presubmit -u
    ```
 
-## 6. Summarize changes and upload the CL
+## 7. Summarize changes and upload the CL
 
 When all tests and presubmit checks pass, commit your changes and upload the CL to Gerrit. Don’t use `[uxw]` as a prefix.
 
