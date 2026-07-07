@@ -189,7 +189,7 @@ describeWithEnvironment('AISettingsTab', () => {
   });
 
   it('disables switches if blocked by age', async () => {
-    const underAgeExplainer = 'This feature is only available to users who are 18 years of age or older.';
+    const underAgeExplainer = 'This feature is only available to users 18 years or older.';
     updateHostConfig({
       aidaAvailability: {
         blockedByAge: true,
@@ -208,7 +208,7 @@ describeWithEnvironment('AISettingsTab', () => {
   });
 
   it('updates when the user logs in', async () => {
-    const notLoggedInExplainer = 'This feature is only available when you sign into Chrome with your Google account.';
+    const notLoggedInExplainer = 'This feature is only available when you sign in to Chrome with your Google account.';
     aidaAccessStub.returns(Promise.resolve(Host.AidaClient.AidaAccessPreconditions.NO_ACCOUNT_EMAIL));
 
     const {view} = await setupWidget();
