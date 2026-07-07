@@ -2302,6 +2302,60 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
       ]);
     });
 
+    it('includes image function keyword suggestions for background-image', async () => {
+      setParentComputedStyle({});
+      const stylePropertyTreeElement = getTreeElement('background-image', '');
+      await stylePropertyTreeElement.onpopulate();
+      stylePropertyTreeElement.updateTitle();
+      stylePropertyTreeElement.startEditingValue();
+      const autocompletions = await suggestions();
+      assert.includeMembers(autocompletions.map(({text}) => text), [
+        'conic-gradient(from 45deg, red, orange, yellow, green, teal, blue, purple)',
+        'repeating-conic-gradient(black 0deg 25%, white 0deg 50%)',
+        'image-set(url("") 1x, url("") 2x)',
+        'cross-fade(url("") 50%, url("") 50%)',
+      ]);
+    });
+
+    it('includes auto keyword suggestions for border-image-width', async () => {
+      setParentComputedStyle({});
+      const stylePropertyTreeElement = getTreeElement('border-image-width', '');
+      await stylePropertyTreeElement.onpopulate();
+      stylePropertyTreeElement.updateTitle();
+      stylePropertyTreeElement.startEditingValue();
+      const autocompletions = await suggestions();
+      assert.includeMembers(autocompletions.map(({text}) => text), [
+        'auto',
+      ]);
+    });
+
+    it('includes fill keyword suggestions for border-image-slice', async () => {
+      setParentComputedStyle({});
+      const stylePropertyTreeElement = getTreeElement('border-image-slice', '');
+      await stylePropertyTreeElement.onpopulate();
+      stylePropertyTreeElement.updateTitle();
+      stylePropertyTreeElement.startEditingValue();
+      const autocompletions = await suggestions();
+      assert.includeMembers(autocompletions.map(({text}) => text), [
+        'fill',
+      ]);
+    });
+
+    it('includes border-image keyword suggestions', async () => {
+      setParentComputedStyle({});
+      const stylePropertyTreeElement = getTreeElement('border-image', '');
+      await stylePropertyTreeElement.onpopulate();
+      stylePropertyTreeElement.updateTitle();
+      stylePropertyTreeElement.startEditingValue();
+      const autocompletions = await suggestions();
+      assert.includeMembers(autocompletions.map(({text}) => text), [
+        'auto',
+        'fill',
+        'image-set(url("") 1x, url("") 2x)',
+        'cross-fade(url("") 50%, url("") 50%)',
+      ]);
+    });
+
     it('includes text-wrap keyword suggestions', async () => {
       setParentComputedStyle({});
       const stylePropertyTreeElement = getTreeElement('text-wrap', '');
