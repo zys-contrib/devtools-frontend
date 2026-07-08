@@ -21,7 +21,6 @@ export interface SerializedConversation {
   id: string;
   type: ConversationType;
   history: SerializedResponseData[];
-  isExternal: boolean;
 }
 
 export interface SerializedImage {

@@ -15,19 +15,16 @@ describe('AiHistoryStorage', () => {
     id: 'id1',
     type: AiAssistance.AiHistoryStorage.ConversationType.STYLING,
     history: [],
-    isExternal: false,
   };
   const agent2: AiAssistance.AiHistoryStorage.SerializedConversation = {
     id: 'id2',
     type: AiAssistance.AiHistoryStorage.ConversationType.FILE,
     history: [],
-    isExternal: false,
   };
   const agent3: AiAssistance.AiHistoryStorage.SerializedConversation = {
     id: 'id3',
     type: AiAssistance.AiHistoryStorage.ConversationType.NETWORK,
     history: [],
-    isExternal: false,
   };
   const agent4: AiAssistance.AiHistoryStorage.SerializedConversation = {
     id: 'id4',
@@ -51,7 +48,6 @@ describe('AiHistoryStorage', () => {
         imageInput: undefined,
       },
     ],
-    isExternal: false,
   };
   const serializedImage1: AiAssistance.AiHistoryStorage.SerializedImage = {
     id: 'image-id1',
@@ -104,7 +100,6 @@ describe('AiHistoryStorage', () => {
           id: 'id1',
           type: 'freestyler' as AiAssistance.AiHistoryStorage.ConversationType,
           history: [],
-          isExternal: false,
         }],
     );
     await storage.upsertHistoryEntry(agent2);
@@ -115,13 +110,11 @@ describe('AiHistoryStorage', () => {
             id: 'id1',
             type: 'freestyler' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
           {
             id: 'id2',
             type: 'drjones-file' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
         ],
     );
@@ -152,13 +145,11 @@ describe('AiHistoryStorage', () => {
                 query: 'text',
               },
             ],
-            isExternal: false,
           },
           {
             id: 'id2',
             type: 'drjones-file' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
         ],
     );
@@ -176,19 +167,16 @@ describe('AiHistoryStorage', () => {
                 query: 'text',
               },
             ],
-            isExternal: false,
           },
           {
             id: 'id2',
             type: 'drjones-file' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
           {
             id: 'id3',
             type: 'drjones-network-request' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
         ],
     );
@@ -212,19 +200,16 @@ describe('AiHistoryStorage', () => {
                 query: 'text',
               },
             ],
-            isExternal: false,
           },
           {
             id: 'id2',
             type: 'drjones-file' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
           {
             id: 'id3',
             type: 'drjones-network-request' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
           {
             id: 'id4',
@@ -248,7 +233,6 @@ describe('AiHistoryStorage', () => {
                 imageInput: undefined,
               },
             ],
-            isExternal: false,
           },
         ],
     );
@@ -282,13 +266,11 @@ describe('AiHistoryStorage', () => {
             id: 'id1',
             type: 'freestyler' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
           {
             id: 'id3',
             type: 'drjones-network-request' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
         ],
     );
@@ -310,19 +292,16 @@ describe('AiHistoryStorage', () => {
             id: 'id1',
             type: 'freestyler' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
           {
             id: 'id2',
             type: 'drjones-file' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
           {
             id: 'id3',
             type: 'drjones-network-request' as AiAssistance.AiHistoryStorage.ConversationType,
             history: [],
-            isExternal: false,
           },
         ],
     );
@@ -556,7 +535,6 @@ describe('AiHistoryStorage', () => {
             query: 'text',
             imageId: 'image-id1',
           }],
-          isExternal: false,
         });
         assert.deepEqual(historyWithoutImages[1], {
           id: 'id2',
@@ -567,7 +545,6 @@ describe('AiHistoryStorage', () => {
             imageInput: undefined,
             imageId: 'image-id2',
           }],
-          isExternal: false,
         });
       });
 

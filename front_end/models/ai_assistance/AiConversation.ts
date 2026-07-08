@@ -68,7 +68,6 @@ export interface AiConversationOptions {
   isReadOnly?: boolean;
   aidaClient?: Host.AidaClient.AidaClient;
   changeManager?: ChangeManager;
-  isExternal?: boolean;
   performanceRecordAndReload?: () => Promise<Trace.TraceModel.ParsedTrace>;
   onInspectElement?: () => Promise<SDK.DOMModel.DOMNode|null>;
   networkTimeCalculator?: NetworkTimeCalculator.NetworkTransferTimeCalculator;
@@ -88,7 +87,6 @@ export class AiConversation {
       data: history,
       id: serializedConversation.id,
       isReadOnly: true,
-      isExternal: serializedConversation.isExternal,
     });
   }
 
@@ -100,7 +98,6 @@ export class AiConversation {
 
   #isReadOnly: boolean;
   readonly history: ResponseData[];
-  #isExternal: boolean;
 
   #aidaClient: Host.AidaClient.AidaClient;
   #changeManager: ChangeManager|undefined;
@@ -122,7 +119,6 @@ export class AiConversation {
       isReadOnly = true,
       aidaClient = new Host.AidaClient.AidaClient(),
       changeManager,
-      isExternal = false,
       performanceRecordAndReload,
       onInspectElement,
       networkTimeCalculator,
@@ -137,7 +133,6 @@ export class AiConversation {
 
     this.id = id;
     this.#isReadOnly = isReadOnly;
-    this.#isExternal = isExternal;
     this.history = this.#reconstructHistory(data);
     // Needs to be last
     this.#updateAgent(type);
@@ -154,10 +149,6 @@ export class AiConversation {
       return;
     }
 
-    if (this.#isExternal) {
-      return `[External] ${query.substring(0, MAX_TITLE_LENGTH - 11)}${
-          query.length > MAX_TITLE_LENGTH - 11 ? '…' : ''}`;
-    }
     return `${query.substring(0, MAX_TITLE_LENGTH)}${query.length > MAX_TITLE_LENGTH ? '…' : ''}`;
   }
 
@@ -322,7 +313,6 @@ export class AiConversation {
                    })
                    .filter(history => !!history),
       type: this.#type,
-      isExternal: this.#isExternal,
     };
   }
 
