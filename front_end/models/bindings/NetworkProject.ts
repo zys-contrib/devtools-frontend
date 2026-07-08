@@ -25,6 +25,10 @@ export class NetworkProjectManager extends Common.ObjectWrapper.ObjectWrapper<Ev
 
     return Root.DevToolsContext.globalInstance().get(NetworkProjectManager);
   }
+
+  static removeInstance(): void {
+    Root.DevToolsContext.globalInstance().delete(NetworkProjectManager);
+  }
 }
 
 export const enum Events {

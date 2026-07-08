@@ -20,6 +20,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Emulation.DeviceModeModel.DeviceModeModel',
   'Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding',
   'Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding',
+  'Bindings.NetworkProject.NetworkProjectManager',
   'Bindings.ResourceMapping.ResourceMapping',
   'Breakpoints.BreakpointManager.BreakpointManager',
   'JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl',

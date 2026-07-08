@@ -454,7 +454,6 @@ export class MainImpl {
     targetManager.addEventListener(
         SDK.TargetManager.Events.SUSPEND_STATE_CHANGED, this.#onSuspendStateChanged.bind(this));
 
-    Bindings.NetworkProject.NetworkProjectManager.instance();
     new Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager();
     targetManager.setScopeTarget(targetManager.primaryPageTarget());
     UI.Context.Context.instance().addFlavorChangeListener(SDK.Target.Target, ({data}) => {

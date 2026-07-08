@@ -133,6 +133,9 @@ export class Universe {
         resourceMapping, targetManager, ignoreListManager, workspace);
     context.set(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, debuggerWorkspaceBinding);
 
+    const networkProjectManager = new Bindings.NetworkProject.NetworkProjectManager();
+    context.set(Bindings.NetworkProject.NetworkProjectManager, networkProjectManager);
+
     const breakpointManager = new Breakpoints.BreakpointManager.BreakpointManager(targetManager, workspace,
                                                                                   debuggerWorkspaceBinding, settings);
     context.set(Breakpoints.BreakpointManager.BreakpointManager, breakpointManager);
@@ -224,6 +227,10 @@ export class Universe {
 
   get networkPersistenceManager(): Persistence.NetworkPersistenceManager.NetworkPersistenceManager {
     return this.context.get(Persistence.NetworkPersistenceManager.NetworkPersistenceManager);
+  }
+
+  get networkProjectManager(): Bindings.NetworkProject.NetworkProjectManager {
+    return this.context.get(Bindings.NetworkProject.NetworkProjectManager);
   }
 
   get liveMetrics(): LiveMetrics.LiveMetrics {

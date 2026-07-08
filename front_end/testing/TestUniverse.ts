@@ -277,6 +277,14 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(Persistence.NetworkPersistenceManager.NetworkPersistenceManager);
   }
 
+  get networkProjectManager(): Bindings.NetworkProject.NetworkProjectManager {
+    if (!this.#context.has(Bindings.NetworkProject.NetworkProjectManager)) {
+      this.#context.set(Bindings.NetworkProject.NetworkProjectManager,
+                        new Bindings.NetworkProject.NetworkProjectManager());
+    }
+    return this.#context.get(Bindings.NetworkProject.NetworkProjectManager);
+  }
+
   get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader {
     if (!this.#context.has(SDK.PageResourceLoader.PageResourceLoader)) {
       const options = this.#creationOptions?.pageResourceLoaderOptions ?? {

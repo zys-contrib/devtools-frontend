@@ -186,7 +186,8 @@ export class NavigatorView extends UI.Widget.VBox implements SDK.TargetManager.O
   private groupByAuthored?: boolean;
   private groupByDomain?: boolean;
   private groupByFolder?: boolean;
-  constructor(jslogContext: string, enableAuthoredGrouping?: boolean) {
+  constructor(jslogContext: string, enableAuthoredGrouping?: boolean,
+              networkProjectManager = Bindings.NetworkProject.NetworkProjectManager.instance()) {
     super({
       jslog: `${VisualLogging.pane(jslogContext).track({resize: true})}`,
       useShadowDom: true,
@@ -242,10 +243,10 @@ export class NavigatorView extends UI.Widget.VBox implements SDK.TargetManager.O
     SDK.TargetManager.TargetManager.instance().observeTargets(this);
     this.resetWorkspace(Workspace.Workspace.WorkspaceImpl.instance());
     this.#workspace.uiSourceCodes().forEach(this.addUISourceCode.bind(this));
-    Bindings.NetworkProject.NetworkProjectManager.instance().addEventListener(
-        Bindings.NetworkProject.Events.FRAME_ATTRIBUTION_ADDED, this.frameAttributionAdded, this);
-    Bindings.NetworkProject.NetworkProjectManager.instance().addEventListener(
-        Bindings.NetworkProject.Events.FRAME_ATTRIBUTION_REMOVED, this.frameAttributionRemoved, this);
+    networkProjectManager.addEventListener(Bindings.NetworkProject.Events.FRAME_ATTRIBUTION_ADDED,
+                                           this.frameAttributionAdded, this);
+    networkProjectManager.addEventListener(Bindings.NetworkProject.Events.FRAME_ATTRIBUTION_REMOVED,
+                                           this.frameAttributionRemoved, this);
   }
 
   private static treeElementOrder(treeElement: UI.TreeOutline.TreeElement): number {
