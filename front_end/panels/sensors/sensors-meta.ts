@@ -10,46 +10,46 @@ import type * as Sensors from './sensors.js';
 
 const UIStrings = {
   /**
-   * @description Title of the Sensors tool. The sensors tool contains GPS, orientation sensors, touch
-   * settings, etc.
+   * @description Title of the Sensors view. The Sensors view contains GPS, orientation sensors, touch
+   * settings, and more.
    */
   sensors: 'Sensors',
   /**
-   * @description A tag of Sensors tool that can be searched in the command menu
+   * @description A tag of the Sensors view that can be searched in the command menu.
    */
   geolocation: 'geolocation',
   /**
-   * @description A tag of Sensors tool that can be searched in the command menu
+   * @description A tag of the Sensors view that can be searched in the command menu.
    */
   timezones: 'timezones',
   /**
-   * @description Text in Sensors View of the Device Toolbar
+   * @description Text in the Sensors view of the Device toolbar.
    */
   locale: 'locale',
   /**
-   * @description A tag of Sensors tool that can be searched in the command menu
+   * @description A tag of the Sensors view that can be searched in the command menu.
    */
   locales: 'locales',
   /**
-   * @description A tag of Sensors tool that can be searched in the command menu
+   * @description A tag of the Sensors view that can be searched in the command menu.
    */
   accelerometer: 'accelerometer',
   /**
-   * @description A tag of Sensors tool that can be searched in the command menu. Refers to the
-   * orientation of a device (e.g. phone) in 3D space, e.g. tilted right/left.
+   * @description A tag of the Sensors view that can be searched in the command menu. Refers to the
+   * orientation of a device (for example, a phone) in 3D space, tilted right or left.
    */
   deviceOrientation: 'device orientation',
   /**
-   * @description Title of Locations settings. Refers to geographic locations for GPS.
+   * @description Title of the Locations settings tab. Refers to geographic locations for GPS.
    */
   locations: 'Locations',
   /**
-   * @description Command that opens the Sensors view/tool. The sensors tool contains GPS,
-   * orientation sensors, touch settings, etc.
+   * @description Command that opens the Sensors view. The Sensors view contains GPS,
+   * orientation sensors, touch settings, and more.
    */
   showSensors: 'Show Sensors',
   /**
-   * @description Command that shows geographic locations.
+   * @description Command that shows the Locations settings tab.
    */
   showLocations: 'Show Locations',
 } as const;
