@@ -3,9 +3,10 @@
 // found in the LICENSE file.
 
 import type * as ProtocolProxyApi from '../../generated/protocol-proxy-api.js';
-import type * as Protocol from '../../generated/protocol.js';
+import * as Protocol from '../../generated/protocol.js';
 
-import {DeferredDOMNode, DOMModel, type DOMNode, Events as DOMModelEvents} from './DOMModel.js';
+import {DeferredDOMNode, DOMDocument, DOMModel, type DOMNode, Events as DOMModelEvents} from './DOMModel.js';
+import {FrameManager} from './FrameManager.js';
 import {SDKModel} from './SDKModel.js';
 import {Capability, type Target} from './Target.js';
 
@@ -190,6 +191,63 @@ export class AccessibilityNode {
   getFrameId(): Protocol.Page.FrameId|null {
     return this.#frameId || this.parentNode()?.getFrameId() || null;
   }
+
+  isLeafNode(): boolean {
+    return this.numChildren() === 0 && this.role()?.value !== 'Iframe';
+  }
+
+  getNodeId(): string {
+    return this.getFrameId() + '#' + this.id();
+  }
+
+  async getChildren(frameManager: FrameManager = FrameManager.instance()): Promise<AccessibilityNode[]> {
+    if (this.role()?.value === 'Iframe') {
+      const domNode = await this.deferredDOMNode()?.resolvePromise();
+      if (!domNode) {
+        throw new Error('Could not find corresponding DOMNode');
+      }
+      const frameId = domNode.frameOwnerFrameId();
+      if (!frameId) {
+        throw new Error('No owner frameId on iframe node');
+      }
+      const localRoot = await getRootNode(frameId, frameManager);
+      return [localRoot];
+    }
+    return await this.accessibilityModel().requestAXChildren(this.id(), this.getFrameId() || undefined);
+  }
+
+  async axNodeToText(depth = 0, frameManager: FrameManager = FrameManager.instance()): Promise<string> {
+    const indent = '  '.repeat(depth);
+    const role = this.role()?.value || '';
+    const name = this.name()?.value || '';
+    const properties = this.properties() || [];
+    const ignored = this.ignored();
+    let childDepth = depth + 1;
+
+    const lines = [];
+    if (ignored) {
+      if (depth === 0) {
+        lines.push('Ignored\n');
+      } else {
+        childDepth = depth;
+      }
+    } else {
+      let line = `${indent}${role} "${name}"`;
+      for (const prop of properties) {
+        if (prop.value && isPrintableType(prop.value.type)) {
+          line += ` ${prop.name}: ${prop.value.value}`;
+        }
+      }
+      lines.push(line + '\n');
+    }
+
+    const children = await this.getChildren(frameManager);
+    for (const child of children) {
+      lines.push(await child.axNodeToText(childDepth, frameManager));
+    }
+
+    return lines.join('');
+  }
 }
 
 export const enum Events {
@@ -363,3 +421,74 @@ export class AccessibilityModel extends SDKModel<EventTypes> implements Protocol
 }
 
 SDKModel.register(AccessibilityModel, {capabilities: Capability.DOM, autostart: false});
+
+function getModel(frameId: Protocol.Page.FrameId,
+                  frameManager: FrameManager = FrameManager.instance()): AccessibilityModel {
+  const frame = frameManager.getFrame(frameId);
+  const model = frame?.resourceTreeModel().target().model(AccessibilityModel);
+  if (!model) {
+    throw new Error('Could not instantiate model for frameId');
+  }
+  return model;
+}
+
+export async function getRootNode(frameId: Protocol.Page.FrameId,
+                                  frameManager: FrameManager = FrameManager.instance()): Promise<AccessibilityNode> {
+  const model = getModel(frameId, frameManager);
+  const root = await model.requestRootNode(frameId);
+  if (!root) {
+    throw new Error('No accessibility root for frame');
+  }
+  return root;
+}
+
+function getFrameIdForNodeOrDocument(node: DOMNode): Protocol.Page.FrameId {
+  let frameId;
+  if (node instanceof DOMDocument) {
+    frameId = node.body?.frameId();
+  } else {
+    frameId = node.frameId();
+  }
+  if (!frameId) {
+    throw new Error('No frameId for DOM node');
+  }
+  return frameId;
+}
+
+export async function getNodeAndAncestorsFromDOMNode(
+    domNode: DOMNode, frameManager: FrameManager = FrameManager.instance()): Promise<AccessibilityNode[]> {
+  let frameId = getFrameIdForNodeOrDocument(domNode);
+  const model = getModel(frameId, frameManager);
+  const result = await model.requestAndLoadSubTreeToNode(domNode);
+  if (!result) {
+    throw new Error('Could not retrieve accessibility node for inspected DOM node');
+  }
+
+  const outermostFrameId = frameManager.getOutermostFrame()?.id;
+  if (!outermostFrameId) {
+    return result;
+  }
+  while (frameId !== outermostFrameId) {
+    const node = await frameManager.getFrame(frameId)?.getOwnerDOMNodeOrDocument();
+    if (!node) {
+      break;
+    }
+    frameId = getFrameIdForNodeOrDocument(node);
+    const model = getModel(frameId, frameManager);
+    const ancestors = await model.requestAndLoadSubTreeToNode(node);
+    result.push(...ancestors || []);
+  }
+  return result;
+}
+
+export function isPrintableType(valueType: Protocol.Accessibility.AXValueType): boolean {
+  switch (valueType) {
+    case Protocol.Accessibility.AXValueType.Boolean:
+    case Protocol.Accessibility.AXValueType.BooleanOrUndefined:
+    case Protocol.Accessibility.AXValueType.String:
+    case Protocol.Accessibility.AXValueType.Number:
+      return true;
+    default:
+      return false;
+  }
+}

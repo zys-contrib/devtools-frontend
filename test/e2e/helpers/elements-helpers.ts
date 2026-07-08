@@ -1191,3 +1191,5 @@ export const getMultilineGhostElements = async (devToolsPage: DevToolsPage) => {
   const ghostRows = await devToolsPage.$$(GHOST_ROW_SELECTOR);
   return await Promise.all(ghostRows.map(row => row.evaluate(node => node.textContent)));
 };
+
+export const getAccessibilityTreeNodeSelector = (textContent: string) => `pierceShadowText/${textContent}`;

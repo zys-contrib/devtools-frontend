@@ -55,9 +55,8 @@ export class PageWrapper {
    * context. If you want to evaluate code on the page, use
    * {@link PageWrapper.evaluate} within the `waitForFunction` callback.
    */
-  async waitForFunction<T>(
-      fn: (logger: Logger) => T | undefined | Promise<T|undefined>, asyncScope = new AsyncScope(),
-      description?: string) {
+  async waitForFunction<T>(fn: (logger: Logger) => T | undefined | Promise<T|undefined>, asyncScope = new AsyncScope(),
+                           description?: string, successCondition: (result: T) => boolean = Boolean) {
     const signal = AsyncScope.abortSignal;
     const innerFunction = async (messages: string[]) => {
       let iterations = 0;
@@ -66,17 +65,39 @@ export class PageWrapper {
         signal?.throwIfAborted();
         const messagesBefore = messages.length;
         const result = await fn(logger);
+        const success = result !== undefined && successCondition(result);
         // On completing an iteration, remove any leftover messages from the previous iteration.
         messages.splice(0, messagesBefore);
-        messages.push(`Iteration ${iterations++} result: ${result ? 'success' : `${result}`}`);
+        messages.push(`Iteration ${iterations++} result: ${success ? 'success' : `${result}`}`);
         signal?.throwIfAborted();
-        if (result) {
+        if (success) {
           return result as Exclude<NonNullable<T>, false>;
         }
         await this.timeout(100);
       }
     };
     return await asyncScope.exec(innerFunction, description);
+  }
+
+  /**
+   * Wait for the return value of a function to not be undefined and to strictly
+   * equal the expected value.
+   */
+  async waitForStrictEqual<T>(expected: T, fn: (logger: Logger) => T | undefined | Promise<T|undefined>,
+                              description?: string, asyncScope = new AsyncScope()) {
+    return await this.waitForFunction(fn, asyncScope, description ?? `Waiting for function to return ${expected}`,
+                                      (result: T) => result === expected);
+  }
+
+  /**
+   * Wait for the return value of a function to be a string that includes the
+   * expected value.
+   */
+  async waitForIncludes(expected: string,
+                        fn: (logger: Logger) => string | undefined | null | Promise<string|undefined|null>,
+                        description?: string, asyncScope = new AsyncScope()) {
+    return await this.waitForFunction(fn, asyncScope, description ?? `Waiting for result to include "${expected}"`,
+                                      result => Boolean(result && result.includes(expected)));
   }
 
   timeout(duration: number) {

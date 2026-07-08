@@ -4,6 +4,7 @@
 /* eslint-disable @devtools/no-imperative-dom-api */
 
 import type * as Common from '../../core/common/common.js';
+import * as i18n from '../../core/i18n/i18n.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as TreeOutline from '../../ui/components/tree_outline/tree_outline.js';
 import * as UI from '../../ui/legacy/legacy.js';
@@ -13,11 +14,21 @@ import * as AccessibilityTreeUtils from './AccessibilityTreeUtils.js';
 import accessibilityTreeViewStyles from './accessibilityTreeView.css.js';
 import {ElementsPanel} from './ElementsPanel.js';
 
+const UIStrings = {
+  /**
+   * @description Text for copying, copy should be used as a verb
+   */
+  copy: 'Copy',
+} as const;
+const str_ = i18n.i18n.registerUIStrings('panels/elements/AccessibilityTreeView.ts', UIStrings);
+const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
+
 export class AccessibilityTreeView extends UI.Widget.VBox implements
     SDK.TargetManager.SDKModelObserver<SDK.AccessibilityModel.AccessibilityModel> {
   private accessibilityTreeComponent: TreeOutline.TreeOutline.TreeOutline<AccessibilityTreeUtils.AXTreeNodeData>;
   private inspectedDOMNode: SDK.DOMModel.DOMNode|null = null;
   private root: SDK.AccessibilityModel.AccessibilityNode|null = null;
+  private selectedAXNode: SDK.AccessibilityModel.AccessibilityNode|null = null;
 
   readonly #frameManager: SDK.FrameManager.FrameManager;
 
@@ -34,8 +45,8 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
     container.setAttribute('jslog', `${VisualLogging.tree('full-accessibility')}`);
     container.appendChild(this.accessibilityTreeComponent);
 
-    SDK.TargetManager.TargetManager.instance().observeModels(
-        SDK.AccessibilityModel.AccessibilityModel, this, {scoped: true});
+    SDK.TargetManager.TargetManager.instance().observeModels(SDK.AccessibilityModel.AccessibilityModel, this,
+                                                             {scoped: true});
 
     // The DOM tree and accessibility are kept in sync as much as possible, so
     // on node selection, update the currently inspected node and reveal in the
@@ -43,6 +54,7 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
     this.accessibilityTreeComponent.addEventListener('itemselected', (event: Event) => {
       const evt = event as TreeOutline.TreeOutline.ItemSelectedEvent<AccessibilityTreeUtils.AXTreeNodeData>;
       const axNode = evt.data.node.treeNodeData;
+      this.selectedAXNode = axNode;
       if (!axNode.isDOMNode()) {
         return;
       }
@@ -66,6 +78,38 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
     this.accessibilityTreeComponent.addEventListener('itemmouseout', () => {
       SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
     });
+
+    this.accessibilityTreeComponent.addEventListener('itemcontextmenu', (event: Event) => {
+      const evt = event as TreeOutline.TreeOutline.ItemContextMenuEvent<AccessibilityTreeUtils.AXTreeNodeData>;
+      this.onContextMenu(evt);
+    });
+
+    this.contentElement.addEventListener('copy', this.onCopy.bind(this));
+  }
+
+  private onContextMenu(event: TreeOutline.TreeOutline.ItemContextMenuEvent<AccessibilityTreeUtils.AXTreeNodeData>):
+      void {
+    event.preventDefault();
+    event.stopPropagation();
+    const contextMenu = new UI.ContextMenu.ContextMenu(event.data.originalEvent);
+    const axNode = event.data.node.treeNodeData;
+    contextMenu.clipboardSection().appendItem(i18nString(UIStrings.copy), () => void this.copyNode(axNode),
+                                              {jslogContext: 'copy'});
+    void contextMenu.show();
+  }
+
+  private onCopy(event: ClipboardEvent): void {
+    if (!this.selectedAXNode) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    void this.copyNode(this.selectedAXNode);
+  }
+
+  private async copyNode(axNode: SDK.AccessibilityModel.AccessibilityNode): Promise<void> {
+    const text = await axNode.axNodeToText();
+    UI.UIUtils.copyTextToClipboard(text);
   }
 
   override async wasShown(): Promise<void> {
@@ -82,7 +126,7 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
       if (!frameId) {
         throw new Error('No top frame');
       }
-      this.root = await AccessibilityTreeUtils.getRootNode(frameId, this.#frameManager);
+      this.root = await SDK.AccessibilityModel.getRootNode(frameId, this.#frameManager);
       if (!this.root) {
         throw new Error('No root');
       }
@@ -95,7 +139,7 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
     if (!this.root) {
       const frameId = this.#frameManager.getOutermostFrame()?.id;
       if (frameId) {
-        this.root = await AccessibilityTreeUtils.getRootNode(frameId, this.#frameManager);
+        this.root = await SDK.AccessibilityModel.getRootNode(frameId, this.#frameManager);
       }
     }
     if (!this.root) {
@@ -116,13 +160,13 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
   // Given a selected DOM node, asks the model to load the missing subtree from the root to the
   // selected node and then re-renders the tree.
   async loadSubTreeIntoAccessibilityModel(selectedNode: SDK.DOMModel.DOMNode): Promise<void> {
-    const ancestors = await AccessibilityTreeUtils.getNodeAndAncestorsFromDOMNode(selectedNode, this.#frameManager);
+    const ancestors = await SDK.AccessibilityModel.getNodeAndAncestorsFromDOMNode(selectedNode, this.#frameManager);
     const inspectedAXNode = ancestors.find(node => node.backendDOMNodeId() === selectedNode.backendNodeId());
     if (!inspectedAXNode) {
       return;
     }
     await this.accessibilityTreeComponent.expandNodeIds(ancestors.map(node => node.getFrameId() + '#' + node.id()));
-    await this.accessibilityTreeComponent.focusNodeId(AccessibilityTreeUtils.getNodeId(inspectedAXNode));
+    await this.accessibilityTreeComponent.focusNodeId(inspectedAXNode.getNodeId());
   }
 
   // A node was revealed through the elements picker.
