@@ -11,6 +11,7 @@ import {
   waitForChildrenOfSelectedElementNode,
   waitForPartialContentOfSelectedElementsNode,
   waitForSelectedNodeChange,
+  waitForStyleRule,
 } from '../helpers/elements-helpers.js';
 
 function assertStartsWith(actual: string, expected: string): void {
@@ -114,6 +115,9 @@ describe('The Elements tab', function() {
 
        // Click the node for this test.
        await waitForAndClickTreeElementWithPartialText('"from-document"', devToolsPage);
+
+       // Wait for the styles pane to populate before interacting with it.
+       await waitForStyleRule('.from-document', devToolsPage);
 
        // Click the link to the adopted stylesheet in the styles pane.
        await devToolsPage.click(
