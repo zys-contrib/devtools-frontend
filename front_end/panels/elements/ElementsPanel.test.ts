@@ -335,6 +335,131 @@ describeWithEnvironment('ElementsPanel', () => {
     panel.detach();
   });
 
+  it('updates elements tree after bfcache navigation', async () => {
+    SDK.TargetManager.TargetManager.instance().setScopeTarget(null);
+    const model = target.model(SDK.DOMModel.DOMModel);
+    assert.exists(model);
+
+    const page1Document = {
+      root: {
+        nodeId: 1 as Protocol.DOM.NodeId,
+        backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+        nodeType: Node.DOCUMENT_NODE,
+        nodeName: '#document',
+        childNodeCount: 1,
+        children: [{
+          nodeId: 4 as Protocol.DOM.NodeId,
+          parentId: 1 as Protocol.DOM.NodeId,
+          backendNodeId: 5 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'HTML',
+          childNodeCount: 1,
+          children: [{
+            nodeId: 6 as Protocol.DOM.NodeId,
+            parentId: 4 as Protocol.DOM.NodeId,
+            backendNodeId: 7 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.ELEMENT_NODE,
+            nodeName: 'BODY',
+            childNodeCount: 1,
+            children: [{
+              nodeId: 8 as Protocol.DOM.NodeId,
+              parentId: 6 as Protocol.DOM.NodeId,
+              backendNodeId: 9 as Protocol.DOM.BackendNodeId,
+              nodeType: Node.ELEMENT_NODE,
+              nodeName: 'DIV',
+              childNodeCount: 0,
+              attributes: ['id', 'page1'],
+            } as Protocol.DOM.Node],
+          } as Protocol.DOM.Node],
+        } as Protocol.DOM.Node],
+      },
+    } as Protocol.DOM.GetDocumentResponse;
+
+    const page2Document = {
+      root: {
+        nodeId: 11 as Protocol.DOM.NodeId,
+        backendNodeId: 12 as Protocol.DOM.BackendNodeId,
+        nodeType: Node.DOCUMENT_NODE,
+        nodeName: '#document',
+        childNodeCount: 1,
+        children: [{
+          nodeId: 14 as Protocol.DOM.NodeId,
+          parentId: 11 as Protocol.DOM.NodeId,
+          backendNodeId: 15 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'HTML',
+          childNodeCount: 1,
+          children: [{
+            nodeId: 16 as Protocol.DOM.NodeId,
+            parentId: 14 as Protocol.DOM.NodeId,
+            backendNodeId: 17 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.ELEMENT_NODE,
+            nodeName: 'BODY',
+            childNodeCount: 1,
+            children: [{
+              nodeId: 18 as Protocol.DOM.NodeId,
+              parentId: 16 as Protocol.DOM.NodeId,
+              backendNodeId: 19 as Protocol.DOM.BackendNodeId,
+              nodeType: Node.ELEMENT_NODE,
+              nodeName: 'DIV',
+              childNodeCount: 0,
+              attributes: ['id', 'page2'],
+            } as Protocol.DOM.Node],
+          } as Protocol.DOM.Node],
+        } as Protocol.DOM.Node],
+      },
+    } as Protocol.DOM.GetDocumentResponse;
+
+    let currentDocument = page1Document;
+    connection.setHandler('DOM.getDocument', null);
+    connection.setSuccessHandler('DOM.getDocument', () => currentDocument);
+
+    const panel = Elements.ElementsPanel.ElementsPanel.instance({forceNew: true});
+    panel.markAsRoot();
+    renderElementIntoDOM(panel);
+
+    SDK.TargetManager.TargetManager.instance().setScopeTarget(target);
+
+    await model.requestDocument();
+    const treeOutline = Elements.ElementsTreeOutline.ElementsTreeOutline.forDOMModel(model);
+    assert.exists(treeOutline);
+
+    // Verify Page 1 is loaded
+    assert.strictEqual(treeOutline.rootDOMNode?.nodeName(), '#document');
+    const doc1 = treeOutline.rootDOMNode as SDK.DOMModel.DOMDocument;
+    const body = doc1?.body;
+    assert.exists(body);
+    const children1 = body!.children();
+    assert.exists(children1);
+    assert.strictEqual(children1![0].getAttribute('id'), 'page1');
+
+    // Simulate navigation to Page 2
+    currentDocument = page2Document;
+    dispatchEvent(target, 'DOM.documentUpdated');
+    await model.requestDocument();
+
+    // Verify Page 2 is loaded
+    const doc2 = treeOutline.rootDOMNode as SDK.DOMModel.DOMDocument;
+    assert.exists(doc2?.body);
+    const children2 = doc2.body!.children();
+    assert.exists(children2);
+    assert.strictEqual(children2![0].getAttribute('id'), 'page2');
+
+    // Simulate BFCache navigation back to Page 1
+    currentDocument = page1Document;
+    dispatchEvent(target, 'DOM.documentUpdated');
+    await model.requestDocument();
+
+    // Verify Page 1 is restored
+    const doc3 = treeOutline.rootDOMNode as SDK.DOMModel.DOMDocument;
+    assert.exists(doc3?.body);
+    const children3 = doc3.body!.children();
+    assert.exists(children3);
+    assert.strictEqual(children3![0].getAttribute('id'), 'page1');
+
+    panel.detach();
+  });
+
   describe('tracking and updating Computed styles', () => {
     const StylesSidebarPane = Elements.StylesSidebarPane.StylesSidebarPane;
     const ComputedStyleModel = ComputedStyle.ComputedStyleModel.ComputedStyleModel;
