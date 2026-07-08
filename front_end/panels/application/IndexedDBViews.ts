@@ -244,7 +244,8 @@ export class IDBDataView extends UI.View.SimpleView {
   // Used in Web Tests
   protected entries: Entry[];
   #hasMore = false;
-  #selectedRowNumber = 0;
+  #selectedRowNumber = -1;
+
   #needsRefreshVisible = false;
   #clearButtonEnabled = true;
   #metadata: ObjectStoreMetadata|null = null;
@@ -322,46 +323,38 @@ export class IDBDataView extends UI.View.SimpleView {
       refreshCallback: this.updateData.bind(this, true),
     });
     dataGrid.setStriped(true);
-    dataGrid.addEventListener(DataGrid.DataGrid.Events.SELECTED_NODE, () => {
+    dataGrid.addEventListener(DataGrid.DataGrid.Events.SELECTED_NODE, event => {
+      const node = event.data as IDBDataGridNode;
+      this.#selectedRowNumber = node.data['number'];
+      this.performUpdate();
+    }, this);
+    dataGrid.addEventListener(DataGrid.DataGrid.Events.DESELECTED_NODE, () => {
+      this.#selectedRowNumber = -1;
       this.performUpdate();
     }, this);
     return dataGrid;
   }
 
-  // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private keyColumnHeaderFragment(prefix: string, keyPath: any): DocumentFragment {
+  private keyColumnHeaderFragment(prefix: string, keyPath: string|string[]|null|undefined): DocumentFragment {
     const keyColumnHeaderFragment = document.createDocumentFragment();
-    UI.UIUtils.createTextChild(keyColumnHeaderFragment, prefix);
-    if (keyPath === null) {
-      return keyColumnHeaderFragment;
-    }
-
-    UI.UIUtils.createTextChild(keyColumnHeaderFragment, ' (' + i18nString(UIStrings.keyPath));
-    if (Array.isArray(keyPath)) {
-      UI.UIUtils.createTextChild(keyColumnHeaderFragment, '[');
-      for (let i = 0; i < keyPath.length; ++i) {
-        if (i !== 0) {
-          UI.UIUtils.createTextChild(keyColumnHeaderFragment, ', ');
-        }
-        keyColumnHeaderFragment.appendChild(this.keyPathStringFragment(keyPath[i]));
-      }
-      UI.UIUtils.createTextChild(keyColumnHeaderFragment, ']');
-    } else {
-      const keyPathString = (keyPath as string);
-      keyColumnHeaderFragment.appendChild(this.keyPathStringFragment(keyPathString));
-    }
-    UI.UIUtils.createTextChild(keyColumnHeaderFragment, ')');
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(this.renderKeyColumnHeader(prefix, keyPath), keyColumnHeaderFragment);
     return keyColumnHeaderFragment;
   }
 
-  private keyPathStringFragment(keyPathString: string): DocumentFragment {
-    const keyPathStringFragment = document.createDocumentFragment();
-    UI.UIUtils.createTextChild(keyPathStringFragment, '"');
-    const keyPathSpan = keyPathStringFragment.createChild('span', 'source-code indexed-db-key-path');
-    keyPathSpan.textContent = keyPathString;
-    UI.UIUtils.createTextChild(keyPathStringFragment, '"');
-    return keyPathStringFragment;
+  private renderKeyColumnHeader(prefix: string, keyPath: string|string[]|null|undefined): LitTemplate {
+    if (keyPath === undefined || keyPath === null || keyPath === '') {
+      return html`${prefix}`;
+    }
+    return html`
+      ${prefix} (${i18nString(UIStrings.keyPath)}${
+        Array.isArray(keyPath) ?
+            html`[${keyPath.map((path, i) => html`${i > 0 ? ', ' : ''}${this.renderKeyPathString(path)}`)}]` :
+            this.renderKeyPathString(keyPath)})`;
+  }
+
+  private renderKeyPathString(keyPathString: string): LitTemplate {
+    return html`"<span class="source-code indexed-db-key-path">${keyPathString}</span>"`;
   }
 
   private renderToolbar(): LitTemplate {
@@ -391,7 +384,7 @@ export class IDBDataView extends UI.View.SimpleView {
           .title=${i18nString(UIStrings.deleteSelected)}
           jslog=${VisualLogging.action('delete-selected').track({click: true})}
           @click=${() => this.deleteButtonClicked(null)}
-          .disabled=${!this.dataGrid || this.dataGrid.rootNode().children.length === 0 || this.dataGrid.selectedNode === null}
+          .disabled=${!this.dataGrid || this.dataGrid.rootNode().children.length === 0 || this.#selectedRowNumber === -1}
           .variant=${Buttons.Button.Variant.TOOLBAR}>
         </devtools-button>
 
@@ -507,7 +500,7 @@ export class IDBDataView extends UI.View.SimpleView {
 
     const pageSize = this.pageSize;
     let skipCount: 0|number = this.skipCount;
-    const selected = this.dataGrid.selectedNode ? this.dataGrid.selectedNode.data['number'] : 0;
+    const selected = this.#selectedRowNumber !== -1 ? this.#selectedRowNumber : 0;
     this.#selectedRowNumber = Math.max(selected, this.skipCount);  // Page forward should select top entry
 
     if (!force && this.lastKey === key && this.lastPageSize === pageSize && this.lastSkipCount === skipCount) {
@@ -569,6 +562,8 @@ export class IDBDataView extends UI.View.SimpleView {
     this.#lastRenderedEntries = this.entries;
     if (selectedNode) {
       selectedNode.select();
+    } else {
+      this.#selectedRowNumber = -1;
     }
   }
 
