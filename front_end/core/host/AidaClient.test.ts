@@ -673,6 +673,44 @@ describe('AidaClient', () => {
     }
   });
 
+  it('throws an AidaQuotaError on 429', async () => {
+    sinon
+        .stub(
+            Host.InspectorFrontendHost.InspectorFrontendHostInstance,
+            'dispatchHttpRequest',
+            )
+        .callsArgWith(1, {
+          statusCode: 429,
+        });
+    const provider = new Host.AidaClient.AidaClient();
+    try {
+      await getAllResults(provider);
+      assert.fail('provider.fetch did not throw');
+    } catch (err) {
+      assert.instanceOf(err, Host.AidaClient.AidaQuotaError);
+    }
+  });
+
+  it('throws an AidaQuotaError when response error payload contains quota', async () => {
+    sinon
+        .stub(
+            Host.InspectorFrontendHost.InspectorFrontendHostInstance,
+            'dispatchHttpRequest',
+            )
+        .callsArgWith(1, {
+          statusCode: 400,
+          error: 'RESOURCE_EXHAUSTED',
+          detail: 'Quota exceeded for project',
+        });
+    const provider = new Host.AidaClient.AidaClient();
+    try {
+      await getAllResults(provider);
+      assert.fail('provider.fetch did not throw');
+    } catch (err) {
+      assert.instanceOf(err, Host.AidaClient.AidaQuotaError);
+    }
+  });
+
   it('throws an error for other codes', async () => {
     sinon
         .stub(

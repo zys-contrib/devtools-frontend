@@ -44,8 +44,13 @@ export const MockAidaFetchError = {
   fetchError: true,
 } as const;
 
-export type MockAidaResponse = Omit<Host.AidaClient.DoConversationResponse, 'completed'|'metadata'>&
-    {metadata?: Host.AidaClient.ResponseMetadata}|typeof MockAidaAbortError|typeof MockAidaFetchError;
+export const MockAidaQuotaError = {
+  quotaError: true,
+} as const;
+
+export type MockAidaResponse =
+    Omit<Host.AidaClient.DoConversationResponse, 'completed'|'metadata'>&{metadata?: Host.AidaClient.ResponseMetadata}|
+    typeof MockAidaAbortError|typeof MockAidaFetchError|typeof MockAidaQuotaError;
 
 /**
  * Creates a mock AIDA client that responds using `data`.
@@ -68,6 +73,9 @@ export function mockAidaClient(data: Array<[MockAidaResponse, ...MockAidaRespons
       }
       if ('fetchError' in chunk) {
         throw new Error('Fetch error');
+      }
+      if ('quotaError' in chunk) {
+        throw new Host.AidaClient.AidaQuotaError();
       }
       const metadata = chunk.metadata ?? {};
       if (metadata?.attributionMetadata?.attributionAction === Host.AidaClient.RecitationAction.BLOCK) {

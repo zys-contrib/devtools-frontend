@@ -63,6 +63,7 @@ const AidaLanguageToMarkdown: Record<AidaInferenceLanguage, string> = {
 
 export class AidaAbortError extends Error {}
 export class AidaBlockError extends Error {}
+export class AidaQuotaError extends Error {}
 
 interface AiStream {
   write: (data: string) => Promise<void>;
@@ -185,12 +186,23 @@ export class AidaClient {
           debugLog('doConversation failed with error:', JSON.stringify(err));
           if (err instanceof DispatchHttpRequestClient.DispatchHttpRequestError && err.response) {
             const result = err.response;
+            if (result.statusCode === 429) {
+              stream.fail(new AidaQuotaError('Server responded: quota exceeded'));
+              return;
+            }
             if (result.statusCode === 403) {
               stream.fail(new Error('Server responded: permission denied'));
               return;
             }
             if ('error' in result && result.error) {
-              stream.fail(new Error(`Cannot send request: ${result.error} ${result.detail || ''}`));
+              const errorStr = typeof result.error === 'string' ? result.error : '';
+              const detailStr = typeof result.detail === 'string' ? result.detail : '';
+              if (errorStr.toLowerCase().includes('quota') || detailStr.toLowerCase().includes('quota')) {
+                stream.fail(new AidaQuotaError(
+                    `Cannot send request: ${result.error}${result.detail ? ` ${result.detail}` : ''}`));
+                return;
+              }
+              stream.fail(new Error(`Cannot send request: ${result.error}${result.detail ? ` ${result.detail}` : ''}`));
               return;
             }
             if ('netErrorName' in result && result.netErrorName === 'net::ERR_TIMED_OUT') {
@@ -249,6 +261,9 @@ export class AidaClient {
             thoughtSignature: result.functionCallChunk.functionCall.thoughtSignature,
           });
         } else if ('error' in result) {
+          if (typeof result.error === 'string' && result.error.toLowerCase().includes('quota')) {
+            throw new AidaQuotaError(`Server responded: ${JSON.stringify(result)}`);
+          }
           throw new Error(`Server responded: ${JSON.stringify(result)}`);
         } else {
           throw new Error(`Unknown chunk result ${JSON.stringify(result)}`);

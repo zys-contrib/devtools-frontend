@@ -116,6 +116,10 @@ const UIStringsNotTranslate = {
   systemError:
       'Something unforeseen happened and I can no longer continue. Try your request again and see if that resolves the issue. If this keeps happening, update Chrome to the latest version.',
   /**
+   * @description The error message when the user is out of quota or rate limited.
+   */
+  quotaError: 'You reached your limit for AI assistance requests. Try again later.',
+  /**
    * @description The error message when the LLM gets stuck in a loop (max steps reached).
    */
   maxStepsError: 'Seems like I am stuck with the investigation. It would be better if you start over.',
@@ -1841,6 +1845,9 @@ function renderError(message: ModelChatMessage): Lit.LitTemplate {
       case AiAssistanceModel.AiAgent.ErrorType.UNKNOWN:
       case AiAssistanceModel.AiAgent.ErrorType.BLOCK:
         errorMessage = UIStringsNotTranslate.systemError;
+        break;
+      case AiAssistanceModel.AiAgent.ErrorType.QUOTA:
+        errorMessage = UIStringsNotTranslate.quotaError;
         break;
       case AiAssistanceModel.AiAgent.ErrorType.MAX_STEPS:
         errorMessage = UIStringsNotTranslate.maxStepsError;

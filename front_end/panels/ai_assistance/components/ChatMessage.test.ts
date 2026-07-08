@@ -10,7 +10,7 @@ import * as Host from '../../../core/host/host.js';
 import type * as Platform from '../../../core/platform/platform.js';
 import * as SDK from '../../../core/sdk/sdk.js';
 import type * as Protocol from '../../../generated/protocol.js';
-import type * as AIAssistanceModel from '../../../models/ai_assistance/ai_assistance.js';
+import * as AIAssistanceModel from '../../../models/ai_assistance/ai_assistance.js';
 import * as TextUtils from '../../../models/text_utils/text_utils.js';
 import type * as Workspace from '../../../models/workspace/workspace.js';
 import {
@@ -1902,6 +1902,23 @@ describeWithEnvironment('ChatMessage', () => {
           targetElement,
       );
       assert.isNotNull(devtoolsWidget);
+    });
+
+    it('renders quota error message', async () => {
+      const message: AiAssistance.ChatMessage.ModelChatMessage = {
+        entity: AiAssistance.ChatMessage.ChatMessageEntity.MODEL,
+        parts: [],
+        error: AIAssistanceModel.AiAgent.ErrorType.QUOTA,
+        id: '1',
+      };
+
+      const targetElement = renderView({message});
+      const errorP = targetElement.querySelector('.error');
+      assert.isNotNull(errorP);
+      assert.strictEqual(
+          errorP?.textContent,
+          'You reached your limit for AI assistance requests. Try again later.',
+      );
     });
   });
 });

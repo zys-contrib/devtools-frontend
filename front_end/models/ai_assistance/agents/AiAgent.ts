@@ -36,7 +36,8 @@ export const enum ErrorType {
   ABORT = 'abort',
   MAX_STEPS = 'max-steps',
   BLOCK = 'block',
-  CROSS_ORIGIN = 'cross-origin'
+  CROSS_ORIGIN = 'cross-origin',
+  QUOTA = 'quota',
 }
 
 export const enum MultimodalInputType {
@@ -795,6 +796,9 @@ export abstract class AiAgent<T> {
           error = ErrorType.ABORT;
         } else if (err instanceof Host.AidaClient.AidaBlockError) {
           error = ErrorType.BLOCK;
+        } else if (err instanceof Host.AidaClient.AidaQuotaError ||
+                   (err instanceof Error && err.message.toLowerCase().includes('quota'))) {
+          error = ErrorType.QUOTA;
         }
         yield this.#createErrorResponse(error);
 
