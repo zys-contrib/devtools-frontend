@@ -15,7 +15,7 @@ import {
 
 const UIStrings = {
   /**
-   * @description Title for Email Verification Protocol specification url link
+   * @description Title for Email Verification Protocol specification URL link.
    */
   emailVerification: 'Email Verification Protocol',
 } as const;
