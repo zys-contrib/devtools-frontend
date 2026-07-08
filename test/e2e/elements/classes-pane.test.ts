@@ -37,6 +37,7 @@ describe('The Classes pane', () => {
     await assertSelectedNodeClasses(['on'], devToolsPage);
 
     await toggleClassesPaneCheckbox('off', devToolsPage);
+    await assertSelectedNodeClasses(['on', 'off'], devToolsPage);
     await toggleClassesPaneCheckbox('on', devToolsPage);
     await assertSelectedNodeClasses(['off'], devToolsPage);
   });
