@@ -182,6 +182,13 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(SDK.EventBreakpointsModel.EventBreakpointsManager);
   }
 
+  get fileManager(): Workspace.FileManager.FileManager {
+    if (!this.#context.has(Workspace.FileManager.FileManager)) {
+      this.#context.set(Workspace.FileManager.FileManager, new Workspace.FileManager.FileManager());
+    }
+    return this.#context.get(Workspace.FileManager.FileManager);
+  }
+
   get frameManager(): SDK.FrameManager.FrameManager {
     if (!this.#context.has(SDK.FrameManager.FrameManager)) {
       this.#context.set(SDK.FrameManager.FrameManager, new SDK.FrameManager.FrameManager(this.targetManager));

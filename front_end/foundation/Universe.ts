@@ -108,6 +108,9 @@ export class Universe {
     const workspace = new Workspace.Workspace.WorkspaceImpl();
     context.set(Workspace.Workspace.WorkspaceImpl, workspace);
 
+    const fileManager = new Workspace.FileManager.FileManager();
+    context.set(Workspace.FileManager.FileManager, fileManager);
+
     const automaticFileSystemWorkspaceBinding =
         new Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding(
             automaticFileSystemManager,
@@ -205,6 +208,10 @@ export class Universe {
 
   get eventBreakpointsManager(): SDK.EventBreakpointsModel.EventBreakpointsManager {
     return this.context.get(SDK.EventBreakpointsModel.EventBreakpointsManager);
+  }
+
+  get fileManager(): Workspace.FileManager.FileManager {
+    return this.context.get(Workspace.FileManager.FileManager);
   }
 
   get isolatedFileSystemManager(): Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager {

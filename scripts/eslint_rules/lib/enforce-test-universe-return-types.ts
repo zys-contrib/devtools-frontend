@@ -42,6 +42,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'SDK.PageResourceLoader.PageResourceLoader',
   'SDK.Target.Target',
   'SDK.TargetManager.TargetManager',
+  'Workspace.FileManager.FileManager',
   'Workspace.IgnoreListManager.IgnoreListManager',
   'Workspace.Workspace.WorkspaceImpl',
   'WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl',

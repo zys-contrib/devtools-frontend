@@ -454,8 +454,6 @@ export class MainImpl {
     targetManager.addEventListener(
         SDK.TargetManager.Events.SUSPEND_STATE_CHANGED, this.#onSuspendStateChanged.bind(this));
 
-    Workspace.FileManager.FileManager.instance({forceNew: true});
-
     Bindings.NetworkProject.NetworkProjectManager.instance();
     new Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager();
     targetManager.setScopeTarget(targetManager.primaryPageTarget());
