@@ -146,8 +146,8 @@ export const TestConfig: Config = {
   shardCount: options['shard-count'],
   shardNumber: options['shard-number'],
   shardBias: options['shard-bias'],
-  isAiAgent:
-      ['GEMINI_CLI', 'CLAUDECODE', 'CODEX_SANDBOX', 'CURSOR_AGENT', 'AI_AGENT'].some(agent => agent in process.env),
+  isAiAgent: ['GEMINI_CLI', 'CLAUDECODE', 'CODEX_SANDBOX', 'CURSOR_AGENT', 'AI_AGENT', 'ANTIGRAVITY_AGENT'].some(
+      agent => agent in process.env),
   allowDuplicateTestIds: options['repeat'] > 1 || options['retries'] > 0,
   isPerfTest: getTestsFromOptions().some(t => t.includes('test/perf') || t.includes('test\\perf')),
 };
