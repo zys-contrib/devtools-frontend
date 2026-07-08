@@ -317,8 +317,9 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     this.#domTreeWidget.setWordWrap(this.#settings.moduleSetting('dom-word-wrap').get());
 
     this.#targetManager.observeModels(SDK.DOMModel.DOMModel, this, {scoped: true});
-    this.#targetManager.addEventListener(SDK.TargetManager.Events.NAME_CHANGED,
-                                         event => this.targetNameChanged(event.data));
+    this.#targetManager.addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
+                                         SDK.ResourceTreeModel.Events.PrimaryPageChanged, this.onPrimaryPageChanged,
+                                         this, {scoped: true});
     this.#settings.moduleSetting('show-ua-shadow-dom').addChangeListener(this.showUAShadowDOMChanged.bind(this));
     PanelCommon.ExtensionServer.ExtensionServer.instance().addEventListener(
         PanelCommon.ExtensionServer.Events.SidebarPaneAdded, this.extensionSidebarPaneAdded, this);
@@ -467,10 +468,15 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     });
   }
 
-  private targetNameChanged(target: SDK.Target.Target): void {
-    const domModel = target.model(SDK.DOMModel.DOMModel);
-    if (!domModel) {
-      return;
+  private onPrimaryPageChanged(
+      event: Common.EventTarget.EventTargetEvent<
+          {frame: SDK.ResourceTreeModel.ResourceTreeFrame, type: SDK.ResourceTreeModel.PrimaryPageChangeType}>): void {
+    const {frame, type} = event.data;
+    if (type === SDK.ResourceTreeModel.PrimaryPageChangeType.ACTIVATION) {
+      const domModel = frame.resourceTreeModel().target().model(SDK.DOMModel.DOMModel);
+      if (domModel && !domModel.parentModel()) {
+        this.#domTreeWidget.show(this.domTreeContainer);
+      }
     }
   }
 
