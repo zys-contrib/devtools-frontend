@@ -38,9 +38,9 @@ export class StackTraceModel extends SDK.SDKModel.SDKModel<unknown> {
   readonly #trie = new Trie();
   readonly #mutex = new Common.Mutex.Mutex();
 
-  /** @returns the {@link StackTraceModel} for the target, or the model for the primaryPageTarget when passing null/undefined */
+  /** @returns the {@link StackTraceModel} for the target. Throws if the target or its model cannot be found. */
   static #modelForTarget(target: SDK.Target.Target|null|undefined): StackTraceModel {
-    const model = (target ?? SDK.TargetManager.TargetManager.instance().primaryPageTarget())?.model(StackTraceModel);
+    const model = target?.model(StackTraceModel);
     if (!model) {
       throw new Error('Unable to find StackTraceModel');
     }
@@ -161,7 +161,7 @@ export class StackTraceModel extends SDK.SDKModel.SDKModel<unknown> {
           // Skip empty async fragments, they don't add value.
           continue;
         }
-        const model = StackTraceModel.#modelForTarget(target);
+        const model = StackTraceModel.#modelForTarget(target ?? this.target().targetManager().primaryPageTarget());
         const targetDebuggerModel = target.model(SDK.DebuggerModel.DebuggerModel);
         const asyncFrames = asyncStackTrace.callFrames.map((frame): RawFrame => {
           const isWasm = targetDebuggerModel?.isWasm(frame.scriptId) ?? false;
