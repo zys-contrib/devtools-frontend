@@ -2023,6 +2023,175 @@ describe('NetworkDispatcher', () => {
       ]);
     });
   });
+
+  describe('webSocket', () => {
+    let universe: TestUniverse;
+    let networkManager: SDK.NetworkManager.NetworkManager;
+    let networkDispatcher: SDK.NetworkManager.NetworkDispatcher;
+
+    beforeEach(() => {
+      universe = new TestUniverse();
+      const target = universe.createTarget({});
+      networkManager = target.model(SDK.NetworkManager.NetworkManager)!;
+      networkDispatcher = networkManager.dispatcher;
+    });
+
+    it('dispatches RequestUpdated and updates frames when WebSocketFrames are sent and received', () => {
+      const requestId = 'mock-ws-id' as Protocol.Network.RequestId;
+      networkDispatcher.webSocketCreated({
+        requestId,
+        url: 'ws://localhost:8880/echo',
+        initiator: {type: Protocol.Network.InitiatorType.Script},
+      });
+      const request = networkManager.requestForId(requestId);
+      assert.exists(request);
+      assert.strictEqual(request.resourceType(), Common.ResourceType.resourceTypes.WebSocket);
+
+      const requestUpdatedEvents: SDK.NetworkRequest.NetworkRequest[] = [];
+      networkManager.addEventListener(SDK.NetworkManager.Events.RequestUpdated, event => {
+        requestUpdatedEvents.push(event.data);
+      });
+
+      networkDispatcher.webSocketFrameSent({
+        requestId,
+        timestamp: 1,
+        response: {opcode: 1, mask: true, payloadData: 'test'},
+      });
+      assert.lengthOf(requestUpdatedEvents, 1);
+      assert.strictEqual(requestUpdatedEvents[0], request);
+      assert.deepEqual(request.frames(), [
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Send,
+          text: 'test',
+          time: request.pseudoWallTime(1),
+          opCode: 1,
+          mask: true,
+        },
+      ]);
+
+      networkDispatcher.webSocketFrameSent({
+        requestId,
+        timestamp: 2,
+        response: {opcode: 1, mask: true, payloadData: 'exit'},
+      });
+      assert.lengthOf(requestUpdatedEvents, 2);
+      assert.deepEqual(request.frames(), [
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Send,
+          text: 'test',
+          time: request.pseudoWallTime(1),
+          opCode: 1,
+          mask: true,
+        },
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Send,
+          text: 'exit',
+          time: request.pseudoWallTime(2),
+          opCode: 1,
+          mask: true,
+        },
+      ]);
+
+      networkDispatcher.webSocketFrameReceived({
+        requestId,
+        timestamp: 3,
+        response: {opcode: 1, mask: false, payloadData: 'test'},
+      });
+      assert.lengthOf(requestUpdatedEvents, 3);
+      assert.deepEqual(request.frames(), [
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Send,
+          text: 'test',
+          time: request.pseudoWallTime(1),
+          opCode: 1,
+          mask: true,
+        },
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Send,
+          text: 'exit',
+          time: request.pseudoWallTime(2),
+          opCode: 1,
+          mask: true,
+        },
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Receive,
+          text: 'test',
+          time: request.pseudoWallTime(3),
+          opCode: 1,
+          mask: false,
+        },
+      ]);
+
+      networkDispatcher.webSocketFrameReceived({
+        requestId,
+        timestamp: 4,
+        response: {opcode: 1, mask: false, payloadData: 'exit'},
+      });
+      assert.lengthOf(requestUpdatedEvents, 4);
+      assert.deepEqual(request.frames(), [
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Send,
+          text: 'test',
+          time: request.pseudoWallTime(1),
+          opCode: 1,
+          mask: true,
+        },
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Send,
+          text: 'exit',
+          time: request.pseudoWallTime(2),
+          opCode: 1,
+          mask: true,
+        },
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Receive,
+          text: 'test',
+          time: request.pseudoWallTime(3),
+          opCode: 1,
+          mask: false,
+        },
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Receive,
+          text: 'exit',
+          time: request.pseudoWallTime(4),
+          opCode: 1,
+          mask: false,
+        },
+      ]);
+    });
+
+    it('dispatches RequestUpdated when webSocketFrameError occurs', () => {
+      const requestId = 'mock-ws-id' as Protocol.Network.RequestId;
+      networkDispatcher.webSocketCreated({
+        requestId,
+        url: 'ws://localhost:8880/echo',
+        initiator: {type: Protocol.Network.InitiatorType.Script},
+      });
+      const request = networkManager.requestForId(requestId);
+      assert.exists(request);
+
+      const requestUpdatedEvents: SDK.NetworkRequest.NetworkRequest[] = [];
+      networkManager.addEventListener(SDK.NetworkManager.Events.RequestUpdated, event => {
+        requestUpdatedEvents.push(event.data);
+      });
+
+      networkDispatcher.webSocketFrameError({
+        requestId,
+        timestamp: 1,
+        errorMessage: 'connection failed',
+      });
+      assert.lengthOf(requestUpdatedEvents, 1);
+      assert.deepEqual(request.frames(), [
+        {
+          type: SDK.NetworkRequest.WebSocketFrameType.Error,
+          text: 'connection failed',
+          time: request.pseudoWallTime(1),
+          opCode: -1,
+          mask: false,
+        },
+      ]);
+    });
+  });
 });
 
 interface OverriddenResponse {
