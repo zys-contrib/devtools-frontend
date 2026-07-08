@@ -20,6 +20,7 @@ import * as Logs from '../models/logs/logs.js';
 import * as Persistence from '../models/persistence/persistence.js';
 import * as ProjectSettings from '../models/project_settings/project_settings.js';
 import * as Workspace from '../models/workspace/workspace.js';
+import * as WorkspaceDiff from '../models/workspace_diff/workspace_diff.js';
 
 import {DEFAULT_SETTING_REGISTRATIONS_FOR_TEST} from './SettingsHelpers.js';
 import {createTarget} from './TargetHelpers.js';
@@ -367,6 +368,15 @@ export class TestUniverse implements Foundation.Universe.Universe {
       this.#context.set(Workspace.Workspace.WorkspaceImpl, new Workspace.Workspace.WorkspaceImpl());
     }
     return this.#context.get(Workspace.Workspace.WorkspaceImpl);
+  }
+
+  get workspaceDiff(): WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl {
+    if (!this.#context.has(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl)) {
+      this.#context.set(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl,
+                        new WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl(this.workspace, this.persistence,
+                                                                          this.networkPersistenceManager));
+    }
+    return this.#context.get(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl);
   }
 
   get #resourceMapping(): Bindings.ResourceMapping.ResourceMapping {

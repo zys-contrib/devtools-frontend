@@ -24,6 +24,7 @@ devtools_foundation_module("foundation") {
     "../models/persistence:bundle",
     "../models/project_settings:bundle",
     "../models/workspace:bundle",
+    "../models/workspace_diff:bundle",
   ]
 }
 

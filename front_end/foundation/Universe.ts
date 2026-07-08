@@ -17,6 +17,7 @@ import * as Logs from '../models/logs/logs.js';
 import * as Persistence from '../models/persistence/persistence.js';
 import * as ProjectSettings from '../models/project_settings/project_settings.js';
 import * as Workspace from '../models/workspace/workspace.js';
+import * as WorkspaceDiff from '../models/workspace_diff/workspace_diff.js';
 
 export interface CreationOptions {
   settingsCreationOptions: Omit<Common.Settings.SettingsCreationOptions, 'console'>;
@@ -147,6 +148,13 @@ export class Universe {
     );
     context.set(Persistence.NetworkPersistenceManager.NetworkPersistenceManager, networkPersistenceManager);
 
+    const workspaceDiff = new WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl(
+        workspace,
+        persistence,
+        networkPersistenceManager,
+    );
+    context.set(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl, workspaceDiff);
+
     const networkLog = new Logs.NetworkLog.NetworkLog(targetManager, settings);
     context.set(Logs.NetworkLog.NetworkLog, networkLog);
 
@@ -237,5 +245,9 @@ export class Universe {
 
   get workspace(): Workspace.Workspace.WorkspaceImpl {
     return this.context.get(Workspace.Workspace.WorkspaceImpl);
+  }
+
+  get workspaceDiff(): WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl {
+    return this.context.get(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl);
   }
 }

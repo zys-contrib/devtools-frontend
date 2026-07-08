@@ -44,6 +44,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'SDK.TargetManager.TargetManager',
   'Workspace.IgnoreListManager.IgnoreListManager',
   'Workspace.Workspace.WorkspaceImpl',
+  'WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl',
 ]);
 
 export default createRule({
