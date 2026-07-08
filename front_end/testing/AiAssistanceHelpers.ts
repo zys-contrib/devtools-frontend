@@ -297,6 +297,7 @@ export function initializePersistenceImplForTests(): void {
     settings: Common.Settings.Settings.instance(),
   });
   Persistence.Persistence.PersistenceImpl.instance({forceNew: true, workspace, breakpointManager});
+  Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance({forceNew: true, workspace});
   WorkspaceDiff.WorkspaceDiff.workspaceDiff({forceNew: true});
 }
 

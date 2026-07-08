@@ -4,6 +4,7 @@
 
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
+import * as Root from '../../core/root/root.js';
 import * as Diff from '../../third_party/diff/diff.js';
 import * as FormatterModule from '../formatter/formatter.js';
 import * as Persistence from '../persistence/persistence.js';
@@ -16,15 +17,23 @@ interface DiffResponse {
 }
 
 export class WorkspaceDiffImpl extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
-  readonly #persistence = Persistence.Persistence.PersistenceImpl.instance();
+  readonly #persistence: Persistence.Persistence.PersistenceImpl;
+  readonly #networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager;
   readonly #diffs = new WeakMap<Workspace.UISourceCode.UISourceCode, UISourceCodeDiff>();
   /** used in web tests */
   private readonly loadingUISourceCodes =
       new Map<Workspace.UISourceCode.UISourceCode, Promise<[string | null, string|null]>>();
   readonly #modified = new Set<Workspace.UISourceCode.UISourceCode>();
 
-  constructor(workspace: Workspace.Workspace.WorkspaceImpl) {
+  constructor(
+      workspace: Workspace.Workspace.WorkspaceImpl,
+      persistence: Persistence.Persistence.PersistenceImpl = Persistence.Persistence.PersistenceImpl.instance(),
+      networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager =
+          Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance(),
+  ) {
     super();
+    this.#persistence = persistence;
+    this.#networkPersistenceManager = networkPersistenceManager;
     workspace.addEventListener(Workspace.Workspace.Events.WorkingCopyChanged, this.#uiSourceCodeChanged, this);
     workspace.addEventListener(Workspace.Workspace.Events.WorkingCopyCommitted, this.#uiSourceCodeChanged, this);
     workspace.addEventListener(Workspace.Workspace.Events.UISourceCodeAdded, this.#uiSourceCodeAdded, this);
@@ -54,7 +63,7 @@ export class WorkspaceDiffImpl extends Common.ObjectWrapper.ObjectWrapper<EventT
   #uiSourceCodeDiff(uiSourceCode: Workspace.UISourceCode.UISourceCode): UISourceCodeDiff {
     let diff = this.#diffs.get(uiSourceCode);
     if (!diff) {
-      diff = new UISourceCodeDiff(uiSourceCode);
+      diff = new UISourceCodeDiff(uiSourceCode, this.#networkPersistenceManager);
       this.#diffs.set(uiSourceCode, diff);
     }
     return diff;
@@ -195,12 +204,17 @@ export interface EventTypes {
 
 export class UISourceCodeDiff extends Common.ObjectWrapper.ObjectWrapper<UISourceCodeDiffEventTypes> {
   #uiSourceCode: Workspace.UISourceCode.UISourceCode;
+  readonly #networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager;
   #requestDiffPromise: Promise<DiffResponse|null>|null = null;
   #pendingChanges: number|null = null;
   dispose = false;
-  constructor(uiSourceCode: Workspace.UISourceCode.UISourceCode) {
+  constructor(
+      uiSourceCode: Workspace.UISourceCode.UISourceCode,
+      networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager,
+  ) {
     super();
     this.#uiSourceCode = uiSourceCode;
+    this.#networkPersistenceManager = networkPersistenceManager;
     uiSourceCode.addEventListener(Workspace.UISourceCode.Events.WorkingCopyChanged, this.#uiSourceCodeChanged, this);
     uiSourceCode.addEventListener(Workspace.UISourceCode.Events.WorkingCopyCommitted, this.#uiSourceCodeChanged, this);
   }
@@ -233,9 +247,7 @@ export class UISourceCodeDiff extends Common.ObjectWrapper.ObjectWrapper<UISourc
   }
 
   async originalContent(): Promise<string|null> {
-    const originalNetworkContent =
-        Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance().originalContentForUISourceCode(
-            this.#uiSourceCode);
+    const originalNetworkContent = this.#networkPersistenceManager.originalContentForUISourceCode(this.#uiSourceCode);
     if (originalNetworkContent) {
       return await originalNetworkContent;
     }
@@ -305,11 +317,10 @@ export interface UISourceCodeDiffEventTypes {
   [UISourceCodeDiffEvents.DIFF_CHANGED]: void;
 }
 
-let workspaceDiffImplInstance: WorkspaceDiffImpl|null = null;
-
 export function workspaceDiff({forceNew}: {forceNew?: boolean} = {}): WorkspaceDiffImpl {
-  if (!workspaceDiffImplInstance || forceNew) {
-    workspaceDiffImplInstance = new WorkspaceDiffImpl(Workspace.Workspace.WorkspaceImpl.instance());
+  if (!Root.DevToolsContext.globalInstance().has(WorkspaceDiffImpl) || forceNew) {
+    Root.DevToolsContext.globalInstance().set(WorkspaceDiffImpl,
+                                              new WorkspaceDiffImpl(Workspace.Workspace.WorkspaceImpl.instance()));
   }
-  return workspaceDiffImplInstance;
+  return Root.DevToolsContext.globalInstance().get(WorkspaceDiffImpl);
 }
