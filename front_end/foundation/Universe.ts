@@ -52,6 +52,9 @@ export class Universe {
     });
     context.set(Common.Settings.Settings, settings);
 
+    const emulatedDevicesList = new Emulation.EmulatedDevices.EmulatedDevicesList(settings);
+    context.set(Emulation.EmulatedDevices.EmulatedDevicesList, emulatedDevicesList);
+
     const isolatedFileSystemManager =
         new Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager(settings, console);
     context.set(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager, isolatedFileSystemManager);
@@ -207,6 +210,10 @@ export class Universe {
 
   get domModelUndoStack(): SDK.DOMModel.DOMModelUndoStack {
     return this.context.get(SDK.DOMModel.DOMModelUndoStack);
+  }
+
+  get emulatedDevicesList(): Emulation.EmulatedDevices.EmulatedDevicesList {
+    return this.context.get(Emulation.EmulatedDevices.EmulatedDevicesList);
   }
 
   get eventBreakpointsManager(): SDK.EventBreakpointsModel.EventBreakpointsManager {

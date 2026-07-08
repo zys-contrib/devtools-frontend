@@ -174,6 +174,16 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(SDK.DOMModel.DOMModelUndoStack);
   }
 
+  get emulatedDevicesList(): Emulation.EmulatedDevices.EmulatedDevicesList {
+    if (!this.#context.has(Emulation.EmulatedDevices.EmulatedDevicesList)) {
+      this.#context.set(
+          Emulation.EmulatedDevices.EmulatedDevicesList,
+          new Emulation.EmulatedDevices.EmulatedDevicesList(this.settings),
+      );
+    }
+    return this.#context.get(Emulation.EmulatedDevices.EmulatedDevicesList);
+  }
+
   get eventBreakpointsManager(): SDK.EventBreakpointsModel.EventBreakpointsManager {
     if (!this.#context.has(SDK.EventBreakpointsModel.EventBreakpointsManager)) {
       this.#context.set(SDK.EventBreakpointsModel.EventBreakpointsManager,
