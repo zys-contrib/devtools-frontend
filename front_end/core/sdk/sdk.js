@@ -10073,11 +10073,16 @@ function cssMetadata() {
   return cssMetadataInstance;
 }
 var imageValuePresetMap = /* @__PURE__ */ new Map([
-  ["linear-gradient", "linear-gradient(|45deg, black, transparent|)"],
-  ["radial-gradient", "radial-gradient(|black, transparent|)"],
-  ["repeating-linear-gradient", "repeating-linear-gradient(|45deg, black, transparent 100px|)"],
-  ["repeating-radial-gradient", "repeating-radial-gradient(|black, transparent 100px|)"],
-  ["url", "url(||)"]
+  ["linear-gradient()", "linear-gradient(|45deg, black, transparent|)"],
+  ["radial-gradient()", "radial-gradient(|black, transparent|)"],
+  ["conic-gradient()", "conic-gradient(|from 45deg, red, orange, yellow, green, teal, blue, purple|)"],
+  ["repeating-linear-gradient()", "repeating-linear-gradient(|45deg, black, transparent 100px|)"],
+  ["repeating-radial-gradient()", "repeating-radial-gradient(|black, transparent 100px|)"],
+  ["repeating-conic-gradient()", "repeating-conic-gradient(|black 0deg 25%, white 0deg 50%|)"],
+  // Checkerboard
+  ["url()", "url(||)"],
+  ["image-set()", 'image-set(|url("") 1x, url("") 2x|)'],
+  ["cross-fade()", 'cross-fade(|url("") 50%, url("") 50%|)']
 ]);
 var filterValuePresetMap = /* @__PURE__ */ new Map([
   ["blur", "blur(|1px|)"],
@@ -10101,7 +10106,12 @@ var valuePresets = /* @__PURE__ */ new Map([
   ["backdrop-filter", filterValuePresetMap],
   ["background", imageValuePresetMap],
   ["background-image", imageValuePresetMap],
+  ["mask-image", imageValuePresetMap],
   ["-webkit-mask-image", imageValuePresetMap],
+  ["list-style", imageValuePresetMap],
+  ["list-style-image", imageValuePresetMap],
+  ["border-image", imageValuePresetMap],
+  ["border-image-source", imageValuePresetMap],
   [
     "transform",
     /* @__PURE__ */ new Map([
@@ -10467,7 +10477,47 @@ var extraPropertyValues = /* @__PURE__ */ new Map([
   ["-webkit-text-emphasis-position", textEmphasisPosition],
   ["alignment-baseline", /* @__PURE__ */ new Set(["before-edge", "after-edge", "text-before-edge", "text-after-edge", "hanging"])],
   ["page-break-before", /* @__PURE__ */ new Set(["left", "right", "always", "avoid"])],
-  ["border-image", /* @__PURE__ */ new Set(["repeat", "stretch", "space", "round"])],
+  [
+    "border-image",
+    /* @__PURE__ */ new Set([
+      "none",
+      // border-image-source
+      "repeat",
+      "stretch",
+      "space",
+      "round",
+      "auto",
+      // border-image-width
+      "fill",
+      // border-image-slice
+      "linear-gradient()",
+      "radial-gradient()",
+      "conic-gradient()",
+      "repeating-linear-gradient()",
+      "repeating-radial-gradient()",
+      "repeating-conic-gradient()",
+      "image-set()",
+      "cross-fade()",
+      "url()"
+    ])
+  ],
+  ["border-image-width", /* @__PURE__ */ new Set(["auto"])],
+  ["border-image-slice", /* @__PURE__ */ new Set(["fill"])],
+  [
+    "border-image-source",
+    /* @__PURE__ */ new Set([
+      "none",
+      "linear-gradient()",
+      "radial-gradient()",
+      "conic-gradient()",
+      "repeating-linear-gradient()",
+      "repeating-radial-gradient()",
+      "repeating-conic-gradient()",
+      "image-set()",
+      "cross-fade()",
+      "url()"
+    ])
+  ],
   [
     "text-decoration",
     /* @__PURE__ */ new Set(["blink", "line-through", "overline", "underline", "wavy", "double", "solid", "dashed", "dotted"])
@@ -10797,16 +10847,32 @@ var extraPropertyValues = /* @__PURE__ */ new Map([
       "border-box",
       "content-box",
       "padding-box",
-      "linear-gradient",
-      "radial-gradient",
-      "repeating-linear-gradient",
-      "repeating-radial-gradient",
-      "url"
+      "text",
+      // background-clip
+      "linear-gradient()",
+      "radial-gradient()",
+      "conic-gradient()",
+      "repeating-linear-gradient()",
+      "repeating-radial-gradient()",
+      "repeating-conic-gradient()",
+      "image-set()",
+      "cross-fade()",
+      "url()"
     ])
   ],
   [
     "background-image",
-    /* @__PURE__ */ new Set(["linear-gradient", "radial-gradient", "repeating-linear-gradient", "repeating-radial-gradient", "url"])
+    /* @__PURE__ */ new Set([
+      "linear-gradient()",
+      "radial-gradient()",
+      "conic-gradient()",
+      "repeating-linear-gradient()",
+      "repeating-radial-gradient()",
+      "repeating-conic-gradient()",
+      "image-set()",
+      "cross-fade()",
+      "url()"
+    ])
   ],
   ["background-position", /* @__PURE__ */ new Set(["top", "bottom", "left", "right", "center"])],
   ["background-position-x", /* @__PURE__ */ new Set(["left", "right", "center"])],
@@ -11059,8 +11125,32 @@ var extraPropertyValues = /* @__PURE__ */ new Map([
     ])
   ],
   [
+    "mask-image",
+    /* @__PURE__ */ new Set([
+      "linear-gradient()",
+      "radial-gradient()",
+      "conic-gradient()",
+      "repeating-linear-gradient()",
+      "repeating-radial-gradient()",
+      "repeating-conic-gradient()",
+      "image-set()",
+      "cross-fade()",
+      "url()"
+    ])
+  ],
+  [
     "-webkit-mask-image",
-    /* @__PURE__ */ new Set(["linear-gradient", "radial-gradient", "repeating-linear-gradient", "repeating-radial-gradient", "url"])
+    /* @__PURE__ */ new Set([
+      "linear-gradient()",
+      "radial-gradient()",
+      "conic-gradient()",
+      "repeating-linear-gradient()",
+      "repeating-radial-gradient()",
+      "repeating-conic-gradient()",
+      "image-set()",
+      "cross-fade()",
+      "url()"
+    ])
   ],
   ["-webkit-mask-origin", /* @__PURE__ */ new Set(["border", "border-box", "content", "content-box", "padding", "padding-box"])],
   ["-webkit-mask-position", /* @__PURE__ */ new Set(["top", "bottom", "left", "right", "center"])],
@@ -29465,7 +29555,7 @@ var RequestCondition = class extends Common24.ObjectWrapper.ObjectWrapper {
   #enabled;
   #conditions;
   #ruleIds = /* @__PURE__ */ new Set();
-  static createFromSetting(setting, settings = Common24.Settings.Settings.instance()) {
+  static createFromSetting(setting, settings) {
     if ("urlPattern" in setting) {
       const pattern2 = RequestURLPattern.create(setting.urlPattern) ?? {
         wildcardURL: setting.urlPattern,

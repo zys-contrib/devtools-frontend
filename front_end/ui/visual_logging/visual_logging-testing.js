@@ -3590,6 +3590,7 @@ var knownContextValues = /* @__PURE__ */ new Set([
   "seeked",
   "seeking",
   "select",
+  "select-all",
   "select-element",
   "select-folder",
   "select-next",

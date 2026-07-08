@@ -12,10 +12,12 @@ import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as CrUXManager from '../models/crux-manager/crux-manager.js';
 import * as Emulation from '../models/emulation/emulation.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
+import * as LiveMetrics from '../models/live-metrics/live-metrics.js';
 import * as Logs from '../models/logs/logs.js';
 import * as Persistence from '../models/persistence/persistence.js';
 import * as ProjectSettings from '../models/project_settings/project_settings.js';
 import * as Workspace from '../models/workspace/workspace.js';
+import * as WorkspaceDiff from '../models/workspace_diff/workspace_diff.js';
 import { DEFAULT_SETTING_REGISTRATIONS_FOR_TEST } from './SettingsHelpers.js';
 import { createTarget } from './TargetHelpers.js';
 /**
@@ -31,6 +33,7 @@ import { createTarget } from './TargetHelpers.js';
 export class TestUniverse {
     #context = new Root.DevToolsContext.WritableDevToolsContext();
     #creationOptions;
+    supportsEmulation = true;
     constructor(options) {
         this.#creationOptions = options;
     }
@@ -158,6 +161,12 @@ export class TestUniverse {
         }
         return this.#context.get(JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl);
     }
+    get liveMetrics() {
+        if (!this.#context.has(LiveMetrics.LiveMetrics)) {
+            this.#context.set(LiveMetrics.LiveMetrics, new LiveMetrics.LiveMetrics(this.targetManager, this.deviceModeModel));
+        }
+        return this.#context.get(LiveMetrics.LiveMetrics);
+    }
     get multitargetNetworkManager() {
         if (!this.#context.has(SDK.NetworkManager.MultitargetNetworkManager)) {
             const multitargetNetworkManager = new SDK.NetworkManager.MultitargetNetworkManager(this.targetManager);
@@ -260,6 +269,12 @@ export class TestUniverse {
             this.#context.set(Workspace.Workspace.WorkspaceImpl, new Workspace.Workspace.WorkspaceImpl());
         }
         return this.#context.get(Workspace.Workspace.WorkspaceImpl);
+    }
+    get workspaceDiff() {
+        if (!this.#context.has(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl)) {
+            this.#context.set(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl, new WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl(this.workspace, this.persistence, this.networkPersistenceManager));
+        }
+        return this.#context.get(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl);
     }
     get #resourceMapping() {
         if (!this.#context.has(Bindings.ResourceMapping.ResourceMapping)) {
