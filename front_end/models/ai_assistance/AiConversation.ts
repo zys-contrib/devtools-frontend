@@ -142,6 +142,18 @@ export class AiConversation {
     return this.#isReadOnly;
   }
 
+  static titleForSerialized(serialized: SerializedConversation): string|undefined {
+    const query = serialized.history.find(item => item.type === ResponseType.USER_QUERY)?.query;
+    if (!query) {
+      return undefined;
+    }
+    return AiConversation.title(query);
+  }
+
+  static title(query: string): string {
+    return `${query.substring(0, MAX_TITLE_LENGTH)}${query.length > MAX_TITLE_LENGTH ? '…' : ''}`;
+  }
+
   get title(): string|undefined {
     const query = this.history.find(response => response.type === ResponseType.USER_QUERY)?.query;
 
@@ -149,7 +161,7 @@ export class AiConversation {
       return;
     }
 
-    return `${query.substring(0, MAX_TITLE_LENGTH)}${query.length > MAX_TITLE_LENGTH ? '…' : ''}`;
+    return AiConversation.title(query);
   }
 
   get isEmpty(): boolean {
@@ -397,8 +409,8 @@ export class AiConversation {
       }
     };
     const targetManager = SDK.TargetManager.TargetManager.instance();
-    targetManager.addModelListener(
-        SDK.ResourceTreeModel.ResourceTreeModel, SDK.ResourceTreeModel.Events.PrimaryPageChanged, listener, this);
+    targetManager.addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
+                                   SDK.ResourceTreeModel.Events.PrimaryPageChanged, listener, this);
 
     try {
       if (this.isBlockedByOrigin) {
@@ -409,8 +421,8 @@ export class AiConversation {
 
       yield* this.#runAgent(initialQuery, options, {isInitialCall: true});
     } finally {
-      targetManager.removeModelListener(
-          SDK.ResourceTreeModel.ResourceTreeModel, SDK.ResourceTreeModel.Events.PrimaryPageChanged, listener, this);
+      targetManager.removeModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
+                                        SDK.ResourceTreeModel.Events.PrimaryPageChanged, listener, this);
     }
   }
 
@@ -481,8 +493,8 @@ export class AiConversation {
       if (data.type === ResponseType.CONTEXT_CHANGE) {
         this.setContext(data.context);
         yield*
-            this.#runAgent(
-                this.#getQueryAfterSelection(initialQuery, data.description), options, {isInitialCall: false});
+            this.#runAgent(this.#getQueryAfterSelection(initialQuery, data.description), options,
+                           {isInitialCall: false});
         return;
       }
     }

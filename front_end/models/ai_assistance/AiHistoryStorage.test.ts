@@ -120,6 +120,65 @@ describe('AiHistoryStorage', () => {
     );
   });
 
+  it('should cap history entries to MAX_CONVERSATIONS_COUNT and evict oldest and clean up their images', async () => {
+    const storage = getStorage();
+
+    await storage.upsertImage(serializedImage1);
+    const oldestConv: AiAssistance.AiHistoryStorage.SerializedConversation = {
+      id: 'oldest-id',
+      type: AiAssistance.AiHistoryStorage.ConversationType.STYLING,
+      history: [
+        {
+          type: AiAssistance.AiAgent.ResponseType.USER_QUERY,
+          query: 'oldest text',
+          imageId: 'image-id1',
+          imageInput: undefined,
+        },
+      ],
+    };
+    await storage.upsertHistoryEntry(oldestConv);
+
+    await storage.upsertImage(serializedImage2);
+    const newerConvWithImage: AiAssistance.AiHistoryStorage.SerializedConversation = {
+      id: 'newer-id-with-image',
+      type: AiAssistance.AiHistoryStorage.ConversationType.STYLING,
+      history: [
+        {
+          type: AiAssistance.AiAgent.ResponseType.USER_QUERY,
+          query: 'newer text',
+          imageId: 'image-id2',
+          imageInput: undefined,
+        },
+      ],
+    };
+    await storage.upsertHistoryEntry(newerConvWithImage);
+
+    assert.deepEqual(
+        storage.getImageHistory(),
+        [serializedImage1, serializedImage2],
+    );
+
+    // Insert dummy entries to trigger eviction
+    for (let i = 0; i < AiAssistance.AiHistoryStorage.MAX_CONVERSATIONS_COUNT - 1; i++) {
+      await storage.upsertHistoryEntry({
+        id: `dummy-id-${i}`,
+        type: AiAssistance.AiHistoryStorage.ConversationType.STYLING,
+        history: [],
+      });
+    }
+
+    const history = storage.getHistory();
+    assert.lengthOf(history, 50);
+
+    assert.isUndefined(history.find(c => c.id === 'oldest-id'));
+    assert.isDefined(history.find(c => c.id === 'newer-id-with-image'));
+
+    assert.deepEqual(
+        storage.getImageHistory(),
+        [serializedImage2],
+    );
+  });
+
   it('should update history entries correctly', async () => {
     const storage = getStorage();
     await storage.upsertHistoryEntry(agent1);
