@@ -430,6 +430,35 @@ describeWithEnvironment('NetworkLogView', () => {
     assert.strictEqual(el.innerText, '2');
   });
 
+  it('shows early hints in initiator column when request is from early hints', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create(
+        'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com`, urlString``, null, null, null);
+    request.setFromEarlyHints();
+
+    const networkRequestNode = new Network.NetworkDataGridNode.NetworkRequestNode(
+        {} as Network.NetworkDataGridNode.NetworkLogViewInterface, request);
+    const el = document.createElement('div');
+    networkRequestNode.renderCell(el, 'initiator');
+
+    assert.strictEqual(el.innerText, 'Early-hints');
+    const tooltip = el.getAttribute('title')!;
+    assert.strictEqual(tooltip, 'Early-hints');
+  });
+
+  it('shows other in initiator column when request has no initiator and is not from early hints', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create(
+        'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com`, urlString``, null, null, null);
+
+    const networkRequestNode = new Network.NetworkDataGridNode.NetworkRequestNode(
+        {} as Network.NetworkDataGridNode.NetworkLogViewInterface, request);
+    const el = document.createElement('div');
+    networkRequestNode.renderCell(el, 'initiator');
+
+    assert.strictEqual(el.innerText, 'Other');
+    const tooltip = el.getAttribute('title')!;
+    assert.strictEqual(tooltip, 'Other');
+  });
+
   it('shows transferred size when the matched ServiceWorker router source is network', async () => {
     const request = SDK.NetworkRequest.NetworkRequest.create(
         'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com`, urlString``, null, null, null);
