@@ -84,6 +84,7 @@ export async function deinitializeGlobalVars() {
 
   // Remove instances.
   deinitializeGlobalLocaleVars();
+  Host.GdpClient.GdpClient.removeInstance();
   Logs.NetworkLog.NetworkLog.removeInstance();
   SDK.TargetManager.TargetManager.removeInstance();
   SDK.CPUThrottlingManager.CPUThrottlingManager.removeInstance();

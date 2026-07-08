@@ -98,21 +98,24 @@ async function makeHttpRequest<R>(request: DispatchHttpRequestRequest): Promise<
 }
 
 const SERVICE_NAME = 'gdpService';
-let gdpClientInstance: GdpClient|null = null;
 export class GdpClient {
   #cachedProfilePromise?: Promise<Profile>;
   #cachedEligibilityPromise?: Promise<CheckElibigilityResponse>;
 
-  private constructor() {
-  }
-
   static instance({forceNew}: {
     forceNew: boolean,
   } = {forceNew: false}): GdpClient {
-    if (!gdpClientInstance || forceNew) {
-      gdpClientInstance = new GdpClient();
+    if (!Root.DevToolsContext.globalInstance().has(GdpClient) || forceNew) {
+      Root.DevToolsContext.globalInstance().set(
+          GdpClient,
+          new GdpClient(),
+      );
     }
-    return gdpClientInstance;
+    return Root.DevToolsContext.globalInstance().get(GdpClient);
+  }
+
+  static removeInstance(): void {
+    Root.DevToolsContext.globalInstance().delete(GdpClient);
   }
 
   /**
