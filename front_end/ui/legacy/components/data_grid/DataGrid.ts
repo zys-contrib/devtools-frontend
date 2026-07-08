@@ -36,6 +36,8 @@ import * as UI from '../../legacy.js';
 import dataGridStyles from './dataGrid.css.js';
 import type {DataGridInternalToken} from './DataGridElement.js';
 
+export {dataGridStyles};
+
 const UIStrings = {
   /**
    * @description Accessible text label for expandible nodes in datagrids

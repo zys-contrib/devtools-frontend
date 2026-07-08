@@ -279,7 +279,6 @@ describeWithEnvironment('IDBDataView', () => {
     component.element.style.height = '200px';
     component.element.style.width = '600px';
     component.update(objectStore);
-    component.focus();
 
     // Verify toolbar elements exist
     const toolbar = component.element.querySelector('devtools-toolbar');

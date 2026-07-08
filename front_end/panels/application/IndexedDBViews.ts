@@ -13,7 +13,7 @@ import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as DataGrid from '../../ui/legacy/components/data_grid/data_grid.js';
 import * as ObjectUI from '../../ui/legacy/components/object_ui/object_ui.js';
 import * as UI from '../../ui/legacy/legacy.js';
-import * as Lit from '../../ui/lit/lit.js';
+import {html, type LitTemplate, nothing, render} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import * as ApplicationComponents from './components/components.js';
@@ -22,8 +22,6 @@ import type {
 import indexedDBViewsStyles from './indexedDBViews.css.js';
 
 type IDBKeyValue = number|string|Date|IDBKeyValue[];
-
-const {html} = Lit;
 
 const UIStrings = {
   /**
@@ -157,9 +155,9 @@ export class IDBDatabaseView extends ApplicationComponents.StorageMetadataView.S
     return this.database?.databaseId.name;
   }
 
-  override async renderReportContent(): Promise<Lit.LitTemplate> {
+  override async renderReportContent(): Promise<LitTemplate> {
     if (!this.database) {
-      return Lit.nothing;
+      return nothing;
     }
     return html`
       ${await super.renderReportContent()}
@@ -240,10 +238,6 @@ export class IDBDataView extends UI.View.SimpleView {
   private readonly databaseId: DatabaseId;
   private isIndex: boolean;
   private readonly refreshObjectStoreCallback: () => void;
-  private readonly refreshButton: UI.Toolbar.ToolbarButton;
-  private readonly deleteSelectedButton: UI.Toolbar.ToolbarButton;
-  private readonly clearButton: UI.Toolbar.ToolbarButton;
-  private readonly needsRefresh: UI.Toolbar.ToolbarItem;
   private clearingObjectStore: boolean;
   private pageSize: number;
   private skipCount: number;
@@ -255,19 +249,16 @@ export class IDBDataView extends UI.View.SimpleView {
   #clearButtonEnabled = true;
   #metadata: ObjectStoreMetadata|null = null;
   #lastRenderedEntries: Entry[]|null = null;
+  #keyFilter = '';
 
   private objectStore!: ObjectStore;
   private index!: Index|null;
-  private keyInput!: UI.Toolbar.ToolbarInput;
   private dataGrid!: DataGrid.DataGrid.DataGridImpl<unknown>;
   private lastPageSize!: number;
   private lastSkipCount!: number;
-  private pageBackButton!: UI.Toolbar.ToolbarButton;
-  private pageForwardButton!: UI.Toolbar.ToolbarButton;
   // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private lastKey?: any;
-  private summaryBarElement?: HTMLElement;
 
   constructor(model: IndexedDBModel, databaseId: DatabaseId, objectStore: ObjectStore, index: Index|null,
               refreshObjectStoreCallback: () => void) {
@@ -277,6 +268,7 @@ export class IDBDataView extends UI.View.SimpleView {
       jslog: `${VisualLogging.pane('indexed-db-data-view')}`,
     });
     this.registerRequiredCSS(indexedDBViewsStyles);
+    this.registerRequiredCSS(DataGrid.dataGridStyles);
 
     this.model = model;
     this.databaseId = databaseId;
@@ -285,36 +277,7 @@ export class IDBDataView extends UI.View.SimpleView {
 
     this.element.classList.add('indexed-db-data-view', 'storage-view');
 
-    this.refreshButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.refresh), 'refresh');
-    this.refreshButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.refreshButtonClicked, this);
-    this.refreshButton.element.setAttribute('jslog', `${VisualLogging.action('refresh').track({click: true})}`);
-
-    this.deleteSelectedButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.deleteSelected), 'bin');
-    this.deleteSelectedButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, _event => {
-      void this.deleteButtonClicked(null);
-    });
-    this.deleteSelectedButton.element.setAttribute('jslog',
-                                                   `${VisualLogging.action('delete-selected').track({click: true})}`);
-
-    this.clearButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.clearObjectStore), 'clear');
-    this.clearButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, () => {
-      void this.clearButtonClicked();
-    }, this);
-    this.clearButton.element.setAttribute('jslog', `${VisualLogging.action('clear-all').track({click: true})}`);
-
-    const refreshIcon = UI.UIUtils.createIconLabel({
-      title: i18nString(UIStrings.dataMayBeStale),
-      iconName: 'warning',
-      color: 'var(--icon-warning)',
-      width: '20px',
-      height: '20px',
-    });
-    this.needsRefresh = new UI.Toolbar.ToolbarItem(refreshIcon);
-    this.needsRefresh.setVisible(false);
-    this.needsRefresh.setTitle(i18nString(UIStrings.someEntriesMayHaveBeenModified));
     this.clearingObjectStore = false;
-
-    this.createEditorToolbar();
 
     this.pageSize = 50;
     this.skipCount = 0;
@@ -360,7 +323,7 @@ export class IDBDataView extends UI.View.SimpleView {
     });
     dataGrid.setStriped(true);
     dataGrid.addEventListener(DataGrid.DataGrid.Events.SELECTED_NODE, () => {
-      this.updateToolbarEnablement();
+      this.performUpdate();
     }, this);
     return dataGrid;
   }
@@ -401,33 +364,79 @@ export class IDBDataView extends UI.View.SimpleView {
     return keyPathStringFragment;
   }
 
-  private createEditorToolbar(): void {
-    const editorToolbar = this.element.createChild('devtools-toolbar', 'data-view-toolbar');
-    editorToolbar.setAttribute('jslog', `${VisualLogging.toolbar()}`);
+  private renderToolbar(): LitTemplate {
+    // clang-format off
+    return html`
+      <devtools-toolbar class="data-view-toolbar" jslog=${VisualLogging.toolbar()}>
+        <devtools-button
+          class="toolbar-button"
+          .iconName=${'refresh'}
+          .title=${i18nString(UIStrings.refresh)}
+          jslog=${VisualLogging.action('refresh').track({click: true})}
+          @click=${() => this.refreshButtonClicked()}
+          .variant=${Buttons.Button.Variant.TOOLBAR}
+        ></devtools-button>
+        <devtools-button
+          class="toolbar-button"
+          .iconName=${'clear'}
+          .title=${i18nString(UIStrings.clearObjectStore)}
+          jslog=${VisualLogging.action('clear-all').track({click: true})}
+          @click=${() => this.clearButtonClicked()}
+          .disabled=${this.isIndex || !this.#clearButtonEnabled}
+          .variant=${Buttons.Button.Variant.TOOLBAR}>
+        </devtools-button>
+        <devtools-button
+          class="toolbar-button"
+          .iconName=${'bin'}
+          .title=${i18nString(UIStrings.deleteSelected)}
+          jslog=${VisualLogging.action('delete-selected').track({click: true})}
+          @click=${() => this.deleteButtonClicked(null)}
+          .disabled=${!this.dataGrid || this.dataGrid.rootNode().children.length === 0 || this.dataGrid.selectedNode === null}
+          .variant=${Buttons.Button.Variant.TOOLBAR}>
+        </devtools-button>
 
-    editorToolbar.appendToolbarItem(this.refreshButton);
-    editorToolbar.appendToolbarItem(this.clearButton);
-    editorToolbar.appendToolbarItem(this.deleteSelectedButton);
+        <div class="toolbar-divider"></div>
 
-    editorToolbar.appendToolbarItem(new UI.Toolbar.ToolbarSeparator());
+        <devtools-button
+          class="toolbar-button"
+          .iconName=${'triangle-left'}
+          .title=${i18nString(UIStrings.showPreviousPage)}
+          .disabled=${this.skipCount <= 0}
+          @click=${() => this.pageBackButtonClicked()}
+          .variant=${Buttons.Button.Variant.TOOLBAR}>
+        </devtools-button>
+        <devtools-button
+          class="toolbar-button"
+          .iconName=${'triangle-right'}
+          .title=${i18nString(UIStrings.showNextPage)}
+          .disabled=${!this.#hasMore}
+          @click=${() => this.pageForwardButtonClicked()}
+          .variant=${Buttons.Button.Variant.TOOLBAR}>
+        </devtools-button>
 
-    this.pageBackButton =
-        new UI.Toolbar.ToolbarButton(i18nString(UIStrings.showPreviousPage), 'triangle-left', undefined, 'prev-page');
-    this.pageBackButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.pageBackButtonClicked, this);
-    editorToolbar.appendToolbarItem(this.pageBackButton);
+        <devtools-toolbar-input
+          type="filter"
+          placeholder=${i18nString(UIStrings.filterByKey)}
+          class="key-filter-input"
+          .value=${this.#keyFilter}
+          @change=${(e: CustomEvent<string>) => {
+            this.#keyFilter = e.detail;
+            this.updateData(false);
+          }}>
+        </devtools-toolbar-input>
 
-    this.pageForwardButton =
-        new UI.Toolbar.ToolbarButton(i18nString(UIStrings.showNextPage), 'triangle-right', undefined, 'next-page');
-    this.pageForwardButton.setEnabled(false);
-    this.pageForwardButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.pageForwardButtonClicked, this);
-    editorToolbar.appendToolbarItem(this.pageForwardButton);
-
-    this.keyInput = new UI.Toolbar.ToolbarFilter(i18nString(UIStrings.filterByKey), 0.5);
-    this.keyInput.addEventListener(UI.Toolbar.ToolbarInput.Event.TEXT_CHANGED, this.updateData.bind(this, false));
-    editorToolbar.appendToolbarItem(this.keyInput);
-    editorToolbar.appendToolbarItem(new UI.Toolbar.ToolbarSeparator());
-
-    editorToolbar.appendToolbarItem(this.needsRefresh);
+        ${this.#needsRefreshVisible ?  html`
+          <div class="toolbar-divider"></div>
+          <div class="toolbar-item stale-data-warning" title=${
+            i18nString(
+                UIStrings
+                    .someEntriesMayHaveBeenModified)}>
+            <devtools-icon name="warning" class="warning-icon"></devtools-icon>
+            <span>${i18nString(UIStrings.dataMayBeStale)}</span>
+          </div>
+        ` : nothing}
+      </devtools-toolbar>`;
+    // clang-format on
   }
 
   private pageBackButtonClicked(): void {
@@ -475,13 +484,10 @@ export class IDBDataView extends UI.View.SimpleView {
     }
     this.dataGrid = this.createDataGrid();
     this.dataGrid.setRowContextMenuCallback(this.populateContextMenu.bind(this));
-    this.dataGrid.asWidget().show(this.element);
-    if (this.summaryBarElement) {
-      this.element.appendChild(this.summaryBarElement);
-    }
 
     this.skipCount = 0;
     this.updateData(true);
+    this.performUpdate();
   }
 
   // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
@@ -497,7 +503,8 @@ export class IDBDataView extends UI.View.SimpleView {
   }
 
   private updateData(force: boolean): void {
-    const key = this.parseKey(this.keyInput.value());
+    const key = this.parseKey(this.#keyFilter);
+
     const pageSize = this.pageSize;
     let skipCount: 0|number = this.skipCount;
     const selected = this.dataGrid.selectedNode ? this.dataGrid.selectedNode.data['number'] : 0;
@@ -559,31 +566,27 @@ export class IDBDataView extends UI.View.SimpleView {
       }
     }
 
+    this.#lastRenderedEntries = this.entries;
     if (selectedNode) {
       selectedNode.select();
     }
-    this.#lastRenderedEntries = this.entries;
   }
 
-  private updateSummaryBar(): void {
-    if (!this.summaryBarElement) {
-      this.summaryBarElement = this.element.createChild('div', 'object-store-summary-bar');
-    }
-    this.summaryBarElement.removeChildren();
+  private renderSummaryBar(): LitTemplate {
     const metadata = this.#metadata;
     if (!metadata) {
-      return;
+      return nothing;
     }
-
-    const separator = '\u2002\u2758\u2002';
-
-    const span = this.summaryBarElement.createChild('span');
-    span.textContent = i18nString(UIStrings.totalEntriesS, {PH1: String(metadata.entriesCount)});
-
-    if (this.objectStore.autoIncrement) {
-      span.textContent += separator;
-      span.textContent += i18nString(UIStrings.keyGeneratorValueS, {PH1: String(metadata.keyGeneratorValue)});
-    }
+    // clang-format off
+    return html`
+      <div class="object-store-summary-bar">
+        <span>${i18nString(UIStrings.totalEntriesS, { PH1: String(metadata.entriesCount)})}</span>
+        ${this.objectStore.autoIncrement ? html`
+          <span class="separator">\u2758</span>
+          <span>${i18nString(UIStrings.keyGeneratorValueS, {PH1: String(metadata.keyGeneratorValue)})}</span>`
+          : nothing}
+      </div>`;
+    // clang-format on
   }
 
   private updatedDataForTests(): void {
@@ -661,20 +664,41 @@ export class IDBDataView extends UI.View.SimpleView {
     this.performUpdate();
   }
 
-  private updateToolbarEnablement(): void {
-    const empty = !this.dataGrid || this.dataGrid.rootNode().children.length === 0;
-    this.deleteSelectedButton.setEnabled(!empty && this.dataGrid.selectedNode !== null);
-  }
-
   override performUpdate(): void {
     this.populateDataGrid();
-    this.updateSummaryBar();
 
-    this.pageBackButton.setEnabled(this.skipCount > 0);
-    this.pageForwardButton.setEnabled(this.#hasMore);
-    this.needsRefresh.setVisible(this.#needsRefreshVisible);
-    this.clearButton.setEnabled(!this.isIndex && this.#clearButtonEnabled);
-    this.updateToolbarEnablement();
+    // clang-format off
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`
+      ${this.renderToolbar()}
+      <div class="data-grid-container">
+        ${this.dataGrid ? this.dataGrid.element : nothing}
+      </div>
+      ${this.renderSummaryBar()}
+    `, this.element);
+    // clang-format on
+  }
+
+  override wasShown(): void {
+    super.wasShown();
+    this.dataGrid?.wasShown();
+  }
+
+  override willHide(): void {
+    super.willHide();
+    this.dataGrid?.willHide();
+  }
+
+  override elementsToRestoreScrollPositionsFor(): Element[] {
+    if (this.dataGrid) {
+      return [this.dataGrid.scrollContainer];
+    }
+    return [];
+  }
+
+  override onResize(): void {
+    super.onResize();
+    this.dataGrid?.onResize();
   }
 }
 
