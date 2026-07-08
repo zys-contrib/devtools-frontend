@@ -243,6 +243,16 @@ describe('NetworkRequest', () => {
     request.originalResponseHeaders = [{name: 'duplicate', value: 'first'}, {name: 'duplicate', value: 'second'}];
     assert.isFalse(request.hasOverriddenHeaders());
   });
+
+  it('determines whether the request is a preload request', () => {
+    const request = SDK.NetworkRequest.NetworkRequest.createWithoutBackendRequest('requestId', urlString`url`,
+                                                                                  urlString`documentURL`, null);
+    assert.isFalse(request.isPreloadRequest());
+
+    const preloadRequest = SDK.NetworkRequest.NetworkRequest.createWithoutBackendRequest(
+        'requestId', urlString`url`, urlString`documentURL`, {type: Protocol.Network.InitiatorType.Preload});
+    assert.isTrue(preloadRequest.isPreloadRequest());
+  });
 });
 
 describeWithEnvironment('NetworkRequest (MockConnection)', () => {

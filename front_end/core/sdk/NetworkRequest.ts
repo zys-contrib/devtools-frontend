@@ -911,6 +911,11 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
         this.#initiator.type === Protocol.Network.InitiatorType.Preflight);
   }
 
+  isPreloadRequest(): boolean {
+    return (this.#initiator !== null && this.#initiator !== undefined &&
+            this.#initiator.type === Protocol.Network.InitiatorType.Preload);
+  }
+
   redirectDestination(): NetworkRequest|null {
     return this.#redirectDestination;
   }

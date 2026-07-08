@@ -1051,16 +1051,20 @@ export class NetworkRequestNode extends NetworkNode {
     return this.requestInternal.resourceType() === Common.ResourceType.resourceTypes.Prefetch;
   }
 
+  private isPreload(): boolean {
+    return this.requestInternal.isPreloadRequest();
+  }
+
   throttlingConditions(): SDK.NetworkManager.AppliedNetworkConditions|undefined {
     return SDK.NetworkManager.MultitargetNetworkManager.instance().appliedRequestConditions(this.requestInternal);
   }
 
   override isWarning(): boolean {
-    return this.isFailed() && this.isPrefetch();
+    return this.isFailed() && (this.isPrefetch() || this.isPreload());
   }
 
   override isError(): boolean {
-    return this.isFailed() && !this.isPrefetch();
+    return this.isFailed() && !this.isPrefetch() && !this.isPreload();
   }
 
   override createCells(trElement: HTMLElement): void {

@@ -504,6 +504,30 @@ describeWithEnvironment('NetworkLogView', () => {
     assert.strictEqual('warning-filled', iconImage);
   });
 
+  it('styles a preloading network request error as a warning', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                             urlString`https://www.example.com`, urlString``, null,
+                                                             null, {type: Protocol.Network.InitiatorType.Preload});
+    request.failed = true;
+    request.statusCode = 404;
+
+    const networkRequestNode = new Network.NetworkDataGridNode.NetworkRequestNode(
+        {} as Network.NetworkDataGridNode.NetworkLogViewInterface, request);
+    const el = document.createElement('div');
+    networkRequestNode.createCells(el);
+    const cell = el.appendChild(document.createElement('div'));
+    networkRequestNode.renderCell(cell, 'name');
+
+    // The row should have the warning-row class name.
+    assert.isTrue(el.classList.contains('network-warning-row'));
+    assert.isFalse(el.classList.contains('network-error-row'));
+
+    // The icon should be the warning icon.
+    const iconElement = el.querySelector('.icon') as HTMLElement;
+    const iconImage = iconElement.getAttribute('name');
+    assert.strictEqual('warning-filled', iconImage);
+  });
+
   describe('OverrideTypesComparator', () => {
     it('should sort correctly based on override types', () => {
       const createRequest = (hasContent: boolean, hasHeaders: boolean, id: string) => {

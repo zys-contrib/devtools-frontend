@@ -7,7 +7,7 @@ import {assert} from 'chai';
 import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
-import type * as Protocol from '../../generated/protocol.js';
+import * as Protocol from '../../generated/protocol.js';
 import {renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import * as Diff from '../../third_party/diff/diff.js';
@@ -95,6 +95,17 @@ describeWithEnvironment('panels/utils', () => {
       const iconElement = renderIcon(request);
       const iconImage = iconElement.getAttribute('name');
       assert.strictEqual('cross-circle-filled', iconImage);
+    });
+
+    it('creates a warning icon for failed preloading request', async () => {
+      const request = SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                               urlString`https://www.example.com`, urlString``, null,
+                                                               null, {type: Protocol.Network.InitiatorType.Preload});
+      request.statusCode = 404;
+
+      const iconElement = renderIcon(request);
+      const iconImage = iconElement.getAttribute('name');
+      assert.strictEqual('warning-filled', iconImage);
     });
 
     it('show document icon', async () => {
