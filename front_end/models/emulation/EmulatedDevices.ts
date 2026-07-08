@@ -7,6 +7,7 @@
 
 import * as Common from '../../core/common/common.js';
 import * as i18n from '../../core/i18n/i18n.js';
+import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 
@@ -575,22 +576,20 @@ enum Show {
   /* eslint-enable @typescript-eslint/naming-convention */
 }
 
-let emulatedDevicesListInstance: EmulatedDevicesList;
-
 export class EmulatedDevicesList extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
   readonly #standardSetting: Common.Settings.Setting<any[]>;
   #standard: Set<EmulatedDevice>;
   readonly #customSetting: Common.Settings.Setting<any[]>;
   readonly #custom: Set<EmulatedDevice>;
-  constructor() {
+  constructor(settings: Common.Settings.Settings = Common.Settings.Settings.instance()) {
     super();
 
-    this.#standardSetting = Common.Settings.Settings.instance().createSetting('standard-emulated-device-list', []);
+    this.#standardSetting = settings.createSetting('standard-emulated-device-list', []);
     this.#standard = new Set();
     this.listFromJSONV1(this.#standardSetting.get(), this.#standard);
     this.updateStandardDevices();
 
-    this.#customSetting = Common.Settings.Settings.instance().createSetting('custom-emulated-device-list', []);
+    this.#customSetting = settings.createSetting('custom-emulated-device-list', []);
     this.#custom = new Set();
     if (!this.listFromJSONV1(this.#customSetting.get(), this.#custom)) {
       this.saveCustomDevices();
@@ -598,10 +597,10 @@ export class EmulatedDevicesList extends Common.ObjectWrapper.ObjectWrapper<Even
   }
 
   static instance(): EmulatedDevicesList {
-    if (!emulatedDevicesListInstance) {
-      emulatedDevicesListInstance = new EmulatedDevicesList();
+    if (!Root.DevToolsContext.globalInstance().has(EmulatedDevicesList)) {
+      Root.DevToolsContext.globalInstance().set(EmulatedDevicesList, new EmulatedDevicesList());
     }
-    return emulatedDevicesListInstance;
+    return Root.DevToolsContext.globalInstance().get(EmulatedDevicesList);
   }
 
   private updateStandardDevices(): void {
