@@ -30,6 +30,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Logs.NetworkLog.NetworkLog',
   'Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager',
   'Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding',
+  'Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding',
   'Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager',
   'Persistence.NetworkPersistenceManager.NetworkPersistenceManager',
   'Persistence.Persistence.PersistenceImpl',

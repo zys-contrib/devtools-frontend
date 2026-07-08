@@ -34,6 +34,7 @@ export class Universe {
   readonly context: Root.DevToolsContext.DevToolsContext;
   readonly autofillManager: AutofillManager.AutofillManager.AutofillManager;
   readonly supportsEmulation: boolean;
+  readonly fileSystemWorkspaceBinding: Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding;
 
   constructor(options: CreationOptions) {
     const context = new Root.DevToolsContext.WritableDevToolsContext();
@@ -124,6 +125,9 @@ export class Universe {
         Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding,
         automaticFileSystemWorkspaceBinding,
     );
+
+    this.fileSystemWorkspaceBinding =
+        new Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding(isolatedFileSystemManager, workspace);
 
     const ignoreListManager = new Workspace.IgnoreListManager.IgnoreListManager(settings, targetManager);
     context.set(Workspace.IgnoreListManager.IgnoreListManager, ignoreListManager);

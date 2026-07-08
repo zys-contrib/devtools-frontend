@@ -199,6 +199,17 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(Workspace.FileManager.FileManager);
   }
 
+  get fileSystemWorkspaceBinding(): Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding {
+    if (!this.#context.has(Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding)) {
+      this.#context.set(Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding,
+                        new Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding(
+                            this.isolatedFileSystemManager,
+                            this.workspace,
+                            ));
+    }
+    return this.#context.get(Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding);
+  }
+
   get frameManager(): SDK.FrameManager.FrameManager {
     if (!this.#context.has(SDK.FrameManager.FrameManager)) {
       this.#context.set(SDK.FrameManager.FrameManager, new SDK.FrameManager.FrameManager(this.targetManager));

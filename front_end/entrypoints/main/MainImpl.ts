@@ -463,8 +463,6 @@ export class MainImpl {
     // @ts-expect-error e2e test global
     self.Extensions.extensionServer = PanelCommon.ExtensionServer.ExtensionServer.instance({forceNew: true});
 
-    new Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding(
-        isolatedFileSystemManager, Workspace.Workspace.WorkspaceImpl.instance());
     isolatedFileSystemManager.addPlatformFileSystem(
         'snippet://' as Platform.DevToolsPath.UrlString, new Snippets.ScriptSnippetFileSystem.SnippetFileSystem());
 
