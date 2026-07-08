@@ -654,7 +654,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aRemoteAddress = aRequest.remoteAddress();
     const bRemoteAddress = bRequest.remoteAddress();
@@ -672,7 +672,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     if (bRequest.cached() && !aRequest.cached()) {
       return 1;
@@ -688,7 +688,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
 
     const aRequestNumber = NetworkRequestNode.requestNumber(aRequest);
@@ -701,7 +701,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aSimpleType = a.displayType();
     const bSimpleType = b.displayType();
@@ -720,7 +720,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aHasInitiatorCell = a instanceof NetworkRequestNode && a.initiatorCell;
     const bHasInitiatorCell = b instanceof NetworkRequestNode && b.initiatorCell;
@@ -744,7 +744,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aClientSecurityState = aRequest.clientSecurityState();
     const bClientSecurityState = bRequest.clientSecurityState();
@@ -758,7 +758,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     return aRequest.remoteAddressSpace().localeCompare(bRequest.remoteAddressSpace());
   }
@@ -768,7 +768,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aScore = aRequest.includedRequestCookies().length;
     const bScore = bRequest.includedRequestCookies().length;
@@ -781,7 +781,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aScore = aRequest.responseCookies ? aRequest.responseCookies.length : 0;
     const bScore = bRequest.responseCookies ? bRequest.responseCookies.length : 0;
@@ -793,7 +793,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aPriority = aRequest.priority();
     let aScore: number = aPriority ? PerfUI.NetworkPriorities.networkPriorityWeight(aPriority) : 0;
@@ -810,7 +810,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aIsAdRelated = aRequest.isAdRelated();
     const bIsAdRelated = bRequest.isAdRelated();
@@ -844,7 +844,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const order = [
       Protocol.Network.RenderBlockingBehavior.InBodyParserBlocking,
@@ -859,6 +859,55 @@ export class NetworkRequestNode extends NetworkNode {
     return aOrder - bOrder;
   }
 
+  static ExecutionContextComparator(a: NetworkNode, b: NetworkNode): number {
+    const aRequest = a.requestOrFirstKnownChildRequest();
+    const bRequest = b.requestOrFirstKnownChildRequest();
+    if (!aRequest || !bRequest) {
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
+    }
+    const aContext = NetworkRequestNode.getExecutionContextDescription(aRequest);
+    const bContext = NetworkRequestNode.getExecutionContextDescription(bRequest);
+    return aContext.localeCompare(bContext);
+  }
+
+  static getExecutionContextDescription(request: SDK.NetworkRequest.NetworkRequest): string {
+    const requestTarget = SDK.NetworkManager.NetworkManager.forRequest(request)?.target();
+
+    if (requestTarget) {
+      const targetType = requestTarget.type();
+      if (targetType === SDK.Target.Type.ServiceWorker || targetType === SDK.Target.Type.Worker ||
+          targetType === SDK.Target.Type.SHARED_WORKER) {
+        const runtimeModel = requestTarget.model(SDK.RuntimeModel.RuntimeModel);
+        if (runtimeModel) {
+          const defaultContextLabel = runtimeModel.executionContexts().find(c => c.isDefault)?.label();
+          if (defaultContextLabel) {
+            return defaultContextLabel;
+          }
+        }
+        return requestTarget.name() || '';
+      }
+    }
+
+    const frame = SDK.ResourceTreeModel.ResourceTreeModel.frameForRequest(request);
+    if (!frame) {
+      return '';
+    }
+
+    if (requestTarget) {
+      const runtimeModel = requestTarget.model(SDK.RuntimeModel.RuntimeModel);
+      if (runtimeModel) {
+        const frameContextLabel = runtimeModel.executionContexts()
+                                      .find(context => context.frameId === request.frameId && context.isDefault)
+                                      ?.label();
+        if (frameContextLabel) {
+          return frameContextLabel;
+        }
+      }
+    }
+
+    return frame.displayName();
+  }
+
   static RequestPropertyComparator(propertyName: string, a: NetworkNode, b: NetworkNode): number {
     // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -867,7 +916,7 @@ export class NetworkRequestNode extends NetworkNode {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const bRequest = (b.requestOrFirstKnownChildRequest() as any);
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aValue = aRequest[propertyName];
     const bValue = bRequest[propertyName];
@@ -881,7 +930,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aURL = aRequest.url();
     const bURL = bRequest.url();
@@ -897,7 +946,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     // Use the provided callback to get the header value
     const aValue = String(getHeaderValue(aRequest, propertyName) || '');
@@ -920,7 +969,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aRawValue = aRequest.responseHeaderValue(propertyName);
     const aValue = (aRawValue !== undefined) ? parseFloat(aRawValue) : -Infinity;
@@ -937,7 +986,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aHeader = aRequest.responseHeaderValue(propertyName);
     const bHeader = bRequest.responseHeaderValue(propertyName);
@@ -953,10 +1002,7 @@ export class NetworkRequestNode extends NetworkNode {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
     if (!aRequest || !bRequest) {
-      if (!aRequest && !bRequest) {
-        return 0;
-      }
-      return !aRequest ? -1 : 1;
+      return !aRequest ? !bRequest ? 0 : -1 : 1;
     }
     const aValue = aRequest.overrideTypes.join(', ');
     const bValue = bRequest.overrideTypes.join(', ');
@@ -1226,6 +1272,10 @@ export class NetworkRequestNode extends NetworkNode {
       }
       case 'has-overrides': {
         this.setTextAndTitle(cell, this.requestInternal.overrideTypes.join(', '));
+        break;
+      }
+      case 'execution-context': {
+        this.renderExecutionContextCell(cell);
         break;
       }
       default: {
@@ -1670,6 +1720,11 @@ export class NetworkRequestNode extends NetworkNode {
       cell.classList.add('network-dim-cell');
       this.setTextAndTitle(cell, i18nString(UIStrings.pending));
     }
+  }
+
+  private renderExecutionContextCell(cell: HTMLElement): void {
+    const contextDescription = NetworkRequestNode.getExecutionContextDescription(this.requestInternal);
+    this.setTextAndTitle(cell, contextDescription);
   }
 
   private appendSubtitle(cellElement: Element, subtitleText: string, alwaysVisible = false, tooltipText = ''): void {
