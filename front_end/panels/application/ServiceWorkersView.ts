@@ -395,10 +395,11 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
   }
 
   private getReportViewForOrigin(origin: string): UI.ReportView.ReportView|null {
-    if (this.securityOriginManager &&
-        (this.securityOriginManager.securityOrigins().includes(origin) ||
-         this.securityOriginManager.unreachableMainSecurityOrigin() === origin)) {
-      return this.currentWorkersView;
+    if (this.securityOriginManager) {
+      if (this.securityOriginManager.securityOrigins().includes(origin) ||
+          this.securityOriginManager.unreachableMainSecurityOrigin() === origin) {
+        return this.currentWorkersView;
+      }
     }
     return null;
   }
@@ -454,7 +455,7 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
   }
 }
 
-export class Section {
+export class Section extends UI.Widget.VBox {
   private manager: SDK.ServiceWorkerManager.ServiceWorkerManager;
   section: UI.ReportView.Section;
   registration: SDK.ServiceWorkerManager.ServiceWorkerRegistration;
@@ -468,6 +469,7 @@ export class Section {
 
   constructor(manager: SDK.ServiceWorkerManager.ServiceWorkerManager, section: UI.ReportView.Section,
               registration: SDK.ServiceWorkerManager.ServiceWorkerRegistration) {
+    super();
     this.manager = manager;
     this.section = section;
     this.registration = registration;
@@ -481,8 +483,8 @@ export class Section {
 
     this.updateCycleView = new ServiceWorkerUpdateCycleView(registration);
 
-    UI.DOMUtilities.appendStyle(this.section.getFieldElement(), serviceWorkersViewStyles,
-                                serviceWorkerUpdateCycleViewStyles);
+    this.registerRequiredCSS(serviceWorkersViewStyles, serviceWorkerUpdateCycleViewStyles);
+    this.show(this.section.getFieldElement());
 
     this.clientInfoCache = new Map();
     this.throttler = new Common.Throttler.Throttler(500);
@@ -558,7 +560,10 @@ export class Section {
       void this.performUpdate();
       return;
     }
-    void this.throttler.schedule(this.performUpdate.bind(this));
+    void this.throttler.schedule(() => {
+      this.requestUpdate();
+      return this.updateComplete;
+    });
   }
 
   private renderVersion(icon: string, label: string, content: LitTemplate = nothing): LitTemplate {
@@ -693,7 +698,7 @@ export class Section {
     // clang-format on
   }
 
-  private performUpdate(): Promise<void> {
+  override performUpdate(): Promise<void> {
     const fingerprint = this.registration.fingerprint();
     if (fingerprint === this.fingerprint) {
       return Promise.resolve();
@@ -728,7 +733,7 @@ export class Section {
                                      'periodic-sync-tag')}
            ${this.renderUpdateCycleField()}
            ${this.renderRouterField()}
-    `, this.section.getFieldElement());
+    `, this.contentElement);
     // clang-format on
     this.updateCycleView.refresh();
 
