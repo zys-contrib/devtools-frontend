@@ -7,6 +7,8 @@
 // just import relevant meta files (as long as they don't contain any UI related code)
 import '../front_end/core/sdk/sdk-meta.js';
 import '../front_end/models/workspace/workspace-meta.js';
+import '../front_end/models/persistence/persistence-meta.js';
+import '../front_end/models/logs/logs-meta.js';
 
 /**
  * IMPORTANT! Make sure that any class that is exported here has related unit
