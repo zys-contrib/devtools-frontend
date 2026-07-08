@@ -188,6 +188,7 @@ devtools_ui_module("unittests") {
     "ImagePreviewPopover.test.ts",
     "InspectElementModeController.test.ts",
     "LayoutPane.test.ts",
+    "MetricsSidebarPane.test.ts",
     "PlatformFontsWidget.test.ts",
     "PropertiesWidget.test.ts",
     "PropertyRenderer.test.ts",
