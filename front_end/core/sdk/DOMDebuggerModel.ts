@@ -661,7 +661,9 @@ export class DOMDebuggerManager implements SDKModelObserver<DOMDebuggerModel> {
     this.createEventListenerBreakpoints(
         Category.XHR, ['readystatechange', 'load', 'loadstart', 'loadend', 'abort', 'error', 'progress', 'timeout'],
         ['xmlhttprequest', 'xmlhttprequestupload']);
+  }
 
+  initialize(): void {
     this.#targetManager.observeModels(DOMDebuggerModel, this);
   }
 
@@ -671,9 +673,11 @@ export class DOMDebuggerManager implements SDKModelObserver<DOMDebuggerModel> {
   } = {forceNew: null}): DOMDebuggerManager {
     const {forceNew, targetManager} = opts;
     if (!Root.DevToolsContext.globalInstance().has(DOMDebuggerManager) || forceNew) {
+      const manager = new DOMDebuggerManager(targetManager ?? TargetManager.instance());
+      manager.initialize();
       Root.DevToolsContext.globalInstance().set(
           DOMDebuggerManager,
-          new DOMDebuggerManager(targetManager ?? TargetManager.instance()),
+          manager,
       );
     }
 
