@@ -337,7 +337,8 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
       throw new Error('Received a message from an unregistered extension');
     }
     const endpoint = new Extensions.LanguageExtensionEndpoint.LanguageExtensionEndpoint(
-        registration.allowFileAccess, extensionOrigin, pluginName, {language, symbol_types: symbol_types_array}, port);
+        registration.allowFileAccess, extensionOrigin, pluginName, {language, symbol_types: symbol_types_array}, port,
+        pluginManager);
     pluginManager.addPlugin(endpoint);
     return this.status.OK();
   }
