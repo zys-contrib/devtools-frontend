@@ -1257,6 +1257,42 @@ describe('NetworkManager', () => {
       });
     });
   });
+
+  describe('WebSocket handling', () => {
+    it('handles WebSocket frame error event', () => {
+      const networkManager = new SDK.NetworkManager.NetworkManager(new TestUniverse().createTarget({}));
+      const networkDispatcher = new SDK.NetworkManager.NetworkDispatcher(networkManager);
+      const updatedRequests: SDK.NetworkRequest.NetworkRequest[] = [];
+      networkManager.addEventListener(SDK.NetworkManager.Events.RequestUpdated, event => {
+        updatedRequests.push(event.data);
+      });
+
+      const mockRequestId = 'mockRequestId' as Protocol.Network.RequestId;
+      const mockUrl = urlString`ws://example.com`;
+
+      networkDispatcher.webSocketCreated({
+        requestId: mockRequestId,
+        url: mockUrl,
+        initiator: {type: Protocol.Network.InitiatorType.Other},
+      });
+
+      networkDispatcher.webSocketFrameError({
+        requestId: mockRequestId,
+        timestamp: 1000,
+        errorMessage: 'Error during WebSocket handshake: Unexpected response code: 404',
+      });
+
+      assert.lengthOf(updatedRequests, 1);
+      const req = updatedRequests[0];
+      assert.strictEqual(req.requestId(), mockRequestId);
+      assert.strictEqual(req.resourceType(), Common.ResourceType.resourceTypes.WebSocket);
+
+      const frames = req.frames();
+      assert.lengthOf(frames, 1);
+      assert.strictEqual(frames[0].type, SDK.NetworkRequest.WebSocketFrameType.Error);
+      assert.strictEqual(frames[0].text, 'Error during WebSocket handshake: Unexpected response code: 404');
+    });
+  });
 });
 
 describe('MultitargetNetworkManager', () => {
