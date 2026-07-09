@@ -134,6 +134,17 @@ template("ts_library") {
       public_deps += deps
     }
 
+    # tsc/esbuild resolve the module type from package.json in the build root,
+    # which //tools/typescript:copy_package_json produces. Depend on it so the
+    # copy runs first; otherwise a concurrent copy can fail the read on Windows
+    # with a sharing violation. The target only exists in a Chromium checkout.
+    if (build_with_chromium) {
+      if (!defined(deps)) {
+        deps = []
+      }
+      deps += [ "//tools/typescript:copy_package_json" ]
+    }
+
     # Here we assume that all sources are in this folder listed,
     # as there is no way of retrieving the folder the template
     # is in with Ninja.
