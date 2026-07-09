@@ -450,21 +450,32 @@ export function getClientFeatureName(feature: ClientFeature): string {
   return name;
 }
 
-let hostConfigTrackerInstance: HostConfigTracker|undefined;
-
 export class HostConfigTracker extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
   #pollTimer?: ReturnType<typeof setTimeout>;
   #aidaAvailability?: AidaAccessPreconditions;
 
-  private constructor() {
-    super();
+  static instance({forceNew}: {
+    forceNew: boolean,
+  } = {forceNew: false}): HostConfigTracker {
+    if (!Root.DevToolsContext.globalInstance().has(HostConfigTracker) || forceNew) {
+      Root.DevToolsContext.globalInstance().set(
+          HostConfigTracker,
+          new HostConfigTracker(),
+      );
+    }
+    return Root.DevToolsContext.globalInstance().get(HostConfigTracker);
   }
 
-  static instance(): HostConfigTracker {
-    if (!hostConfigTrackerInstance) {
-      hostConfigTrackerInstance = new HostConfigTracker();
+  dispose(): void {
+    clearTimeout(this.#pollTimer);
+    this.listeners = undefined;
+  }
+
+  static removeInstance(): void {
+    if (Root.DevToolsContext.globalInstance().has(HostConfigTracker)) {
+      Root.DevToolsContext.globalInstance().get(HostConfigTracker).dispose();
+      Root.DevToolsContext.globalInstance().delete(HostConfigTracker);
     }
-    return hostConfigTrackerInstance;
   }
 
   override addEventListener(eventType: Events, listener: Common.EventTarget.EventListener<EventTypes, Events>):
