@@ -37,9 +37,14 @@ export class Result {
 
   get symbolizedError(): Promise<Bindings.SymbolizedError.SymbolizedError|null>|undefined {
     if (!this.#symbolizedError) {
-      this.#symbolizedError = this.#exception ?
-          Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance().createSymbolizedError(this.#exception) :
-          Promise.resolve(null);
+      if (this.#exception) {
+        const target = this.#exception.runtimeModel().target();
+        const debuggerWorkspaceBinding =
+            target.targetManager().context.get(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding);
+        this.#symbolizedError = debuggerWorkspaceBinding.createSymbolizedError(this.#exception);
+      } else {
+        this.#symbolizedError = Promise.resolve(null);
+      }
     }
     return this.#symbolizedError;
   }
@@ -61,9 +66,11 @@ export class Tool {
   constructor(tool: Protocol.WebMCP.Tool, target: SDK.Target.Target) {
     this.#target = new WeakRef(target);
     this.#protocolTool = tool;
-    this.#stackTrace = tool.stackTrace &&
-        Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance().createStackTraceFromProtocolRuntime(
-            tool.stackTrace, target);
+    if (tool.stackTrace) {
+      const debuggerWorkspaceBinding =
+          target.targetManager().context.get(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding);
+      this.#stackTrace = debuggerWorkspaceBinding.createStackTraceFromProtocolRuntime(tool.stackTrace, target);
+    }
   }
 
   get stackTrace(): Promise<StackTrace.StackTrace.StackTrace>|undefined {

@@ -391,6 +391,9 @@ export class TestUniverse implements Foundation.Universe.Universe {
           if (ctor === SDK.NetworkManager.MultitargetNetworkManager.prototype.constructor) {
             return universe.multitargetNetworkManager as T;
           }
+          if (ctor === Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.prototype.constructor) {
+            return universe.debuggerWorkspaceBinding as T;
+          }
           throw new Error(`Class ${
               ctor.name} not set-up as a dependency for SDKModels in TestUniverse.ts. Add it to LazyContext#get in TestUniverse.ts`);
         }
