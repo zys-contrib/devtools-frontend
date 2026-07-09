@@ -2345,7 +2345,7 @@ export class FrameTreeElement extends ApplicationPanelTreeElement {
     this.showView(this.view);
 
     this.listItemElement.classList.remove('hovered');
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     return false;
   }
 
@@ -2355,7 +2355,7 @@ export class FrameTreeElement extends ApplicationPanelTreeElement {
       void this.frame.highlight();
     } else {
       this.listItemElement.classList.remove('hovered');
-      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     }
   }
 

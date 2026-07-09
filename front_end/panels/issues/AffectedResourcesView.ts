@@ -205,7 +205,8 @@ export abstract class AffectedResourcesView extends UI.TreeOutline.TreeElement {
         void frame.highlight();
       }
     };
-    frameCell.onmouseleave = () => SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    frameCell.onmouseleave = () =>
+        SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     return frameCell;
   }
 

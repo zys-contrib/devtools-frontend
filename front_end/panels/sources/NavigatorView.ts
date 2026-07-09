@@ -727,7 +727,7 @@ export class NavigatorView extends UI.Widget.VBox implements SDK.TargetManager.O
           overlayModel.highlightFrame(frame.id);
         }
       } else {
-        SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+        SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
       }
     }
     return frameNode;

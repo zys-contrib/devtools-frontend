@@ -260,7 +260,7 @@ export class DeveloperResourcesListView extends UI.Widget.VBox {
         }
       },
       onInitiatorMouseLeave: () => {
-        SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+        SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
       },
     };
     const output = {};

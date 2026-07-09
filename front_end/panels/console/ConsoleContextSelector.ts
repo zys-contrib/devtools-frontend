@@ -78,7 +78,7 @@ export class ConsoleContextSelector implements SDK.TargetManager.SDKModelObserve
   highlightedItemChanged(
       _from: SDK.RuntimeModel.ExecutionContext|null, to: SDK.RuntimeModel.ExecutionContext|null,
       fromElement: Element|null, toElement: Element|null): void {
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     if (to?.frameId) {
       const frame = SDK.FrameManager.FrameManager.instance().getFrame(to.frameId);
       if (frame && !frame.isOutermostFrame()) {

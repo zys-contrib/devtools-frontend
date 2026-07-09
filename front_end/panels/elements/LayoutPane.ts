@@ -116,7 +116,7 @@ const nodeToLayoutElement = (node: SDK.DOMModel.DOMNode): LayoutElement => {
       node.highlight();
     },
     hideHighlight: () => {
-      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     },
     toggle: (_value: boolean) => {
       throw new Error('Not implemented');

@@ -1223,7 +1223,7 @@ export class ToolDetailsWidget extends UI.Widget.Widget {
   };
 
   #clearHighlight = (): void => {
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
   };
 
   #revealNode = (node: SDK.DOMModel.DOMNode): void => {

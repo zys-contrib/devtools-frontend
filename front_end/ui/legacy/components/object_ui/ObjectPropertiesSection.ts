@@ -1164,7 +1164,8 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
           event.consume(true);
         }}
             @mousemove=${() => SDK.OverlayModel.OverlayModel.highlightObjectAsDOMNode(value)}
-            @mouseleave=${() => SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight()}
+            @mouseleave=${
+            () => SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance())}
           >${renderNodeTitle(description)}</span>`;
       }
       if (description.length > maxRenderableStringLength) {

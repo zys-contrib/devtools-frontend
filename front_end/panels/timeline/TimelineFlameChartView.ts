@@ -1422,7 +1422,7 @@ export class TimelineFlameChartView extends Common.ObjectWrapper.eventMixin<Even
   }
 
   private onEntryHovered(commonEvent: Common.EventTarget.EventTargetEvent<number>): void {
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     const entryIndex = commonEvent.data;
     const event = this.mainDataProvider.eventByIndex(entryIndex);
     if (!event || !this.#parsedTrace) {

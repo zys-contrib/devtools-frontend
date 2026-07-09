@@ -76,7 +76,7 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
     });
 
     this.accessibilityTreeComponent.addEventListener('itemmouseout', () => {
-      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     });
 
     this.accessibilityTreeComponent.addEventListener('itemcontextmenu', (event: Event) => {

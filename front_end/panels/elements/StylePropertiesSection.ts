@@ -676,7 +676,7 @@ export class StylePropertiesSection {
     if (this.hoverTimer) {
       clearTimeout(this.hoverTimer);
     }
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
   }
 
   private onMouseEnterSelector(): void {
@@ -687,7 +687,7 @@ export class StylePropertiesSection {
   }
 
   highlight(mode: string|undefined = 'all'): void {
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     const node = this.stylesContainer.node();
     if (!node) {
       return;

@@ -8,6 +8,7 @@ import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 
 export class AutofillManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
+  #targetManager: SDK.TargetManager.TargetManager;
   #address = '';
   #filledFields: Protocol.Autofill.FilledField[] = [];
   #matches: Match[] = [];
@@ -16,6 +17,7 @@ export class AutofillManager extends Common.ObjectWrapper.ObjectWrapper<EventTyp
 
   constructor(targetManager: SDK.TargetManager.TargetManager, frameManager: SDK.FrameManager.FrameManager) {
     super();
+    this.#targetManager = targetManager;
     this.#frameManager = frameManager;
     targetManager.addModelListener(SDK.AutofillModel.AutofillModel, SDK.AutofillModel.Events.ADDRESS_FORM_FILLED,
                                    this.#addressFormFilled, this, {scoped: true});
@@ -58,7 +60,7 @@ export class AutofillManager extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   }
 
   clearHighlightedFilledFields(): void {
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(this.#targetManager);
   }
 
   #processAddressFormFilledData({addressUi, filledFields}: Protocol.Autofill.AddressFormFilledEvent): void {

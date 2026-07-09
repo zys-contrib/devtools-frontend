@@ -290,7 +290,7 @@ export class MetricsSidebarPane extends ElementsSidebarPane<ShadowRoot> {
       node.highlight(mode);
     } else {
       this.highlightMode = '';
-      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     }
 
     if (this.computedStyle) {

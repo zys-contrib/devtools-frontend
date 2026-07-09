@@ -508,7 +508,7 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
   }
 
   override willHide(): void {
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     this.evaluateTrackingComputedStyleUpdatesForNode();
     this.#domTreeWidget.detach();
     super.willHide();

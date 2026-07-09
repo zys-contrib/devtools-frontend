@@ -1348,7 +1348,7 @@ export class ElementsTreeOutline extends
   }
 
   private onfocusout(_event: Event): void {
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
   }
 
   private onmousedown(event: MouseEvent): void {
@@ -1401,7 +1401,7 @@ export class ElementsTreeOutline extends
 
   private onmouseleave(_event: MouseEvent): void {
     this.setHoverEffect(null);
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
   }
 
   private ondragstart(event: DragEvent): boolean|undefined {
@@ -1429,7 +1429,7 @@ export class ElementsTreeOutline extends
     event.dataTransfer.effectAllowed = 'copyMove';
     this.treeElementBeingDragged = treeElement;
 
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
 
     return true;
   }
@@ -1790,7 +1790,7 @@ export class ElementsTreeOutline extends
     this.selectDOMNode(null, false);
     this.imagePreviewPopover.hide();
     delete this.clipboardNodeData;
-    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     this.updateRecords.clear();
   }
 

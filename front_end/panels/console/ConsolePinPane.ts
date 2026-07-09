@@ -459,7 +459,7 @@ export class ConsolePinPresenter extends UI.Widget.Widget {
     }
     this.#hovered = hovered;
     if (!hovered && this.#lastNode) {
-      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
     }
   }
 
@@ -520,7 +520,7 @@ export class ConsolePinPresenter extends UI.Widget.Widget {
       if (node) {
         SDK.OverlayModel.OverlayModel.highlightObjectAsDOMNode(node);
       } else if (this.#lastNode) {
-        SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight();
+        SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
       }
     }
     this.#lastNode = node || null;

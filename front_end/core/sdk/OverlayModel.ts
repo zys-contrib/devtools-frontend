@@ -15,7 +15,7 @@ import {OverlayPersistentHighlighter} from './OverlayPersistentHighlighter.js';
 import type {RemoteObject} from './RemoteObject.js';
 import {SDKModel} from './SDKModel.js';
 import {Capability, type Target} from './Target.js';
-import {TargetManager} from './TargetManager.js';
+import type {TargetManager} from './TargetManager.js';
 
 const UIStrings = {
   /**
@@ -178,27 +178,27 @@ export class OverlayModel extends SDKModel<EventTypes> implements ProtocolProxyA
     }
   }
 
-  static hideDOMNodeHighlight(targetManager: TargetManager = TargetManager.instance()): void {
+  static hideDOMNodeHighlight(targetManager: TargetManager): void {
     for (const overlayModel of targetManager.models(OverlayModel)) {
       overlayModel.delayedHideHighlight(0);
     }
   }
 
-  static async muteHighlight(targetManager: TargetManager = TargetManager.instance()): Promise<void[]> {
+  static async muteHighlight(targetManager: TargetManager): Promise<void[]> {
     return await Promise.all(targetManager.models(OverlayModel).map(model => model.suspendModel()));
   }
 
-  static async unmuteHighlight(targetManager: TargetManager = TargetManager.instance()): Promise<void[]> {
+  static async unmuteHighlight(targetManager: TargetManager): Promise<void[]> {
     return await Promise.all(targetManager.models(OverlayModel).map(model => model.resumeModel()));
   }
 
-  static highlightRect(rect: HighlightRect, targetManager: TargetManager = TargetManager.instance()): void {
+  static highlightRect(rect: HighlightRect, targetManager: TargetManager): void {
     for (const overlayModel of targetManager.models(OverlayModel)) {
       void overlayModel.highlightRect(rect);
     }
   }
 
-  static clearHighlight(targetManager: TargetManager = TargetManager.instance()): void {
+  static clearHighlight(targetManager: TargetManager): void {
     for (const overlayModel of targetManager.models(OverlayModel)) {
       void overlayModel.clearHighlight();
     }
