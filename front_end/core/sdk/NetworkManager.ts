@@ -1965,6 +1965,7 @@ export class RequestConditions extends Common.ObjectWrapper.ObjectWrapper<Reques
       promises.push(agent
                         .invoke_emulateNetworkConditionsByRule({
                           offline,
+                          emulateOfflineServiceWorker: offline,
                           matchedNetworkConditions: matchedNetworkConditions.map(
                               ({urlPattern, conditions}) => ({
                                 urlPattern: urlPattern ?? '',
@@ -1975,6 +1976,7 @@ export class RequestConditions extends Common.ObjectWrapper.ObjectWrapper<Reques
                                 packetQueueLength: conditions.packetQueueLength,
                                 packetReordering: conditions.packetReordering,
                                 connectionType: NetworkManager.connectionType(conditions),
+                                offline,
                               }))
                         })
                         .then(response => {

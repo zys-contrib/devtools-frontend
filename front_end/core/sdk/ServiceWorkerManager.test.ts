@@ -3,8 +3,11 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
 
 import type * as Protocol from '../../generated/protocol.js';
+import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
+import * as Common from '../common/common.js';
 
 import * as SDK from './sdk.js';
 
@@ -286,4 +289,31 @@ describe('ServiceWorkerVersion', () => {
 
     assert.isNull(version.routerRules);
   });
+});
+
+describeWithEnvironment('ServiceWorkerManager', () => {
+  it('disables forceUpdateOnPageLoad when DevTools is offline even if service-worker-update-on-reload setting is enabled',
+     () => {
+       const target = createTarget({type: SDK.Target.Type.FRAME});
+       const serviceWorkerAgent = target.serviceWorkerAgent();
+       const setForceUpdateSpy = sinon.spy(serviceWorkerAgent, 'invoke_setForceUpdateOnPageLoad');
+       const updateOnReloadSetting =
+           Common.Settings.Settings.instance().createSetting('service-worker-update-on-reload', false);
+
+       const manager = new SDK.ServiceWorkerManager.ServiceWorkerManager(target);
+       sinon.assert.notCalled(setForceUpdateSpy);
+
+       updateOnReloadSetting.set(true);
+       sinon.assert.calledWith(setForceUpdateSpy, {forceUpdateOnPageLoad: true});
+
+       SDK.NetworkManager.MultitargetNetworkManager.instance().setNetworkConditions(
+           SDK.NetworkManager.OfflineConditions);
+       sinon.assert.calledWith(setForceUpdateSpy, {forceUpdateOnPageLoad: false});
+
+       SDK.NetworkManager.MultitargetNetworkManager.instance().setNetworkConditions(
+           SDK.NetworkManager.NoThrottlingConditions);
+       sinon.assert.calledWith(setForceUpdateSpy, {forceUpdateOnPageLoad: true});
+
+       manager.dispose();
+     });
 });

@@ -1618,6 +1618,7 @@ describe('RequestConditions', () => {
       sinon.assert.calledOnce(emulateNetworkConditionsByRule);
       assert.deepEqual(emulateNetworkConditionsByRule.args[0][0], {
         offline: false,
+        emulateOfflineServiceWorker: false,
         matchedNetworkConditions: [{
           urlPattern: '*://throttle:*',
           latency: 2000,
@@ -1627,6 +1628,7 @@ describe('RequestConditions', () => {
           packetQueueLength: undefined,
           packetReordering: undefined,
           connectionType: Protocol.Network.ConnectionType.Cellular3g,
+          offline: false,
         }]
       });
       sinon.assert.calledOnceWithExactly(setBlockedURLs, {
@@ -1646,6 +1648,7 @@ describe('RequestConditions', () => {
       sinon.assert.calledOnce(emulateNetworkConditionsByRule);
       assert.deepEqual(emulateNetworkConditionsByRule.args[0][0], {
         offline: true,
+        emulateOfflineServiceWorker: true,
         matchedNetworkConditions: [
           {
             urlPattern: '*://throttle:*',
@@ -1656,6 +1659,7 @@ describe('RequestConditions', () => {
             packetQueueLength: undefined,
             packetReordering: undefined,
             connectionType: Protocol.Network.ConnectionType.Cellular3g,
+            offline: true,
           },
           {
             urlPattern: '',
@@ -1666,6 +1670,7 @@ describe('RequestConditions', () => {
             packetQueueLength: undefined,
             packetReordering: undefined,
             connectionType: Protocol.Network.ConnectionType.Cellular4g,
+            offline: true,
           }
         ]
       });
@@ -1699,7 +1704,8 @@ describe('RequestConditions', () => {
       conditions.conditionsEnabled = false;
       sinon.assert.notCalled(emulateNetworkConditions);
       sinon.assert.calledOnceWithExactly(
-          emulateNetworkConditionsByRule, {offline: false, matchedNetworkConditions: []});
+          emulateNetworkConditionsByRule,
+          {offline: false, emulateOfflineServiceWorker: false, matchedNetworkConditions: []});
       sinon.assert.calledOnceWithExactly(setBlockedURLs, {urlPatterns: []});
 
       emulateNetworkConditions.resetHistory();
@@ -1710,6 +1716,7 @@ describe('RequestConditions', () => {
       sinon.assert.notCalled(emulateNetworkConditions);
       sinon.assert.calledOnceWithExactly(emulateNetworkConditionsByRule, {
         offline: false,
+        emulateOfflineServiceWorker: false,
         matchedNetworkConditions: [{
           urlPattern: '*://throttle:*',
           latency: 2000,
@@ -1719,6 +1726,7 @@ describe('RequestConditions', () => {
           packetQueueLength: undefined,
           packetReordering: undefined,
           connectionType: Protocol.Network.ConnectionType.Cellular3g,
+          offline: false,
         }]
       });
       sinon.assert.calledOnceWithExactly(setBlockedURLs, {
