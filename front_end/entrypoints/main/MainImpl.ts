@@ -472,6 +472,7 @@ export class MainImpl {
     new ExecutionContextSelector(targetManager, UI.Context.Context.instance());
 
     this.#universe.domDebuggerManager.initialize();
+    this.#universe.cpuThrottlingManager.initialize();
     void this.#universe.liveMetrics.enable();
     CrUXManager.CrUXManager.instance();
 
