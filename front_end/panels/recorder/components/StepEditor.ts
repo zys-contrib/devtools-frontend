@@ -458,6 +458,26 @@ export class EditorState {
  * @fires RequestSelectorAttributeEvent#requestselectorattribute
  * @fires StepEditedEvent#stepedited
  */
+export interface ViewInput {
+  state: DeepImmutable<EditorState>;
+  disabled: boolean;
+  error: string|undefined;
+  isTypeEditable: boolean;
+  handleInputBlur: <A extends Attribute>(opts: {
+    attribute: A,
+    from(value: DataType<A>): DeepImmutable<DeepPartial<Assignments<EditorState>>>|undefined,
+  }) => (event: Event) => void;
+  handleTypeInputBlur: (event: Event) => Promise<void>;
+  handleAddRowClickEvent: (event: MouseEvent) => Promise<void>;
+  handleDeleteRowClick: (attribute: Attribute) => (event: MouseEvent) => void;
+  handleSelectorPicked: (data: Models.Schema.StepWithSelectors&
+                         Pick<Models.Schema.ClickAttributes, 'offsetX'|'offsetY'>) => void;
+  handleAttributeRequested: (send: (attribute?: string) => void) => void;
+  handleAddOrRemoveClick: (assignments: DeepImmutable<DeepPartial<Assignments<EditorState>>>,
+                           query: string) => (event: Event) => void;
+  handleKeyDownEvent: (event: Event) => void;
+}
+
 @customElement('devtools-recorder-step-editor')
 export class StepEditor extends LitElement {
   @state() private declare state: DeepImmutable<EditorState>;
@@ -465,8 +485,6 @@ export class StepEditor extends LitElement {
 
   @property({type: Boolean}) declare isTypeEditable: boolean;
   @property({type: Boolean}) declare disabled: boolean;
-
-  #renderedAttributes = new Set<Attribute>();
 
   constructor() {
     super();
@@ -486,6 +504,24 @@ export class StepEditor extends LitElement {
   set step(step: DeepImmutable<Models.Schema.Step>) {
     this.state = deepFreeze(EditorState.fromStep(step));
     this.error = undefined;
+  }
+
+  protected override render(): Lit.TemplateResult {
+    const input: ViewInput = {
+      state: this.state,
+      disabled: this.disabled,
+      error: this.error,
+      isTypeEditable: this.isTypeEditable,
+      handleInputBlur: this.#handleInputBlur,
+      handleTypeInputBlur: this.#handleTypeInputBlur,
+      handleAddRowClickEvent: this.#handleAddRowClickEvent,
+      handleDeleteRowClick: this.#handleDeleteRowClick,
+      handleSelectorPicked: this.#handleSelectorPicked,
+      handleAttributeRequested: this.#handleAttributeRequested,
+      handleAddOrRemoveClick: this.#handleAddOrRemoveClick,
+      handleKeyDownEvent: this.#handleKeyDownEvent,
+    };
+    return renderStepEditor(input);
   }
 
   #commit(updatedState: DeepImmutable<EditorState>): void {
@@ -526,6 +562,19 @@ export class StepEditor extends LitElement {
 
         this.#ensureFocus(query);
       };
+
+  #handleDeleteRowClick = (attribute: Attribute) => (event: Event): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    this.#commit(immutableDeepAssign(this.state, {[attribute]: undefined}));
+  };
+
+  #ensureFocus = (query: string): void => {
+    void this.updateComplete.then(() => {
+      const node = this.renderRoot.querySelector<HTMLElement>(query);
+      node?.focus();
+    });
+  };
 
   #handleKeyDownEvent = (event: Event): void => {
     assert(event instanceof KeyboardEvent);
@@ -590,80 +639,78 @@ export class StepEditor extends LitElement {
 
     this.#ensureFocus(`[data-attribute=${attribute}].attribute devtools-suggestion-input`);
   };
+}
 
-  #renderInlineButton(opts: {class: string, title: string, iconName: string, onClick: (event: MouseEvent) => void}):
-      Lit.TemplateResult|undefined {
-    if (this.disabled) {
-      return;
-    }
-    return html`
-      <devtools-button
-        title=${opts.title}
-        .accessibleLabel=${opts.title}
-        .size=${Buttons.Button.Size.SMALL}
-        .iconName=${opts.iconName}
-        .variant=${Buttons.Button.Variant.ICON}
-        jslog=${VisualLogging.action(opts.class).track({
-      click: true,
-    })}
-        class="inline-button ${opts.class}"
-        @click=${opts.onClick}
-      ></devtools-button>
-    `;
+function renderInlineButton(
+    input: ViewInput, opts: {class: string, title: string, iconName: string, onClick: (event: MouseEvent) => void}):
+    Lit.TemplateResult|undefined {
+  if (input.disabled) {
+    return;
   }
-
-  #renderDeleteButton(attribute: Attribute): Lit.TemplateResult|undefined {
-    if (this.disabled) {
-      return;
-    }
-
-    const attributes = attributesByType[this.state.type];
-    const optional = [...attributes.optional].includes(attribute as typeof attributes.optional[number]);
-    if (!optional || this.disabled) {
-      return;
-    }
-
-    // clang-format off
-    return html`<devtools-button
+  return html`
+    <devtools-button
+      title=${opts.title}
+      .accessibleLabel=${opts.title}
       .size=${Buttons.Button.Size.SMALL}
-      .iconName=${'bin'}
+      .iconName=${opts.iconName}
       .variant=${Buttons.Button.Variant.ICON}
-      .title=${i18nString(UIStrings.deleteRow)}
-      class="inline-button delete-row"
-      data-attribute=${attribute}
-      jslog=${VisualLogging.action('delete').track({click: true})}
-      @click=${(event: MouseEvent) => {
-        event.preventDefault();
-        event.stopPropagation();
+      jslog=${VisualLogging.action(opts.class).track({
+    click: true,
+  })}
+      class="inline-button ${opts.class}"
+      @click=${opts.onClick}
+    ></devtools-button>
+  `;
+}
 
-        this.#commit(
-          immutableDeepAssign(this.state, { [attribute]: undefined }),
-        );
-      }}
-    ></devtools-button>`;
-    // clang-format on
+function renderDeleteButton(input: ViewInput, attribute: Attribute): Lit.TemplateResult|undefined {
+  if (input.disabled) {
+    return;
   }
 
-  #renderTypeRow(editable: boolean): Lit.TemplateResult {
-    this.#renderedAttributes.add('type');
+  const attributes = attributesByType[input.state.type];
+  const optional = [...attributes.optional].includes(attribute as typeof attributes.optional[number]);
+  if (!optional || input.disabled) {
+    return;
+  }
+
+  // clang-format off
+  return html`<devtools-button
+    .size=${Buttons.Button.Size.SMALL}
+    .iconName=${'bin'}
+    .variant=${Buttons.Button.Variant.ICON}
+    .title=${i18nString(UIStrings.deleteRow)}
+    class="inline-button delete-row"
+    data-attribute=${attribute}
+    jslog=${VisualLogging.action('delete').track({click: true})}
+    @click=${input.handleDeleteRowClick(attribute)}
+  ></devtools-button>`;
+  // clang-format on
+}
+
+export function renderStepEditor(input: ViewInput): Lit.TemplateResult {
+  const renderedAttributes = new Set<Attribute>();
+
+  function renderTypeRow(editable: boolean): Lit.TemplateResult {
+    renderedAttributes.add('type');
     // clang-format off
     return html`<div class="row attribute" data-attribute="type" jslog=${VisualLogging.treeItem('type').track({resize: true})}>
       <div id="type">type<span class="separator">:</span></div>
       <devtools-suggestion-input
         aria-labelledby="type"
-        .disabled=${!editable || this.disabled}
+        .disabled=${!editable || input.disabled}
         .options=${Object.values(Models.Schema.StepType)}
         .placeholder=${defaultValuesByAttribute.type}
-        .value=${live(this.state.type)}
-        @blur=${this.#handleTypeInputBlur}
+        .value=${live(input.state.type)}
+        @blur=${input.handleTypeInputBlur}
       ></devtools-suggestion-input>
     </div>`;
     // clang-format on
   }
 
-  #renderRow(attribute: Attribute): Lit.TemplateResult|undefined {
-    this.#renderedAttributes.add(attribute);
-    const attributeValue = this.state[attribute]?.toString();
+  function renderRow(attribute: Attribute): Lit.TemplateResult|undefined {
+    renderedAttributes.add(attribute);
+    const attributeValue = input.state[attribute]?.toString();
     if (attributeValue === undefined) {
       return;
     }
@@ -671,7 +718,7 @@ export class StepEditor extends LitElement {
     return html`<div class="row attribute" data-attribute=${attribute} jslog=${VisualLogging.treeItem(Platform.StringUtilities.toKebabCase(attribute)).track({resize: true})}>
       <div id=${attribute}>${attribute}<span class="separator">:</span></div>
       <devtools-suggestion-input
-        .disabled=${this.disabled}
+        .disabled=${input.disabled}
         aria-labelledby=${attribute}
         .placeholder=${defaultValuesByAttribute[attribute].toString()}
         .value=${live(attributeValue)}
@@ -685,24 +732,24 @@ export class StepEditor extends LitElement {
               return '';
           }
         })()}
-        @blur=${this.#handleInputBlur({
+        @blur=${input.handleInputBlur({
       attribute,
       from(value) {
-        if (this.state[attribute] === undefined) {
+        if (input.state[attribute] === undefined || input.state[attribute] === value) {
           return;
         }
         return {[attribute]: value};
       },
     })}
       ></devtools-suggestion-input>
-      ${this.#renderDeleteButton(attribute)}
+      ${renderDeleteButton(input, attribute)}
     </div>`;
     // clang-format on
   }
 
-  #renderFrameRow(): Lit.TemplateResult|undefined {
-    this.#renderedAttributes.add('frame');
-    if (this.state.frame === undefined) {
+  function renderFrameRow(): Lit.TemplateResult|undefined {
+    renderedAttributes.add('frame');
+    if (input.state.frame === undefined) {
       return;
     }
     // clang-format off
@@ -710,21 +757,21 @@ export class StepEditor extends LitElement {
       <div class="attribute" data-attribute="frame" jslog=${VisualLogging.treeItem('frame').track({resize: true})}>
         <div class="row">
           <div id="frame">frame<span class="separator">:</span></div>
-          ${this.#renderDeleteButton('frame')}
+          ${renderDeleteButton(input, 'frame')}
         </div>
-        ${this.state.frame.map((frame, index, frames) => {
+        ${input.state.frame.map((frame, index, frames) => {
           return html`
             <div class="padded row">
               <devtools-suggestion-input
                 aria-labelledby="frame"
-                .disabled=${this.disabled}
+                .disabled=${input.disabled}
                 .placeholder=${defaultValuesByAttribute.frame[0].toString()}
                 .value=${live(frame.toString())}
                 data-path=${`frame.${index}`}
-                @blur=${this.#handleInputBlur({
+                @blur=${input.handleInputBlur({
                   attribute: 'frame',
                   from(value) {
-                    if (this.state.frame?.[index] === undefined) {
+                    if (input.state.frame?.[index] === undefined || input.state.frame[index] === value) {
                       return;
                     }
                     return {
@@ -733,11 +780,11 @@ export class StepEditor extends LitElement {
                   },
                 })}
               ></devtools-suggestion-input>
-              ${this.#renderInlineButton({
+              ${renderInlineButton(input, {
                 class: 'add-frame',
                 title: i18nString(UIStrings.addFrameIndex),
                 iconName: 'plus',
-                onClick: this.#handleAddOrRemoveClick(
+                onClick: input.handleAddOrRemoveClick(
                   {
                     frame: new ArrayAssignments({
                       [index + 1]: new InsertAssignment(
@@ -748,11 +795,11 @@ export class StepEditor extends LitElement {
                   `devtools-suggestion-input[data-path="frame.${index + 1}"]`,
                 ),
               })}
-              ${this.#renderInlineButton({
+              ${renderInlineButton(input, {
                 class: 'remove-frame',
                 title: i18nString(UIStrings.removeFrameIndex),
                 iconName: 'minus',
-                onClick: this.#handleAddOrRemoveClick(
+                onClick: input.handleAddOrRemoveClick(
                   {
                     frame: new ArrayAssignments({ [index]: undefined }),
                   },
@@ -770,9 +817,9 @@ export class StepEditor extends LitElement {
     // clang-format on
   }
 
-  #renderSelectorsRow(): Lit.TemplateResult|undefined {
-    this.#renderedAttributes.add('selectors');
-    if (this.state.selectors === undefined) {
+  function renderSelectorsRow(): Lit.TemplateResult|undefined {
+    renderedAttributes.add('selectors');
+    if (input.state.selectors === undefined) {
       return;
     }
     // clang-format off
@@ -780,20 +827,20 @@ export class StepEditor extends LitElement {
       <div class="row">
         <div>selectors<span class="separator">:</span></div>
         ${widget(SelectorPicker, {
-          disabled: this.disabled,
-          onSelectorPicked: this.#handleSelectorPicked,
-          onAttributeRequested: this.#handleAttributeRequested,
+          disabled: input.disabled,
+          onSelectorPicked: input.handleSelectorPicked,
+          onAttributeRequested: input.handleAttributeRequested,
         })}
-        ${this.#renderDeleteButton('selectors')}
+        ${renderDeleteButton(input, 'selectors')}
       </div>
-      ${this.state.selectors.map((selector, index, selectors) => {
+      ${input.state.selectors.map((selector, index, selectors) => {
         return html`<div class="padded row" data-selector-path=${index}>
             <div id="selector-${index}">selector #${index + 1}<span class="separator">:</span></div>
-            ${this.#renderInlineButton({
+            ${renderInlineButton(input, {
               class: 'add-selector',
               title: i18nString(UIStrings.addSelector),
               iconName: 'plus',
-              onClick: this.#handleAddOrRemoveClick(
+              onClick: input.handleAddOrRemoveClick(
                 {
                   selectors: new ArrayAssignments({
                     [index + 1]: new InsertAssignment(
@@ -804,11 +851,11 @@ export class StepEditor extends LitElement {
                 `devtools-suggestion-input[data-path="selectors.${index + 1}.0"]`,
               ),
             })}
-            ${this.#renderInlineButton({
+            ${renderInlineButton(input, {
               class: 'remove-selector',
               title: i18nString(UIStrings.removeSelector),
               iconName: 'minus',
-              onClick: this.#handleAddOrRemoveClick(
+              onClick: input.handleAddOrRemoveClick(
                 { selectors: new ArrayAssignments({ [index]: undefined }) },
                 `devtools-suggestion-input[data-path="selectors.${Math.min(
                   index,
@@ -824,15 +871,15 @@ export class StepEditor extends LitElement {
             >
               <devtools-suggestion-input
                 aria-labelledby="selector-${index}"
-                .disabled=${this.disabled}
+                .disabled=${input.disabled}
                 .placeholder=${defaultValuesByAttribute.selectors[0][0]}
                 .value=${live(part)}
                 data-path=${`selectors.${index}.${partIndex}`}
-                @blur=${this.#handleInputBlur({
+                @blur=${input.handleInputBlur({
                   attribute: 'selectors',
                   from(value) {
                     if (
-                      this.state.selectors?.[index]?.[partIndex] === undefined
+                      input.state.selectors?.[index]?.[partIndex] === undefined || input.state.selectors[index][partIndex] === value
                     ) {
                       return;
                     }
@@ -846,11 +893,11 @@ export class StepEditor extends LitElement {
                   },
                 })}
               ></devtools-suggestion-input>
-              ${this.#renderInlineButton({
+              ${renderInlineButton(input, {
                 class: 'add-selector-part',
                 title: i18nString(UIStrings.addSelectorPart),
                 iconName: 'plus',
-                onClick: this.#handleAddOrRemoveClick(
+                onClick: input.handleAddOrRemoveClick(
                   {
                     selectors: new ArrayAssignments({
                       [index]: new ArrayAssignments({
@@ -865,11 +912,11 @@ export class StepEditor extends LitElement {
                   }"]`,
                 ),
               })}
-              ${this.#renderInlineButton({
+              ${renderInlineButton(input, {
                 class: 'remove-selector-part',
                 title: i18nString(UIStrings.removeSelectorPart),
                 iconName: 'minus',
-                onClick: this.#handleAddOrRemoveClick(
+                onClick: input.handleAddOrRemoveClick(
                   {
                     selectors: new ArrayAssignments({
                       [index]: new ArrayAssignments({
@@ -890,18 +937,18 @@ export class StepEditor extends LitElement {
     // clang-format on
   }
 
-  #renderAssertedEvents(): Lit.TemplateResult|undefined {
-    this.#renderedAttributes.add('assertedEvents');
-    if (this.state.assertedEvents === undefined) {
+  function renderAssertedEvents(): Lit.TemplateResult|undefined {
+    renderedAttributes.add('assertedEvents');
+    if (input.state.assertedEvents === undefined) {
       return;
     }
     // clang-format off
     return html`<div class="attribute" data-attribute="assertedEvents" jslog=${VisualLogging.treeItem('asserted-events')}>
       <div class="row">
         <div>asserted events<span class="separator">:</span></div>
-        ${this.#renderDeleteButton('assertedEvents')}
+        ${renderDeleteButton(input, 'assertedEvents')}
       </div>
-      ${this.state.assertedEvents.map((event, index) => {
+      ${input.state.assertedEvents.map((event, index) => {
         return html` <div class="padded row" jslog=${VisualLogging.treeItem('event-type')}>
             <div id="event-type">type<span class="separator">:</span></div>
             <div aria-labelledby="event-type">${event.type}</div>
@@ -910,13 +957,13 @@ export class StepEditor extends LitElement {
             <div id="event-title">title<span class="separator">:</span></div>
             <devtools-suggestion-input
               aria-labelledby="event-title"
-              .disabled=${this.disabled}
+              .disabled=${input.disabled}
               .placeholder=${defaultValuesByAttribute.assertedEvents[0].title}
               .value=${live(event.title ?? '')}
-              @blur=${this.#handleInputBlur({
+              @blur=${input.handleInputBlur({
                 attribute: 'assertedEvents',
                 from(value) {
-                  if (this.state.assertedEvents?.[index]?.title === undefined) {
+                  if (input.state.assertedEvents?.[index]?.title === undefined || input.state.assertedEvents[index].title === value) {
                     return;
                   }
                   return {
@@ -932,13 +979,13 @@ export class StepEditor extends LitElement {
             <div>url<span class="separator">:</span></div>
             <devtools-suggestion-input
               aria-labelledby="event-url"
-              .disabled=${this.disabled}
+              .disabled=${input.disabled}
               .placeholder=${defaultValuesByAttribute.assertedEvents[0].url}
               .value=${live(event.url ?? '')}
-              @blur=${this.#handleInputBlur({
+              @blur=${input.handleInputBlur({
                 attribute: 'url',
                 from(value) {
-                  if (this.state.assertedEvents?.[index]?.url === undefined) {
+                  if (input.state.assertedEvents?.[index]?.url === undefined || input.state.assertedEvents[index].url === value) {
                     return;
                   }
                   return {
@@ -955,29 +1002,29 @@ export class StepEditor extends LitElement {
     // clang-format on
   }
 
-  #renderAttributesRow(): Lit.TemplateResult|undefined {
-    this.#renderedAttributes.add('attributes');
-    if (this.state.attributes === undefined) {
+  function renderAttributesRow(): Lit.TemplateResult|undefined {
+    renderedAttributes.add('attributes');
+    if (input.state.attributes === undefined) {
       return;
     }
     // clang-format off
     return html`<div class="attribute" data-attribute="attributes" jslog=${VisualLogging.treeItem('attributes')}>
       <div class="row">
         <div>attributes<span class="separator">:</span></div>
-        ${this.#renderDeleteButton('attributes')}
+        ${renderDeleteButton(input, 'attributes')}
       </div>
-      ${this.state.attributes.map(({ name, value }, index, attributes) => {
+      ${input.state.attributes.map(({ name, value }, index, attributes) => {
         return html`<div class="padded row" jslog=${VisualLogging.treeItem('attribute')}>
           <devtools-suggestion-input
-            .disabled=${this.disabled}
+            .disabled=${input.disabled}
             .placeholder=${defaultValuesByAttribute.attributes[0].name}
             .value=${live(name)}
             data-path=${`attributes.${index}.name`}
             jslog=${VisualLogging.key().track({change: true})}
-            @blur=${this.#handleInputBlur({
+            @blur=${input.handleInputBlur({
               attribute: 'attributes',
               from(name) {
-                if (this.state.attributes?.[index]?.name === undefined) {
+                if (input.state.attributes?.[index]?.name === undefined || input.state.attributes[index].name === name) {
                   return;
                 }
                 return {
@@ -988,14 +1035,14 @@ export class StepEditor extends LitElement {
           ></devtools-suggestion-input>
           <span class="separator">:</span>
           <devtools-suggestion-input
-            .disabled=${this.disabled}
+            .disabled=${input.disabled}
             .placeholder=${defaultValuesByAttribute.attributes[0].value}
             .value=${live(value)}
             data-path=${`attributes.${index}.value`}
-            @blur=${this.#handleInputBlur({
+            @blur=${input.handleInputBlur({
               attribute: 'attributes',
               from(value) {
-                if (this.state.attributes?.[index]?.value === undefined) {
+                if (input.state.attributes?.[index]?.value === undefined || input.state.attributes[index].value === value) {
                   return;
                 }
                 return {
@@ -1004,11 +1051,11 @@ export class StepEditor extends LitElement {
               },
             })}
           ></devtools-suggestion-input>
-          ${this.#renderInlineButton({
+          ${renderInlineButton(input, {
             class: 'add-attribute-assertion',
             title: i18nString(UIStrings.addSelectorPart),
             iconName: 'plus',
-            onClick: this.#handleAddOrRemoveClick(
+            onClick: input.handleAddOrRemoveClick(
               {
                 attributes: new ArrayAssignments({
                   [index + 1]: new InsertAssignment(
@@ -1036,11 +1083,11 @@ export class StepEditor extends LitElement {
               }.name"]`,
             ),
           })}
-          ${this.#renderInlineButton({
+          ${renderInlineButton(input, {
             class: 'remove-attribute-assertion',
             title: i18nString(UIStrings.removeSelectorPart),
             iconName: 'minus',
-            onClick: this.#handleAddOrRemoveClick(
+            onClick: input.handleAddOrRemoveClick(
               { attributes: new ArrayAssignments({ [index]: undefined }) },
               `devtools-suggestion-input[data-path="attributes.${Math.min(
                 index,
@@ -1054,16 +1101,16 @@ export class StepEditor extends LitElement {
     // clang-format on
   }
 
-  #renderAddRowButtons(): Array<Lit.TemplateResult|undefined> {
-    const attributes = attributesByType[this.state.type];
-    return [...attributes.optional].filter(attr => this.state[attr] === undefined).map(attr => {
+  function renderAddRowButtons(): Array<Lit.TemplateResult|undefined> {
+    const attributes = attributesByType[input.state.type];
+    return [...attributes.optional].filter(attr => input.state[attr] === undefined).map(attr => {
       // clang-format off
         return html`<devtools-button
           .variant=${Buttons.Button.Variant.OUTLINED}
           class="add-row"
           data-attribute=${attr}
           jslog=${VisualLogging.action(`add-${Platform.StringUtilities.toKebabCase(attr)}`)}
-          @click=${this.#handleAddRowClickEvent}
+          @click=${input.handleAddRowClickEvent}
         >
           ${i18nString(UIStrings.addAttribute, {
             attributeName: attr,
@@ -1073,63 +1120,52 @@ export class StepEditor extends LitElement {
     });
   }
 
-  #ensureFocus = (query: string): void => {
-    void this.updateComplete.then(() => {
-      const node = this.renderRoot.querySelector<HTMLElement>(query);
-      node?.focus();
-    });
-  };
+  // clang-format off
+  const result = html`
+    <style>${stepEditorStyles}</style>
+    <div class="wrapper" jslog=${VisualLogging.tree('step-editor')} >
+      ${renderTypeRow(input.isTypeEditable)} ${renderRow('target')}
+      ${renderFrameRow()} ${renderSelectorsRow()}
+      ${renderRow('deviceType')} ${renderRow('button')}
+      ${renderRow('url')} ${renderRow('x')}
+      ${renderRow('y')} ${renderRow('offsetX')}
+      ${renderRow('offsetY')} ${renderRow('value')}
+      ${renderRow('key')} ${renderRow('operator')}
+      ${renderRow('count')} ${renderRow('expression')}
+      ${renderRow('duration')} ${renderAssertedEvents()}
+      ${renderRow('timeout')} ${renderRow('width')}
+      ${renderRow('height')} ${renderRow('deviceScaleFactor')}
+      ${renderRow('isMobile')} ${renderRow('hasTouch')}
+      ${renderRow('isLandscape')} ${renderRow('download')}
+      ${renderRow('upload')} ${renderRow('latency')}
+      ${renderRow('name')} ${renderRow('parameters')}
+      ${renderRow('visible')} ${renderRow('properties')}
+      ${renderAttributesRow()}
+      ${input.error
+        ? html`
+            <div class="error">
+              ${i18nString(UIStrings.notSaved, {
+                error: input.error,
+              })}
+            </div>
+          `
+        : undefined}
+      ${!input.disabled
+        ? html`<div
+            class="row-buttons wrapped gap row regular-font no-margin"
+          >
+            ${renderAddRowButtons()}
+          </div>`
+        : undefined}
+    </div>
+  `;
 
-  protected override render(): Lit.TemplateResult {
-    this.#renderedAttributes = new Set();
-
-    // clang-format off
-    const result = html`
-      <style>${stepEditorStyles}</style>
-      <div class="wrapper" jslog=${VisualLogging.tree('step-editor')} >
-        ${this.#renderTypeRow(this.isTypeEditable)} ${this.#renderRow('target')}
-        ${this.#renderFrameRow()} ${this.#renderSelectorsRow()}
-        ${this.#renderRow('deviceType')} ${this.#renderRow('button')}
-        ${this.#renderRow('url')} ${this.#renderRow('x')}
-        ${this.#renderRow('y')} ${this.#renderRow('offsetX')}
-        ${this.#renderRow('offsetY')} ${this.#renderRow('value')}
-        ${this.#renderRow('key')} ${this.#renderRow('operator')}
-        ${this.#renderRow('count')} ${this.#renderRow('expression')}
-        ${this.#renderRow('duration')} ${this.#renderAssertedEvents()}
-        ${this.#renderRow('timeout')} ${this.#renderRow('width')}
-        ${this.#renderRow('height')} ${this.#renderRow('deviceScaleFactor')}
-        ${this.#renderRow('isMobile')} ${this.#renderRow('hasTouch')}
-        ${this.#renderRow('isLandscape')} ${this.#renderRow('download')}
-        ${this.#renderRow('upload')} ${this.#renderRow('latency')}
-        ${this.#renderRow('name')} ${this.#renderRow('parameters')}
-        ${this.#renderRow('visible')} ${this.#renderRow('properties')}
-        ${this.#renderAttributesRow()}
-        ${this.error
-          ? html`
-              <div class="error">
-                ${i18nString(UIStrings.notSaved, {
-                  error: this.error,
-                })}
-              </div>
-            `
-          : undefined}
-        ${!this.disabled
-          ? html`<div
-              class="row-buttons wrapped gap row regular-font no-margin"
-            >
-              ${this.#renderAddRowButtons()}
-            </div>`
-          : undefined}
-      </div>
-    `;
-
-    // clang-format on
-    for (const key of Object.keys(dataTypeByAttribute)) {
-      if (!this.#renderedAttributes.has(key as Attribute)) {
-        throw new Error(`The editable attribute ${key} does not have UI`);
-      }
+  // clang-format on
+  for (const key of Object.keys(dataTypeByAttribute)) {
+    if (!renderedAttributes.has(key as Attribute)) {
+      throw new Error(`The editable attribute ${key} does not have UI`);
     }
-
-    return result;
   }
+
+  return result;
 }
