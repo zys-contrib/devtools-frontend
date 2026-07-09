@@ -2476,19 +2476,24 @@ describe('The Styles pane', () => {
       const propertiesSection = await getStyleRule('#inspected', devToolsPage);
       await propertiesSection.focus();
 
-      // paste a large block of css properties
+      // Paste a large block of css properties.
       await devToolsPage.typeText('m');
       await devToolsPage.pasteText(`argin: 10px; padding: 20px;
           font-weight: bold; font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
           background-image: url('https://example.com/image;v=1?query:part=true');`);
-      await propertiesSection.click();
+      await devToolsPage.page.keyboard.press('Enter');
+      await devToolsPage.page.keyboard.press('Escape');
+      await devToolsPage.waitForFunction(async () => {
+        const names = await getDisplayedCSSPropertyNames(propertiesSection, devToolsPage);
+        return names.includes('margin') && names.includes('background-image');
+      });
 
       await mockAidaCodeComplete(devToolsPage, {
         generatedSamples: [{generationString: 'or: red;', sampleId: 1, score: 1.0}],
         metadata: {rpcGlobalId: '123'}
       });
 
-      // trigger code completion
+      // Trigger code completion.
       await propertiesSection.focus();
       await devToolsPage.typeText('col');
       await devToolsPage.waitForFunction(async () => {
