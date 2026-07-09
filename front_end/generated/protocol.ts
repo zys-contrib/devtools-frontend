@@ -12120,6 +12120,9 @@ export namespace Network {
     FailedToUnwrapKey = 'FailedToUnwrapKey',
     SessionDeletedDuringRefresh = 'SessionDeletedDuringRefresh',
     CrossOriginRegistrationSiteNotIncluded = 'CrossOriginRegistrationSiteNotIncluded',
+    InvalidPreProvisionedKeyInitiatorMissing = 'InvalidPreProvisionedKeyInitiatorMissing',
+    PreProvisionedKeyAccessNotGranted = 'PreProvisionedKeyAccessNotGranted',
+    PreProvisionedKeyNotFound = 'PreProvisionedKeyNotFound',
   }
 
   /**
