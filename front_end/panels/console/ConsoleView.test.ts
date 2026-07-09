@@ -282,7 +282,7 @@ describeWithEnvironment('ConsoleView', () => {
     it('adds messages', async () => {
       const consoleModel = target.model(SDK.ConsoleModel.ConsoleModel);
       assert.exists(consoleModel);
-      SDK.ConsoleModel.ConsoleModel.requestClearMessages();
+      SDK.ConsoleModel.ConsoleModel.requestClearMessages(SDK.TargetManager.TargetManager.instance());
       consoleModel.addMessage(createConsoleMessage(target, 'message 1'));
       consoleModel.addMessage(createConsoleMessage(target, 'message 2'));
 
@@ -295,7 +295,7 @@ describeWithEnvironment('ConsoleView', () => {
       assert.exists(consoleModel);
       const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
       assert.exists(runtimeModel);
-      SDK.ConsoleModel.ConsoleModel.requestClearMessages();
+      SDK.ConsoleModel.ConsoleModel.requestClearMessages(SDK.TargetManager.TargetManager.instance());
       consoleModel.dispatchEventToListeners(SDK.ConsoleModel.Events.CommandEvaluated, {
         result: new SDK.RemoteObject.RemoteObjectImpl(runtimeModel, undefined, 'number', undefined, 42),
         commandMessage: createConsoleMessage(target, '[ultimateQuestionOfLife, theUniverse, everything].join()'),
@@ -363,7 +363,7 @@ describeWithEnvironment('ConsoleView', () => {
       assert.exists(consoleModel);
       const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
       assert.exists(runtimeModel);
-      SDK.ConsoleModel.ConsoleModel.requestClearMessages();
+      SDK.ConsoleModel.ConsoleModel.requestClearMessages(SDK.TargetManager.TargetManager.instance());
 
       const selfXssWarningDisabledSetting = Common.Settings.Settings.instance().createSetting(
           'disable-self-xss-warning', false, Common.Settings.SettingStorageType.SYNCED);

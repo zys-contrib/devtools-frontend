@@ -168,8 +168,8 @@ export class WarningErrorCounterWidget extends UI.Widget.Widget {
   }
 
   override async performUpdate(): Promise<void> {
-    const errors = SDK.ConsoleModel.ConsoleModel.allErrors();
-    const warnings = SDK.ConsoleModel.ConsoleModel.allWarnings();
+    const errors = SDK.ConsoleModel.ConsoleModel.allErrors(SDK.TargetManager.TargetManager.instance());
+    const warnings = SDK.ConsoleModel.ConsoleModel.allWarnings(SDK.TargetManager.TargetManager.instance());
     const issuesManager = IssuesManager.IssuesManager.IssuesManager.instance();
     const issues = issuesManager.numberOfIssues();
 

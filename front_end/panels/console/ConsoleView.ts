@@ -701,7 +701,7 @@ export class ConsoleView extends UI.Widget.VBox implements
   }
 
   clearConsole(): void {
-    SDK.ConsoleModel.ConsoleModel.requestClearMessages();
+    SDK.ConsoleModel.ConsoleModel.requestClearMessages(SDK.TargetManager.TargetManager.instance());
     this.prompt.clearAiCodeCompletionCache();
   }
 

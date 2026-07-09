@@ -35,7 +35,7 @@ import {
 } from './RuntimeModel.js';
 import {SDKModel} from './SDKModel.js';
 import {Capability, type Target, Type} from './Target.js';
-import {TargetManager} from './TargetManager.js';
+import type {TargetManager} from './TargetManager.js';
 
 export {FrontendMessageType} from './ConsoleModelTypes.js';
 
@@ -357,7 +357,7 @@ export class ConsoleModel extends SDKModel<EventTypes> {
   }
 
   // messages[] are not ordered by timestamp.
-  static allMessagesUnordered(targetManager: TargetManager = TargetManager.instance()): ConsoleMessage[] {
+  static allMessagesUnordered(targetManager: TargetManager): ConsoleMessage[] {
     const messages = [];
     for (const target of targetManager.targets()) {
       const targetMessages = target.model(ConsoleModel)?.messages() || [];
@@ -366,7 +366,7 @@ export class ConsoleModel extends SDKModel<EventTypes> {
     return messages;
   }
 
-  static requestClearMessages(targetManager: TargetManager = TargetManager.instance()): void {
+  static requestClearMessages(targetManager: TargetManager): void {
     for (const logModel of targetManager.models(LogModel)) {
       logModel.requestClear();
     }
@@ -394,7 +394,7 @@ export class ConsoleModel extends SDKModel<EventTypes> {
     return this.#errors;
   }
 
-  static allErrors(targetManager: TargetManager = TargetManager.instance()): number {
+  static allErrors(targetManager: TargetManager): number {
     let errors = 0;
     for (const target of targetManager.targets()) {
       errors += target.model(ConsoleModel)?.errors() || 0;
@@ -406,7 +406,7 @@ export class ConsoleModel extends SDKModel<EventTypes> {
     return this.#warnings;
   }
 
-  static allWarnings(targetManager: TargetManager = TargetManager.instance()): number {
+  static allWarnings(targetManager: TargetManager): number {
     let warnings = 0;
     for (const target of targetManager.targets()) {
       warnings += target.model(ConsoleModel)?.warnings() || 0;
