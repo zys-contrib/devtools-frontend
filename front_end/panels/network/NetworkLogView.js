@@ -699,6 +699,9 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin(UI.Widget.VB
     static initiatedByServiceWorkerFilter(request) {
         return request.initiatedByServiceWorker();
     }
+    static linkPreloadRequestFilter(request) {
+        return request.isLinkPreload();
+    }
     static requestResponseHeaderFilter(value, request) {
         return request.responseHeaderValue(value) !== undefined;
     }
@@ -935,6 +938,7 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin(UI.Widget.VB
         this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.Is, "from-cache" /* NetworkForward.UIFilter.IsFilterType.FROM_CACHE */);
         this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.Is, "service-worker-intercepted" /* NetworkForward.UIFilter.IsFilterType.SERVICE_WORKER_INTERCEPTED */);
         this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.Is, "service-worker-initiated" /* NetworkForward.UIFilter.IsFilterType.SERVICE_WORKER_INITIATED */);
+        this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.Is, "preloaded" /* NetworkForward.UIFilter.IsFilterType.PRELOAD */);
         this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.LargerThan, '100');
         this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.LargerThan, '10k');
         this.suggestionBuilder.addItem(NetworkForward.UIFilter.FilterType.LargerThan, '1M');
@@ -1847,6 +1851,9 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin(UI.Widget.VB
                 }
                 if (value.toLowerCase() === "service-worker-initiated" /* NetworkForward.UIFilter.IsFilterType.SERVICE_WORKER_INITIATED */) {
                     return NetworkLogView.initiatedByServiceWorkerFilter;
+                }
+                if (value.toLowerCase() === "preloaded" /* NetworkForward.UIFilter.IsFilterType.PRELOAD */) {
+                    return NetworkLogView.linkPreloadRequestFilter;
                 }
                 break;
             case NetworkForward.UIFilter.FilterType.LargerThan:

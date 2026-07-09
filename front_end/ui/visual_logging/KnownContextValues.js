@@ -2126,6 +2126,7 @@ export const knownContextValues = new Set([
     'is-ad-related',
     'is-landscape',
     'is-mobile',
+    'is-preloaded',
     'is-resident-credential',
     'is-u',
     'is-user-active-false-is-screen-unlocked-false',

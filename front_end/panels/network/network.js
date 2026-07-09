@@ -2277,7 +2277,7 @@ var UIStrings6 = {
   /**
    * @description Cell title in Network Data Grid Node of the Network panel
    */
-  earlyHints: "early-hints",
+  earlyHints: "Early-hints",
   /**
    * @description Text in Network Data Grid Node of the Network panel
    */
@@ -2791,6 +2791,22 @@ var NetworkRequestNode = class _NetworkRequestNode extends NetworkNode {
     }
     return aRequest.identityCompare(bRequest);
   }
+  static IsPreloadedComparator(a, b) {
+    const aRequest = a.requestOrFirstKnownChildRequest();
+    const bRequest = b.requestOrFirstKnownChildRequest();
+    if (!aRequest && !bRequest) {
+      return 0;
+    }
+    if (!aRequest || !bRequest) {
+      return !aRequest ? -1 : 1;
+    }
+    const aIsPreloaded = aRequest.isLinkPreload();
+    const bIsPreloaded = bRequest.isLinkPreload();
+    if (aIsPreloaded === bIsPreloaded) {
+      return aRequest.identityCompare(bRequest);
+    }
+    return aIsPreloaded ? 1 : -1;
+  }
   static RenderBlockingComparator(a, b) {
     const aRequest = a.requestOrFirstKnownChildRequest();
     const bRequest = b.requestOrFirstKnownChildRequest();
@@ -2938,9 +2954,6 @@ var NetworkRequestNode = class _NetworkRequestNode extends NetworkNode {
     const mimeType = this.requestInternal.mimeType || this.requestInternal.requestContentType() || "";
     const resourceType = this.requestInternal.resourceType();
     let simpleType = resourceType.name();
-    if (this.requestInternal.fromEarlyHints()) {
-      return i18nString6(UIStrings6.earlyHints);
-    }
     if (resourceType === Common5.ResourceType.resourceTypes.Other || resourceType === Common5.ResourceType.resourceTypes.Image) {
       simpleType = mimeType.replace(/^(application|image)\//, "");
     }
@@ -2965,14 +2978,17 @@ var NetworkRequestNode = class _NetworkRequestNode extends NetworkNode {
   isPrefetch() {
     return this.requestInternal.resourceType() === Common5.ResourceType.resourceTypes.Prefetch;
   }
+  isPreload() {
+    return this.requestInternal.isPreloadRequest();
+  }
   throttlingConditions() {
     return SDK5.NetworkManager.MultitargetNetworkManager.instance().appliedRequestConditions(this.requestInternal);
   }
   isWarning() {
-    return this.isFailed() && this.isPrefetch();
+    return this.isFailed() && (this.isPrefetch() || this.isPreload());
   }
   isError() {
-    return this.isFailed() && !this.isPrefetch();
+    return this.isFailed() && !this.isPrefetch() && !this.isPreload();
   }
   createCells(trElement) {
     this.initiatorCell = null;
@@ -3051,6 +3067,10 @@ var NetworkRequestNode = class _NetworkRequestNode extends NetworkNode {
       }
       case "is-ad-related": {
         this.setTextAndTitle(cell, this.requestInternal.isAdRelated().toLocaleString());
+        break;
+      }
+      case "is-preloaded": {
+        this.setTextAndTitle(cell, this.requestInternal.isLinkPreload().toLocaleString());
         break;
       }
       case "render-blocking": {
@@ -3411,9 +3431,10 @@ var NetworkRequestNode = class _NetworkRequestNode extends NetworkNode {
         break;
       }
       default: {
-        UI6.Tooltip.Tooltip.install(cell, i18nString6(UIStrings6.otherC));
+        const initiatorText = request.fromEarlyHints() ? i18nString6(UIStrings6.earlyHints) : i18nString6(UIStrings6.otherC);
+        UI6.Tooltip.Tooltip.install(cell, initiatorText);
         cell.classList.add("network-dim-cell");
-        cell.appendChild(document.createTextNode(i18nString6(UIStrings6.otherC)));
+        cell.appendChild(document.createTextNode(initiatorText));
       }
     }
   }
@@ -9789,7 +9810,11 @@ var UIStrings21 = {
   /**
    * @description Text in Network Log View Columns of the Network panel
    */
-  renderBlocking: "Render-blocking"
+  renderBlocking: "Render-blocking",
+  /**
+   * @description Text to show whether a request is preloaded
+   */
+  isPreloaded: "Preloaded"
 };
 var str_21 = i18n41.i18n.registerUIStrings("panels/network/NetworkLogViewColumns.ts", UIStrings21);
 var i18nString21 = i18n41.i18n.getLocalizedString.bind(void 0, str_21);
@@ -10680,6 +10705,11 @@ var DEFAULT_COLUMNS = [
     title: i18nLazyString3(UIStrings21.renderBlocking),
     sortingFunction: NetworkRequestNode.RenderBlockingComparator
   },
+  {
+    id: "is-preloaded",
+    title: i18nLazyString3(UIStrings21.isPreloaded),
+    sortingFunction: NetworkRequestNode.IsPreloadedComparator
+  },
   // This header is a placeholder to let datagrid know that it can be sorted by this column, but never shown.
   {
     id: "waterfall",
@@ -11327,6 +11357,9 @@ var NetworkLogView = class _NetworkLogView extends Common19.ObjectWrapper.eventM
   static initiatedByServiceWorkerFilter(request) {
     return request.initiatedByServiceWorker();
   }
+  static linkPreloadRequestFilter(request) {
+    return request.isLinkPreload();
+  }
   static requestResponseHeaderFilter(value, request) {
     return request.responseHeaderValue(value) !== void 0;
   }
@@ -11574,6 +11607,11 @@ var NetworkLogView = class _NetworkLogView extends Common19.ObjectWrapper.eventM
       NetworkForward4.UIFilter.FilterType.Is,
       "service-worker-initiated"
       /* NetworkForward.UIFilter.IsFilterType.SERVICE_WORKER_INITIATED */
+    );
+    this.suggestionBuilder.addItem(
+      NetworkForward4.UIFilter.FilterType.Is,
+      "preloaded"
+      /* NetworkForward.UIFilter.IsFilterType.PRELOAD */
     );
     this.suggestionBuilder.addItem(NetworkForward4.UIFilter.FilterType.LargerThan, "100");
     this.suggestionBuilder.addItem(NetworkForward4.UIFilter.FilterType.LargerThan, "10k");
@@ -12468,6 +12506,9 @@ var NetworkLogView = class _NetworkLogView extends Common19.ObjectWrapper.eventM
         }
         if (value.toLowerCase() === "service-worker-initiated") {
           return _NetworkLogView.initiatedByServiceWorkerFilter;
+        }
+        if (value.toLowerCase() === "preloaded") {
+          return _NetworkLogView.linkPreloadRequestFilter;
         }
         break;
       case NetworkForward4.UIFilter.FilterType.LargerThan:

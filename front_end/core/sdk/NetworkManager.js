@@ -538,6 +538,7 @@ export class NetworkDispatcher {
         networkRequest.setReferrerPolicy(request.referrerPolicy);
         networkRequest.setIsSameSite(request.isSameSite || false);
         networkRequest.setIsAdRelated(request.isAdRelated || false);
+        networkRequest.setIsLinkPreload(request.isLinkPreload || false);
     }
     updateNetworkRequestWithResponse(networkRequest, response) {
         if (response.url && networkRequest.url() !== response.url) {

@@ -21,7 +21,7 @@ __export(DeviceModeModel_exports, {
 import * as Common2 from "./../../core/common/common.js";
 import * as Host from "./../../core/host/host.js";
 import * as i18n3 from "./../../core/i18n/i18n.js";
-import * as Root from "./../../core/root/root.js";
+import * as Root2 from "./../../core/root/root.js";
 import * as SDK2 from "./../../core/sdk/sdk.js";
 import * as Geometry from "./../geometry/geometry.js";
 
@@ -38,6 +38,7 @@ __export(EmulatedDevices_exports, {
 });
 import * as Common from "./../../core/common/common.js";
 import * as i18n from "./../../core/i18n/i18n.js";
+import * as Root from "./../../core/root/root.js";
 import * as SDK from "./../../core/sdk/sdk.js";
 var UIStrings = {
   /**
@@ -522,29 +523,28 @@ var Show;
   Show2["Default"] = "Default";
   Show2["Never"] = "Never";
 })(Show || (Show = {}));
-var emulatedDevicesListInstance;
 var EmulatedDevicesList = class _EmulatedDevicesList extends Common.ObjectWrapper.ObjectWrapper {
   #standardSetting;
   #standard;
   #customSetting;
   #custom;
-  constructor() {
+  constructor(settings = Common.Settings.Settings.instance()) {
     super();
-    this.#standardSetting = Common.Settings.Settings.instance().createSetting("standard-emulated-device-list", []);
+    this.#standardSetting = settings.createSetting("standard-emulated-device-list", []);
     this.#standard = /* @__PURE__ */ new Set();
     this.listFromJSONV1(this.#standardSetting.get(), this.#standard);
     this.updateStandardDevices();
-    this.#customSetting = Common.Settings.Settings.instance().createSetting("custom-emulated-device-list", []);
+    this.#customSetting = settings.createSetting("custom-emulated-device-list", []);
     this.#custom = /* @__PURE__ */ new Set();
     if (!this.listFromJSONV1(this.#customSetting.get(), this.#custom)) {
       this.saveCustomDevices();
     }
   }
   static instance() {
-    if (!emulatedDevicesListInstance) {
-      emulatedDevicesListInstance = new _EmulatedDevicesList();
+    if (!Root.DevToolsContext.globalInstance().has(_EmulatedDevicesList)) {
+      Root.DevToolsContext.globalInstance().set(_EmulatedDevicesList, new _EmulatedDevicesList());
     }
-    return emulatedDevicesListInstance;
+    return Root.DevToolsContext.globalInstance().get(_EmulatedDevicesList);
   }
   updateStandardDevices() {
     const devices = /* @__PURE__ */ new Set();
@@ -2357,10 +2357,10 @@ var DeviceModeModel = class _DeviceModeModel extends Common2.ObjectWrapper.Objec
     this.#targetManager.observeModels(SDK2.EmulationModel.EmulationModel, this);
   }
   static instance(opts) {
-    if (!Root.DevToolsContext.globalInstance().has(_DeviceModeModel) || opts?.forceNew) {
-      Root.DevToolsContext.globalInstance().set(_DeviceModeModel, new _DeviceModeModel(SDK2.TargetManager.TargetManager.instance(), Common2.Settings.Settings.instance(), SDK2.NetworkManager.MultitargetNetworkManager.instance()));
+    if (!Root2.DevToolsContext.globalInstance().has(_DeviceModeModel) || opts?.forceNew) {
+      Root2.DevToolsContext.globalInstance().set(_DeviceModeModel, new _DeviceModeModel(SDK2.TargetManager.TargetManager.instance(), Common2.Settings.Settings.instance(), SDK2.NetworkManager.MultitargetNetworkManager.instance()));
     }
-    return Root.DevToolsContext.globalInstance().get(_DeviceModeModel);
+    return Root2.DevToolsContext.globalInstance().get(_DeviceModeModel);
   }
   /**
    * This wraps `instance()` in a try/catch because in some DevTools entry points
@@ -2377,10 +2377,10 @@ var DeviceModeModel = class _DeviceModeModel extends Common2.ObjectWrapper.Objec
     }
   }
   static removeInstance() {
-    if (Root.DevToolsContext.globalInstance().has(_DeviceModeModel)) {
-      Root.DevToolsContext.globalInstance().get(_DeviceModeModel).dispose();
+    if (Root2.DevToolsContext.globalInstance().has(_DeviceModeModel)) {
+      Root2.DevToolsContext.globalInstance().get(_DeviceModeModel).dispose();
     }
-    Root.DevToolsContext.globalInstance().delete(_DeviceModeModel);
+    Root2.DevToolsContext.globalInstance().delete(_DeviceModeModel);
   }
   dispose() {
     this.#targetManager.unobserveModels(SDK2.EmulationModel.EmulationModel, this);
