@@ -7,6 +7,7 @@ import './components.js';
 import {assert} from 'chai';
 
 import {
+  assertScreenshot,
   dispatchKeyDownEvent,
   getEventPromise,
   renderElementIntoDOM,
@@ -140,6 +141,16 @@ describe('StepEditor', () => {
 
   beforeEach(() => {
     installMocksForRecordingPlayer();
+  });
+
+  it('should render correctly (screenshot)', async () => {
+    await renderEditor({
+      type: Models.Schema.StepType.Click,
+      selectors: [['.cls']],
+      offsetX: 1,
+      offsetY: 1,
+    });
+    await assertScreenshot('recorder/StepEditor_click.png');
   });
 
   it('should edit step type', async () => {
