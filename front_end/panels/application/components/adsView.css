@@ -58,3 +58,28 @@
   font-weight: normal;
   color: var(--sys-color-on-surface-subtle);
 }
+
+.metrics-title,
+.ad-frames-title {
+  color: var(--sys-color-on-surface);
+  flex: 0 0 auto;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.ad-frames-data-grid {
+  flex: auto;
+}
+
+.ad-frames-container {
+  border: 1px solid var(--sys-color-divider);
+  display: flex;
+  flex: auto;
+  flex-direction: column;
+  margin-bottom: 24px;
+  height: 300px;
+  min-height: 150px;
+  position: relative;
+  resize: vertical;
+  overflow: hidden;
+}
