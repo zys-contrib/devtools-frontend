@@ -97,6 +97,17 @@ export class Tool {
     return (typeof rawSchema === 'object' && rawSchema !== null) ? rawSchema as JSONSchema7 : {};
   }
 
+  get flags(): Array<keyof Protocol.WebMCP.Annotation> {
+    const annotations = this.#protocolTool.annotations;
+    if (!annotations) {
+      return [];
+    }
+
+    return (Object.keys(annotations) as Array<keyof Protocol.WebMCP.Annotation>)
+        .filter(key => annotations[key] === true)
+        .sort();
+  }
+
   get frame(): SDK.ResourceTreeModel.ResourceTreeFrame|undefined {
     return this.#target.deref()
                ?.model(SDK.ResourceTreeModel.ResourceTreeModel)
