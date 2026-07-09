@@ -18,6 +18,8 @@ describe('GdpClient', () => {
   setupRuntimeHooks();
   let dispatchHttpRequestStub:
       sinon.SinonStub<Parameters<typeof Host.InspectorFrontendHost.InspectorFrontendHostInstance.dispatchHttpRequest>>;
+  let gdpClient: Host.GdpClient.GdpClient;
+
   beforeEach(() => {
     updateHostConfig({
       devToolsGdpProfiles: {
@@ -37,7 +39,7 @@ describe('GdpClient', () => {
                 statusCode: 200,
               });
             });
-    Host.GdpClient.GdpClient.instance({forceNew: true});
+    gdpClient = new Host.GdpClient.GdpClient();
   });
 
   it('should cache requests to getProfile when profile exists', async () => {
@@ -48,8 +50,8 @@ describe('GdpClient', () => {
             statusCode: 200,
           });
         });
-    await Host.GdpClient.GdpClient.instance().getProfile();
-    await Host.GdpClient.GdpClient.instance().getProfile();
+    await gdpClient.getProfile();
+    await gdpClient.getProfile();
 
     sinon.assert.calledOnce(dispatchHttpRequestStub);
   });
@@ -68,8 +70,8 @@ describe('GdpClient', () => {
             statusCode: 200,
           });
         });
-    await Host.GdpClient.GdpClient.instance().getProfile();
-    await Host.GdpClient.GdpClient.instance().getProfile();
+    await gdpClient.getProfile();
+    await gdpClient.getProfile();
 
     sinon.assert.calledTwice(dispatchHttpRequestStub);
   });
@@ -82,11 +84,10 @@ describe('GdpClient', () => {
             statusCode: 404,
           });
         });
-    await Host.GdpClient.GdpClient.instance().getProfile();
-    await Host.GdpClient.GdpClient.instance().createProfile(
-        {user: 'test', emailPreference: Host.GdpClient.EmailPreference.ENABLED});
-    await Host.GdpClient.GdpClient.instance().getProfile();
-    await Host.GdpClient.GdpClient.instance().getProfile();
+    await gdpClient.getProfile();
+    await gdpClient.createProfile({user: 'test', emailPreference: Host.GdpClient.EmailPreference.ENABLED});
+    await gdpClient.getProfile();
+    await gdpClient.getProfile();
 
     sinon.assert.calledThrice(dispatchHttpRequestStub);
   });
@@ -103,7 +104,7 @@ describe('GdpClient', () => {
             statusCode: 200,
           });
         });
-    const result = await Host.GdpClient.GdpClient.instance().getAwardedBadgeNames({names: []});
+    const result = await gdpClient.getAwardedBadgeNames({names: []});
     assert.deepEqual(result, new Set(['/profiles/me/awards/some-badge']));
   });
 
@@ -115,7 +116,8 @@ describe('GdpClient', () => {
         },
       });
 
-      const profileResult = await Host.GdpClient.GdpClient.instance({forceNew: true}).getProfile();
+      gdpClient = new Host.GdpClient.GdpClient();
+      const profileResult = await gdpClient.getProfile();
 
       assert.isNull(profileResult);
       sinon.assert.notCalled(dispatchHttpRequestStub);
@@ -131,7 +133,7 @@ describe('GdpClient', () => {
               return;
             }
           });
-      const result = await Host.GdpClient.GdpClient.instance().getProfile();
+      const result = await gdpClient.getProfile();
 
       assert.isNull(result);
       sinon.assert.calledOnce(dispatchHttpRequestStub);
@@ -145,7 +147,7 @@ describe('GdpClient', () => {
               response: 'this is not a json',
             });
           });
-      const result = await Host.GdpClient.GdpClient.instance().getProfile();
+      const result = await gdpClient.getProfile();
       assert.isNull(result);
     });
 
@@ -159,7 +161,7 @@ describe('GdpClient', () => {
 
             cb({statusCode: 503, error: ''});
           });
-      const result = await Host.GdpClient.GdpClient.instance().getProfile();
+      const result = await gdpClient.getProfile();
 
       assert.isNull(result);
       sinon.assert.calledTwice(dispatchHttpRequestStub);
@@ -173,7 +175,7 @@ describe('GdpClient', () => {
               return;
             }
           });
-      const result = await Host.GdpClient.GdpClient.instance().getProfile();
+      const result = await gdpClient.getProfile();
 
       assert.deepEqual(result, {
         profile: {name: 'test/profile-id'},
@@ -197,7 +199,8 @@ describe('GdpClient', () => {
             });
           });
 
-      const result = await Host.GdpClient.GdpClient.instance({forceNew: true}).getProfile();
+      gdpClient = new Host.GdpClient.GdpClient();
+      const result = await gdpClient.getProfile();
 
       assert.deepEqual(result, {
         profile: null,
