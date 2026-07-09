@@ -56,7 +56,7 @@ export function stubNoopSettings() {
   } as unknown as Common.Settings.Settings);
 }
 
-export const DEFAULT_SETTING_REGISTRATIONS_FOR_TEST = [
+export const DEFAULT_SETTING_REGISTRATIONS_FOR_TEST: ReadonlyArray<ReturnType<typeof createSettingValue>> = [
   createSettingValue(Common.Settings.SettingCategory.ADORNER, 'adorner-settings', [],
                      Common.Settings.SettingType.ARRAY),
   createSettingValue(Common.Settings.SettingCategory.APPEARANCE, 'disable-paused-state-overlay', false),

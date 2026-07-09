@@ -53,5 +53,7 @@ devtools_foundation_module("unittests") {
     ":bundle",
     "../core/common:bundle",
     "../core/root:bundle",
+    "../generated:protocol",
+    "../testing",
   ]
 }

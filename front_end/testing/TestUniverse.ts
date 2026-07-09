@@ -412,7 +412,7 @@ export class TestUniverse implements Foundation.Universe.Universe {
         syncedStorage: storage,
         globalStorage: storage,
         localStorage: storage,
-        settingRegistrations: DEFAULT_SETTING_REGISTRATIONS_FOR_TEST,
+        settingRegistrations: [...DEFAULT_SETTING_REGISTRATIONS_FOR_TEST],
         console: this.console,
         ...this.#creationOptions?.settingsCreationOptions,
       };
