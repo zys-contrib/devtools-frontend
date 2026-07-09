@@ -34,7 +34,12 @@ description: Use when migrating Chromium layout tests to DevTools unit tests
 - Use the `verification` skill to correctly build the project and run the new test.
 - Ensure the test passes.
 
-6. Upload a CL with your changes using the `version-control` skill. Make sure the CL description has a `Fixed: <issue number>` trailer instead of `Bug: <issue number>`.
+6. **Evaluate Test Completeness and Utility**:
+
+- Critically review the newly created test to ensure it provides meaningful coverage. Cross-reference it with the original Chromium layout test to verify that all original behaviors, edge cases, and assertions have been fully migrated and are actively being tested.
+- If the newly added test does not test any logic from the component but just the getters from the mocked data explain to the user that this test does not add value and it's better to close it without adding the test. Provide a command without executing it to close the issue.
+
+7. Upload a CL with your changes using the `version-control` skill. Make sure the CL description has a `Fixed: <issue number>` trailer instead of `Bug: <issue number>`.
 
 ## Example Conversion
 
