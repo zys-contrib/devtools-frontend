@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import '../../../ui/kit/kit.js';
-import './StepEditor.js';
 
 import * as i18n from '../../../core/i18n/i18n.js';
 import * as Platform from '../../../core/platform/platform.js';
@@ -14,7 +13,7 @@ import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
 import type * as Converters from '../converters/converters.js';
 import * as Models from '../models/models.js';
 
-import type {StepEditedEvent} from './StepEditor.js';
+import {type StepEditedEvent, StepEditor} from './StepEditor.js';
 import stepViewStyles from './stepView.css.js';
 import {TimelineSection} from './TimelineSection.js';
 
@@ -464,21 +463,21 @@ export const DEFAULT_VIEW = (input: ViewInput, _output: ViewOutput, target: HTML
         <div class="details">
           ${
             input.step &&
-            html`<devtools-recorder-step-editor
+            html`<devtools-widget ${widget(StepEditor, {
+              step: input.step,
+              disabled: input.isPlaying,
+            })}
             class=${input.isSelected ? 'is-selected' : ''}
-            .step=${input.step}
-            .disabled=${input.isPlaying}
-            @stepedited=${input.stepEdited}>
-          </devtools-recorder-step-editor>`
+            @stepedited=${input.stepEdited}></devtools-widget>`
           }
           ${
             input.section?.causingStep &&
-            html`<devtools-recorder-step-editor
-            .step=${input.section.causingStep}
-            .isTypeEditable=${false}
-            .disabled=${input.isPlaying}
-            @stepedited=${input.stepEdited}>
-          </devtools-recorder-step-editor>`
+            html`<devtools-widget ${widget(StepEditor, {
+              step: input.section.causingStep,
+              isTypeEditable: false,
+              disabled: input.isPlaying,
+            })}
+            @stepedited=${input.stepEdited}></devtools-widget>`
           }
         </div>
         ${

@@ -29,8 +29,7 @@ import {
   type RequiredKeys,
 } from './util.js';
 
-const {html, Decorators, Directives, LitElement} = Lit;
-const {customElement, property, state} = Decorators;
+const {html, render, Directives} = Lit;
 const {live} = Directives;
 const {widget} = UI.Widget;
 
@@ -271,12 +270,6 @@ const UIStrings = {
 const str_ = i18n.i18n.registerUIStrings('panels/recorder/components/StepEditor.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'devtools-recorder-step-editor': StepEditor;
-  }
-}
-
 export class StepEditedEvent extends Event {
   static readonly eventName = 'stepedited';
   data: Models.Schema.Step;
@@ -358,9 +351,9 @@ export class EditorState {
   static async defaultByAttribute<Attribute extends keyof typeof defaultValuesByAttribute>(
       state: DeepImmutable<EditorState>,
       attribute: Attribute): Promise<DeepImmutable<typeof defaultValuesByAttribute[Attribute]>>;
-  static async defaultByAttribute(_state: DeepImmutable<EditorState>, attribute: keyof typeof defaultValuesByAttribute):
-      Promise<unknown> {
-    return await this.#puppeteer.run(puppeteer => {
+  static async defaultByAttribute(_state: DeepImmutable<EditorState>,
+                                  attribute: keyof typeof defaultValuesByAttribute): Promise<unknown> {
+    return await this.#puppeteer.run<unknown>(puppeteer => {
       switch (attribute) {
         case 'assertedEvents': {
           return immutableDeepAssign(defaultValuesByAttribute.assertedEvents, new ArrayAssignments({
@@ -373,14 +366,12 @@ export class EditorState {
           return puppeteer.page.url() || defaultValuesByAttribute.url;
         }
         case 'height': {
-          return (
-              puppeteer.page.evaluate(() => (visualViewport as VisualViewport).height) ||
-              defaultValuesByAttribute.height);
+          return puppeteer.page.evaluate(() => (visualViewport as VisualViewport).height)
+              .then(h => h || defaultValuesByAttribute.height);
         }
         case 'width': {
-          return (
-              puppeteer.page.evaluate(() => (visualViewport as VisualViewport).width) ||
-              defaultValuesByAttribute.width);
+          return puppeteer.page.evaluate(() => (visualViewport as VisualViewport).width)
+              .then(w => w || defaultValuesByAttribute.width);
         }
         default: {
           return defaultValuesByAttribute[attribute];
@@ -389,11 +380,10 @@ export class EditorState {
     });
   }
 
-  static fromStep(step: DeepImmutable<Models.Schema.Step>): DeepImmutable<EditorState> {
+  static fromStep(step: Models.Schema.Step): DeepImmutable<EditorState> {
     const state = structuredClone(step) as EditorState;
     for (const key of ['parameters', 'properties'] as Array<'properties'>) {
       if (key in step && step[key] !== undefined) {
-        // @ts-expect-error Potential infinite type instantiation.
         state[key] = JSON.stringify(step[key]);
       }
     }
@@ -478,40 +468,39 @@ export interface ViewInput {
   handleKeyDownEvent: (event: Event) => void;
 }
 
-@customElement('devtools-recorder-step-editor')
-export class StepEditor extends LitElement {
-  @state() private declare state: DeepImmutable<EditorState>;
-  @state() private declare error: string|undefined;
+export class StepEditor extends UI.Widget.Widget {
+  #state: DeepImmutable<EditorState>;
+  #error: string|undefined;
+  #isTypeEditable = true;
+  #disabled = false;
 
-  @property({type: Boolean}) declare isTypeEditable: boolean;
-  @property({type: Boolean}) declare disabled: boolean;
-
-  constructor() {
-    super();
-
-    this.state = {type: Models.Schema.StepType.WaitForElement};
-
-    this.isTypeEditable = true;
-    this.disabled = false;
+  constructor(element?: HTMLElement) {
+    super(element, {useShadowDom: true});
+    this.#state = {type: Models.Schema.StepType.WaitForElement};
   }
 
-  protected override createRenderRoot(): HTMLElement|DocumentFragment {
-    const root = super.createRenderRoot();
-    root.addEventListener('keydown', this.#handleKeyDownEvent);
-    return root;
+  set isTypeEditable(value: boolean) {
+    this.#isTypeEditable = value;
+    this.requestUpdate();
   }
 
-  set step(step: DeepImmutable<Models.Schema.Step>) {
-    this.state = deepFreeze(EditorState.fromStep(step));
-    this.error = undefined;
+  set disabled(value: boolean) {
+    this.#disabled = value;
+    this.requestUpdate();
   }
 
-  protected override render(): Lit.TemplateResult {
+  set step(step: Models.Schema.Step) {
+    this.#state = deepFreeze(EditorState.fromStep(step));
+    this.#error = undefined;
+    this.requestUpdate();
+  }
+
+  override performUpdate(): void {
     const input: ViewInput = {
-      state: this.state,
-      disabled: this.disabled,
-      error: this.error,
-      isTypeEditable: this.isTypeEditable,
+      state: this.#state,
+      disabled: this.#disabled,
+      error: this.#error,
+      isTypeEditable: this.#isTypeEditable,
       handleInputBlur: this.#handleInputBlur,
       handleTypeInputBlur: this.#handleTypeInputBlur,
       handleAddRowClickEvent: this.#handleAddRowClickEvent,
@@ -521,26 +510,28 @@ export class StepEditor extends LitElement {
       handleAddOrRemoveClick: this.#handleAddOrRemoveClick,
       handleKeyDownEvent: this.#handleKeyDownEvent,
     };
-    return renderStepEditor(input);
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(renderStepEditor(input), this.contentElement, {container: {listeners: {keydown: this.#handleKeyDownEvent}}});
   }
 
   #commit(updatedState: DeepImmutable<EditorState>): void {
     try {
-      this.dispatchEvent(new StepEditedEvent(EditorState.toStep(updatedState)));
+      this.element.dispatchEvent(new StepEditedEvent(EditorState.toStep(updatedState)));
       // Note we don't need to update this variable since it will come from up
       // the tree, but processing up the tree is asynchronous implying we cannot
       // reliably know when the state will come back down. Since we need to
       // focus the DOM elements that may be created as a result of this new
       // state, we set it here for waiting on the updateComplete promise later.
-      this.state = updatedState;
+      this.#state = updatedState;
     } catch (error) {
-      this.error = error.message;
+      this.#error = error.message;
     }
+    this.requestUpdate();
   }
 
   #handleSelectorPicked =
       (data: Models.Schema.StepWithSelectors&Pick<Models.Schema.ClickAttributes, 'offsetX'|'offsetY'>): void => {
-        this.#commit(immutableDeepAssign(this.state, {
+        this.#commit(immutableDeepAssign(this.#state, {
           target: data.target,
           frame: data.frame,
           selectors: data.selectors.map(selector => typeof selector === 'string' ? [selector] : selector),
@@ -550,28 +541,28 @@ export class StepEditor extends LitElement {
       };
 
   #handleAttributeRequested = (send: (attribute?: string) => void): void => {
-    this.dispatchEvent(new RequestSelectorAttributeEvent(send));
+    this.element.dispatchEvent(new RequestSelectorAttributeEvent(send));
   };
 
-  #handleAddOrRemoveClick = (assignments: DeepImmutable<DeepPartial<Assignments<EditorState>>>, query: string):
-      ((event: Event) => void) => event => {
-        event.preventDefault();
-        event.stopPropagation();
+  #handleAddOrRemoveClick = (assignments: DeepImmutable<DeepPartial<Assignments<EditorState>>>,
+                             query: string): ((event: Event) => void) => event => {
+    event.preventDefault();
+    event.stopPropagation();
 
-        this.#commit(immutableDeepAssign(this.state, assignments));
+    this.#commit(immutableDeepAssign(this.#state, assignments));
 
-        this.#ensureFocus(query);
-      };
+    this.#ensureFocus(query);
+  };
 
   #handleDeleteRowClick = (attribute: Attribute) => (event: Event): void => {
     event.preventDefault();
     event.stopPropagation();
-    this.#commit(immutableDeepAssign(this.state, {[attribute]: undefined}));
+    this.#commit(immutableDeepAssign(this.#state, {[attribute]: undefined}));
   };
 
   #ensureFocus = (query: string): void => {
     void this.updateComplete.then(() => {
-      const node = this.renderRoot.querySelector<HTMLElement>(query);
+      const node = this.contentElement.querySelector<HTMLElement>(query);
       node?.focus();
     });
   };
@@ -581,7 +572,7 @@ export class StepEditor extends LitElement {
     if (event.target instanceof SuggestionInput.SuggestionInput.SuggestionInput && event.key === 'Enter') {
       event.preventDefault();
       event.stopPropagation();
-      const elements = this.renderRoot.querySelectorAll('devtools-suggestion-input');
+      const elements = this.contentElement.querySelectorAll('devtools-suggestion-input');
       const element = [...elements].findIndex(value => value === event.target);
       if (element >= 0 && element + 1 < elements.length) {
         elements[element + 1].focus();
@@ -607,7 +598,7 @@ export class StepEditor extends LitElement {
     if (!assignments) {
       return;
     }
-    this.#commit(immutableDeepAssign(this.state, assignments));
+    this.#commit(immutableDeepAssign(this.#state, assignments));
   };
 
   #handleTypeInputBlur = async(event: Event): Promise<void> => {
@@ -617,11 +608,12 @@ export class StepEditor extends LitElement {
     }
 
     const value = event.target.value as Models.Schema.StepType;
-    if (value === this.state.type) {
+    if (value === this.#state.type) {
       return;
     }
     if (!Object.values(Models.Schema.StepType).includes(value)) {
-      this.error = i18nString(UIStrings.unknownActionType);
+      this.#error = i18nString(UIStrings.unknownActionType);
+      this.requestUpdate();
       return;
     }
     this.#commit(await EditorState.default(value));
@@ -633,8 +625,8 @@ export class StepEditor extends LitElement {
 
     const attribute = (event.target as HTMLElement).dataset.attribute as Attribute;
 
-    this.#commit(immutableDeepAssign(this.state, {
-      [attribute]: await EditorState.defaultByAttribute(this.state, attribute),
+    this.#commit(immutableDeepAssign(this.#state, {
+      [attribute]: await EditorState.defaultByAttribute(this.#state, attribute),
     }));
 
     this.#ensureFocus(`[data-attribute=${attribute}].attribute devtools-suggestion-input`);

@@ -17,11 +17,11 @@ import type * as SuggestionInput from '../../../ui/components/suggestion_input/s
 import * as Models from '../models/models.js';
 import {installMocksForRecordingPlayer} from '../testing/RecorderHelpers.js';
 
-import type * as Components from './components.js';
+import * as Components from './components.js';
 
 function getStepEditedPromise(editor: Components.StepEditor.StepEditor) {
   return getEventPromise<Components.StepEditor.StepEditedEvent>(
-             editor,
+             editor.element,
              'stepedited',
              )
       .then(({data}) => data);
@@ -39,9 +39,10 @@ describe('StepEditor', () => {
   async function renderEditor(
       step: Models.Schema.Step,
       ): Promise<Components.StepEditor.StepEditor> {
-    const editor = document.createElement('devtools-recorder-step-editor');
+    const editor = new Components.StepEditor.StepEditor();
     editor.step = structuredClone(step) as typeof editor.step;
     renderElementIntoDOM(editor, {});
+    await triggerMicroTaskQueue();
     await editor.updateComplete;
     return editor;
   }
@@ -50,7 +51,7 @@ describe('StepEditor', () => {
       editor: Components.StepEditor.StepEditor,
       attribute: string,
       ): SuggestionInput.SuggestionInput.SuggestionInput {
-    const input = editor.renderRoot.querySelector(
+    const input = editor.contentElement.querySelector(
         `.attribute[data-attribute="${attribute}"] devtools-suggestion-input`,
     );
     if (!input) {
@@ -63,7 +64,7 @@ describe('StepEditor', () => {
       editor: Components.StepEditor.StepEditor,
       ): string[] {
     const result = [];
-    const inputs = editor.renderRoot.querySelectorAll(
+    const inputs = editor.contentElement.querySelectorAll(
         'devtools-suggestion-input',
     );
     for (const input of inputs) {
@@ -76,7 +77,7 @@ describe('StepEditor', () => {
       editor: Components.StepEditor.StepEditor,
       attribute: string,
       ): Promise<void> {
-    const button = editor.renderRoot.querySelector(
+    const button = editor.contentElement.querySelector(
         `devtools-button.add-row[data-attribute="${attribute}"]`,
     );
     assert.instanceOf(button, HTMLElement);
@@ -89,7 +90,7 @@ describe('StepEditor', () => {
       editor: Components.StepEditor.StepEditor,
       attribute: string,
       ): Promise<void> {
-    const button = editor.renderRoot.querySelector(
+    const button = editor.contentElement.querySelector(
         `devtools-button.delete-row[data-attribute="${attribute}"]`,
     );
     assert.instanceOf(button, HTMLElement);
@@ -102,7 +103,7 @@ describe('StepEditor', () => {
       editor: Components.StepEditor.StepEditor,
       className: string,
       ): Promise<void> {
-    const button = editor.renderRoot.querySelector(
+    const button = editor.contentElement.querySelector(
         `.attribute[data-attribute="frame"] devtools-button${className}`,
     );
     assert.instanceOf(button, HTMLElement);
@@ -115,7 +116,7 @@ describe('StepEditor', () => {
       path: number[],
       className: string,
       ): Promise<void> {
-    const button = editor.renderRoot.querySelector(
+    const button = editor.contentElement.querySelector(
         `[data-selector-path="${path.join('.')}"] devtools-button${className}`,
     );
     assert.instanceOf(button, HTMLElement);
@@ -181,6 +182,7 @@ describe('StepEditor', () => {
       selectors: ['.cls'],
       value: 'Value',
     });
+    await editor.updateComplete;
     assert.deepEqual(getAllInputValues(editor), [
       'change',
       '.cls',
@@ -220,6 +222,7 @@ describe('StepEditor', () => {
       offsetX: 1,
       offsetY: 1,
     });
+    await editor.updateComplete;
     assert.deepEqual(getAllInputValues(editor), [
       'click',
       '.cls',
@@ -433,7 +436,7 @@ describe('StepEditor', () => {
       assert.deepEqual(getAllInputValues(editor), ['scroll', '0', '0']);
 
       assert.isTrue(
-          editor.shadowRoot?.activeElement?.matches(
+          editor.element.shadowRoot?.activeElement?.matches(
               'devtools-suggestion-input[data-path="frame.1"]',
               ),
       );
@@ -450,7 +453,7 @@ describe('StepEditor', () => {
       assert.deepEqual(getAllInputValues(editor), ['scroll', '0']);
 
       assert.isTrue(
-          editor.shadowRoot?.activeElement?.matches(
+          editor.element.shadowRoot?.activeElement?.matches(
               'devtools-suggestion-input[data-path="frame.0"]',
               ),
       );
@@ -479,7 +482,7 @@ describe('StepEditor', () => {
       ]);
 
       assert.isTrue(
-          editor.shadowRoot?.activeElement?.matches(
+          editor.element.shadowRoot?.activeElement?.matches(
               'devtools-suggestion-input[data-path="selectors.0.1"]',
               ),
       );
@@ -497,7 +500,7 @@ describe('StepEditor', () => {
       assert.deepEqual(getAllInputValues(editor), ['scroll', '.cls']);
 
       assert.isTrue(
-          editor.shadowRoot?.activeElement?.matches(
+          editor.element.shadowRoot?.activeElement?.matches(
               'devtools-suggestion-input[data-path="selectors.0.0"]',
               ),
       );
@@ -524,7 +527,7 @@ describe('StepEditor', () => {
         '.cls',
       ]);
       assert.isTrue(
-          editor.shadowRoot?.activeElement?.matches(
+          editor.element.shadowRoot?.activeElement?.matches(
               'devtools-suggestion-input[data-path="selectors.1.0"]',
               ),
       );
@@ -540,7 +543,7 @@ describe('StepEditor', () => {
       });
       assert.deepEqual(getAllInputValues(editor), ['scroll', '.part1']);
       assert.isTrue(
-          editor.shadowRoot?.activeElement?.matches(
+          editor.element.shadowRoot?.activeElement?.matches(
               'devtools-suggestion-input[data-path="selectors.0.0"]',
               ),
       );
@@ -555,7 +558,7 @@ describe('StepEditor', () => {
     editor.disabled = true;
     await editor.updateComplete;
 
-    for (const input of editor.renderRoot.querySelectorAll(
+    for (const input of editor.contentElement.querySelectorAll(
              'devtools-suggestion-input',
              )) {
       assert.isTrue(input.disabled);
@@ -652,13 +655,14 @@ describe('StepEditor', () => {
     {
       const step = getStepEditedPromise(editor);
 
-      editor.renderRoot.querySelectorAll<HTMLElement>('.add-attribute-assertion')[0]?.click();
+      editor.contentElement.querySelectorAll<HTMLElement>('.add-attribute-assertion')[0]?.click();
 
       assert.deepEqual(await step, {
         type: Models.Schema.StepType.WaitForElement,
         selectors: ['.part1'],
         attributes: {a: 'b', attribute: 'value'},
       });
+      await editor.updateComplete;
       assert.deepEqual(getAllInputValues(editor), [
         'waitForElement',
         '.part1',
@@ -671,13 +675,14 @@ describe('StepEditor', () => {
     {
       const step = getStepEditedPromise(editor);
 
-      editor.renderRoot.querySelectorAll<HTMLElement>('.remove-attribute-assertion')[1]?.click();
+      editor.contentElement.querySelectorAll<HTMLElement>('.remove-attribute-assertion')[1]?.click();
 
       assert.deepEqual(await step, {
         type: Models.Schema.StepType.WaitForElement,
         selectors: ['.part1'],
         attributes: {a: 'b'},
       });
+      await editor.updateComplete;
       assert.deepEqual(getAllInputValues(editor), [
         'waitForElement',
         '.part1',

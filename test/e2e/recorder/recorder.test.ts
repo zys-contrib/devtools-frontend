@@ -1351,17 +1351,23 @@ describe('Recorder', function() {
     await inspectedPage.page.click('#test');
 
     await devToolsPage.bringToFront();
-    const steps = await devToolsPage.waitForFunction(async () => {
+    const step = await devToolsPage.waitForFunction(async () => {
       const steps = await devToolsPage.$$('.step-view-widget');
-      return steps.length === 5 ? steps : undefined;
+      for (const s of steps) {
+        const title = await devToolsPage.$('.main-title', s);
+        const text = await title?.evaluate(el => el.textContent);
+        if (text?.includes('Click')) {
+          return s;
+        }
+      }
+      return undefined;
     });
-    const step = steps.pop();
     assert.isOk(step);
     const title = await step.waitForSelector(':scope >>>> .main-title');
     await title!.click();
 
     const input = await step.waitForSelector(
-        ':scope >>>> devtools-recorder-step-editor >>>> div:nth-of-type(1) > devtools-suggestion-input');
+        ':scope >>>> .details devtools-widget >>>> div:nth-of-type(1) > devtools-suggestion-input');
     await input!.click();
 
     const eventPromise = step.evaluate(element => {
