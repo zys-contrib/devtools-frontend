@@ -339,7 +339,8 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
       return contextMenu;
     }
 
-    const url = SourceMapsResolver.SourceMapsResolver.resolvedURLForEntry(this.parsedTrace, entry);
+    const url = SourceMapsResolver.SourceMapsResolver.resolvedURLForEntry(this.parsedTrace, entry,
+                                                                          Workspace.Workspace.WorkspaceImpl.instance());
     if (!url) {
       return contextMenu;
     }
