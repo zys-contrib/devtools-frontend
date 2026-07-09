@@ -117,6 +117,24 @@ describeWithEnvironment('NetworkLogView', () => {
     return request;
   }
 
+  function createWebSocketRequest(url: string, options: {
+    target?: SDK.Target.Target,
+  } = {}): SDK.NetworkRequest.NetworkRequest {
+    const effectiveTarget = options.target || target;
+    const networkManager = effectiveTarget.model(SDK.NetworkManager.NetworkManager);
+    assert.exists(networkManager);
+    let request: SDK.NetworkRequest.NetworkRequest|undefined;
+    const onRequestStarted = (event: Common.EventTarget.EventTargetEvent<SDK.NetworkManager.RequestStartedEvent>) => {
+      request = event.data.request;
+    };
+    networkManager.addEventListener(SDK.NetworkManager.Events.RequestStarted, onRequestStarted);
+    dispatchEvent(effectiveTarget, 'Network.webSocketCreated',
+                  {requestId: `request${++nextId}`, url} as unknown as Protocol.Network.WebSocketCreatedEvent);
+    networkManager.removeEventListener(SDK.NetworkManager.Events.RequestStarted, onRequestStarted);
+    assert.exists(request);
+    return request;
+  }
+
   function createEnvironment() {
     const filterBar = new UI.FilterBar.FilterBar('network-panel', true);
     networkLogView = createNetworkLogView(filterBar);
@@ -1370,6 +1388,35 @@ Invoke-WebRequest -UseBasicParsing -Uri "https://url-header-and-content-overridd
     const revealStub = sinon.stub(Common.Revealer.RevealerRegistry.instance(), 'reveal');
     icons[1].click();
     sinon.assert.calledOnceWithExactly(revealStub, appliedConditions, false);
+  });
+
+  it('preserves selection when a WebSocket frame is received', async () => {
+    const {rootNode, networkLogView} = createEnvironment();
+
+    const request = createWebSocketRequest('ws://localhost:8880/echo');
+
+    await RenderCoordinator.done();
+
+    const dataGrid = networkLogView.columns().dataGrid();
+    const node = rootNode.children.find(n => (n as Network.NetworkDataGridNode.NetworkNode).request() === request);
+    assert.exists(node);
+
+    node.select();
+    assert.strictEqual(dataGrid.selectedNode, node);
+
+    dispatchEvent(target, 'Network.webSocketFrameReceived', {
+      requestId: request.requestId(),
+      timestamp: 0,
+      response: {
+        opcode: 1,
+        mask: false,
+        payloadData: 'test',
+      },
+    } as unknown as Protocol.Network.WebSocketFrameReceivedEvent);
+
+    await RenderCoordinator.done();
+
+    assert.strictEqual(dataGrid.selectedNode, node);
   });
 });
 
