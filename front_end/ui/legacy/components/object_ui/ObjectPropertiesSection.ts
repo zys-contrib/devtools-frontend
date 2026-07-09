@@ -52,7 +52,7 @@ import {RemoteObjectPreviewFormatter, renderNodeTitle} from './RemoteObjectPrevi
 
 export {objectPropertiesSectionStyles, objectValueStyles};
 const {widget} = UI.Widget;
-const {ref, repeat, ifDefined, classMap} = Directives;
+const {ref, repeat, ifDefined, classMap, until} = Directives;
 const UIStrings = {
   /**
    * @description Text in Object Properties Section
@@ -149,6 +149,13 @@ const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 export const EXPANDABLE_MAX_DEPTH = 100;
 
 const objectPropertiesSectionMap = new WeakMap<Element, ObjectPropertiesSection>();
+// TODO(crbug.com/457388389): This cache is a temporary workaround for the <devtools-tree> migration.
+// It can be removed once the entire ObjectPropertiesSection is fully migrated to Lit and
+// the legacy TreeOutline/TreeElement dependencies are removed.
+const topLevelNodesCache = new WeakMap<ObjectTreeNodeBase, {
+  nodes: UI.TreeOutline.TreeElement[],
+  linkifier?: Components.Linkifier.Linkifier,
+}>();
 
 interface NodeChildren {
   properties?: ObjectTreeNode[];
@@ -435,7 +442,6 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
   get canExpandRecursively(): boolean {
     return true;
   }
-
   get sortPropertiesAlphabetically(): boolean {
     if (this.isWasm) {
       return false;
@@ -451,6 +457,7 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
     setting.set(value);
     this.removeChildren();
   }
+
   // Performs a pre-order tree traversal over the populated children. If any children need to be populated, callers must
   // do that while walking (pre-order visitation enables that).
   * #walk(maxDepth = -1, filter?: (node: ObjectTreeNodeBase) => boolean): Generator<ObjectTreeNodeBase> {
@@ -776,7 +783,6 @@ export class ObjectTreeNode extends ObjectTreeNodeBase {
   override get canExpandRecursively(): boolean {
     return this.property.name !== '[[Prototype]]';
   }
-
   get name(): string {
     return this.property.name;
   }
@@ -1339,6 +1345,40 @@ export function populateObjectTreeContextMenu(
       {checked: object.includeNullOrUndefinedValues, jslogContext: 'show-all'});
 }
 
+export function renderObjectTree(
+    objectTree: ObjectTree,
+    linkifier?: Components.Linkifier.Linkifier,
+    emptyPlaceholder?: string|null,
+    ): unknown {
+  const entry = topLevelNodesCache.get(objectTree);
+  if (entry && entry.linkifier === linkifier) {
+    return html`
+      <ul class="source-code object-properties-section" role="group">
+        ${entry.nodes.map(node => html`<devtools-tree-wrapper .treeElement=${node}></devtools-tree-wrapper>`)}
+      </ul>
+    `;
+  }
+
+  const promise = (async () => {
+    await ObjectPropertyTreeElement.populateChildrenIfNeeded(objectTree);
+    const nodes = Array.from(ObjectPropertyTreeElement.createNodes(
+        objectTree, /* skipProto= */ false, /* skipGettersAndSetters= */ false, linkifier, emptyPlaceholder));
+    topLevelNodesCache.set(objectTree, {linkifier, nodes});
+    const listener = (): void => {
+      topLevelNodesCache.delete(objectTree);
+      objectTree.removeEventListener(ObjectTreeNodeBase.Events.CHILDREN_CHANGED, listener);
+    };
+    objectTree.addEventListener(ObjectTreeNodeBase.Events.CHILDREN_CHANGED, listener);
+
+    return html`
+      <ul class="source-code object-properties-section" role="group">
+        ${nodes.map(node => html`<devtools-tree-wrapper .treeElement=${node}></devtools-tree-wrapper>`)}
+      </ul>
+    `;
+  })();
+
+  return until(promise, html`<ul class="source-code object-properties-section" role="group"></ul>`);
+}
 export class RootElement extends UI.TreeOutline.TreeElement {
   private readonly object: ObjectTree;
   private readonly linkifier: Components.Linkifier.Linkifier|undefined;
@@ -1699,6 +1739,7 @@ export class ObjectPropertyTreeElement extends UI.TreeOutline.TreeElement {
     super();
 
     this.#widget = new ObjectPropertyWidget();
+    this.#widget.markAsRoot();
     this.property = property;
     this.hidden = property.isFiltered;
     this.property.addEventListener(ObjectTreeNodeBase.Events.VALUE_CHANGED, this.#updateValue, this);
@@ -1919,7 +1960,6 @@ export class ObjectPropertyTreeElement extends UI.TreeOutline.TreeElement {
 
   override onattach(): void {
     this.updateExpandable();
-    this.#widget.markAsRoot();
     this.#widget.show(this.listItemElement);
     this.#widget.property = this.property;
     this.#widget.linkifier = this.linkifier;
@@ -1957,7 +1997,6 @@ export class ObjectPropertyTreeElement extends UI.TreeOutline.TreeElement {
       this.collapse();
     }
   }
-
   getContextMenu(event: Event): UI.ContextMenu.ContextMenu {
     const contextMenu = new UI.ContextMenu.ContextMenu(event);
     contextMenu.appendApplicableItems(this);
