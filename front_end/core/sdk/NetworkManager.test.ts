@@ -581,6 +581,67 @@ describe('NetworkManager', () => {
     });
   });
 
+  describe('WebSocket handling', () => {
+    it('updates request with handshake info on CDP events', () => {
+      const networkManager = new SDK.NetworkManager.NetworkManager(new TestUniverse().createTarget({}));
+      const networkDispatcher = new SDK.NetworkManager.NetworkDispatcher(networkManager);
+      const updatedRequests: SDK.NetworkRequest.NetworkRequest[] = [];
+      networkManager.addEventListener(SDK.NetworkManager.Events.RequestUpdated, event => {
+        updatedRequests.push(event.data);
+      });
+
+      networkDispatcher.webSocketCreated({
+        requestId: 'mockWsId' as Protocol.Network.RequestId,
+        url: 'ws://example.com/ws',
+        initiator: {type: Protocol.Network.InitiatorType.Script},
+      });
+
+      assert.lengthOf(updatedRequests, 0);
+
+      networkDispatcher.webSocketWillSendHandshakeRequest({
+        requestId: 'mockWsId' as Protocol.Network.RequestId,
+        timestamp: 1000,
+        wallTime: 1000,
+        request: {
+          headers:
+              {Connection: 'Upgrade', Upgrade: 'websocket', 'Sec-WebSocket-Key': 'key', 'Sec-WebSocket-Version': '13'}
+        } as Protocol.Network.WebSocketRequest
+      });
+
+      assert.lengthOf(updatedRequests, 1);
+      let req = updatedRequests[updatedRequests.length - 1];
+      assert.strictEqual(req.requestMethod, 'GET');
+      assert.deepEqual(req.requestHeaders(), [
+        {name: 'Connection', value: 'Upgrade'},
+        {name: 'Upgrade', value: 'websocket'},
+        {name: 'Sec-WebSocket-Key', value: 'key'},
+        {name: 'Sec-WebSocket-Version', value: '13'},
+      ]);
+
+      networkDispatcher.webSocketHandshakeResponseReceived({
+        requestId: 'mockWsId' as Protocol.Network.RequestId,
+        timestamp: 1001,
+        response: {
+          status: 101,
+          statusText: 'Switching Protocols',
+          headers: {Connection: 'Upgrade', Upgrade: 'websocket', 'Sec-WebSocket-Accept': 'accept'},
+          headersText: 'HTTP/1.1 101 Switching Protocols'
+        } as Protocol.Network.WebSocketResponse
+      });
+
+      assert.lengthOf(updatedRequests, 2);
+      req = updatedRequests[updatedRequests.length - 1];
+      assert.strictEqual(req.statusCode, 101);
+      assert.strictEqual(req.statusText, 'Switching Protocols');
+      assert.deepEqual(req.responseHeaders, [
+        {name: 'Connection', value: 'Upgrade'},
+        {name: 'Upgrade', value: 'websocket'},
+        {name: 'Sec-WebSocket-Accept', value: 'accept'},
+      ]);
+      assert.strictEqual(req.responseHeadersText, 'HTTP/1.1 101 Switching Protocols');
+    });
+  });
+
   describe('Direct UDP socket handling', () => {
     describe('on CDP created event', () => {
       it('creates request for connected UDP', () => {
