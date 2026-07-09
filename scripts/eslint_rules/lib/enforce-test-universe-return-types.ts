@@ -17,6 +17,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Common.Console.Console',
   'Common.Settings.Settings',
   'CrUXManager.CrUXManager',
+  'Host.AidaClient.HostConfigTracker',
   'Emulation.DeviceModeModel.DeviceModeModel',
   'Emulation.EmulatedDevices.EmulatedDevicesList',
   'Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding',

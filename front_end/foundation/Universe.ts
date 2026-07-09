@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import * as Common from '../core/common/common.js';
-import type * as Host from '../core/host/host.js';
+import * as Host from '../core/host/host.js';
 import * as Root from '../core/root/root.js';
 import * as SDK from '../core/sdk/sdk.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
@@ -42,6 +42,9 @@ export class Universe {
 
     const console = new Common.Console.Console();
     context.set(Common.Console.Console, console);
+
+    const hostConfigTracker = new Host.AidaClient.HostConfigTracker();
+    context.set(Host.AidaClient.HostConfigTracker, hostConfigTracker);
 
     // TODO(crbug.com/458180550): Store instance only on this.context instead.
     //                            For now the global is required as not everything in foundation cleanly
@@ -226,6 +229,10 @@ export class Universe {
 
   get fileManager(): Workspace.FileManager.FileManager {
     return this.context.get(Workspace.FileManager.FileManager);
+  }
+
+  get hostConfigTracker(): Host.AidaClient.HostConfigTracker {
+    return this.context.get(Host.AidaClient.HostConfigTracker);
   }
 
   get isolatedFileSystemManager(): Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager {

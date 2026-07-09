@@ -217,6 +217,16 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(SDK.FrameManager.FrameManager);
   }
 
+  get hostConfigTracker(): Host.AidaClient.HostConfigTracker {
+    if (!this.#context.has(Host.AidaClient.HostConfigTracker)) {
+      this.#context.set(
+          Host.AidaClient.HostConfigTracker,
+          new Host.AidaClient.HostConfigTracker(),
+      );
+    }
+    return this.#context.get(Host.AidaClient.HostConfigTracker);
+  }
+
   get ignoreListManager(): Workspace.IgnoreListManager.IgnoreListManager {
     if (!this.#context.has(Workspace.IgnoreListManager.IgnoreListManager)) {
       this.#context.set(
