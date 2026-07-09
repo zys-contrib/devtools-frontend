@@ -1,6 +1,6 @@
 ---
 name: devtools-version-control
-description: Use when starting a new task, creating a branch, switching branches, managing branches, creating and uploading CLs, or handling stacked changes in the DevTools Gerrit-based workflow. ALWAYS use this instead of running standard git checkout/switch commands for branch creation.
+description: Use when starting a new task, creating a branch, switching branches, managing branches, creating and uploading CLs, handling stacked changes, or checking release and roll status in the DevTools Gerrit-based workflow. ALWAYS use this instead of running standard git checkout/switch commands for branch creation.
 ---
 
 # DevTools Version Control
@@ -73,6 +73,12 @@ To upload an updated CL:
 git cl upload -d -t "<one sentence patch set description>"
 ```
 
+## Release and Roll Status
+
+To check whether a DevTools commit (`devtools/devtools-frontend`) has rolled into `chromium/src` (`Roll status`) and what version or channel it is deployed to (`Release status`), look it up via the Chromium Dash API:
+
+`https://chromiumdash.appspot.com/fetch_commit?commit=<sha>`
+
 ## Quick Reference
 
 | Action | Command |
@@ -83,6 +89,7 @@ git cl upload -d -t "<one sentence patch set description>"
 | Upload to Gerrit | `git cl upload` |
 | Change branch parent | `git reparent-branch <new-parent>` |
 | Sync all branches | `git rebase-update` |
+| Check release & roll status | Query `https://chromiumdash.appspot.com/fetch_commit?commit=<sha>` |
 
 ## Common Mistakes
 - **Multiple commits on one branch:** Gerrit expects one commit per CL. Always `commit --amend`.
