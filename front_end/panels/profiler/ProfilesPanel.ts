@@ -144,12 +144,18 @@ export class ProfilesPanel extends UI.Panel.PanelWithSidebar implements DataDisp
   typeIdToSidebarSection: Record<string, ProfileTypeSidebarSection>;
   fileSelectorElement!: HTMLInputElement;
   selectedProfileType?: ProfileType;
-  static registry: ProfileTypeRegistry = {
-    heapSnapshotProfileType: new HeapSnapshotProfileType(),
-    trackingHeapSnapshotProfileType: new TrackingHeapSnapshotProfileType(),
-    samplingHeapProfileType: new SamplingHeapProfileType(),
-    detachedElementProfileType: new DetachedElementsProfileType(),
-  };
+  static #registry: ProfileTypeRegistry|null = null;
+  static get registry(): ProfileTypeRegistry {
+    if (!ProfilesPanel.#registry) {
+      ProfilesPanel.#registry = {
+        heapSnapshotProfileType: new HeapSnapshotProfileType(),
+        trackingHeapSnapshotProfileType: new TrackingHeapSnapshotProfileType(),
+        samplingHeapProfileType: new SamplingHeapProfileType(),
+        detachedElementProfileType: new DetachedElementsProfileType(),
+      };
+    }
+    return ProfilesPanel.#registry;
+  }
 
   constructor(
       name: string,

@@ -864,13 +864,18 @@ export class HeapSnapshotView extends UI.View.SimpleView implements DataDisplayD
     this.performSearch(this.currentSearch, false);
   }
 
-  static readonly ALWAYS_AVAILABLE_FILTERS: readonly NamedFilter[] = [
-    {uiName: i18nString(UIStrings.duplicatedStrings), filterName: 'duplicatedStrings'},
-    {uiName: i18nString(UIStrings.objectsRetainedByDetachedDomNodes), filterName: 'objectsRetainedByDetachedDomNodes'},
-    {uiName: i18nString(UIStrings.objectsRetainedByContexts), filterName: 'objectsRetainedByContexts'},
-    {uiName: i18nString(UIStrings.objectsRetainedByConsole), filterName: 'objectsRetainedByConsole'},
-    {uiName: i18nString(UIStrings.objectsRetainedByEventHandlers), filterName: 'objectsRetainedByEventHandlers'},
-  ];
+  static get alwaysAvailableFilters(): readonly NamedFilter[] {
+    return [
+      {uiName: i18nString(UIStrings.duplicatedStrings), filterName: 'duplicatedStrings'},
+      {
+        uiName: i18nString(UIStrings.objectsRetainedByDetachedDomNodes),
+        filterName: 'objectsRetainedByDetachedDomNodes'
+      },
+      {uiName: i18nString(UIStrings.objectsRetainedByContexts), filterName: 'objectsRetainedByContexts'},
+      {uiName: i18nString(UIStrings.objectsRetainedByConsole), filterName: 'objectsRetainedByConsole'},
+      {uiName: i18nString(UIStrings.objectsRetainedByEventHandlers), filterName: 'objectsRetainedByEventHandlers'},
+    ];
+  }
 
   changeFilter(): void {
     const selectedOption = this.#filterOptions[this.filterSelect.selectedIndex()];
@@ -1132,7 +1137,7 @@ export class HeapSnapshotView extends UI.View.SimpleView implements DataDisplayD
 
     createSeparator();
 
-    for (const filter of HeapSnapshotView.ALWAYS_AVAILABLE_FILTERS) {
+    for (const filter of HeapSnapshotView.alwaysAvailableFilters) {
       createOption({uiName: filter.uiName, profileIndex: -1, filterName: filter.filterName});
     }
 
