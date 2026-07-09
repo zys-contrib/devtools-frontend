@@ -21,6 +21,11 @@ describe('The Console Tab', () => {
     await showVerboseMessages(devToolsPage);
     await waitForConsoleMessagesToBeNonEmpty(19, devToolsPage);
 
+    await devToolsPage.waitForFunction(async () => {
+      return await devToolsPage.evaluate(
+          () => document.querySelectorAll('.console-group-messages .devtools-link').length >= 19);
+    });
+
     const actualMessages = await devToolsPage.evaluate(
         selector => Array.from(document.querySelectorAll(selector)).map(e => e.textContent),
         CONSOLE_MESSAGE_TEXT_AND_ANCHOR_SELECTOR);
