@@ -71,8 +71,8 @@ export const togglePreferenceInSettingsTab =
 
 export const setIgnoreListPattern = async (pattern: string, devToolsPage: DevToolsPage) => {
   await openSettingsTab('Ignore list', devToolsPage);
-  await devToolsPage.click('[aria-label="Add a regular expression rule for the script\'s URL"]');
-  const textBox = await devToolsPage.waitFor('[aria-label="Add a regular expression rule for the script\'s URL"]');
+  await devToolsPage.click('[aria-label="Add a regular expression rule for the script’s URL"]');
+  const textBox = await devToolsPage.waitFor('[aria-label="Add a regular expression rule for the script’s URL"]');
   await devToolsPage.clickElement(textBox);
   await textBox.type(pattern);
   await textBox.type('\n');

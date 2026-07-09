@@ -13,7 +13,7 @@ import {
 import {openSettingsTab} from '../helpers/settings-helpers.js';
 
 const CONSOLE_MESSAGE_WRAPPER = '.console-message-stack-trace-wrapper';
-const ADD_FILENAME_PATTERN_BUTTON = 'devtools-button[aria-label="Add a regular expression rule for the script\'s URL"]';
+const ADD_FILENAME_PATTERN_BUTTON = 'devtools-button[aria-label="Add a regular expression rule for the script’s URL"]';
 const ADD_BUTTON = '.editor-buttons devtools-button:nth-of-type(2)';
 const CLOSE_SETTINGS_BUTTON = 'button[aria-label="Close"]';
 const SHOW_MORE_LINK = '.show-all-link .link';

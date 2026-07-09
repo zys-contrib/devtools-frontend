@@ -133,9 +133,8 @@ describeWithEnvironment('AISettingsTab', () => {
     const explainThisResource = settingToParams.next();
     assert.exists(explainThisResource.value);
     assert.isFalse(explainThisResource.value[0].disabled());
-    assert.strictEqual(
-        explainThisResource.value[1].settingDescription,
-        'Get help with understanding CSS styles, and network requests');
+    assert.strictEqual(explainThisResource.value[1].settingDescription,
+                       'Get help with understanding CSS styles and network requests');
   });
 
   it('can turn feature on, which automatically expands it', async () => {
@@ -308,9 +307,8 @@ describeWithEnvironment('AISettingsTab', () => {
     assert.strictEqual(
         aiAssistanceParams.settingItems[0].text,
         'Debug styling, network, performance, source code, accessibility and storage issues with DevTools AI assistance');
-    assert.strictEqual(
-        aiAssistanceParams.settingItems[1].text,
-        'Follow the agent\'s reasoning step-by-step and quickly jump to the relevant source data');
+    assert.strictEqual(aiAssistanceParams.settingItems[1].text,
+                       'Follow the agent’s reasoning step-by-step and quickly jump to the relevant source data');
     assert.strictEqual(
         aiAssistanceParams.toConsiderSettingItems[0].text,
         'To generate explanations, chat messages, data accessible for this site via DevTools panels and Web APIs, and items you select such as network requests, files, and performance traces are sent to Google and may be seen by human reviewers to improve this feature. This is an experimental AI feature and won’t always get it right.');
