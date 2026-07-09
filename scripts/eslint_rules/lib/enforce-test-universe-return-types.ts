@@ -18,6 +18,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Common.Settings.Settings',
   'CrUXManager.CrUXManager',
   'Host.AidaClient.HostConfigTracker',
+  'Host.GdpClient.GdpClient',
   'Emulation.DeviceModeModel.DeviceModeModel',
   'Emulation.EmulatedDevices.EmulatedDevicesList',
   'Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding',

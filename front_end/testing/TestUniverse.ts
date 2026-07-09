@@ -217,6 +217,16 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(SDK.FrameManager.FrameManager);
   }
 
+  get gdpClient(): Host.GdpClient.GdpClient {
+    if (!this.#context.has(Host.GdpClient.GdpClient)) {
+      this.#context.set(
+          Host.GdpClient.GdpClient,
+          new Host.GdpClient.GdpClient(),
+      );
+    }
+    return this.#context.get(Host.GdpClient.GdpClient);
+  }
+
   get hostConfigTracker(): Host.AidaClient.HostConfigTracker {
     if (!this.#context.has(Host.AidaClient.HostConfigTracker)) {
       this.#context.set(
