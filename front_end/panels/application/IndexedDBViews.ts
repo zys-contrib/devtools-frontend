@@ -445,19 +445,26 @@ export class IDBDataView extends UI.View.SimpleView {
   private populateContextMenu(contextMenu: UI.ContextMenu.ContextMenu,
                               gridNode: DataGrid.DataGrid.DataGridNode<unknown>): void {
     const node = (gridNode as IDBDataGridNode);
-    if (node.valueObjectPresentation) {
-      contextMenu.revealSection().appendItem(i18nString(UIStrings.expandRecursively), () => {
-        if (!node.valueObjectPresentation) {
-          return;
+    const value = node.data['value'] as SDK.RemoteObject.RemoteObject | undefined;
+    if (value && value.hasChildren) {
+      const cell = node.element().querySelector('.value-column');
+      if (cell) {
+        const widgetElement = cell.firstElementChild;
+        if (widgetElement) {
+          const widget = UI.Widget.Widget.get(widgetElement);
+          if (widget instanceof ObjectPropertiesSectionWidget) {
+            const objectUi = widget.objectPropertiesSection;
+            if (objectUi) {
+              contextMenu.revealSection().appendItem(i18nString(UIStrings.expandRecursively), () => {
+                void objectUi.objectTreeElement().expandRecursively();
+              }, {jslogContext: 'expand-recursively'});
+              contextMenu.revealSection().appendItem(i18nString(UIStrings.collapse), () => {
+                objectUi.objectTreeElement().collapse();
+              }, {jslogContext: 'collapse'});
+            }
+          }
         }
-        void node.valueObjectPresentation.objectTreeElement().expandRecursively();
-      }, {jslogContext: 'expand-recursively'});
-      contextMenu.revealSection().appendItem(i18nString(UIStrings.collapse), () => {
-        if (!node.valueObjectPresentation) {
-          return;
-        }
-        node.valueObjectPresentation.objectTreeElement().collapse();
-      }, {jslogContext: 'collapse'});
+      }
     }
   }
 
@@ -697,14 +704,46 @@ export class IDBDataView extends UI.View.SimpleView {
   }
 }
 
+class ObjectPropertiesSectionWidget extends UI.Widget.Widget {
+  #value: SDK.RemoteObject.RemoteObject|null = null;
+  #objectPropSection: ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection|null = null;
+
+  set value(value: SDK.RemoteObject.RemoteObject|null) {
+    if (this.#value === value) {
+      return;
+    }
+    this.#value = value;
+    this.requestUpdate();
+  }
+
+  get objectPropertiesSection(): ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection|null {
+    return this.#objectPropSection;
+  }
+
+  override performUpdate(): void {
+    const value = this.#value;
+    if (!value) {
+      this.contentElement.removeChildren();
+      this.#objectPropSection = null;
+      return;
+    }
+    this.contentElement.removeChildren();
+    this.#objectPropSection = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.defaultObjectPropertiesSection(
+        value, undefined /* linkifier */, true /* skipProto */, true /* readOnly */);
+
+    if (value.hasChildren) {
+      this.contentElement.appendChild(this.#objectPropSection.element);
+    } else {
+      this.contentElement.appendChild(this.#objectPropSection.titleElement);
+    }
+  }
+}
 export class IDBDataGridNode extends DataGrid.DataGrid.DataGridNode<unknown> {
   override selectable: boolean;
-  valueObjectPresentation: ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection|null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(data: Record<string, any>) {
     super(data, false);
     this.selectable = true;
-    this.valueObjectPresentation = null;
   }
 
   override createCell(columnIdentifier: string): HTMLElement {
@@ -712,21 +751,13 @@ export class IDBDataGridNode extends DataGrid.DataGrid.DataGridNode<unknown> {
     const value = (this.data[columnIdentifier] as SDK.RemoteObject.RemoteObject);
 
     switch (columnIdentifier) {
-      case 'value': {
-        cell.removeChildren();
-        const objectPropSection =
-            ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.defaultObjectPropertiesSection(
-                value, undefined /* linkifier */, true /* skipProto */, true /* readOnly */);
-        cell.appendChild(objectPropSection.element);
-        this.valueObjectPresentation = objectPropSection;
-        break;
-      }
+      case 'value':
       case 'key':
       case 'primary-key': {
         cell.removeChildren();
-        const objectElement = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.defaultObjectPresentation(
-            value, undefined /* linkifier */, true /* skipProto */, true /* readOnly */);
-        cell.appendChild(objectElement);
+        const widget = new ObjectPropertiesSectionWidget();
+        widget.value = value;
+        widget.show(cell, null, true);
         break;
       }
     }

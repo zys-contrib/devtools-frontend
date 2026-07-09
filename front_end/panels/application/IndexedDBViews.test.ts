@@ -231,14 +231,24 @@ describeWithEnvironment('IDBDataGridNode', () => {
     const remoteObject = SDK.RemoteObject.RemoteObject.fromLocalObject({foo: 'bar'});
     const node = new Application.IndexedDBViews.IDBDataGridNode({value: remoteObject});
 
-    node.createCell('value');
+    const cell = node.createCell('value');
 
-    assert.exists(node.valueObjectPresentation);
-    const rootElement = node.valueObjectPresentation.objectTreeElement();
+    const widgetElement = cell.firstElementChild;
+    assert.exists(widgetElement);
+    const widget = UI.Widget.Widget.get(widgetElement);
+    assert.exists(widget);
+    await UI.Widget.Widget.allUpdatesComplete;
+
+    const presentation =
+        ObjectUI.ObjectPropertiesSection.getObjectPropertiesSectionFrom(widgetElement.firstElementChild as Element);
+    assert.exists(presentation);
+    const rootElement = presentation.objectTreeElement();
     await rootElement.onpopulate();
     const child = rootElement.childAt(0);
     assert.instanceOf(child, ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement);
     assert.isFalse(child.editable);
+
+    await UI.Widget.Widget.allUpdatesComplete;
   });
 });
 
@@ -291,6 +301,8 @@ describeWithEnvironment('IDBDataView', () => {
     // Verify row rendered
     const rows = dataGrid?.querySelectorAll('.data-grid-data-grid-node');
     assert.strictEqual(rows?.length, 3);
+
+    await UI.Widget.Widget.allUpdatesComplete;
 
     await assertScreenshot('application/idb_data_view_baseline.png');
   });
