@@ -24,6 +24,7 @@ export interface CoreOrProtocolAxProperty {
 
 export class AccessibilityNode {
   readonly #accessibilityModel: AccessibilityModel;
+  readonly #frameManager: FrameManager;
   readonly #id: Protocol.Accessibility.AXNodeId;
   readonly #backendDOMNodeId: Protocol.DOM.BackendNodeId|null;
   readonly #deferredDOMNode: DeferredDOMNode|null;
@@ -40,6 +41,7 @@ export class AccessibilityNode {
 
   constructor(accessibilityModel: AccessibilityModel, payload: Protocol.Accessibility.AXNode) {
     this.#accessibilityModel = accessibilityModel;
+    this.#frameManager = accessibilityModel.target().targetManager().getFrameManager();
 
     this.#id = payload.nodeId;
     accessibilityModel.setAXNodeForAXId(this.#id, this);
@@ -200,7 +202,7 @@ export class AccessibilityNode {
     return this.getFrameId() + '#' + this.id();
   }
 
-  async getChildren(frameManager: FrameManager = FrameManager.instance()): Promise<AccessibilityNode[]> {
+  async getChildren(): Promise<AccessibilityNode[]> {
     if (this.role()?.value === 'Iframe') {
       const domNode = await this.deferredDOMNode()?.resolvePromise();
       if (!domNode) {
@@ -210,13 +212,13 @@ export class AccessibilityNode {
       if (!frameId) {
         throw new Error('No owner frameId on iframe node');
       }
-      const localRoot = await getRootNode(frameId, frameManager);
+      const localRoot = await getRootNode(frameId, this.#frameManager);
       return [localRoot];
     }
     return await this.accessibilityModel().requestAXChildren(this.id(), this.getFrameId() || undefined);
   }
 
-  async axNodeToText(depth = 0, frameManager: FrameManager = FrameManager.instance()): Promise<string> {
+  async axNodeToText(depth = 0): Promise<string> {
     const indent = '  '.repeat(depth);
     const role = this.role()?.value || '';
     const name = this.name()?.value || '';
@@ -241,9 +243,9 @@ export class AccessibilityNode {
       lines.push(line + '\n');
     }
 
-    const children = await this.getChildren(frameManager);
+    const children = await this.getChildren();
     for (const child of children) {
-      lines.push(await child.axNodeToText(childDepth, frameManager));
+      lines.push(await child.axNodeToText(childDepth));
     }
 
     return lines.join('');
@@ -455,8 +457,8 @@ function getFrameIdForNodeOrDocument(node: DOMNode): Protocol.Page.FrameId {
   return frameId;
 }
 
-export async function getNodeAndAncestorsFromDOMNode(
-    domNode: DOMNode, frameManager: FrameManager = FrameManager.instance()): Promise<AccessibilityNode[]> {
+export async function getNodeAndAncestorsFromDOMNode(domNode: DOMNode): Promise<AccessibilityNode[]> {
+  const frameManager = domNode.domModel().target().targetManager().getFrameManager();
   let frameId = getFrameIdForNodeOrDocument(domNode);
   const model = getModel(frameId, frameManager);
   const result = await model.requestAndLoadSubTreeToNode(domNode);

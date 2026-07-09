@@ -4,7 +4,7 @@
 
 import './components/components.js';
 
-import * as SDK from '../../core/sdk/sdk.js';
+import type * as SDK from '../../core/sdk/sdk.js';
 import type * as TreeOutline from '../../ui/components/tree_outline/tree_outline.js';
 import * as Lit from '../../ui/lit/lit.js';
 
@@ -13,9 +13,7 @@ const {html} = Lit;
 export type AXTreeNodeData = SDK.AccessibilityModel.AccessibilityNode;
 export type AXTreeNode = TreeOutline.TreeOutlineUtils.TreeNode<AXTreeNodeData>;
 
-export async function sdkNodeToAXTreeNodes(
-    sdkNode: SDK.AccessibilityModel.AccessibilityNode,
-    frameManager: SDK.FrameManager.FrameManager = SDK.FrameManager.FrameManager.instance()): Promise<AXTreeNode[]> {
+export async function sdkNodeToAXTreeNodes(sdkNode: SDK.AccessibilityModel.AccessibilityNode): Promise<AXTreeNode[]> {
   const treeNodeData = sdkNode;
   if (sdkNode.isLeafNode()) {
     return [{
@@ -27,9 +25,8 @@ export async function sdkNodeToAXTreeNodes(
   return [{
     treeNodeData,
     children: async () => {
-      const childNodes = await sdkNode.getChildren(frameManager);
-      const childTreeNodes =
-          await Promise.all(childNodes.map(childNode => sdkNodeToAXTreeNodes(childNode, frameManager)));
+      const childNodes = await sdkNode.getChildren();
+      const childTreeNodes = await Promise.all(childNodes.map(childNode => sdkNodeToAXTreeNodes(childNode)));
       return childTreeNodes.flat(1);
     },
     id: sdkNode.getNodeId(),
