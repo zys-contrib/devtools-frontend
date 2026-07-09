@@ -26,6 +26,7 @@ const {urlString} = Platform.DevToolsPath;
 describeWithEnvironment('NavigatorView', () => {
   let target: SDK.Target.Target;
   let workspace: Workspace.Workspace.WorkspaceImpl;
+  let networkProjectManager: Bindings.NetworkProject.NetworkProjectManager;
 
   beforeEach(() => {
     const connection = new MockCDPConnection();
@@ -60,6 +61,7 @@ describeWithEnvironment('NavigatorView', () => {
     });
     Persistence.Persistence.PersistenceImpl.instance({forceNew: true, workspace, breakpointManager});
     Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance({forceNew: true, workspace});
+    networkProjectManager = new Bindings.NetworkProject.NetworkProjectManager();
   });
 
   function addResourceAndUISourceCode(
@@ -85,7 +87,8 @@ describeWithEnvironment('NavigatorView', () => {
     const childFrame = await addChildFrame(target);
     const {project} = addResourceAndUISourceCode(url, childFrame, '', 'text/html');
 
-    const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+    const navigatorView =
+        Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
     const children = navigatorView.scriptsTree.rootElement().children();
     assert.lengthOf(children, 1, 'The NavigatorView root node should have 1 child before node removal');
     assert.strictEqual(children[0].title, 'top');
@@ -131,7 +134,8 @@ describeWithEnvironment('NavigatorView', () => {
         },
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const topChildren = navigatorView.scriptsTree.rootElement().children();
       assert.lengthOf(topChildren, 1);
       assert.strictEqual(topChildren[0].title, 'top');
@@ -174,7 +178,8 @@ describeWithEnvironment('NavigatorView', () => {
         },
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const topChildren = navigatorView.scriptsTree.rootElement().children();
       assert.lengthOf(topChildren, 1);
       assert.strictEqual(topChildren[0].title, 'top');
@@ -220,7 +225,8 @@ describeWithEnvironment('NavigatorView', () => {
         },
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const topChildren = navigatorView.scriptsTree.rootElement().children();
       assert.lengthOf(topChildren, 1);
       assert.strictEqual(topChildren[0].title, 'top');
@@ -250,7 +256,8 @@ describeWithEnvironment('NavigatorView', () => {
         },
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const topChildren = navigatorView.scriptsTree.rootElement().children();
       assert.lengthOf(topChildren, 1);
       assert.strictEqual(topChildren[0].title, 'top');
@@ -266,7 +273,8 @@ describeWithEnvironment('NavigatorView', () => {
       const url = urlString`*bad url*`;
       addResourceAndUISourceCode(url, mainFrame, '', 'text/html');
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const topChildren = navigatorView.scriptsTree.rootElement().children();
       assert.lengthOf(topChildren, 1);
       assert.strictEqual(topChildren[0].title, 'top');

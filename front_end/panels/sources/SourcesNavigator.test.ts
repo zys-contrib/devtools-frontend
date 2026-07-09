@@ -12,7 +12,7 @@ import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
-import type * as Bindings from '../../models/bindings/bindings.js';
+import * as Bindings from '../../models/bindings/bindings.js';
 import * as Breakpoints from '../../models/breakpoints/breakpoints.js';
 import * as Persistence from '../../models/persistence/persistence.js';
 import * as Workspace from '../../models/workspace/workspace.js';
@@ -33,6 +33,7 @@ describe('NetworkNavigatorView', () => {
   setupLocaleHooks();
   let workspace: Workspace.Workspace.WorkspaceImpl;
   let backend: MockDebuggerBackend;
+  let networkProjectManager: Bindings.NetworkProject.NetworkProjectManager;
 
   beforeEach(async () => {
     backend = new MockDebuggerBackend();
@@ -57,6 +58,7 @@ describe('NetworkNavigatorView', () => {
     Persistence.Persistence.PersistenceImpl.instance({forceNew: true, workspace, breakpointManager});
     Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance({forceNew: true, workspace});
     UI.ShortcutRegistry.ShortcutRegistry.instance({forceNew: true, actionRegistry: actionRegistryInstance});
+    networkProjectManager = new Bindings.NetworkProject.NetworkProjectManager();
   });
 
   afterEach(async () => {
@@ -101,7 +103,8 @@ describe('NetworkNavigatorView', () => {
         target,
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       const folder = rootElement.firstChild();
       const file = folder?.firstChild();
@@ -130,7 +133,8 @@ describe('NetworkNavigatorView', () => {
         target,
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       assert.lengthOf(rootElement.children(), 0);
 
@@ -138,7 +142,8 @@ describe('NetworkNavigatorView', () => {
     });
 
     it('reveals main frame target on navigation', async () => {
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
 
       const rootElement = navigatorView.scriptsTree.rootElement();
       assert.strictEqual(rootElement.childCount(), 1);
@@ -154,7 +159,8 @@ describe('NetworkNavigatorView', () => {
 
     it('reveals main frame target when added', async () => {
       target.setInspectedURL(urlString`http://example.com/`);
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
 
       const rootElement = navigatorView.scriptsTree.rootElement();
       assert.strictEqual(rootElement.childCount(), 1);
@@ -188,7 +194,8 @@ describe('NetworkNavigatorView', () => {
     });
 
     SDK.TargetManager.TargetManager.instance().setScopeTarget(target);
-    const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+    const navigatorView =
+        Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
 
     let rootElement = navigatorView.scriptsTree.rootElement();
     assert.strictEqual(rootElement.childCount(), 1);
@@ -233,7 +240,8 @@ describe('NetworkNavigatorView', () => {
         target,
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       const exampleComNode = rootElement.firstChild();
       assert.exists(exampleComNode);
@@ -270,7 +278,8 @@ describe('NetworkNavigatorView', () => {
         target,
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       const nodeExampleCom = rootElement.firstChild();
       assert.exists(nodeExampleCom);
@@ -319,7 +328,8 @@ describe('NetworkNavigatorView', () => {
         target,
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       const exampleComNode = rootElement.firstChild();
       assert.exists(exampleComNode);
@@ -374,7 +384,8 @@ describe('NetworkNavigatorView', () => {
         target,
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       const exampleComNode = rootElement.firstChild();
       assert.exists(exampleComNode);
@@ -433,7 +444,8 @@ describe('NetworkNavigatorView', () => {
           target, {content: '42', url: 'http://example.com/b.js', executionContextId: 2, hasSourceURL: false}, null);
       await backend.addScript(target, {content: '42', url: 'http://example.com/c.js', hasSourceURL: false}, null);
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       const exampleComNode = rootElement.firstChild();
       assert.exists(exampleComNode);
@@ -516,7 +528,8 @@ describe('NetworkNavigatorView', () => {
         target,
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       const nodeExampleCom = rootElement.firstChild();
       const ignoredFolder = nodeExampleCom!.childAt(0);
@@ -553,7 +566,8 @@ describe('NetworkNavigatorView', () => {
         target,
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       const nodeExampleCom = rootElement.firstChild();
       const ignoredFolder = nodeExampleCom!.childAt(0);
@@ -596,7 +610,8 @@ describe('NetworkNavigatorView', () => {
         target,
       });
 
-      const navigatorView = Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true});
+      const navigatorView =
+          Sources.SourcesNavigator.NetworkNavigatorView.instance({forceNew: true, networkProjectManager});
       const rootElement = navigatorView.scriptsTree.rootElement();
       const nodeExampleCom = rootElement.firstChild();
       const ignoredFolder = nodeExampleCom!.childAt(0);

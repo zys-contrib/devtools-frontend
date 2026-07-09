@@ -186,8 +186,8 @@ export class NavigatorView extends UI.Widget.VBox implements SDK.TargetManager.O
   private groupByAuthored?: boolean;
   private groupByDomain?: boolean;
   private groupByFolder?: boolean;
-  constructor(jslogContext: string, enableAuthoredGrouping?: boolean,
-              networkProjectManager = Bindings.NetworkProject.NetworkProjectManager.instance()) {
+  constructor(jslogContext: string, networkProjectManager: Bindings.NetworkProject.NetworkProjectManager,
+              enableAuthoredGrouping?: boolean) {
     super({
       jslog: `${VisualLogging.pane(jslogContext).track({resize: true})}`,
       useShadowDom: true,
