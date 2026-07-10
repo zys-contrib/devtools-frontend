@@ -4,6 +4,8 @@
 
 import type {Brand} from './Brand.js';
 
+let graphemeSegmenter: Intl.Segmenter|null = null;
+
 export const escapeCharacters = (inputString: string, charsToEscape: string): string => {
   let foundChar = false;
   for (let i = 0; i < charsToEscape.length; ++i) {
@@ -445,6 +447,39 @@ export const trimEndWithMaxLength = (str: string, maxLength: number): string => 
   }
 
   return str.slice(0, lastSegmentIndex) + ellipsis;
+};
+
+/**
+ * Truncates a string to not exceed a maximum number of UTF-16 code units (as measured by JS `string.length`).
+ *
+ * Unlike simple character limiters, this helper is grapheme-aware and uses `Intl.Segmenter` to prevent
+ * slicing inside surrogate pairs (e.g. Plane 1+ characters or emojis like '𠜎' / '🥳') or combining characters
+ * (e.g. 'é' represented in NFD as 'e' + combining acute accent). If the limit falls in the middle of a
+ * grapheme cluster, the function backs off to drop the entire cluster, ensuring the result is always a valid
+ * Unicode string.
+ *
+ * @param str The string to truncate.
+ * @param maxCodeUnits The maximum allowed code unit length (must be >= 0).
+ * @returns The truncated string, guaranteed to be <= maxCodeUnits in length and grapheme-safe.
+ */
+export const truncateToCodeUnitLength = (str: string, maxCodeUnits: number): string => {
+  if (isNaN(maxCodeUnits) || maxCodeUnits <= 0) {
+    return '';
+  }
+  if (str.length <= maxCodeUnits) {
+    return str;
+  }
+  if (!graphemeSegmenter) {
+    graphemeSegmenter = new Intl.Segmenter(undefined, {granularity: 'grapheme'});
+  }
+  let lastSafeIndex = 0;
+  for (const {index, segment} of graphemeSegmenter.segment(str)) {
+    if (index + segment.length > maxCodeUnits) {
+      break;
+    }
+    lastSafeIndex = index + segment.length;
+  }
+  return str.slice(0, lastSafeIndex);
 };
 
 export const escapeForRegExp = (str: string): string => {

@@ -399,6 +399,42 @@ describe('StringUtilities', () => {
     });
   });
 
+  describe('truncateToCodeUnitLength', () => {
+    const {truncateToCodeUnitLength} = Platform.StringUtilities;
+
+    it('returns the original string if it is shorter than or equal to maxCodeUnits', () => {
+      assert.strictEqual(truncateToCodeUnitLength('abc', 3), 'abc');
+      assert.strictEqual(truncateToCodeUnitLength('abc', 10), 'abc');
+      assert.strictEqual(truncateToCodeUnitLength('', 5), '');
+    });
+
+    it('truncates normal ASCII strings correctly', () => {
+      assert.strictEqual(truncateToCodeUnitLength('abcdef', 3), 'abc');
+    });
+
+    it('handles negative, NaN, or zero bounds by returning empty string', () => {
+      assert.strictEqual(truncateToCodeUnitLength('abc', 0), '');
+      assert.strictEqual(truncateToCodeUnitLength('abc', -1), '');
+      assert.strictEqual(truncateToCodeUnitLength('abc', NaN), '');
+      assert.strictEqual(truncateToCodeUnitLength('abc', 1.5), 'a');
+    });
+
+    it('does not split surrogate pairs', () => {
+      // 𠜎 (U+2070E) is represented as surrogate pair '\uD841\uDF0E' (length 2)
+      assert.strictEqual(truncateToCodeUnitLength('a𠜎b', 4), 'a𠜎b');
+      assert.strictEqual(truncateToCodeUnitLength('a𠜎b', 3), 'a𠜎');
+      assert.strictEqual(truncateToCodeUnitLength('a𠜎b', 2), 'a');
+      assert.strictEqual(truncateToCodeUnitLength('a𠜎b', 1), 'a');
+    });
+
+    it('does not split letters from their combining accents', () => {
+      // caf\u0065\u0301 (é is length 2: e + accent) -> total length 5
+      assert.strictEqual(truncateToCodeUnitLength('caf\u0065\u0301', 5), 'café');
+      assert.strictEqual(truncateToCodeUnitLength('caf\u0065\u0301', 4), 'caf');
+      assert.strictEqual(truncateToCodeUnitLength('caf\u0065\u0301', 3), 'caf');
+    });
+  });
+
   describe('escapeForRegExp', () => {
     it('escapes regex characters', () => {
       const inputString = '^[]{}()\\.^$*+?|-';
