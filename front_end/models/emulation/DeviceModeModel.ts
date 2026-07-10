@@ -11,6 +11,8 @@ import * as Protocol from '../../generated/protocol.js';
 import * as Geometry from '../geometry/geometry.js';
 
 import {
+  type Cutout,
+  CutoutShape,
   type EmulatedDevice,
   Horizontal,
   HorizontalSpanned,
@@ -84,6 +86,13 @@ const UIStrings = {
 } as const;
 const str_ = i18n.i18n.registerUIStrings('models/emulation/DeviceModeModel.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
+
+const CUTOUT_SHAPE_TO_PROTOCOL: Record<CutoutShape, Protocol.Overlay.DisplayCutoutShape> = {
+  [CutoutShape.PILL]: Protocol.Overlay.DisplayCutoutShape.Pill,
+  [CutoutShape.NOTCH]: Protocol.Overlay.DisplayCutoutShape.Notch,
+  [CutoutShape.CIRCLE]: Protocol.Overlay.DisplayCutoutShape.Circle,
+  [CutoutShape.RECTANGLE]: Protocol.Overlay.DisplayCutoutShape.Rectangle,
+};
 
 export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTypes> implements
     SDK.TargetManager.SDKModelObserver<SDK.EmulationModel.EmulationModel> {
@@ -506,7 +515,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
       return;
     }
 
-    this.showHingeIfApplicable(overlayModel);
+    this.showDeviceOverlaysIfApplicable(overlayModel);
   }
 
   private onScreenOrientationLockChanged(
@@ -638,7 +647,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     const mobile = this.isMobile();
     const overlayModel = this.#emulationModel ? this.#emulationModel.overlayModel() : null;
     if (overlayModel) {
-      this.showHingeIfApplicable(overlayModel);
+      this.showDeviceOverlaysIfApplicable(overlayModel);
     }
     if (this.#type === Type.Device && this.#device && this.#mode) {
       const orientation = this.#device.orientationByName(this.#mode.orientation);
@@ -878,14 +887,67 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     }
   }
 
-  private showHingeIfApplicable(overlayModel: SDK.OverlayModel.OverlayModel): void {
+  private showDeviceOverlaysIfApplicable(overlayModel: SDK.OverlayModel.OverlayModel): void {
     const orientation = (this.#device && this.#mode) ? this.#device.orientationByName(this.#mode.orientation) : null;
     if (orientation?.hinge) {
       overlayModel.showHingeForDualScreen(orientation.hinge);
-      return;
+    } else {
+      overlayModel.showHingeForDualScreen(null);
     }
 
-    overlayModel.showHingeForDualScreen(null);
+    overlayModel.showDisplayCutout(this.currentDisplayCutout());
+  }
+
+  private currentDisplayCutout(): SDK.OverlayModel.DisplayCutout|null {
+    const device = this.#device;
+    const mode = this.#mode;
+    if (!device || !mode || !device.modes.includes(mode)) {
+      return null;
+    }
+
+    const cutout = mode.cutout;
+    if (cutout) {
+      return this.toDisplayCutout(cutout);
+    }
+
+    if (mode.orientation !== Horizontal) {
+      return null;
+    }
+
+    const rotationPartner = device.getRotationPartner(mode);
+    const rotatedCutout = rotationPartner?.cutout;
+    if (rotationPartner?.orientation !== Vertical || !rotatedCutout) {
+      return null;
+    }
+
+    const orientation = device.orientationByName(mode.orientation);
+    if (rotatedCutout.shape === CutoutShape.CIRCLE) {
+      return this.toDisplayCutout({
+        ...rotatedCutout,
+        x: orientation.width - rotatedCutout.y - rotatedCutout.height,
+        y: rotatedCutout.x,
+        width: rotatedCutout.height,
+        height: rotatedCutout.width,
+        cx: orientation.width - rotatedCutout.cy,
+        cy: rotatedCutout.cx,
+      });
+    }
+    return this.toDisplayCutout({
+      ...rotatedCutout,
+      x: orientation.width - rotatedCutout.y - rotatedCutout.height,
+      y: rotatedCutout.x,
+      width: rotatedCutout.height,
+      height: rotatedCutout.width,
+    });
+  }
+
+  private toDisplayCutout(cutout: Cutout): SDK.OverlayModel.DisplayCutout {
+    const {shape, ...rest} = cutout;
+    return {
+      ...rest,
+      shape: CUTOUT_SHAPE_TO_PROTOCOL[shape],
+      contentColor: {r: 0, g: 0, b: 0, a: 1},
+    } as SDK.OverlayModel.DisplayCutout;
   }
 
   private getDisplayFeatureOrientation(): Protocol.Emulation.DisplayFeatureOrientation {
