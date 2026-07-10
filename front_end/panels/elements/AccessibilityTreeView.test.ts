@@ -8,7 +8,7 @@ import sinon from 'sinon';
 import * as Host from '../../core/host/host.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
-import {renderElementIntoDOM} from '../../testing/DOMHelpers.js';
+import {assertScreenshot, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {createTarget, describeWithEnvironment, stubNoopSettings} from '../../testing/EnvironmentHelpers.js';
 import * as TreeOutline from '../../ui/components/tree_outline/tree_outline.js';
 import * as UI from '../../ui/legacy/legacy.js';
@@ -33,23 +33,21 @@ describeWithEnvironment('AccessibilityTreeView', () => {
     renderElementIntoDOM(view);
 
     const model = target.model(SDK.AccessibilityModel.AccessibilityModel);
+    assert.exists(model);
     const treeComponentDataSet = sinon.spy(treeComponent, 'data', ['set']);
     sinon.stub(SDK.FrameManager.FrameManager.instance(), 'getOutermostFrame').returns({
       id: MAIN_FRAME_ID,
     } as SDK.ResourceTreeModel.ResourceTreeFrame);
 
-    model!.dispatchEventToListeners(SDK.AccessibilityModel.Events.TREE_UPDATED, {
-      root: {
-        numChildren: () => 0,
-        role: () => null,
-        getFrameId: () => MAIN_FRAME_ID,
-        id: () => 'id',
-        isLeafNode: SDK.AccessibilityModel.AccessibilityNode.prototype.isLeafNode,
-        getNodeId: SDK.AccessibilityModel.AccessibilityNode.prototype.getNodeId,
-        getChildren: SDK.AccessibilityModel.AccessibilityNode.prototype.getChildren,
-        axNodeToText: SDK.AccessibilityModel.AccessibilityNode.prototype.axNodeToText,
-      } as unknown as SDK.AccessibilityModel.AccessibilityNode,
-    });
+    const rootPayload: Protocol.Accessibility.AXNode = {
+      nodeId: 'root-id' as Protocol.Accessibility.AXNodeId,
+      ignored: false,
+      role: {type: 'role' as Protocol.Accessibility.AXValueType, value: 'document'},
+      name: {type: 'computedString' as Protocol.Accessibility.AXValueType, value: 'Root Node'},
+      frameId: MAIN_FRAME_ID,
+    };
+
+    model.loadComplete({root: rootPayload});
     await new Promise<void>(resolve => queueMicrotask(resolve));
     assert.strictEqual(treeComponentDataSet.set.called, inScope);
     view.detach();
@@ -131,5 +129,52 @@ describeWithEnvironment('AccessibilityTreeView', () => {
       copyStub.restore();
       view.detach();
     });
+  });
+
+  it('renders the accessibility tree screenshot', async () => {
+    SDK.TargetManager.TargetManager.instance().setScopeTarget(target);
+    const view = new Elements.AccessibilityTreeView.AccessibilityTreeView(treeComponent);
+
+    const refreshSpy = sinon.spy(view, 'refreshAccessibilityTree');
+
+    const model = target.model(SDK.AccessibilityModel.AccessibilityModel);
+    assert.exists(model);
+
+    sinon.stub(SDK.FrameManager.FrameManager.instance(), 'getOutermostFrame').returns({
+      id: MAIN_FRAME_ID,
+    } as SDK.ResourceTreeModel.ResourceTreeFrame);
+    const rootPayload: Protocol.Accessibility.AXNode = {
+      nodeId: 'root-id' as Protocol.Accessibility.AXNodeId,
+      ignored: false,
+      role: {type: 'role' as Protocol.Accessibility.AXValueType, value: 'document'},
+      name: {type: 'computedString' as Protocol.Accessibility.AXValueType, value: 'Root Node'},
+      childIds: ['child-id' as Protocol.Accessibility.AXNodeId],
+      frameId: MAIN_FRAME_ID,
+    };
+
+    const childPayload: Protocol.Accessibility.AXNode = {
+      nodeId: 'child-id' as Protocol.Accessibility.AXNodeId,
+      ignored: false,
+      role: {type: 'role' as Protocol.Accessibility.AXValueType, value: 'button'},
+      name: {type: 'computedString' as Protocol.Accessibility.AXValueType, value: 'Child Node'},
+      parentId: 'root-id' as Protocol.Accessibility.AXNodeId,
+    };
+
+    sinon.stub(model.agent, 'invoke_getChildAXNodes').resolves({
+      nodes: [childPayload],
+      getError: () => undefined,
+    });
+
+    model.loadComplete({root: rootPayload});
+    renderElementIntoDOM(view, {includeCommonStyles: true});
+
+    assert.exists(refreshSpy.firstCall);
+    await refreshSpy.firstCall.returnValue;
+
+    view.element.style.width = '300px';
+    view.element.style.height = '100px';
+
+    await assertScreenshot('elements/accessibility_tree_view.png');
+    view.detach();
   });
 });
