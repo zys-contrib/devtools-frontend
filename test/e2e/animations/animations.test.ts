@@ -33,8 +33,8 @@ describe('The Animations Panel', () => {
 
   async function waitForAnimationContent(devToolsPage: DevToolsPage) {
     await devToolsPage.waitFor('.animation-timeline-buffer');
-    await devToolsPage.click(
-        '.animation-buffer-preview[aria-label="Animation Preview 1"]', {clickOptions: {offset: {x: 4, y: 4}}});
+    await devToolsPage.click('.animation-buffer-preview[aria-label="Animation preview 1"]',
+                             {clickOptions: {offset: {x: 4, y: 4}}});
     await devToolsPage.waitFor('.animation-node-row');
     await devToolsPage.waitFor('svg.animation-ui');
   }
