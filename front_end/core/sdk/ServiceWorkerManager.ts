@@ -71,21 +71,20 @@ export class ServiceWorkerManager extends SDKModel<EventTypes> {
   readonly #registrations = new Map<string, ServiceWorkerRegistration>();
   #enabled = false;
   readonly #forceUpdateSetting: Common.Settings.Setting<boolean>;
+  readonly #networkManager: MultitargetNetworkManager;
 
   constructor(target: Target) {
     super(target);
+    this.#networkManager = target.targetManager().getNetworkManager();
     target.registerServiceWorkerDispatcher(new ServiceWorkerDispatcher(this));
     this.#agent = target.serviceWorkerAgent();
     void this.enable();
-    this.#forceUpdateSetting = this.target()
-                                   .targetManager()
-                                   .context.get(Common.Settings.Settings)
-                                   .createSetting('service-worker-update-on-reload', false);
+    this.#forceUpdateSetting = target.targetManager().settings.createSetting('service-worker-update-on-reload', false);
     if (this.#forceUpdateSetting.get()) {
       this.forceUpdateSettingChanged();
     }
     this.#forceUpdateSetting.addChangeListener(this.forceUpdateSettingChanged, this);
-    MultitargetNetworkManager.instance().addEventListener(
+    this.#networkManager.addEventListener(
         MultitargetNetworkManager.Events.CONDITIONS_CHANGED,
         this.forceUpdateSettingChanged,
         this,
@@ -94,7 +93,7 @@ export class ServiceWorkerManager extends SDKModel<EventTypes> {
   }
 
   override dispose(): void {
-    MultitargetNetworkManager.instance().removeEventListener(
+    this.#networkManager.removeEventListener(
         MultitargetNetworkManager.Events.CONDITIONS_CHANGED,
         this.forceUpdateSettingChanged,
         this,
@@ -252,7 +251,7 @@ export class ServiceWorkerManager extends SDKModel<EventTypes> {
   }
 
   private forceUpdateSettingChanged(): void {
-    const forceUpdateOnPageLoad = this.#forceUpdateSetting.get() && !MultitargetNetworkManager.instance().isOffline();
+    const forceUpdateOnPageLoad = this.#forceUpdateSetting.get() && !this.#networkManager.isOffline();
     void this.#agent.invoke_setForceUpdateOnPageLoad({forceUpdateOnPageLoad});
   }
 }
