@@ -636,7 +636,7 @@
     {
       // crbug.com/445727139
       name: "AnnotationSpaceOnStart",
-      status: "experimental",
+      status: "stable",
     },
     {
       name: "AnonymousIframe",
@@ -819,6 +819,12 @@
       // there is no need to collapse the whitespace between them.
       // https://crbug.com/406053617
       name: "AvoidNormalizingVisiblePositionsWhenStartEqualsEnd",
+      status: "stable",
+    },
+    {
+      // Disables the synchronous focus blur behavior when a focused form control
+      // is disabled.
+      name: "AvoidSynchronousBlurOnDisabledAttributeChange",
       status: "stable",
     },
     // When enabled, enforces new interoperable semantics for 3D transforms.
@@ -1333,10 +1339,6 @@
       status: "experimental",
     },
     {
-      name: "ComputeInlineContentsSafeRetarget",
-      status: "stable",
-    },
-    {
       name: "ComputePressure",
       status: {
         "Android": "",
@@ -1347,6 +1349,10 @@
       // If enabled, allow concurrent animations via native paint worklets to
       // run on the compositor thread.
       name: "ConcurrentNativePaintWorklets",
+      status: "experimental",
+    },
+    {
+      name: "ConditionalTracingLoAF",
       status: "experimental",
     },
     {
@@ -1481,7 +1487,7 @@
       status: "stable",
     },
     {
-      name: "CreateInlineContentsExcludeOutOfFlow",
+      name: "CreateInlineContentsAnonymousBlock",
       status: "stable",
     },
     {
@@ -2523,6 +2529,10 @@
       status: "experimental",
     },
     {
+      name: "DocumentPolicyJSProfilingMode",
+      status: "experimental",
+    },
+    {
       name: "DocumentPolicyNegotiation",
       origin_trial_feature_name: "DocumentPolicyNegotiation",
       public: true,
@@ -2704,6 +2714,10 @@
       // Added in M144, can be removed in M146.
       name: "EventTimingInteractionCount",
       status: "stable",
+    },
+    {
+      name: "EventTimingMatchingHTML",
+      status: "experimental",
     },
     {
       name: "EventTimingTargetSelector",
@@ -4669,7 +4683,7 @@
       // message when calling showPopover() within another popover hide/show
       // operation. https://crbug.com/527495812
       name: "PopoverHintNestedShowException",
-      status: "experimental",
+      status: "stable",
     },
     {
       // Simplifies the behavior and stacking interactions of popover=hint and
@@ -5104,8 +5118,9 @@
     {
       // Kill switch for painting non-SVG replaced normal-flow stacking
       // contexts inline with their siblings.
+      // This was set to experimental due to crbug.com/532229489.
       name: "ReplacedNormalFlowStackingInlinePaint",
-      status: "stable",
+      status: "experimental",
     },
     {
       name: "ReportFirstFrameTimeAsRenderTime",
@@ -6377,7 +6392,7 @@
     // This feature enables drag and drop using touch input devices. Replaces
     // the old "--enable-touch-drag-drop" and "--disable-touch-drag-drop"
     // switches.
-    // Enabled by default in Android, ChromeOS and Windows.
+    // Enabled by default in Android, ChromeOS, Windows, and Linux.
     {
       name: "TouchDragAndDrop",
       base_feature: "none",
