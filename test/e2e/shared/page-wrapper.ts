@@ -137,6 +137,21 @@ export class PageWrapper {
     }, modifiers ?? {});
   }
 
+  async pressKeyAndExpectNavigation(key: puppeteer.KeyInput, modifiers?: KeyModifiers) {
+    await this.#withKeyModifiers(async () => {
+      await this.page.keyboard.down(key);
+      await this.page.keyboard.up(key).catch(e => {
+        // When KeyDown triggers a navigation, it is likely that the target
+        // (that normally would handle the KeyUp event) gets destroyed before
+        // the event gets handled. This should not be seen as a failure case,
+        // as that causes flakiness in tests.
+        if (!e.message.includes('Target closed')) {
+          throw e;
+        }
+      });
+    }, modifiers ?? {});
+  }
+
   /**
    * Get a single element handle. Uses `pierce` handler per default for piercing Shadow DOM.
    */

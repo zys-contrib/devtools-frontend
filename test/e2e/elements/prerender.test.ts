@@ -21,7 +21,7 @@ describe('The Elements tab', () => {
     await waitForElementWithPartialText('The next page is prerendered', devToolsPage);
     // TODO: cannot use click due to helper not handling target close correctly.
     await inspectedPage.pressKey('Tab');
-    await inspectedPage.pressKey('Enter');
+    await inspectedPage.pressKeyAndExpectNavigation('Enter');
     await waitForElementWithPartialText('Is this page prerendered?', devToolsPage);
   });
 });
