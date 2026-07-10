@@ -67,6 +67,7 @@ function getBaseViewInput(): Elements.ElementsTreeElement.ViewInput {
     onTopLayerAdornerClick: () => {},
     isHovered: false,
     isSelected: false,
+    canInspect: false,
     showAiButton: false,
     onAiButtonClick: () => {},
     decorations: [],
@@ -131,15 +132,14 @@ describe('ElementsTreeElement', () => {
     const descendantDecorations = [
       {title: 'Descendant 1', color: 'green'},
     ];
-    Elements.ElementsTreeElement.DEFAULT_VIEW(
-        {
-          ...getBaseViewInput(),
-          decorations,
-          descendantDecorations,
-          decorationsTooltip: 'Title',
-          indent: 20,
-        },
-        {}, target);
+    Elements.ElementsTreeElement.DEFAULT_VIEW({
+      ...getBaseViewInput(),
+      decorations,
+      descendantDecorations,
+      decorationsTooltip: 'Title',
+      indent: 20,
+    },
+                                              {}, target);
     await assertScreenshot('elements/gutter_decorations.png');
   });
 });
@@ -183,35 +183,33 @@ describeWithEnvironment('ElementsTreeElement', () => {
     it('renders fallback tooltip when no provenance is available', () => {
       const domTarget = document.createElement('div');
       renderElementIntoDOM(domTarget);
-      Elements.ElementsTreeElement.DEFAULT_VIEW(
-          {
-            ...getBaseViewInput(),
-            adTooltipId: 'ad-tooltip-test',
-            target,
-            adProvenance: {},
-          },
-          {}, domTarget);
+      Elements.ElementsTreeElement.DEFAULT_VIEW({
+        ...getBaseViewInput(),
+        adTooltipId: 'ad-tooltip-test',
+        target,
+        adProvenance: {},
+      },
+                                                {}, domTarget);
 
       const adorners = domTarget.querySelectorAll('devtools-adorner');
       const adorner = Array.from(adorners).find(a => a.name === 'ad');
       assert.exists(adorner);
       const tooltip = domTarget.querySelector('devtools-tooltip');
       assert.exists(tooltip);
-      assert.strictEqual(
-          tooltip.querySelector('.ad-provenance-tooltip-title')?.textContent, 'No provenance data is available');
+      assert.strictEqual(tooltip.querySelector('.ad-provenance-tooltip-title')?.textContent,
+                         'No provenance data is available');
     });
 
     it('renders filter list rule', () => {
       const domTarget = document.createElement('div');
       renderElementIntoDOM(domTarget);
-      Elements.ElementsTreeElement.DEFAULT_VIEW(
-          {
-            ...getBaseViewInput(),
-            adTooltipId: 'ad-tooltip-test',
-            target,
-            adProvenance: {filterlistRule: '||ads.com^'},
-          },
-          {}, domTarget);
+      Elements.ElementsTreeElement.DEFAULT_VIEW({
+        ...getBaseViewInput(),
+        adTooltipId: 'ad-tooltip-test',
+        target,
+        adProvenance: {filterlistRule: '||ads.com^'},
+      },
+                                                {}, domTarget);
 
       const tooltip = domTarget.querySelector('devtools-tooltip');
       assert.exists(tooltip);
@@ -243,19 +241,18 @@ describeWithEnvironment('ElementsTreeElement', () => {
       dispatchEvent(target, 'Debugger.scriptParsed', scriptParsedEvent);
 
       // Render the view.
-      Elements.ElementsTreeElement.DEFAULT_VIEW(
-          {
-            ...getBaseViewInput(),
-            adTooltipId: 'ad-tooltip-test',
-            target,
-            adProvenance: {
-              adScriptAncestry: {
-                ancestryChain: [{scriptId, debuggerId, name: ''}],
-                rootScriptFilterlistRule: '/ad-script.$script',
-              },
-            },
+      Elements.ElementsTreeElement.DEFAULT_VIEW({
+        ...getBaseViewInput(),
+        adTooltipId: 'ad-tooltip-test',
+        target,
+        adProvenance: {
+          adScriptAncestry: {
+            ancestryChain: [{scriptId, debuggerId, name: ''}],
+            rootScriptFilterlistRule: '/ad-script.$script',
           },
-          {}, domTarget);
+        },
+      },
+                                                {}, domTarget);
 
       // Wait for the asynchronous Linkifier to render the script name.
       await raf();
@@ -411,8 +408,8 @@ describeWithEnvironment('ElementsTreeElement', () => {
     });
   });
 
-  async function getContextMenuForElementWithLayoutProperties(layoutProperties: SDK.CSSModel.LayoutProperties|null):
-      Promise<UI.ContextMenu.ContextMenu> {
+  async function getContextMenuForElementWithLayoutProperties(layoutProperties: SDK.CSSModel.LayoutProperties|
+                                                              null): Promise<UI.ContextMenu.ContextMenu> {
     const target = createTarget();
     const domModel = target.model(SDK.DOMModel.DOMModel);
     const cssModel = target.model(SDK.CSSModel.CSSModel);
@@ -439,8 +436,8 @@ describeWithEnvironment('ElementsTreeElement', () => {
     const contextMenu = await getContextMenuForElementWithLayoutProperties(null);
     const debugWithAiItem = contextMenu.buildDescriptor().subItems?.find(item => item.label === 'Debug with AI');
     assert.exists(debugWithAiItem);
-    assert.deepEqual(
-        debugWithAiItem?.subItems?.map(item => item.label), ['Start a chat', 'Assess visibility', 'Center element']);
+    assert.deepEqual(debugWithAiItem?.subItems?.map(item => item.label),
+                     ['Start a chat', 'Assess visibility', 'Center element']);
   });
 
   it('shows flexbox submenu items', async () => {
@@ -448,9 +445,8 @@ describeWithEnvironment('ElementsTreeElement', () => {
         await getContextMenuForElementWithLayoutProperties({...DEFAULT_LAYOUT_PROPERTIES, isFlex: true});
     const debugWithAiItem = contextMenu.buildDescriptor().subItems?.find(item => item.label === 'Debug with AI');
     assert.exists(debugWithAiItem);
-    assert.deepEqual(
-        debugWithAiItem?.subItems?.map(item => item.label),
-        ['Start a chat', 'Wrap these items', 'Distribute items evenly', 'Explain flexbox']);
+    assert.deepEqual(debugWithAiItem?.subItems?.map(item => item.label),
+                     ['Start a chat', 'Wrap these items', 'Distribute items evenly', 'Explain flexbox']);
   });
 
   it('shows grid submenu items', async () => {
@@ -458,9 +454,8 @@ describeWithEnvironment('ElementsTreeElement', () => {
         await getContextMenuForElementWithLayoutProperties({...DEFAULT_LAYOUT_PROPERTIES, isGrid: true});
     const debugWithAiItem = contextMenu.buildDescriptor().subItems?.find(item => item.label === 'Debug with AI');
     assert.exists(debugWithAiItem);
-    assert.deepEqual(
-        debugWithAiItem?.subItems?.map(item => item.label),
-        ['Start a chat', 'Align items', 'Add padding', 'Explain grid layout']);
+    assert.deepEqual(debugWithAiItem?.subItems?.map(item => item.label),
+                     ['Start a chat', 'Align items', 'Add padding', 'Explain grid layout']);
   });
 
   it('shows subgrid submenu items', async () => {
@@ -468,9 +463,8 @@ describeWithEnvironment('ElementsTreeElement', () => {
         {...DEFAULT_LAYOUT_PROPERTIES, isGrid: true, isSubgrid: true});
     const debugWithAiItem = contextMenu.buildDescriptor().subItems?.find(item => item.label === 'Debug with AI');
     assert.exists(debugWithAiItem);
-    assert.deepEqual(
-        debugWithAiItem?.subItems?.map(item => item.label),
-        ['Start a chat', 'Find grid definition', 'Change parent properties', 'Explain subgrids']);
+    assert.deepEqual(debugWithAiItem?.subItems?.map(item => item.label),
+                     ['Start a chat', 'Find grid definition', 'Change parent properties', 'Explain subgrids']);
   });
 
   it('shows scroll submenu items', async () => {
@@ -478,9 +472,8 @@ describeWithEnvironment('ElementsTreeElement', () => {
         await getContextMenuForElementWithLayoutProperties({...DEFAULT_LAYOUT_PROPERTIES, hasScroll: true});
     const debugWithAiItem = contextMenu.buildDescriptor().subItems?.find(item => item.label === 'Debug with AI');
     assert.exists(debugWithAiItem);
-    assert.deepEqual(
-        debugWithAiItem?.subItems?.map(item => item.label),
-        ['Start a chat', 'Remove scrollbars', 'Style scrollbars', 'Explain scrollbars']);
+    assert.deepEqual(debugWithAiItem?.subItems?.map(item => item.label),
+                     ['Start a chat', 'Remove scrollbars', 'Style scrollbars', 'Explain scrollbars']);
   });
 
   it('shows container submenu items', async () => {
@@ -1236,6 +1229,50 @@ describeWithEnvironment('ElementsTreeElement in Snapshot Mode', () => {
       const revealSpy = sinon.spy(Common.Revealer.RevealerRegistry.instance(), 'reveal');
       slotAdorner!.dispatchEvent(new Event('click'));
       sinon.assert.called(revealSpy);
+    });
+  });
+
+  describe('selected hint', () => {
+    it('renders selected hint when selected and inspectable', () => {
+      const domTarget = document.createElement('div');
+      renderElementIntoDOM(domTarget);
+      Elements.ElementsTreeElement.DEFAULT_VIEW({
+        ...getBaseViewInput(),
+        isSelected: true,
+        canInspect: true,
+      },
+                                                {}, domTarget);
+
+      const hint = domTarget.querySelector('.selected-hint');
+      assert.exists(hint);
+    });
+
+    it('does not render selected hint when selected but not inspectable', () => {
+      const domTarget = document.createElement('div');
+      renderElementIntoDOM(domTarget);
+      Elements.ElementsTreeElement.DEFAULT_VIEW({
+        ...getBaseViewInput(),
+        isSelected: true,
+        canInspect: false,
+      },
+                                                {}, domTarget);
+
+      const hint = domTarget.querySelector('.selected-hint');
+      assert.isNull(hint);
+    });
+
+    it('does not render selected hint when not selected', () => {
+      const domTarget = document.createElement('div');
+      renderElementIntoDOM(domTarget);
+      Elements.ElementsTreeElement.DEFAULT_VIEW({
+        ...getBaseViewInput(),
+        isSelected: false,
+        canInspect: true,
+      },
+                                                {}, domTarget);
+
+      const hint = domTarget.querySelector('.selected-hint');
+      assert.isNull(hint);
     });
   });
 });

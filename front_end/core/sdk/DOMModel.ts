@@ -1127,27 +1127,33 @@ export class DOMNode extends Common.ObjectWrapper.ObjectWrapper<DOMNodeEventType
     return model;
   }
 
+  canInspectNode(): boolean {
+    if (this.ancestorUserAgentShadowRoot()) {
+      return false;
+    }
+
+    if (this.#pseudoType) {
+      return [
+        Protocol.DOM.PseudoType.Before,
+        Protocol.DOM.PseudoType.After,
+        Protocol.DOM.PseudoType.Marker,
+        Protocol.DOM.PseudoType.ScrollMarker,
+        Protocol.DOM.PseudoType.Backdrop,
+        Protocol.DOM.PseudoType.ViewTransition,
+        Protocol.DOM.PseudoType.ViewTransitionGroup,
+        Protocol.DOM.PseudoType.ViewTransitionImagePair,
+        Protocol.DOM.PseudoType.ViewTransitionOld,
+        Protocol.DOM.PseudoType.ViewTransitionNew,
+      ].includes(this.#pseudoType);
+    }
+    return true;
+  }
+
   async setAsInspectedNode(): Promise<void> {
-    let node: DOMNode|null = this;
-    if (node?.pseudoType()) {
-      node = node.parentNode;
+    if (!this.canInspectNode()) {
+      return;
     }
-    while (node) {
-      let ancestor = node.ancestorUserAgentShadowRoot();
-      if (!ancestor) {
-        break;
-      }
-      ancestor = node.ancestorShadowHost();
-      if (!ancestor) {
-        break;
-      }
-      // User #agent shadow root, keep climbing up.
-      node = ancestor;
-    }
-    if (!node) {
-      throw new Error('In DOMNode.setAsInspectedNode: node is expected to not be null.');
-    }
-    await this.#agent.invoke_setInspectedNode({nodeId: node.id});
+    await this.#agent.invoke_setInspectedNode({nodeId: this.id});
   }
 
   enclosingElementOrSelf(): DOMNode|null {
@@ -2365,6 +2371,10 @@ export class DOMNodeSnapshot extends DOMNode {
       _callback?: ((arg0: string|null, arg1: DOMNode|null) => void)|undefined): void {
   }
 
+  override canInspectNode(): boolean {
+    return false;
+  }
+
   override setAsInspectedNode(): Promise<void> {
     return Promise.resolve();
   }
@@ -2408,6 +2418,10 @@ export class DOMDocumentSnapshot extends DOMDocument {
   override moveTo(
       _targetNode: DOMNode, _anchorNode: DOMNode|null,
       _callback?: ((arg0: string|null, arg1: DOMNode|null) => void)|undefined): void {
+  }
+
+  override canInspectNode(): boolean {
+    return false;
   }
 
   override setAsInspectedNode(): Promise<void> {

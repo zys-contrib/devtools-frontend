@@ -464,6 +464,7 @@ export interface ViewInput {
 
   isHovered: boolean;
   isSelected: boolean;
+  canInspect: boolean;
   showAiButton: boolean;
   aiButtonTitle?: string;
   onAiButtonClick: (e: Event) => void;
@@ -1178,7 +1179,7 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
           <span>${ElementsComponents.AdornerManager.RegisteredAdorners.SCROLL_SNAP}</span>
         </devtools-adorner>` : nothing}
       </div>`: nothing}
-      ${input.isSelected ? html`
+      ${input.isSelected && input.canInspect ? html`
         <span class="selected-hint ${input.editorState ? 'hidden' : ''}" title=${i18nString(UIStrings.useSInTheConsoleToReferToThis, { PH1: '$0' })} aria-hidden="true"></span>
       ` : nothing}
       ${input.showAiButton ? html`
@@ -1438,6 +1439,7 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
                                                                },
       isHovered: this.#hovered,
       isSelected: this.selected,
+      canInspect: this.node().canInspectNode(),
       showAiButton: Boolean(this.#hovered || this.selected) && this.node().nodeType() === Node.ELEMENT_NODE &&
           this.isAiButtonEnabled() && (this.treeOutline as ElementsTreeOutline)?.showAIButton,
       aiButtonTitle: this.isAiButtonEnabled() ?
@@ -1814,6 +1816,7 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
       onTopLayerAdornerClick: () => {},
       isHovered: false,
       isSelected: false,
+      canInspect: false,
       showAiButton: false,
       onAiButtonClick: () => {},
       decorations: [],

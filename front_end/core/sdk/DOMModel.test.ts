@@ -151,8 +151,8 @@ describeWithEnvironment('DOMModel', () => {
     assert.lengthOf(topLayerShortcuts, 1);
     assert.strictEqual(topLayerShortcuts[0].deferredNode.backendNodeId(), 3 as Protocol.DOM.BackendNodeId);
     assert.lengthOf(topLayerShortcuts[0].childShortcuts, 1);
-    assert.strictEqual(
-        topLayerShortcuts[0].childShortcuts[0].deferredNode.backendNodeId(), 2 as Protocol.DOM.BackendNodeId);
+    assert.strictEqual(topLayerShortcuts[0].childShortcuts[0].deferredNode.backendNodeId(),
+                       2 as Protocol.DOM.BackendNodeId);
   });
 
   it('updates top layer elements correctly with multiple documents', async () => {
@@ -1138,6 +1138,271 @@ describeWithEnvironment('DOMModel', () => {
       assert.lengthOf(parentNode.children() || [], 1);
 
       assert.lengthOf(snapshot.children() || [], 0);
+    });
+  });
+
+  describe('setAsInspectedNode', () => {
+    it('does not send setInspectedNode command for non-inspectable pseudo elements', async () => {
+      const target = createTarget();
+      const domModel = target.model(SDK.DOMModel.DOMModel);
+      assert.exists(domModel);
+      assert.exists(domModel.agent);
+
+      const DOCUMENT_NODE_ID = 1 as Protocol.DOM.NodeId;
+      const ELEMENT_NODE_ID = 2 as Protocol.DOM.NodeId;
+      const PSEUDO_NODE_ID = 3 as Protocol.DOM.NodeId;
+
+      domModel.setDocumentForTest({
+        nodeId: DOCUMENT_NODE_ID,
+        backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+        nodeType: Node.DOCUMENT_NODE,
+        nodeName: '#document',
+        childNodeCount: 1,
+        children: [
+          {
+            nodeId: ELEMENT_NODE_ID,
+            backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.ELEMENT_NODE,
+            nodeName: 'div',
+            localName: 'div',
+            nodeValue: '',
+            pseudoElements: [
+              {
+                nodeId: PSEUDO_NODE_ID,
+                backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+                nodeType: Node.ELEMENT_NODE,
+                nodeName: '::first-line',
+                localName: '::first-line',
+                nodeValue: '',
+                pseudoType: ProtocolModule.DOM.PseudoType.FirstLine,
+              },
+            ],
+          },
+        ],
+      } as Protocol.DOM.Node);
+
+      const spy = sinon.spy(domModel.agent, 'invoke_setInspectedNode');
+
+      const pseudoNode = domModel.nodeForId(PSEUDO_NODE_ID);
+      assert.exists(pseudoNode);
+      await pseudoNode.setAsInspectedNode();
+      sinon.assert.notCalled(spy);
+    });
+
+    it('sends setInspectedNode command for inspectable pseudo elements', async () => {
+      const target = createTarget();
+      const domModel = target.model(SDK.DOMModel.DOMModel);
+      assert.exists(domModel);
+      assert.exists(domModel.agent);
+
+      const DOCUMENT_NODE_ID = 1 as Protocol.DOM.NodeId;
+      const ELEMENT_NODE_ID = 2 as Protocol.DOM.NodeId;
+      const PSEUDO_NODE_ID = 3 as Protocol.DOM.NodeId;
+
+      domModel.setDocumentForTest({
+        nodeId: DOCUMENT_NODE_ID,
+        backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+        nodeType: Node.DOCUMENT_NODE,
+        nodeName: '#document',
+        childNodeCount: 1,
+        children: [
+          {
+            nodeId: ELEMENT_NODE_ID,
+            backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.ELEMENT_NODE,
+            nodeName: 'div',
+            localName: 'div',
+            nodeValue: '',
+            pseudoElements: [
+              {
+                nodeId: PSEUDO_NODE_ID,
+                backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+                nodeType: Node.ELEMENT_NODE,
+                nodeName: '::before',
+                localName: '::before',
+                nodeValue: '',
+                pseudoType: ProtocolModule.DOM.PseudoType.Before,
+              },
+            ],
+          },
+        ],
+      } as Protocol.DOM.Node);
+
+      const spy = sinon.spy(domModel.agent, 'invoke_setInspectedNode');
+
+      const pseudoNode = domModel.nodeForId(PSEUDO_NODE_ID);
+      assert.exists(pseudoNode);
+      await pseudoNode.setAsInspectedNode();
+      sinon.assert.calledOnceWithExactly(spy, {nodeId: PSEUDO_NODE_ID});
+    });
+
+    it('does not send setInspectedNode command for UA shadow roots and their children', async () => {
+      const target = createTarget();
+      const domModel = target.model(SDK.DOMModel.DOMModel);
+      assert.exists(domModel);
+      assert.exists(domModel.agent);
+
+      const DOCUMENT_NODE_ID = 1 as Protocol.DOM.NodeId;
+      const HOST_NODE_ID = 2 as Protocol.DOM.NodeId;
+      const UA_SHADOW_ROOT_ID = 3 as Protocol.DOM.NodeId;
+      const UA_SHADOW_CHILD_ID = 4 as Protocol.DOM.NodeId;
+
+      domModel.setDocumentForTest({
+        nodeId: DOCUMENT_NODE_ID,
+        backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+        nodeType: Node.DOCUMENT_NODE,
+        nodeName: '#document',
+        childNodeCount: 1,
+        children: [
+          {
+            nodeId: HOST_NODE_ID,
+            backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.ELEMENT_NODE,
+            nodeName: 'div',
+            localName: 'div',
+            nodeValue: '',
+            shadowRoots: [
+              {
+                nodeId: UA_SHADOW_ROOT_ID,
+                backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+                nodeType: Node.DOCUMENT_FRAGMENT_NODE,
+                nodeName: '#shadow-root',
+                localName: '',
+                nodeValue: '',
+                shadowRootType: ProtocolModule.DOM.ShadowRootType.UserAgent,
+                children: [{
+                  nodeId: UA_SHADOW_CHILD_ID,
+                  backendNodeId: 4 as Protocol.DOM.BackendNodeId,
+                  nodeType: Node.ELEMENT_NODE,
+                  nodeName: 'span',
+                  localName: 'span',
+                  nodeValue: '',
+                }]
+              },
+            ],
+          },
+        ],
+      } as Protocol.DOM.Node);
+
+      const spy = sinon.spy(domModel.agent, 'invoke_setInspectedNode');
+
+      const uaShadowRoot = domModel.nodeForId(UA_SHADOW_ROOT_ID);
+      assert.exists(uaShadowRoot);
+      await uaShadowRoot.setAsInspectedNode();
+      sinon.assert.notCalled(spy);
+
+      const uaShadowChild = domModel.nodeForId(UA_SHADOW_CHILD_ID);
+      assert.exists(uaShadowChild);
+      await uaShadowChild.setAsInspectedNode();
+      sinon.assert.notCalled(spy);
+    });
+  });
+
+  describe('canInspectNode', () => {
+    let domModel: SDK.DOMModel.DOMModel;
+    const DOCUMENT_NODE_ID = 1 as Protocol.DOM.NodeId;
+    const ELEMENT_NODE_ID = 2 as Protocol.DOM.NodeId;
+    const PSEUDO_NODE_ID = 3 as Protocol.DOM.NodeId;
+    const NON_INSPECTABLE_PSEUDO_NODE_ID = 6 as Protocol.DOM.NodeId;
+    const UA_SHADOW_ROOT_ID = 4 as Protocol.DOM.NodeId;
+    const UA_SHADOW_CHILD_ID = 5 as Protocol.DOM.NodeId;
+
+    beforeEach(() => {
+      const target = createTarget();
+      domModel = target.model(SDK.DOMModel.DOMModel)!;
+      domModel.setDocumentForTest({
+        nodeId: DOCUMENT_NODE_ID,
+        backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+        nodeType: Node.DOCUMENT_NODE,
+        nodeName: '#document',
+        childNodeCount: 1,
+        children: [
+          {
+            nodeId: ELEMENT_NODE_ID,
+            backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.ELEMENT_NODE,
+            nodeName: 'div',
+            localName: 'div',
+            nodeValue: '',
+            pseudoElements: [
+              {
+                nodeId: PSEUDO_NODE_ID,
+                backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+                nodeType: Node.ELEMENT_NODE,
+                nodeName: '::before',
+                localName: '::before',
+                nodeValue: '',
+                pseudoType: ProtocolModule.DOM.PseudoType.Before,
+              },
+              {
+                nodeId: NON_INSPECTABLE_PSEUDO_NODE_ID,
+                backendNodeId: 6 as Protocol.DOM.BackendNodeId,
+                nodeType: Node.ELEMENT_NODE,
+                nodeName: '::first-line',
+                localName: '::first-line',
+                nodeValue: '',
+                pseudoType: ProtocolModule.DOM.PseudoType.FirstLine,
+              },
+            ],
+            shadowRoots: [
+              {
+                nodeId: UA_SHADOW_ROOT_ID,
+                backendNodeId: 4 as Protocol.DOM.BackendNodeId,
+                nodeType: Node.DOCUMENT_FRAGMENT_NODE,
+                nodeName: '#shadow-root',
+                localName: '',
+                nodeValue: '',
+                shadowRootType: ProtocolModule.DOM.ShadowRootType.UserAgent,
+                children: [{
+                  nodeId: UA_SHADOW_CHILD_ID,
+                  backendNodeId: 5 as Protocol.DOM.BackendNodeId,
+                  nodeType: Node.ELEMENT_NODE,
+                  nodeName: 'span',
+                  localName: 'span',
+                  nodeValue: '',
+                }]
+              },
+            ],
+          },
+        ],
+      } as Protocol.DOM.Node);
+    });
+
+    it('returns true for normal elements', () => {
+      const elementNode = domModel.nodeForId(ELEMENT_NODE_ID);
+      assert.exists(elementNode);
+      assert.isTrue(elementNode.canInspectNode());
+    });
+
+    it('returns true for inspectable pseudo elements', () => {
+      const pseudoNode = domModel.nodeForId(PSEUDO_NODE_ID);
+      assert.exists(pseudoNode);
+      assert.isTrue(pseudoNode.canInspectNode());
+    });
+
+    it('returns false for non-inspectable pseudo elements', () => {
+      const pseudoNode = domModel.nodeForId(NON_INSPECTABLE_PSEUDO_NODE_ID);
+      assert.exists(pseudoNode);
+      assert.isFalse(pseudoNode.canInspectNode());
+    });
+
+    it('returns false for user agent shadow roots', () => {
+      const uaShadowRoot = domModel.nodeForId(UA_SHADOW_ROOT_ID);
+      assert.exists(uaShadowRoot);
+      assert.isFalse(uaShadowRoot.canInspectNode());
+    });
+
+    it('returns false for nodes inside user agent shadow roots', () => {
+      const uaShadowChild = domModel.nodeForId(UA_SHADOW_CHILD_ID);
+      assert.exists(uaShadowChild);
+      assert.isFalse(uaShadowChild.canInspectNode());
+    });
+
+    it('returns false for snapshots', async () => {
+      const elementNode = domModel.nodeForId(ELEMENT_NODE_ID);
+      assert.exists(elementNode);
+      const snapshot = await elementNode.takeSnapshot();
+      assert.isFalse(snapshot.canInspectNode());
     });
   });
 });
