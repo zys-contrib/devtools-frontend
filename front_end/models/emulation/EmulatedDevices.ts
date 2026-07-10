@@ -766,6 +766,7 @@ export interface JSONMode {
 
 // These props should quoted for the script to work properly
 /* eslint-disable @stylistic/quote-props */
+// TODO(crbug.com/40718410): Add Android system navigation bar safe areas to the Pixel presets.
 const emulatedDevices = [
   // This is used by a python script to keep this list up-to-date with
   // chromedriver native code.
@@ -1374,6 +1375,21 @@ const emulatedDevices = [
     'user-agent-metadata':
         {'platform': 'Android', 'platformVersion': '11', 'architecture': '', 'model': 'Pixel 3', 'mobile': true},
     'type': 'phone',
+    'modes': [
+      {
+        'title': 'default',
+        'orientation': 'vertical',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 45, 'right': 0, 'bottom': 0},
+        'cutout': {'shape': 'rectangle', 'x': 126, 'y': 0, 'width': 141, 'height': 45},
+      },
+      {
+        'title': 'default',
+        'orientation': 'horizontal',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 0, 'right': 45, 'bottom': 0},
+      },
+    ],
   },
   {
     'order': 30,
@@ -1396,6 +1412,21 @@ const emulatedDevices = [
     'user-agent-metadata':
         {'platform': 'Android', 'platformVersion': '13', 'architecture': '', 'model': 'Pixel 7', 'mobile': true},
     'type': 'phone',
+    'modes': [
+      {
+        'title': 'default',
+        'orientation': 'vertical',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 52, 'right': 0, 'bottom': 0},
+        'cutout': {'shape': 'circle', 'x': 183, 'y': 0, 'width': 55, 'height': 52, 'cx': 206, 'cy': 26, 'radius': 13},
+      },
+      {
+        'title': 'default',
+        'orientation': 'horizontal',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 0, 'right': 52, 'bottom': 0},
+      },
+    ],
   },
   {
     'order': 31,
@@ -1418,6 +1449,21 @@ const emulatedDevices = [
     'user-agent-metadata':
         {'platform': 'Android', 'platformVersion': '14', 'architecture': '', 'model': 'Pixel 8', 'mobile': true},
     'type': 'phone',
+    'modes': [
+      {
+        'title': 'default',
+        'orientation': 'vertical',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 50, 'right': 0, 'bottom': 0},
+        'cutout': {'shape': 'circle', 'x': 182, 'y': 0, 'width': 46, 'height': 50, 'cx': 206, 'cy': 25, 'radius': 14},
+      },
+      {
+        'title': 'default',
+        'orientation': 'horizontal',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 0, 'right': 50, 'bottom': 0},
+      },
+    ],
   },
   {
     'order': 32,
@@ -1440,6 +1486,21 @@ const emulatedDevices = [
     'user-agent-metadata':
         {'platform': 'Android', 'platformVersion': '14', 'architecture': '', 'model': 'Pixel 8 Pro', 'mobile': true},
     'type': 'phone',
+    'modes': [
+      {
+        'title': 'default',
+        'orientation': 'vertical',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 50, 'right': 0, 'bottom': 0},
+        'cutout': {'shape': 'circle', 'x': 205, 'y': 0, 'width': 37, 'height': 50, 'cx': 224, 'cy': 25, 'radius': 14},
+      },
+      {
+        'title': 'default',
+        'orientation': 'horizontal',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 0, 'right': 50, 'bottom': 0},
+      },
+    ],
   },
   {
     'order': 33,
@@ -1462,6 +1523,21 @@ const emulatedDevices = [
     'user-agent-metadata':
         {'platform': 'Android', 'platformVersion': '14', 'architecture': '', 'model': 'Pixel 8a', 'mobile': true},
     'type': 'phone',
+    'modes': [
+      {
+        'title': 'default',
+        'orientation': 'vertical',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 46, 'right': 0, 'bottom': 0},
+        'cutout': {'shape': 'circle', 'x': 185, 'y': 0, 'width': 42, 'height': 46, 'cx': 206, 'cy': 26, 'radius': 13},
+      },
+      {
+        'title': 'default',
+        'orientation': 'horizontal',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 0, 'right': 46, 'bottom': 0},
+      },
+    ],
   },
   {
     'order': 34,
@@ -1484,6 +1560,21 @@ const emulatedDevices = [
     'user-agent-metadata':
         {'platform': 'Android', 'platformVersion': '14', 'architecture': '', 'model': 'Pixel 9', 'mobile': true},
     'type': 'phone',
+    'modes': [
+      {
+        'title': 'default',
+        'orientation': 'vertical',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 58, 'right': 0, 'bottom': 0},
+        'cutout': {'shape': 'circle', 'x': 188, 'y': 0, 'width': 37, 'height': 58, 'cx': 206, 'cy': 29, 'radius': 14},
+      },
+      {
+        'title': 'default',
+        'orientation': 'horizontal',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 0, 'right': 58, 'bottom': 0},
+      },
+    ],
   },
   {
     'order': 35,
@@ -1506,6 +1597,21 @@ const emulatedDevices = [
     'user-agent-metadata':
         {'platform': 'Android', 'platformVersion': '14', 'architecture': '', 'model': 'Pixel 9 Pro', 'mobile': true},
     'type': 'phone',
+    'modes': [
+      {
+        'title': 'default',
+        'orientation': 'vertical',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 68, 'right': 0, 'bottom': 0},
+        'cutout': {'shape': 'circle', 'x': 195, 'y': 0, 'width': 36, 'height': 68, 'cx': 213, 'cy': 34, 'radius': 16},
+      },
+      {
+        'title': 'default',
+        'orientation': 'horizontal',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 0, 'right': 68, 'bottom': 0},
+      },
+    ],
   },
   {
     'order': 36,
@@ -1528,6 +1634,21 @@ const emulatedDevices = [
     'user-agent-metadata':
         {'platform': 'Android', 'platformVersion': '14', 'architecture': '', 'model': 'Pixel 9 Pro XL', 'mobile': true},
     'type': 'phone',
+    'modes': [
+      {
+        'title': 'default',
+        'orientation': 'vertical',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 66, 'right': 0, 'bottom': 0},
+        'cutout': {'shape': 'circle', 'x': 205, 'y': 0, 'width': 38, 'height': 66, 'cx': 224, 'cy': 33, 'radius': 16},
+      },
+      {
+        'title': 'default',
+        'orientation': 'horizontal',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 0, 'right': 66, 'bottom': 0},
+      },
+    ],
   },
   {
     'order': 37,
@@ -1550,6 +1671,21 @@ const emulatedDevices = [
     'user-agent-metadata':
         {'platform': 'Android', 'platformVersion': '16', 'architecture': '', 'model': 'Pixel 10', 'mobile': true},
     'type': 'phone',
+    'modes': [
+      {
+        'title': 'default',
+        'orientation': 'vertical',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 58, 'right': 0, 'bottom': 0},
+        'cutout': {'shape': 'circle', 'x': 188, 'y': 0, 'width': 37, 'height': 58, 'cx': 206, 'cy': 29, 'radius': 14},
+      },
+      {
+        'title': 'default',
+        'orientation': 'horizontal',
+        'insets': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+        'safe-area-insets': {'left': 0, 'top': 0, 'right': 58, 'bottom': 0},
+      },
+    ],
   },
   {
     'order': 38,
