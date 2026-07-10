@@ -23,12 +23,9 @@ const yargsObject = yargs(hideBin(process.argv))
 const shouldRemoveFiles = yargsObject.removeFiles === true;
 const SOURCE_ROOT = path.resolve(import.meta.dirname, path.join('..', '..'));
 const unitTestRoot = path.join(SOURCE_ROOT, 'front_end');
-const e2eTestRoot = path.join(SOURCE_ROOT, 'test', 'e2e');
 const GOLDENS_LOCATION = path.join(SOURCE_ROOT, 'test', 'goldens');
-const testFiles = [
-  ...(await Array.fromAsync(glob('**/*.test.ts', {cwd: unitTestRoot}))).map(file => path.join(unitTestRoot, file)),
-  ...(await Array.fromAsync(glob('**/*.test.ts', {cwd: e2eTestRoot}))).map(file => path.join(e2eTestRoot, file)),
-];
+const unitTestFiles =
+    (await Array.fromAsync(glob('**/*.test.ts', {cwd: unitTestRoot}))).map(file => path.join(unitTestRoot, file));
 
 function findScreenshotsToCheck(folder) {
   const filesToCheck = [];
@@ -63,9 +60,9 @@ function checkGoldensForPlatform(platform) {
 
   for (const golden of goldens) {
     const relativeGoldenPath = path.relative(platformRoot, golden).replace(/\\/g, '/');
-    const used = checkFolder(relativeGoldenPath, testFiles);
+    const units = checkFolder(relativeGoldenPath, unitTestFiles);
 
-    if (!used) {
+    if (!units) {
       obsoleteImages.push(path.join(platform, relativeGoldenPath));
     }
   }

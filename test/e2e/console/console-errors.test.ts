@@ -10,10 +10,12 @@ import {
   showVerboseMessages,
   waitForConsoleMessagesToBeNonEmpty,
 } from '../helpers/console-helpers.js';
+import {
+  increaseTimeoutForPerfPanel,
+} from '../helpers/performance-helpers.js';
 
 describe('The Console\'s errors', function() {
-  setup({enableScreenshotAssertion: true});
-
+  increaseTimeoutForPerfPanel(this);
   it('picks up custom exception names ending with \'Error\' and symbolizes stack traces according to source maps',
      async ({
        devToolsPage,
@@ -161,5 +163,4 @@ performActions @ resource-errors.html:8
       assert.notInclude(lines[i], '(at buggy-script.js:1:36)');
     }
   });
-
 });
