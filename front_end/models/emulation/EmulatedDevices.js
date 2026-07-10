@@ -647,6 +647,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 44, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'notch', 'x': 92, 'y': 0, 'width': 231, 'height': 33, 'upper-radius': 6, 'lower-radius': 25 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 44, 'top': 0, 'right': 44, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 14,
@@ -667,6 +682,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 47, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'notch', 'x': 90, 'y': 0, 'width': 210, 'height': 32, 'upper-radius': 6, 'lower-radius': 23 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 47, 'top': 0, 'right': 47, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 15,
@@ -687,6 +717,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 47, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'notch', 'x': 114, 'y': 0, 'width': 162, 'height': 34, 'upper-radius': 5, 'lower-radius': 22 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 47, 'top': 0, 'right': 47, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 16,
@@ -707,6 +752,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 47, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'notch', 'x': 133, 'y': 0, 'width': 161, 'height': 34, 'upper-radius': 5, 'lower-radius': 22 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 47, 'top': 0, 'right': 47, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 17,
@@ -727,6 +787,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 59, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 134, 'y': 11, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 59, 'top': 0, 'right': 59, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 18,
@@ -747,6 +822,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 59, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 153, 'y': 11, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 59, 'top': 0, 'right': 59, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 19,
@@ -767,6 +857,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 59, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 134, 'y': 11, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 59, 'top': 0, 'right': 59, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 20,
@@ -787,6 +892,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 59, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 153, 'y': 11, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 59, 'top': 0, 'right': 59, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 21,
@@ -807,6 +927,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 59, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 134, 'y': 11, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 59, 'top': 0, 'right': 59, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 22,
@@ -827,6 +962,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 59, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 153, 'y': 11, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 59, 'top': 0, 'right': 59, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 23,
@@ -847,6 +997,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 47, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'notch', 'x': 114, 'y': 0, 'width': 162, 'height': 34, 'upper-radius': 5, 'lower-radius': 22 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 47, 'top': 0, 'right': 47, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 24,
@@ -867,6 +1032,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 59, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 134, 'y': 11, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 59, 'top': 0, 'right': 59, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 25,
@@ -887,6 +1067,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 59, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 153, 'y': 11, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 59, 'top': 0, 'right': 59, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 26,
@@ -907,6 +1102,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 62, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 139, 'y': 14, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 62, 'top': 0, 'right': 62, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 27,
@@ -927,6 +1137,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '18.5', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 62, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'pill', 'x': 158, 'y': 14, 'width': 125, 'height': 37, 'border-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 62, 'top': 0, 'right': 62, 'bottom': 21 },
+            },
+        ],
     },
     {
         'order': 28,
@@ -1544,6 +1769,21 @@ const emulatedDevices = [
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
         'user-agent-metadata': { 'platform': 'iOS', 'platformVersion': '13.2.3', 'architecture': '', 'model': 'iPhone', 'mobile': true },
         'type': 'phone',
+        'modes': [
+            {
+                'title': 'default',
+                'orientation': 'vertical',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 0, 'top': 44, 'right': 0, 'bottom': 34 },
+                'cutout': { 'shape': 'notch', 'x': 85, 'y': 0, 'width': 204, 'height': 30, 'upper-radius': 8, 'lower-radius': 19 },
+            },
+            {
+                'title': 'default',
+                'orientation': 'horizontal',
+                'insets': { 'left': 0, 'top': 0, 'right': 0, 'bottom': 0 },
+                'safe-area-insets': { 'left': 44, 'top': 0, 'right': 44, 'bottom': 21 },
+            },
+        ],
     },
     {
         'show-by-default': false,

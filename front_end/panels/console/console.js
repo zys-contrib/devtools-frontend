@@ -6739,7 +6739,7 @@ var ConsoleView = class _ConsoleView extends UI9.Widget.VBox {
     this.aiCodeCompletionSummaryToolbar?.setLoading(false);
   }
   clearConsole() {
-    SDK7.ConsoleModel.ConsoleModel.requestClearMessages();
+    SDK7.ConsoleModel.ConsoleModel.requestClearMessages(SDK7.TargetManager.TargetManager.instance());
     this.prompt.clearAiCodeCompletionCache();
   }
   collapseAll() {

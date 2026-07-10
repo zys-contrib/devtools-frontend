@@ -4739,7 +4739,7 @@ var PresentationConsoleMessageManager = class {
   #sourceFrameMessageManager = new PresentationSourceFrameMessageManager();
   constructor() {
     SDK13.TargetManager.TargetManager.instance().addModelListener(SDK13.ConsoleModel.ConsoleModel, SDK13.ConsoleModel.Events.MessageAdded, (event) => this.consoleMessageAdded(event.data));
-    SDK13.ConsoleModel.ConsoleModel.allMessagesUnordered().forEach(this.consoleMessageAdded, this);
+    SDK13.ConsoleModel.ConsoleModel.allMessagesUnordered(SDK13.TargetManager.TargetManager.instance()).forEach(this.consoleMessageAdded, this);
     SDK13.TargetManager.TargetManager.instance().addModelListener(SDK13.ConsoleModel.ConsoleModel, SDK13.ConsoleModel.Events.ConsoleCleared, () => this.#sourceFrameMessageManager.clear());
   }
   consoleMessageAdded(consoleMessage) {
