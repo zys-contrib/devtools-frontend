@@ -9,9 +9,9 @@ import {
   getContentOfSelectedNode,
   waitForAndClickTreeElementWithPartialText,
   waitForChildrenOfSelectedElementNode,
+  waitForElementWithPartialText,
   waitForPartialContentOfSelectedElementsNode,
   waitForSelectedNodeChange,
-  waitForStyleRule,
 } from '../helpers/elements-helpers.js';
 
 function assertStartsWith(actual: string, expected: string): void {
@@ -116,15 +116,18 @@ describe('The Elements tab', function() {
        // Click the node for this test.
        await waitForAndClickTreeElementWithPartialText('"from-document"', devToolsPage);
 
-       // Wait for the styles pane to populate before interacting with it.
-       await waitForStyleRule('.from-document', devToolsPage);
+       // Wait for the link text to appear to ensure it's fully rendered.
+       const rule = await devToolsPage.waitFor('.matched-styles[aria-label=".from-document, css selector"]');
+       await devToolsPage.waitForElementWithTextContent('constructed stylesheet', rule);
 
        // Click the link to the adopted stylesheet in the styles pane.
        await devToolsPage.click(
            '.matched-styles[aria-label=".from-document, css selector"] > .styles-section-subtitle > devtools-widget');
 
        // The adopted stylesheet set should now be expanded.
-       await devToolsPage.waitForClass(styleSheets, 'expanded');
-       await expectExpanded(true);
+       const expandedStyleSheets = await waitForElementWithPartialText('#adopted-style-sheets', devToolsPage);
+       assert.isOk(expandedStyleSheets);
+       await devToolsPage.waitForClass(expandedStyleSheets, 'expanded');
+       assert.strictEqual(await expandedStyleSheets.evaluate((e: Element) => e.getAttribute('aria-expanded')), 'true');
      });
 });
