@@ -64,7 +64,7 @@ import {ProfileSidebarTreeElement} from './ProfileSidebarTreeElement.js';
 import profilesPanelStyles from './profilesPanel.css.js';
 import profilesSidebarTreeStyles from './profilesSidebarTree.css.js';
 import type {ProfileTypeRegistry} from './ProfileTypeRegistry.js';
-import {WritableProfileHeader} from './ProfileView.js';
+import {WritableProfileHeader} from './WritableProfileHeader.js';
 
 const UIStrings = {
   /**

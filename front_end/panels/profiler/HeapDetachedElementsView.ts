@@ -17,7 +17,7 @@ import {
   type ProfileHeader,
   ProfileType,
 } from './ProfileHeader.js';
-import {WritableProfileHeader} from './ProfileView.js';
+import {WritableProfileHeader} from './WritableProfileHeader.js';
 
 const UIStrings = {
   /**

@@ -36,9 +36,9 @@ devtools_ui_module("profiler") {
     "ProfileLauncherView.ts",
     "ProfileSidebarTreeElement.ts",
     "ProfileTypeRegistry.ts",
-    "ProfileView.ts",
     "ProfilesPanel.ts",
     "TopDownProfileDataGrid.ts",
+    "WritableProfileHeader.ts",
   ]
 
   deps = [

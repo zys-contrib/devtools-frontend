@@ -139,4 +139,23 @@ describeWithEnvironment('HeapProfileView', () => {
     const samples = setSamplesSpy.firstCall.args[0];
     assert.strictEqual(samples.sizes[0], 100);
   });
+
+  it('changes view correctly', () => {
+    const mockHeader = createMockHeader();
+
+    const view = new Profiler.HeapProfileView.HeapProfileView(mockHeader);
+
+    // Initial view should be HEAVY
+    assert.strictEqual(view.viewType.get(), Profiler.HeapProfileView.ViewTypes.HEAVY);
+
+    // Change to TREE
+    view.viewSelectComboBox.setSelectedIndex(2);
+    view.changeView();
+    assert.strictEqual(view.visibleView, view.dataGrid.asWidget());
+
+    // Change to FLAME
+    view.viewSelectComboBox.setSelectedIndex(0);
+    view.changeView();
+    assert.strictEqual(view.visibleView, view.flameChart);
+  });
 });
