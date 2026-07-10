@@ -52,7 +52,7 @@ export async function navigateToFrame(name: string, devToolsPage: DevToolsPage) 
 export async function navigateToStorage(devToolsPage: DevToolsPage) {
   const STORAGE_SELECTOR = '[aria-label="Storage"]';
   await devToolsPage.click(STORAGE_SELECTOR);
-  await devToolsPage.waitFor('.clear-storage-button');
+  await devToolsPage.waitFor('#storage-view-clear-button');
   await expectVeEvents(
       [
         veClick('Panel: resources > Pane: sidebar > Tree > TreeItem: application > TreeItem: storage'),
@@ -494,27 +494,24 @@ function veImpressionForServiceWorkersView() {
 
 function veImpressionForStorageOverview() {
   return veImpression('Pane', 'clear-storage', [
-    veImpression('Action', 'storage.clear-site-data'),
-    veImpression('Section', 'application', [veImpression('Toggle', 'clear-storage-service-workers')]),
-    veImpression(
-        'Section', 'storage',
-        [
-          veImpression('Toggle', 'clear-storage-cache-storage'),
-          veImpression('Toggle', 'clear-storage-cookies'),
-          veImpression('Toggle', 'clear-storage-indexeddb'),
-          veImpression('Toggle', 'clear-storage-local-storage'),
-        ]),
-    veImpression(
-        'Section', 'usage',
-        [
-          veImpression('Link', 'learn-more'),
-          veImpression(
-              'PieChart', undefined,
-              [
-                veImpression('Section', 'legend', [veImpression('PieChartTotal', 'select-total')]),
-              ]),
-          veImpression('Toggle', 'simulate-custom-quota'),
-        ]),
-    veImpression('Toggle', 'clear-storage-include-third-party-cookies'),
+    veImpression('Section', 'clear-storage',
+                 [
+                   veImpression('Action', 'storage.clear-site-data'),
+                   veImpression('Toggle', 'clear-storage-cache-storage'),
+                   veImpression('Toggle', 'clear-storage-cookies'),
+                   veImpression('Toggle', 'clear-storage-include-third-party-cookies'),
+                   veImpression('Toggle', 'clear-storage-indexeddb'),
+                   veImpression('Toggle', 'clear-storage-local-storage'),
+                   veImpression('Toggle', 'clear-storage-service-workers'),
+                 ]),
+    veImpression('Section', 'usage',
+                 [
+                   veImpression('Link', 'learn-more'),
+                   veImpression('PieChart', undefined,
+                                [
+                                  veImpression('Section', 'legend', [veImpression('PieChartTotal', 'select-total')]),
+                                ]),
+                   veImpression('Toggle', 'simulate-custom-quota'),
+                 ]),
   ]);
 }
