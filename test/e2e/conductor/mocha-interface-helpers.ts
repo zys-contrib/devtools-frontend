@@ -164,13 +164,13 @@ export class InstrumentedTestFunction {
   }
 
   async #executeWithTimeout(context: Mocha.Context) {
-    // This needs to be the first thing we do
-    // Else we may hit Mocha's timeouts
+    // This needs to be the first thing we do,
+    // otherwise we may hit Mocha's timeouts.
     this.#setupTimeout(context);
-    // Get the state before starting the test timeouts
+    // Get the state before starting the test timeouts.
     this.state = this.suite ? await StateProvider.instance.getState(this.suite) : undefined;
 
-    let cleanupTimeoutPromise: (() => void)|undefined = undefined;
+    let cleanupTimeoutPromise: (() => void)|undefined;
     let timeoutPromise: Promise<never>|undefined = undefined;
 
     const executionPromise = this.#executeTest(context);
@@ -182,33 +182,42 @@ export class InstrumentedTestFunction {
         }, this.actualTimeout);
         cleanupTimeoutPromise = () => {
           clearTimeout(timeout);
-          // Don't keep the Promise as pending
+          // Don't keep the Promise as pending.
           reject();
         };
       });
     }
     const racePromise = timeoutPromise ? Promise.race([executionPromise, timeoutPromise]) : executionPromise;
 
-    return await racePromise
-        .then(
-            () => {
-              this.#abortController.abort();
-              AsyncScope.abortSignal = undefined;
-            },
-            async err => {
-              this.#abortController.abort();
-              AsyncScope.abortSignal = undefined;
-              throw await finalizeTestError(this.state, err);
-            })
-        .finally(async () => {
-          cleanupTimeoutPromise?.();
-          await this.#clearState();
-          // Under some situations we report error when
-          // we disconnect CDP sessions,
-          // because of this we want to keep this last
-          // else it will report the error for the next test
-          dumpCollectedErrors();
-        });
+    let testExecutionError: Error|undefined;
+    try {
+      await racePromise;
+    } catch (err) {
+      testExecutionError = await finalizeTestError(this.state, err as Error);
+    } finally {
+      this.#abortController.abort();
+      AsyncScope.abortSignal = undefined;
+    }
+
+    try {
+      cleanupTimeoutPromise?.();
+      await this.#clearState();
+      // Under some situations we report error when we disconnect CDP sessions,
+      // because of this we want to keep this last else it will report the error
+      // for the next test.
+      dumpCollectedErrors();
+    } catch (teardownError) {
+      if (testExecutionError) {
+        // The test itself failed, so suppress the teardown error to avoid masking it.
+        console.error('Teardown error overshadowed by test error:', teardownError);
+      } else {
+        testExecutionError = teardownError instanceof Error ? teardownError : new Error(String(teardownError));
+      }
+    }
+
+    if (testExecutionError) {
+      throw testExecutionError;
+    }
   }
 
   static instrument(fn: Mocha.AsyncFunc, label: string, suite?: Mocha.Suite) {
