@@ -480,6 +480,42 @@ describeWithEnvironment('NetworkLogView', () => {
     assert.strictEqual(tooltip, expected);
   });
 
+  it('shows ServiceWorker when the request matches no router rule but is fulfilled by the fetch handler', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create(
+        'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com`, urlString``, null, null, null);
+    request.resourceSize = 4;
+    request.setTransferSize(2);
+    request.statusCode = 200;
+    request.fetchedViaServiceWorker = true;
+    request.serviceWorkerRouterInfo = {} as Protocol.Network.ServiceWorkerRouterInfo;
+
+    const networkRequestNode = new Network.NetworkDataGridNode.NetworkRequestNode(
+        {} as Network.NetworkDataGridNode.NetworkLogViewInterface, request);
+    const el = document.createElement('div');
+    networkRequestNode.renderCell(el, 'size');
+    assert.strictEqual(el.innerText, '(ServiceWorker)0.0\xa0kB');
+    const tooltip = el.getAttribute('title')!;
+    assert.strictEqual(tooltip, 'Served from ServiceWorker, resource size: 0.0\xa0kB');
+  });
+
+  it('shows transferred size when the request matches no router rule and falls back to network', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create(
+        'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com`, urlString``, null, null, null);
+    request.resourceSize = 4;
+    request.setTransferSize(2);
+    request.statusCode = 200;
+    request.serviceWorkerRouterInfo = {} as Protocol.Network.ServiceWorkerRouterInfo;
+
+    const networkRequestNode = new Network.NetworkDataGridNode.NetworkRequestNode(
+        {} as Network.NetworkDataGridNode.NetworkLogViewInterface, request);
+    const el = document.createElement('div');
+    networkRequestNode.renderCell(el, 'size');
+    assert.strictEqual(el.innerText, '0.0\xa0kB0.0\xa0kB');
+    const tooltip = el.getAttribute('title')!;
+    const expected = '0.0\xa0kB transferred over network, resource size: 0.0\xa0kB, no matching ServiceWorker routes';
+    assert.strictEqual(tooltip, expected);
+  });
+
   it('styles a prefetch network request error as a warning', async () => {
     const request = SDK.NetworkRequest.NetworkRequest.create(
         'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com`, urlString``, null, null, null);
