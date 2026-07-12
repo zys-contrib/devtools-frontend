@@ -144,6 +144,30 @@ describeWithEnvironment('NetworkLogView', () => {
     return {rootNode, filterBar, networkLogView};
   }
 
+  it('places the request-number column first when it is visible', () => {
+    Common.Settings.Settings.instance().createSetting('network-log-columns', {}).set({
+      'request-number': {visible: true},
+    });
+    networkLogView = createNetworkLogView();
+    networkLogView.columns().switchViewMode(true);
+    const visibleColumns = networkLogView.columns().dataGrid().visibleColumnsArray;
+    assert.strictEqual(visibleColumns[0].id, 'request-number');
+  });
+
+  it('keeps the request icon on the name cell when request-number is pinned first', () => {
+    Common.Settings.Settings.instance().createSetting('network-log-columns', {}).set({
+      'request-number': {visible: true},
+    });
+    createNetworkRequest('http://localhost/foo.js', {});
+    networkLogView = createNetworkLogView();
+    networkLogView.columns().switchViewMode(true);
+    renderElementIntoDOM(networkLogView);
+    const node =
+        networkLogView.columns().dataGrid().rootNode().children[0] as Network.NetworkDataGridNode.NetworkRequestNode;
+    assert.exists(node.createCell('name').querySelector('devtools-icon'));
+    assert.isNull(node.createCell('request-number').querySelector('devtools-icon'));
+  });
+
   it('generates a valid curl command when some headers don\'t have values', async () => {
     const request = createNetworkRequest(urlString`http://localhost`, {
       requestHeaders: [
