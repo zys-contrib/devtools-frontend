@@ -35,7 +35,9 @@
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
+import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
+import * as TextUtils from '../../models/text_utils/text_utils.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as ObjectUI from '../../ui/legacy/components/object_ui/object_ui.js';
 // eslint-disable-next-line @devtools/es-modules-import
@@ -43,9 +45,10 @@ import objectPropertiesSectionStyles from '../../ui/legacy/components/object_ui/
 // eslint-disable-next-line @devtools/es-modules-import
 import objectValueStyles from '../../ui/legacy/components/object_ui/objectValue.css.js';
 import * as UI from '../../ui/legacy/legacy.js';
-import {Directives, html, type LitTemplate, render, type TemplateResult} from '../../ui/lit/lit.js';
+import {Directives, html, type LitTemplate, nothing, render, type TemplateResult} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
+import {BinaryResourceView} from './BinaryResourceView.js';
 import requestPayloadTreeStyles from './requestPayloadTree.css.js';
 import requestPayloadViewStyles from './requestPayloadView.css.js';
 import {ShowMoreDetailsWidget} from './ShowMoreDetailsWidget.js';
@@ -120,6 +123,10 @@ interface ViewInput {
   formParameters: SDK.NetworkRequest.NameValue[]|undefined;
   queryString: string|null;
   queryParameters: SDK.NetworkRequest.NameValue[]|null;
+
+  /** Raw binary content data for the request body (when base64-encoded by backend). */
+  binaryPayloadContentData: TextUtils.ContentData.ContentData|null;
+  requestUrl: Platform.DevToolsPath.UrlString;
 }
 
 type View = (input: ViewInput, output: object, target: HTMLElement) => void;
@@ -273,7 +280,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
       </li>
       <li
           role=treeitem
-          ?hidden=${!input.formData || Boolean(input.formParameters)}
+          ?hidden=${!input.formData || Boolean(input.formParameters) || Boolean(input.binaryPayloadContentData)}
           jslog=${VisualLogging.section().context('request-payload')}
           @contextmenu=${onContextMenu(input.viewJSONPayloadSource, input.setViewJSONPayloadSource,
                                        /* includeURLDecodingOption*/ false)}
@@ -289,7 +296,21 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
         </ul>
       </li>
      </ul>
-     `}></devtools-tree>`, target, {
+     `}></devtools-tree>
+   ${input.binaryPayloadContentData ? html`
+     <div class="raw-payload-section"
+          jslog=${VisualLogging.section().context('binary-request-payload')}>
+       ${widget(element => {
+         const streamingContent = TextUtils.StreamingContentData.StreamingContentData.from(
+             input.binaryPayloadContentData as TextUtils.ContentData.ContentData);
+         return new BinaryResourceView(
+             streamingContent,
+             input.requestUrl,
+             Common.ResourceType.resourceTypes.XHR,
+             element);
+       })}
+     </div>` : nothing}
+   `, target, {
       container: {
         classes: ['request-payload-view'],
         attributes: {
@@ -304,10 +325,12 @@ export class RequestPayloadView extends UI.Widget.VBox {
   #decodeRequestParameters = true;
   #formData?: string;
   #formParameters?: SDK.NetworkRequest.NameValue[];
+  #binaryPayloadContentData: TextUtils.ContentData.ContentData|null = null;
   #view: View;
   #viewJSONPayloadSource = false;
   #viewFormParamSource = false;
   #viewQueryParamSource = false;
+  #refreshFormDataPromiseForTest = Promise.resolve();
 
   constructor(target?: HTMLElement, view = DEFAULT_VIEW) {
     super();
@@ -330,18 +353,22 @@ export class RequestPayloadView extends UI.Widget.VBox {
     }
 
     this.requestUpdate();
-    void this.#refreshFormData();
+    this.#refreshFormData();
   }
 
   get request(): SDK.NetworkRequest.NetworkRequest|undefined {
     return this.#request;
   }
 
+  get refreshFormDataPromiseForTest(): Promise<void> {
+    return this.#refreshFormDataPromiseForTest;
+  }
+
   override wasShown(): void {
     super.wasShown();
     this.request?.addEventListener(SDK.NetworkRequest.Events.REQUEST_HEADERS_CHANGED, this.#refreshFormData, this);
 
-    void this.#refreshFormData();
+    this.#refreshFormData();
   }
 
   override willHide(): void {
@@ -396,16 +423,35 @@ export class RequestPayloadView extends UI.Widget.VBox {
       copyValue: (value: string): void => {
         Host.userMetrics.actionTaken(Host.UserMetrics.Action.NetworkPanelCopyValue);
         Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(value);
-      }
+      },
+      binaryPayloadContentData: this.#binaryPayloadContentData,
+      requestUrl: this.request?.url() ?? Platform.DevToolsPath.EmptyUrlString,
     };
     this.#view(input, {}, this.element);
   }
 
-  async #refreshFormData(): Promise<void> {
+  #refreshFormData(): void {
+    this.#refreshFormDataPromiseForTest = this.#doRefreshFormData();
+  }
+
+  async #doRefreshFormData(): Promise<void> {
     this.#formData = await this.request?.requestFormData() ?? undefined;
     if (this.#formData) {
       this.#formParameters = await this.request?.formParameters() ?? undefined;
     }
+
+    // Fetch raw binary content data for the request body when the backend
+    // returns base64-encoded data. This enables the binary viewer (hex,
+    // base64, utf-8) in the Payload tab for compressed/binary bodies.
+    this.#binaryPayloadContentData = null;
+    if (this.request && !this.#formParameters) {
+      const contentData = await this.request.requestFormDataContentData();
+      if (!TextUtils.ContentData.ContentData.isError(contentData) && !contentData.isTextContent &&
+          contentData.createdFromBase64) {
+        this.#binaryPayloadContentData = contentData;
+      }
+    }
+
     this.requestUpdate();
   }
 

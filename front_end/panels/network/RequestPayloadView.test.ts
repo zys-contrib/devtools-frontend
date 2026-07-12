@@ -7,6 +7,7 @@ import sinon from 'sinon';
 import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
+import * as TextUtils from '../../models/text_utils/text_utils.js';
 import {assertScreenshot, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import * as ObjectUI from '../../ui/legacy/components/object_ui/object_ui.js';
@@ -288,5 +289,77 @@ describeWithEnvironment('RequestPayloadView', () => {
     const firstProperty = rootElement.childAt(0);
     assert.instanceOf(firstProperty, ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement);
     assert.isFalse(firstProperty.editable);
+  });
+
+  it('sets binaryPayloadContentData for base64-encoded request bodies', async () => {
+    const base64Data = 'SGVsbG8gV29ybGQ=';  // "Hello World" in base64
+    const binaryContentData =
+        new TextUtils.ContentData.ContentData(base64Data, /* isBase64= */ true, 'application/octet-stream');
+
+    const request = SDK.NetworkRequest.NetworkRequest.create(
+        'requestId' as Protocol.Network.RequestId, urlString`https://example.com/api`, urlString``, null, null, null);
+    request.setRequestHeaders([
+      {name: 'Content-Type', value: 'application/octet-stream'},
+      {name: 'Content-Encoding', value: 'gzip'},
+    ]);
+
+    sinon.stub(request, 'requestFormData').resolves(base64Data);
+    sinon.stub(request, 'formParameters').resolves(null);
+    sinon.stub(request, 'requestFormDataContentData').resolves(binaryContentData);
+
+    // Use a spy view to capture the input passed to the view function.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let lastInput: any = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const spyView = (input: any, _output: any, _target: any): void => {
+      lastInput = input;
+    };
+
+    const view = new Network.RequestPayloadView.RequestPayloadView(undefined, spyView);
+    view.request = request;
+    renderElementIntoDOM(view);
+    view.wasShown();
+
+    await view.refreshFormDataPromiseForTest;
+    await view.updateComplete;
+
+    assert.exists(lastInput, 'View should have been called');
+    assert.exists(lastInput.binaryPayloadContentData,
+                  'binaryPayloadContentData should be set for base64-encoded request bodies');
+    assert.isTrue(lastInput.binaryPayloadContentData.createdFromBase64, 'ContentData should be created from base64');
+    assert.strictEqual(lastInput.binaryPayloadContentData.base64, base64Data,
+                       'ContentData base64 should match the original encoded data');
+    assert.strictEqual(lastInput.requestUrl, 'https://example.com/api');
+  });
+
+  it('does not set binaryPayloadContentData for text request bodies', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create(
+        'requestId' as Protocol.Network.RequestId, urlString`https://example.com/api`, urlString``, null, null, null);
+    request.setRequestHeaders([{name: 'Content-Type', value: 'application/json'}]);
+
+    const textContentData =
+        new TextUtils.ContentData.ContentData('{"foo": "bar"}', /* isBase64= */ false, 'application/json');
+    sinon.stub(request, 'requestFormData').resolves('{"foo": "bar"}');
+    sinon.stub(request, 'formParameters').resolves(null);
+    sinon.stub(request, 'requestFormDataContentData').resolves(textContentData);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let lastInput: any = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const spyView = (input: any, _output: any, _target: any): void => {
+      lastInput = input;
+    };
+
+    const view = new Network.RequestPayloadView.RequestPayloadView(undefined, spyView);
+    view.request = request;
+    renderElementIntoDOM(view);
+    view.wasShown();
+
+    await view.refreshFormDataPromiseForTest;
+    await view.updateComplete;
+
+    assert.exists(lastInput, 'View should have been called');
+    assert.isNull(lastInput.binaryPayloadContentData,
+                  'binaryPayloadContentData should be null for text request bodies');
   });
 });

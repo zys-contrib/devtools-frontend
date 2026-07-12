@@ -967,6 +967,15 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
     this.#formParametersPromise = null;
   }
 
+  /**
+   * Returns the raw request body as ContentData, preserving base64 encoding
+   * for binary payloads. This enables binary viewers (hex, base64, utf-8)
+   * in the Payload tab.
+   */
+  requestFormDataContentData(): Promise<TextUtils.ContentData.ContentDataOrError> {
+    return NetworkManager.requestPostDataContentData(this);
+  }
+
   private filteredProtocolName(): string {
     const protocol = this.protocol.toLowerCase();
     if (protocol === 'h2') {

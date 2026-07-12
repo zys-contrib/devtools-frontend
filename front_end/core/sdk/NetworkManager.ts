@@ -324,6 +324,45 @@ export class NetworkManager extends SDKModel<EventTypes> {
   }
 
   /**
+   * Returns the request post data as a ContentData suitable for binary
+   * viewers (hex, base64, utf-8) in the Payload tab.  When the backend
+   * provides base64-encoded (possibly compressed) data, the body is
+   * decompressed first so viewers show the actual payload bytes rather
+   * than gzip/deflate framing.
+   */
+  static async requestPostDataContentData(request: NetworkRequest): Promise<TextUtils.ContentData.ContentDataOrError> {
+    const manager = NetworkManager.forRequest(request);
+    if (!manager) {
+      return {error: 'No network manager for request'};
+    }
+    const requestId = request.backendRequestId();
+    if (!requestId) {
+      return {error: 'No backend request id for request'};
+    }
+    try {
+      const response = await manager.#networkAgent.invoke_getRequestPostData({requestId});
+      const error = response.getError();
+      if (error) {
+        return {error};
+      }
+      const {postData, base64Encoded} = response;
+      if (!postData) {
+        return {error: 'No post data'};
+      }
+      const requestContentType = request.requestContentType() ?? 'application/octet-stream';
+      const {charset} = Platform.MimeType.parseContentType(requestContentType);
+
+      if (base64Encoded && postData) {
+        return await TextUtils.ContentData.ContentData.fromCompressedBase64(
+            postData, requestContentType, charset ?? undefined, request.requestContentEncoding());
+      }
+      return new TextUtils.ContentData.ContentData(postData, false, requestContentType, charset ?? undefined);
+    } catch (e) {
+      return {error: e.message};
+    }
+  }
+
+  /**
    * Attempts to decompress a compressed request body.
    * Returns the decompressed string, or null if decompression is not applicable.
    */
