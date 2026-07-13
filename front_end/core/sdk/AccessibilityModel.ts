@@ -6,7 +6,7 @@ import type * as ProtocolProxyApi from '../../generated/protocol-proxy-api.js';
 import * as Protocol from '../../generated/protocol.js';
 
 import {DeferredDOMNode, DOMDocument, DOMModel, type DOMNode, Events as DOMModelEvents} from './DOMModel.js';
-import {FrameManager} from './FrameManager.js';
+import type {FrameManager} from './FrameManager.js';
 import {SDKModel} from './SDKModel.js';
 import {Capability, type Target} from './Target.js';
 
@@ -424,8 +424,7 @@ export class AccessibilityModel extends SDKModel<EventTypes> implements Protocol
 
 SDKModel.register(AccessibilityModel, {capabilities: Capability.DOM, autostart: false});
 
-function getModel(frameId: Protocol.Page.FrameId,
-                  frameManager: FrameManager = FrameManager.instance()): AccessibilityModel {
+function getModel(frameId: Protocol.Page.FrameId, frameManager: FrameManager): AccessibilityModel {
   const frame = frameManager.getFrame(frameId);
   const model = frame?.resourceTreeModel().target().model(AccessibilityModel);
   if (!model) {
@@ -435,7 +434,7 @@ function getModel(frameId: Protocol.Page.FrameId,
 }
 
 export async function getRootNode(frameId: Protocol.Page.FrameId,
-                                  frameManager: FrameManager = FrameManager.instance()): Promise<AccessibilityNode> {
+                                  frameManager: FrameManager): Promise<AccessibilityNode> {
   const model = getModel(frameId, frameManager);
   const root = await model.requestRootNode(frameId);
   if (!root) {
