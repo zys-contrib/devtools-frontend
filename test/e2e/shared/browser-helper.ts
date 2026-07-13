@@ -41,7 +41,10 @@ export class BrowserWrapper {
         continue;
       }
       console.error('Collecting crash dump:', file);
-      fs.copyFileSync(path.join(crashesPath, file), path.join(TestConfig.artifactsDir, file));
+      fs.copyFileSync(
+          path.join(crashesPath, file),
+          path.join(TestConfig.artifactsDir, file),
+      );
     }
   }
 
@@ -50,7 +53,11 @@ export class BrowserWrapper {
     // instead of parsing it out of args
     const userDataArg = this.browser.process()?.spawnargs.find(arg => arg.startsWith('--user-data-dir='));
     if (userDataArg) {
-      const configuredPath = path.join(userDataArg.split('=')[1], 'Crashpad', 'pending');
+      const configuredPath = path.join(
+          userDataArg.split('=')[1],
+          'Crashpad',
+          'pending',
+      );
       // `--user-data-dir` generally does not contain Craspad files on any
       // platform. In the future this might get properly aligned so we search
       // here first.
@@ -63,18 +70,45 @@ export class BrowserWrapper {
     switch (platform) {
       case 'darwin':
         return path.join(
-            homeDir, 'Library', 'Application Support', 'Google', 'Chrome for Testing', 'Crashpad', 'pending');
+            homeDir,
+            'Library',
+            'Application Support',
+            'Google',
+            'Chrome for Testing',
+            'Crashpad',
+            'pending',
+        );
       case 'win32': {
         const localAppData = path.join(
-            process.env.LOCALAPPDATA ?? '', 'Google', 'Chrome for Testing', 'User Data', 'Crashpad', 'pending');
+            process.env.LOCALAPPDATA ?? '',
+            'Google',
+            'Chrome for Testing',
+            'User Data',
+            'Crashpad',
+            'pending',
+        );
         if (fs.existsSync(localAppData)) {
           return localAppData;
         }
         return path.join(
-            homeDir, 'AppData', 'Local', 'Google', 'Chrome for Testing', 'User Data', 'Crashpad', 'pending');
+            homeDir,
+            'AppData',
+            'Local',
+            'Google',
+            'Chrome for Testing',
+            'User Data',
+            'Crashpad',
+            'pending',
+        );
       }
       case 'linux':
-        return path.join(homeDir, '.config', 'google-chrome-for-testing', 'Crashpad', 'pending');
+        return path.join(
+            homeDir,
+            '.config',
+            'google-chrome-for-testing',
+            'Crashpad',
+            'pending',
+        );
       default:
         throw new Error(`Unsupported platform: ${platform}`);
     }
@@ -86,30 +120,19 @@ export class Launcher {
     setupBrowserProcessIO(browser);
     const wrapper = new BrowserWrapper(browser);
     if (settings.extensions && settings.extensions.length > 0) {
-      await Launcher.loadExtensions(wrapper, settings.extensions);
+      for (const extPath of settings.extensions) {
+        await wrapper.browser.installExtension(extPath, {
+          enabledInIncognito: true,
+        });
+      }
     }
     return wrapper;
   }
 
-  static async loadExtensions(browser: BrowserWrapper, extensions: string[]) {
-    try {
-      const browserTarget = await browser.browser.waitForTarget(t => t.type() === 'browser');
-      const session = await browserTarget.createCDPSession();
-      for (const extPath of extensions) {
-        await session.send('Extensions.loadUnpacked', {
-          path: extPath,
-          enableInIncognito: true,
-        });
-      }
-      await session.detach();
-    } catch (error) {
-      console.error('Failed to load extensions via CDP:', error);
-      throw error;
-    }
-  }
-
   private static launchChrome(settings: BrowserSettings, serverPort: number) {
-    const frontEndDirectory = url.pathToFileURL(path.join(GEN_DIR, 'front_end'));
+    const frontEndDirectory = url.pathToFileURL(
+        path.join(GEN_DIR, 'front_end'),
+    );
     const disabledFeatures = settings.disabledFeatures?.slice() ?? [];
     const launchArgs = [
       '--remote-allow-origins=*',
@@ -131,7 +154,7 @@ export class Launcher {
     const headless = TestConfig.headless;
     // CDP commands in e2e and interaction should not generally take
     // more than 20 seconds, but performance tests might require more time.
-    const protocolTimeout = TestConfig.debug ? 0 : (TestConfig.isPerfTest ? 120_000 : 20_000);
+    const protocolTimeout = TestConfig.debug ? 0 : TestConfig.isPerfTest ? 120_000 : 20_000;
     const executablePath = TestConfig.chromeBinary;
 
     const opts: puppeteer.LaunchOptions = {
@@ -140,11 +163,9 @@ export class Launcher {
       dumpio: !headless || Boolean(process.env['LUCI_CONTEXT']),
       protocolTimeout,
       networkEnabled: false,
+      enableExtensions: true,
       pipe: true,
-      ignoreDefaultArgs: [
-        '--disable-crash-reporter',
-        '--disable-breakpad',
-      ],
+      ignoreDefaultArgs: ['--disable-crash-reporter', '--disable-breakpad'],
     };
 
     TestConfig.configureChrome(executablePath);
@@ -172,14 +193,6 @@ export class Launcher {
       enabledFeatures.push(envChromeFeatures);
     }
     launchArgs.push(`--enable-features=${enabledFeatures.join(',')}`);
-
-    if (settings.extensions && settings.extensions.length > 0) {
-      if (Array.isArray(opts.ignoreDefaultArgs)) {
-        opts.ignoreDefaultArgs.push('--disable-extensions');
-      } else {
-        opts.ignoreDefaultArgs = ['--disable-extensions'];
-      }
-    }
 
     opts.args = launchArgs;
     return puppeteer.launch(opts);
@@ -210,6 +223,6 @@ export const DEFAULT_BROWSER_SETTINGS: BrowserSettings = {
     'CompositeBackgroundColorAnimation',           // crbug.com/381055647
     'ScriptSrcHashesV1',                           // crbug.com/443216445
     'RenderDocument',                              // crbug.com/444369637
-  ]
+  ],
   // LINT.ThenChange(/test/conductor/hooks.ts:features)
 };
