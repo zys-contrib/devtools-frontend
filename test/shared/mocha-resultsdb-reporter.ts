@@ -45,9 +45,15 @@ interface HookWithParent {
   parent: Record<string, any>;
 }
 
-class ResultsDbReporter extends (TestConfig.isAiAgent ? Mocha.reporters.Base : Mocha.reporters.Spec) {
+class ResultsDbReporter extends Mocha.reporters.Base {
   private suitePrefix?: string;
+  private indents = 0;
+  private n = 0;
   htmlResult: fs.WriteStream|undefined;
+
+  private indent() {
+    return Array(this.indents).join('  ');
+  }
 
   localResultsPath() {
     return !ResultsDb.available() && this.suitePrefix ? path.join(__dirname, '..', this.suitePrefix, 'results.html') :
@@ -66,18 +72,41 @@ class ResultsDbReporter extends (TestConfig.isAiAgent ? Mocha.reporters.Base : M
       this.htmlResult = fs.createWriteStream(localResults, {});
     }
 
+    if (!TestConfig.isAiAgent) {
+      runner.on(Mocha.Runner.constants.EVENT_RUN_BEGIN, () => {
+        Mocha.reporters.Base.consoleLog();
+      });
+
+      runner.on(Mocha.Runner.constants.EVENT_SUITE_BEGIN, (suite: Mocha.Suite) => {
+        this.indents++;
+        Mocha.reporters.Base.consoleLog(Mocha.reporters.Base.color('suite', '%s%s'), this.indent(), suite.title);
+      });
+
+      runner.on(Mocha.Runner.constants.EVENT_SUITE_END, () => {
+        this.indents--;
+        if (this.indents === 1) {
+          Mocha.reporters.Base.consoleLog();
+        }
+      });
+    }
+
     runner.on(EVENT_TEST_PASS, this.onTestPass.bind(this));
     runner.on(EVENT_TEST_FAIL, this.onTestFail.bind(this));
     runner.on(EVENT_TEST_RETRY, this.onTestFail.bind(this));
     runner.on(EVENT_TEST_PENDING, this.onTestSkip.bind(this));
 
-    if (TestConfig.isAiAgent) {
-      // Base doesn't report anything so we just report the final result.
-      runner.once(EVENT_RUN_END, this.epilogue.bind(this));
-    }
+    runner.once(EVENT_RUN_END, this.epilogue.bind(this));
   }
 
   private onTestPass(test: Mocha.Test) {
+    if (!TestConfig.isAiAgent) {
+      const fmt = test.speed === 'fast' ?
+          this.indent() + Mocha.reporters.Base.color('checkmark', '  ' + Mocha.reporters.Base.symbols.ok) +
+              Mocha.reporters.Base.color('pass', ' %s') :
+          this.indent() + Mocha.reporters.Base.color('checkmark', '  ' + Mocha.reporters.Base.symbols.ok) +
+              Mocha.reporters.Base.color('pass', ' %s') + Mocha.reporters.Base.color(test.speed as string, ' (%dms)');
+      Mocha.reporters.Base.consoleLog(fmt, test.title, test.duration);
+    }
     const testResult = this.buildDefaultTestResultFrom(test);
     testResult.status = 'PASS';
     testResult.expected = true;
@@ -89,8 +118,25 @@ class ResultsDbReporter extends (TestConfig.isAiAgent ? Mocha.reporters.Base : M
     ResultsDb.sendTestResult(testResult);
   }
 
-  private onTestFail(test: Mocha.Test, error: Error|ScreenshotError|unknown) {
-    const testResult = this.buildDefaultTestResultFrom(test);
+  private onTestFail(test: Mocha.Test|Mocha.Hook, error: Error|ScreenshotError|unknown) {
+    let targetTest: Mocha.Test;
+    const isHook = test.type === 'hook';
+    if (isHook) {
+      if (!test.ctx?.currentTest) {
+        throw new Error(`Hook ${test.id} is missing currentTest`);
+      }
+      targetTest = test.ctx.currentTest;
+    } else {
+      targetTest = test as Mocha.Test;
+    }
+
+    if (!TestConfig.isAiAgent) {
+      this.n++;
+      Mocha.reporters.Base.consoleLog(this.indent() + Mocha.reporters.Base.color('fail', '  %d) %s'), this.n,
+                                      targetTest.title);
+    }
+
+    const testResult = this.buildDefaultTestResultFrom(targetTest);
     testResult.status = 'FAIL';
     testResult.expected = false;
     if (error instanceof ScreenshotError) {
@@ -104,6 +150,9 @@ class ResultsDbReporter extends (TestConfig.isAiAgent ? Mocha.reporters.Base : M
       const assertionDiff = DiffUtils.resultAssertionsDiff([error]);
       const diffText = DiffUtils.formatDiffText(assertionDiff);
       testResult.summaryHtml = DiffUtils.formatSummary(errorMessage, diffText);
+    }
+    if (isHook) {
+      testResult.summaryHtml = `Failed in ${test.title}:<br>${testResult.summaryHtml}`;
     }
     if (this.htmlResult) {
       this.htmlResult.write(testResult.summaryHtml);
@@ -127,6 +176,10 @@ class ResultsDbReporter extends (TestConfig.isAiAgent ? Mocha.reporters.Base : M
   }
 
   private onTestSkip(test: Mocha.Test) {
+    if (!TestConfig.isAiAgent) {
+      const fmt = this.indent() + Mocha.reporters.Base.color('pending', '  - %s');
+      Mocha.reporters.Base.consoleLog(fmt, test.title);
+    }
     const testResult = this.buildDefaultTestResultFrom(test);
     testResult.status = 'SKIP';
     testResult.expected = true;
