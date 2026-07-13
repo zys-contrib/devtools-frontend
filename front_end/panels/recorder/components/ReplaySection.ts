@@ -19,39 +19,39 @@ const {html, Directives: {ifDefined, repeat}} = Lit;
 
 const UIStrings = {
   /**
-   * @description Replay button label
+   * @description Replay button label.
    */
   Replay: 'Replay',
   /**
-   * @description Button label for the normal speed replay option
+   * @description Button label for the normal speed replay option.
    */
   ReplayNormalButtonLabel: 'Normal speed',
   /**
-   * @description Item label for the normal speed replay option
+   * @description Item label for the normal speed replay option.
    */
   ReplayNormalItemLabel: 'Normal (Default)',
   /**
-   * @description Button label for the slow speed replay option
+   * @description Button label for the slow speed replay option.
    */
   ReplaySlowButtonLabel: 'Slow speed',
   /**
-   * @description Item label for the slow speed replay option
+   * @description Item label for the slow speed replay option.
    */
   ReplaySlowItemLabel: 'Slow',
   /**
-   * @description Button label for the very slow speed replay option
+   * @description Button label for the very slow speed replay option.
    */
   ReplayVerySlowButtonLabel: 'Very slow speed',
   /**
-   * @description Item label for the very slow speed replay option
+   * @description Item label for the very slow speed replay option.
    */
   ReplayVerySlowItemLabel: 'Very slow',
   /**
-   * @description Button label for the extremely slow speed replay option
+   * @description Button label for the extremely slow speed replay option.
    */
   ReplayExtremelySlowButtonLabel: 'Extremely slow speed',
   /**
-   * @description Item label for the slow speed replay option
+   * @description Item label for the extremely slow speed replay option.
    */
   ReplayExtremelySlowItemLabel: 'Extremely slow',
   /**

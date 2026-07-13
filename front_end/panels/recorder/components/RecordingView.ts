@@ -80,11 +80,11 @@ const UIStrings = {
    */
   environment: 'Environment',
   /**
-   * @description The title of the screenshot image that is shown for every section in the recordign view.
+   * @description The title of the screenshot image that is shown for every section in the recording view.
    */
   screenshotForSection: 'Screenshot for this section',
   /**
-   * @description The title of the button that edits the current recording's title.
+   * @description The title of the button that edits the current recording’s title.
    */
   editTitle: 'Edit title',
   /**
@@ -138,7 +138,7 @@ const UIStrings = {
    */
   addAssertion: 'Add assertion',
   /**
-   * @description The title of the button that open current recording in Performance panel.
+   * @description The title of the button that opens the current recording in the Performance panel.
    */
   performancePanel: 'Performance panel',
   /**
@@ -148,7 +148,7 @@ const UIStrings = {
   /**
    * @description The announcement when the code sidebar is closed.
    */
-  codeSidebarClosed: 'Code sidebar closed'
+  codeSidebarClosed: 'Code sidebar closed',
 } as const;
 const str_ = i18n.i18n.registerUIStrings(
     'panels/recorder/components/RecordingView.ts',

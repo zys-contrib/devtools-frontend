@@ -18,11 +18,11 @@ const {html} = Lit;
 
 const UIStrings = {
   /**
-   * @description The title of the page that contains a list of saved recordings that the user has..
+   * @description The title of the page that contains a list of saved recordings.
    */
   savedRecordings: 'Saved recordings',
   /**
-   * @description The title of the button that leads to create a new recording page.
+   * @description The title of the button that leads to the page for creating a new recording.
    */
   createRecording: 'Create a new recording',
   /**
@@ -34,7 +34,7 @@ const UIStrings = {
    */
   deleteRecording: 'Delete recording',
   /**
-   * @description The title of the row corresponding to a recording. By clicking on the row, the user open the recording for editing.
+   * @description The title of the row corresponding to a recording. By clicking on the row, the user opens the recording for editing.
    */
   openRecording: 'Open recording',
 } as const;

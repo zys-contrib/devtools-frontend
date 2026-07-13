@@ -48,7 +48,7 @@ const UIStrings = {
    */
   recordingImported: 'Recording imported',
   /**
-   * @description The title of the button that deletes the recording
+   * @description The title of the button that deletes the recording.
    */
   deleteRecording: 'Delete recording',
   /**
@@ -56,20 +56,19 @@ const UIStrings = {
    */
   recordingDeleted: 'Recording deleted',
   /**
-   * @description The title of the select if user has no saved recordings
+   * @description The title of the select option if the user has no saved recordings.
    */
   noRecordings: 'No recordings',
   /**
-   * @description The title of the select option for one or more recording
-   * number followed by this text - `1 recording(s)` or `4 recording(s)`
+   * @description The title of the select option for one or more recording number followed by this text - 1 recording(s) or 4 recording(s).
    */
   numberOfRecordings: 'recording(s)',
   /**
-   * @description The title of the button that continues the replay
+   * @description The title of the button that continues the replay.
    */
   continueReplay: 'Continue',
   /**
-   * @description The title of the button that executes only one step in the replay
+   * @description The title of the button that executes only one step in the replay.
    */
   stepOverReplay: 'Execute one step',
   /**
@@ -79,7 +78,7 @@ const UIStrings = {
   /**
    * @description The title of shortcut for starting and stopping recording.
    */
-  startStopRecording: 'Start/Stop recording',
+  startStopRecording: 'Start/stop recording',
   /**
    * @description The title of shortcut for replaying recording.
    */
@@ -109,11 +108,11 @@ const UIStrings = {
   exportViaExtensions: 'Export via extensions',
   /**
    * @description The title of the menu option that leads to a page that lists
-   * all browsers extensions available for Recorder.
+   * all browser extensions available for the Recorder panel.
    */
   getExtensions: 'Get extensions…',
   /**
-   * @description The button label that leads to the feedback form for Recorder.
+   * @description The button label that leads to the feedback form for the Recorder panel.
    */
   sendFeedback: 'Send feedback',
   /**
@@ -121,26 +120,26 @@ const UIStrings = {
    */
   header: 'Nothing recorded yet',
   /**
-   * @description Text to explain the usage of the recorder panel.
+   * @description Text to explain the usage of the Recorder panel.
    */
   recordingDescription: 'Use recordings to create automated end-to-end tests or performance traces.',
   /**
-   * @description Link text to forward to a documentation page on the recorder.
+   * @description Link text to forward to a documentation page on the Recorder panel.
    */
   learnMore: 'Learn more',
   /**
-   * @description Headline of warning shown to users when users import a recording into DevTools Recorder.
+   * @description Headline of warning shown when users import a recording into the Recorder panel.
    */
   doYouTrustThisCode: 'Do you trust this recording?',
   /**
-   * @description Warning shown to users when imports code into DevTools Recorder. IMPORTANT: keep double quotes around PH1 and do not use single quotes.
+   * @description Warning shown to users when importing code into the Recorder panel. IMPORTANT: keep double quotes around PH1 and do not use single quotes.
    * @example {allow importing} PH1
    */
   doNotImport:
-      'Don\'t import recordings you do not understand or have not reviewed yourself into DevTools. This could allow attackers to steal your identity or take control of your computer. Please type “{PH1}” below to allow importing.',
+      'Don’t import recordings you don’t understand or haven’t reviewed yourself into DevTools. This could allow attackers to steal your identity or take control of your computer. Type “{PH1}” below to allow importing.',
   /**
    * @description Text a user needs to type in order to confirm that they
-   *are aware of the danger of import code into the DevTools Recorder.
+   * are aware of the danger of importing code into the Recorder panel.
    */
   allowImporting: 'allow importing',
   /**

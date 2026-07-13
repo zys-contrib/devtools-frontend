@@ -25,7 +25,7 @@ const UIStrings = {
    */
   recordingName: 'Recording name',
   /**
-   * @description The button that start the recording with selected options.
+   * @description The button that starts the recording with the selected options.
    */
   startRecording: 'Start recording',
   /**
@@ -41,13 +41,13 @@ const UIStrings = {
    */
   selectorAttribute: 'Selector attribute',
   /**
-   * @description The title for the close button where the user cancels a recording and returns back to previous view.
+   * @description The title for the close button where the user cancels a recording and returns to the previous view.
    */
   cancelRecording: 'Cancel recording',
   /**
    * @description Label indicating a CSS (Cascading Style Sheets) selector type
    * (https://developer.mozilla.org/en-US/docs/Web/CSS). The label is used on a
-   * checkbox which users can tick if they are interesting in recording CSS
+   * checkbox which users can tick if they are interested in recording CSS
    * selectors.
    */
   selectorTypeCSS: 'CSS',
@@ -55,29 +55,29 @@ const UIStrings = {
    * @description Label indicating a piercing CSS (Cascading Style Sheets)
    * selector type
    * (https://pptr.dev/guides/query-selectors#pierce-selectors-pierce). These
-   * type of selectors behave like CSS selectors, but can pierce through
-   * ShadowDOM. The label is used on a checkbox which users can tick if they are
-   * interesting in recording CSS selectors.
+   * types of selectors behave like CSS selectors, but can pierce through
+   * Shadow DOM. The label is used on a checkbox which users can tick if they are
+   * interested in recording Pierce selectors.
    */
   selectorTypePierce: 'Pierce',
   /**
-   * @description Label indicating a ARIA (Accessible Rich Internet
+   * @description Label indicating an ARIA (Accessible Rich Internet
    * Applications) selector type
    * (https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA). The
-   * label is used on a checkbox which users can tick if they are interesting in
+   * label is used on a checkbox which users can tick if they are interested in
    * recording ARIA selectors.
    */
   selectorTypeARIA: 'ARIA',
   /**
    * @description Label indicating a text selector type. The label is used on a
-   * checkbox which users can tick if they are interesting in recording text
+   * checkbox which users can tick if they are interested in recording text
    * selectors.
    */
   selectorTypeText: 'Text',
   /**
-   * @description Label indicating a XPath (XML Path Language) selector type
+   * @description Label indicating an XPath (XML Path Language) selector type
    * (https://en.wikipedia.org/wiki/XPath). The label is used on a checkbox
-   * which users can tick if they are interesting in recording text selectors.
+   * which users can tick if they are interested in recording XPath selectors.
    */
   selectorTypeXPath: 'XPath',
   /**

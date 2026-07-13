@@ -225,7 +225,7 @@ const attributesByType = deepFreeze<{
 
 const UIStrings = {
   /**
-   * @description The text that is disabled when the steps were not saved due to an error. The error message itself is always in English and not translated.
+   * @description The text that is displayed when the steps were not saved due to an error. The error message itself is always in English and not translated.
    * @example {Saving failed} error
    */
   notSaved: 'Not saved: {error}',
@@ -239,7 +239,7 @@ const UIStrings = {
    */
   deleteRow: 'Delete row',
   /**
-   * @description The title of a button that adds a new input field for the entry of the frame index. Frame index is the number of the frame within the page's frame tree.
+   * @description The title of a button that adds a new input field for the entry of the frame index. Frame index is the number of the frame within the page’s frame tree.
    */
   addFrameIndex: 'Add frame index within the frame tree',
   /**
@@ -263,9 +263,9 @@ const UIStrings = {
    */
   removeSelector: 'Remove a selector',
   /**
-   * @description The error message display when a user enters a type in the input not associates with any existing types.
+   * @description The error message displayed when a user enters a type in the input that is not associated with any existing types.
    */
-  unknownActionType: 'Unknown action type.',
+  unknownActionType: 'Enter a valid action type',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/recorder/components/StepEditor.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
