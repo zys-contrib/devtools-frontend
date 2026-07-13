@@ -273,7 +273,8 @@ function renderURL(request: Trace.Types.Events.SyntheticNetworkRequest): Lit.Tem
       request.args.data.url as Platform.DevToolsPath.UrlString, options);
 
   // Potentially link to request within Network Panel
-  const networkRequest = SDK.TraceObject.RevealableNetworkRequest.create(request);
+  const networkRequest =
+      SDK.TraceObject.RevealableNetworkRequest.create(SDK.TargetManager.TargetManager.instance(), request);
   if (networkRequest) {
     linkifiedURL.addEventListener('contextmenu', (event: MouseEvent) => {
       const contextMenu = new UI.ContextMenu.ContextMenu(event);

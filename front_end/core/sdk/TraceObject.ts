@@ -10,7 +10,7 @@ import type {NetworkRequest} from './NetworkRequest.js';
 import type {RehydratingResource} from './RehydratingObject.js';
 import {ResourceTreeModel} from './ResourceTreeModel.js';
 import type {SourceMapV3} from './SourceMap.js';
-import {TargetManager} from './TargetManager.js';
+import type {TargetManager} from './TargetManager.js';
 
 interface TraceObjectWithNoMetadata {
   readonly traceEvents: TraceObject['traceEvents'];
@@ -58,14 +58,14 @@ export class RevealableNetworkRequest {
   }
 
   // Only Trace.Types.Events.SyntheticNetworkRequest are passed in, but we can't depend on that type from SDK
-  static create(event: unknown): RevealableNetworkRequest|null {
+  static create(targetManager: TargetManager, event: unknown): RevealableNetworkRequest|null {
     const syntheticNetworkRequest = event;
     // @ts-expect-error We don't have type checking here to confirm these events have .args.data.url.
     const url = syntheticNetworkRequest.args.data.url as Platform.DevToolsPath.UrlString;
     const urlWithoutHash = Common.ParsedURL.ParsedURL.urlWithoutHash(url) as Platform.DevToolsPath.UrlString;
 
-    const resource = ResourceTreeModel.resourceForURL(TargetManager.instance(), url) ??
-        ResourceTreeModel.resourceForURL(TargetManager.instance(), urlWithoutHash);
+    const resource = ResourceTreeModel.resourceForURL(targetManager, url) ??
+        ResourceTreeModel.resourceForURL(targetManager, urlWithoutHash);
     const sdkNetworkRequest = resource?.request;
     return sdkNetworkRequest ? new RevealableNetworkRequest(sdkNetworkRequest) : null;
   }

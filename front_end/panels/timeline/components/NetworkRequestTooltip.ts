@@ -172,7 +172,8 @@ export class NetworkRequestTooltip extends UI.Widget.Widget {
       backgroundColor: color,
     };
 
-    const sdkNetworkRequest = SDK.TraceObject.RevealableNetworkRequest.create(networkRequest);
+    const sdkNetworkRequest =
+        SDK.TraceObject.RevealableNetworkRequest.create(SDK.TargetManager.TargetManager.instance(), networkRequest);
     const wasThrottled = sdkNetworkRequest &&
         SDK.NetworkManager.MultitargetNetworkManager.instance().appliedRequestConditions(
             sdkNetworkRequest.networkRequest);
@@ -253,7 +254,8 @@ export class NetworkRequestTooltip extends UI.Widget.Widget {
     }
 
     // TODO(crbug.com/466124088): Seems broken.
-    const sdkNetworkRequest = SDK.TraceObject.RevealableNetworkRequest.create(this.#networkRequest);
+    const sdkNetworkRequest = SDK.TraceObject.RevealableNetworkRequest.create(
+        SDK.TargetManager.TargetManager.instance(), this.#networkRequest);
     const networkConditions = sdkNetworkRequest &&
         SDK.NetworkManager.MultitargetNetworkManager.instance().appliedRequestConditions(
             sdkNetworkRequest.networkRequest);
