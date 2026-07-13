@@ -131,6 +131,7 @@ export const DEFAULT_SETTING_REGISTRATIONS_FOR_TEST: ReadonlyArray<ReturnType<ty
   createSettingValue(Common.Settings.SettingCategory.SOURCES, 'inline-variable-values', true),
   createSettingValue(Common.Settings.SettingCategory.SOURCES, 'auto-pretty-print-minified', true),
   createSettingValue(Common.Settings.SettingCategory.SOURCES, 'js-source-maps-enabled', true),
+  createSettingValue(Common.Settings.SettingCategory.SOURCES, 'search-in-anonymous-and-content-scripts', false),
   createSettingValue(Common.Settings.SettingCategory.SOURCES, 'show-whitespaces-in-editor', 'none'),
   createSettingValue(Common.Settings.SettingCategory.SOURCES, 'sources.word-wrap', true),
   createSettingValue(Common.Settings.SettingCategory.SOURCES, 'text-editor-autocompletion', true),

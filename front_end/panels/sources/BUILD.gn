@@ -184,6 +184,7 @@ devtools_ui_module("unittests") {
     "ScopeChainSidebarPane.test.ts",
     "SourcesNavigator.test.ts",
     "SourcesPanel.test.ts",
+    "SourcesSearchScope.test.ts",
     "SourcesView.test.ts",
     "TabbedEditorContainer.test.ts",
     "ThreadsSidebarPane.test.ts",

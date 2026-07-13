@@ -77,6 +77,7 @@ export function createContentProviderUISourceCode(options: {
 class TestPlatformFileSystem extends Persistence.PlatformFileSystem.PlatformFileSystem {
   readonly #mimeType: string;
   readonly #autoMapping: boolean;
+  readonly #files = new Set<Platform.DevToolsPath.UrlString>();
 
   constructor(
       path: Platform.DevToolsPath.UrlString, type: Persistence.PlatformFileSystem.PlatformFileSystemType,
@@ -84,6 +85,9 @@ class TestPlatformFileSystem extends Persistence.PlatformFileSystem.PlatformFile
     super(path, type, false);
     this.#mimeType = mimeType;
     this.#autoMapping = autoMapping;
+  }
+  addFileForSearch(url: Platform.DevToolsPath.UrlString): void {
+    this.#files.add(url);
   }
   override tooltipForURL(_url: Platform.DevToolsPath.UrlString): string {
     return 'tooltip-for-url';
@@ -93,6 +97,9 @@ class TestPlatformFileSystem extends Persistence.PlatformFileSystem.PlatformFile
   }
   override mimeFromPath(_path: Platform.DevToolsPath.UrlString): string {
     return this.#mimeType;
+  }
+  override searchInPath(_query: string, _progress: Common.Progress.Progress): Promise<string[]> {
+    return Promise.resolve([...this.#files]);
   }
 }
 
@@ -144,6 +151,7 @@ export function createFileSystemUISourceCode(options: {
   const platformFileSystem = new TestPlatformFileSystem(
       fileSystemPath, type || Persistence.PlatformFileSystem.PlatformFileSystemType.WORKSPACE_PROJECT, options.mimeType,
       Boolean(options.autoMapping));
+  platformFileSystem.addFileForSearch(options.url);
   const metadata = options.metadata || new Workspace.UISourceCode.UISourceCodeMetadata(null, null);
 
   const project = new TestFileSystem({fileSystemWorkspaceBinding, platformFileSystem, workspace, content, metadata});
