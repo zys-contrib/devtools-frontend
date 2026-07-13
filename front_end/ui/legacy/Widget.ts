@@ -84,7 +84,8 @@ function enqueueIntoNextUpdateQueue(widget: AnyWidget): Promise<void> {
   nextUpdateQueue.delete(widget);
   nextUpdateQueue.set(widget, scheduledUpdate);
   if (pendingAnimationFrame === null) {
-    pendingAnimationFrame = requestAnimationFrame(runNextUpdate);
+    const widgetWindow = widget.contentElement.window() || window;
+    pendingAnimationFrame = widgetWindow.requestAnimationFrame(runNextUpdate);
   }
   return scheduledUpdate.promise;
 }
@@ -155,7 +156,8 @@ function runNextUpdate(): void {
         if (nextUpdate) {
           void nextUpdate.promise.then(resolve);
           if (pendingAnimationFrame === null) {
-            pendingAnimationFrame = requestAnimationFrame(runNextUpdate);
+            const widgetWindow = widget.contentElement.window() || window;
+            pendingAnimationFrame = widgetWindow.requestAnimationFrame(runNextUpdate);
           }
         } else {
           resolve();
@@ -182,16 +184,16 @@ function runNextUpdate(): void {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const widgetConfigs = new WeakMap<HTMLElement, WidgetConfig<any>>();
 
-export function registerWidgetConfig<WidgetT extends AnyWidget>(
-    element: HTMLElement, config: WidgetConfig<WidgetT>): void {
+export function registerWidgetConfig<WidgetT extends AnyWidget>(element: HTMLElement,
+                                                                config: WidgetConfig<WidgetT>): void {
   if (!widgetConfigs.has(element)) {
     setUpLifecycleTracking(element);
   }
   widgetConfigs.set(element, config);
 }
 
-function instantiateWidget<WidgetT extends AnyWidget>(
-    element: HTMLElement, widgetConfig: WidgetConfig<WidgetT>): WidgetT {
+function instantiateWidget<WidgetT extends AnyWidget>(element: HTMLElement,
+                                                      widgetConfig: WidgetConfig<WidgetT>): WidgetT {
   if (!widgetConfig.widgetClass) {
     throw new Error('No widgetClass defined');
   }
@@ -794,9 +796,8 @@ export class Widget<ContentTypeT extends HTMLElement|DocumentFragment = HTMLElem
     if (this.#isRoot) {
       assert(!currentParent, 'Attempt to show root widget under another widget');
     } else {
-      assert(
-          currentParent && widgetMap.get(currentParent) === this.#parentWidget,
-          'Attempt to show under node belonging to alien widget');
+      assert(currentParent && widgetMap.get(currentParent) === this.#parentWidget,
+             'Attempt to show under node belonging to alien widget');
     }
 
     const wasVisible = this.#visible;
@@ -1031,9 +1032,8 @@ export class Widget<ContentTypeT extends HTMLElement|DocumentFragment = HTMLElem
   getDefaultFocusedElement(): HTMLElement|null {
     const elements = this.getDefaultFocusedElements();
     if (elements.length > 1) {
-      console.error(
-          'Multiple autofocus elements found', this.constructor.name,
-          ...elements.map(e => Platform.StringUtilities.trimMiddle(e.outerHTML, 250)));
+      console.error('Multiple autofocus elements found', this.constructor.name,
+                    ...elements.map(e => Platform.StringUtilities.trimMiddle(e.outerHTML, 250)));
     }
     return elements[0] || null;
   }
@@ -1110,9 +1110,8 @@ export class Widget<ContentTypeT extends HTMLElement|DocumentFragment = HTMLElem
 
   private hasNonZeroConstraints(): boolean {
     const constraints = this.constraints();
-    return Boolean(
-        constraints.minimum.width || constraints.minimum.height || constraints.preferred.width ||
-        constraints.preferred.height);
+    return Boolean(constraints.minimum.width || constraints.minimum.height || constraints.preferred.width ||
+                   constraints.preferred.height);
   }
 
   suspendInvalidations(): void {
