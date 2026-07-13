@@ -319,7 +319,6 @@ module.exports = function(config: any) {
     plugins: [
       {[`launcher:${CustomChrome.prototype.name}`]: ['type', CustomChrome]},
       require('karma-mocha'),
-      require('karma-mocha-reporter'),
       require('karma-sourcemap-loader'),
       require('karma-spec-reporter'),
       require('karma-coverage'),
