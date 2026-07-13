@@ -33,6 +33,14 @@ interface RenderOptions {
    * component-specific stylesheet strings during DOM/screenshot testing.
    */
   extraStyles?: CSSInJS[];
+  /**
+   * Sets the width of the test DOM container.
+   */
+  width?: string|number;
+  /**
+   * Sets the height of the test DOM container.
+   */
+  height?: string|number;
 }
 
 /**
@@ -59,6 +67,13 @@ export function renderElementIntoDOM<E extends Node|UI.Widget.AnyWidget>(
     for (const style of renderOptions.extraStyles) {
       container.appendChild(document.createElement('style')).textContent = style;
     }
+  }
+  if (renderOptions.width !== undefined) {
+    container.style.width = typeof renderOptions.width === 'number' ? `${renderOptions.width}px` : renderOptions.width;
+  }
+  if (renderOptions.height !== undefined) {
+    container.style.height =
+        typeof renderOptions.height === 'number' ? `${renderOptions.height}px` : renderOptions.height;
   }
   if (element instanceof Node) {
     container.appendChild(element);
@@ -327,7 +342,10 @@ declare global {
  */
 export async function assertScreenshot(filename: string) {
   // To avoid a lot of empty space in the screenshot.
-  document.getElementById(TEST_CONTAINER_ID)!.style.width = 'fit-content';
+  const container = document.getElementById(TEST_CONTAINER_ID)!;
+  if (!container.style.width) {
+    container.style.width = 'fit-content';
+  }
   let frame: Window|null = window;
   while (frame) {
     frame.scrollTo(0, 0);

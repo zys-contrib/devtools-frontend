@@ -65,7 +65,7 @@ const containerToBreakpointEntry = new WeakMap<Element, HTMLElement>();
 
 const breakpointEntryToCheckbox = new WeakMap<Element, UI.UIUtils.CheckboxLabel>();
 
-let xhrBreakpointsSidebarPaneInstance: XHRBreakpointsSidebarPane;
+let xhrBreakpointsSidebarPaneInstance: XHRBreakpointsSidebarPane|null = null;
 
 export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.ContextFlavorListener.ContextFlavorListener,
                                                                          UI.Toolbar.ItemsProvider,
@@ -115,6 +115,10 @@ export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.Cont
       xhrBreakpointsSidebarPaneInstance = new XHRBreakpointsSidebarPane();
     }
     return xhrBreakpointsSidebarPaneInstance;
+  }
+
+  static removeInstance(): void {
+    xhrBreakpointsSidebarPaneInstance = null;
   }
 
   toolbarItems(): UI.Toolbar.ToolbarItem[] {
