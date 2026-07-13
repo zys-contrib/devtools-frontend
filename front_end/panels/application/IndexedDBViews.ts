@@ -7,13 +7,12 @@ import '../../ui/components/report_view/report_view.js';
 import '../../ui/legacy/legacy.js';
 
 import * as i18n from '../../core/i18n/i18n.js';
-import type * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as DataGrid from '../../ui/legacy/components/data_grid/data_grid.js';
 import * as ObjectUI from '../../ui/legacy/components/object_ui/object_ui.js';
 import * as UI from '../../ui/legacy/legacy.js';
-import {html, type LitTemplate, nothing, render} from '../../ui/lit/lit.js';
+import {Directives, html, type LitTemplate, nothing, render} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import * as ApplicationComponents from './components/components.js';
@@ -137,6 +136,8 @@ const UIStrings = {
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/application/IndexedDBViews.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
+const {repeat} = Directives;
+const {widget} = UI.Widget;
 
 export class IDBDatabaseView extends ApplicationComponents.StorageMetadataView.StorageMetadataView {
   private readonly model: IndexedDBModel;
@@ -249,12 +250,10 @@ export class IDBDataView extends UI.View.SimpleView {
   #needsRefreshVisible = false;
   #clearButtonEnabled = true;
   #metadata: ObjectStoreMetadata|null = null;
-  #lastRenderedEntries: Entry[]|null = null;
   #keyFilter = '';
 
   private objectStore!: ObjectStore;
   private index!: Index|null;
-  private dataGrid!: DataGrid.DataGrid.DataGridImpl<unknown>;
   private lastPageSize!: number;
   private lastSkipCount!: number;
   // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
@@ -287,59 +286,32 @@ export class IDBDataView extends UI.View.SimpleView {
     this.update(objectStore, index);
   }
 
-  private createDataGrid(): DataGrid.DataGrid.DataGridImpl<unknown> {
+  private renderDataGrid(): LitTemplate {
     const keyPath = this.isIndex && this.index ? this.index.keyPath : this.objectStore.keyPath;
-
-    const columns: DataGrid.DataGrid.ColumnDescriptor[] = [];
-    columns.push({
-      id: 'number',
-      title: '#' as Platform.UIString.LocalizedString,
-      sortable: false,
-      width: '50px',
-    });
-    columns.push({
-      id: 'key',
-      titleDOMFragment: this.keyColumnHeaderFragment(i18nString(UIStrings.keyString), keyPath),
-      sortable: false,
-    });
-    if (this.isIndex) {
-      columns.push({
-        id: 'primary-key',
-        titleDOMFragment: this.keyColumnHeaderFragment(i18nString(UIStrings.primaryKey), this.objectStore.keyPath),
-        sortable: false,
-      });
-    }
-    const title = i18nString(UIStrings.valueString);
-    columns.push({
-      id: 'value',
-      title,
-      sortable: false,
-    });
-
-    const dataGrid = new DataGrid.DataGrid.DataGridImpl({
-      displayName: i18nString(UIStrings.indexedDb),
-      columns,
-      deleteCallback: this.deleteButtonClicked.bind(this),
-      refreshCallback: this.updateData.bind(this, true),
-    });
-    dataGrid.setStriped(true);
-    dataGrid.addEventListener(DataGrid.DataGrid.Events.SELECTED_NODE, event => {
-      const node = event.data as IDBDataGridNode;
-      this.#selectedRowNumber = node.data['number'];
-      this.performUpdate();
-    }, this);
-    dataGrid.addEventListener(DataGrid.DataGrid.Events.DESELECTED_NODE, () => {
-      this.#selectedRowNumber = -1;
-      this.performUpdate();
-    }, this);
-    return dataGrid;
-  }
-
-  private keyColumnHeaderFragment(prefix: string, keyPath: string|string[]|null|undefined): DocumentFragment {
-    const keyColumnHeaderFragment = document.createDocumentFragment();
-    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
-    render(this.renderKeyColumnHeader(prefix, keyPath), keyColumnHeaderFragment);
-    return keyColumnHeaderFragment;
+    // clang-format off
+    return html`<devtools-data-grid striped style="flex: auto;" name=${i18nString(UIStrings.indexedDb)} .template=${html`
+      <style>${indexedDBViewsStyles}</style>
+      <table>
+        <tr>
+          <th id="number" fixed width="50px">#</th>
+          <th id="key">${this.renderKeyColumnHeader(i18nString(UIStrings.keyString), keyPath)}</th>
+          ${this.isIndex ? html`<th id="primary-key">${this.renderKeyColumnHeader(i18nString(UIStrings.primaryKey), this.objectStore.keyPath)}</th>` : nothing}
+          <th id="value">${i18nString(UIStrings.valueString)}</th>
+        </tr>
+        ${repeat(this.entries, (_entry, index) => index, (entry, index) => html`
+          <tr ?selected=${index + this.skipCount === this.#selectedRowNumber}
+              @select=${() => this.onRowSelected(index + this.skipCount)}
+              @delete=${() => this.deleteEntry(entry)}
+              @contextmenu=${(e: CustomEvent<UI.ContextMenu.ContextMenu>) => this.populateContextMenu(e, entry)}>
+            <td>${index + this.skipCount}</td>
+            <td>${widget(ObjectPropertiesSectionWidget, {value: entry.key})}</td>
+            ${this.isIndex ? html`<td>${widget(ObjectPropertiesSectionWidget, {value: entry.primaryKey})}</td>` : nothing}
+            <td class="value-column">${widget(ObjectPropertiesSectionWidget, {value: entry.value})}</td>
+          </tr>`
+        )}
+      </table>`}>
+    </devtools-data-grid>`;
+    // clang-format on
   }
 
   private renderKeyColumnHeader(prefix: string, keyPath: string|string[]|null|undefined): LitTemplate {
@@ -383,8 +355,8 @@ export class IDBDataView extends UI.View.SimpleView {
           .iconName=${'bin'}
           .title=${i18nString(UIStrings.deleteSelected)}
           jslog=${VisualLogging.action('delete-selected').track({click: true})}
-          @click=${() => this.deleteButtonClicked(null)}
-          .disabled=${!this.dataGrid || this.dataGrid.rootNode().children.length === 0 || this.#selectedRowNumber === -1}
+          @click=${() => this.deleteButtonClicked()}
+          .disabled=${this.#selectedRowNumber < 0 || this.entries.length === 0}
           .variant=${Buttons.Button.Variant.TOOLBAR}>
         </devtools-button>
 
@@ -442,16 +414,15 @@ export class IDBDataView extends UI.View.SimpleView {
     this.updateData(false);
   }
 
-  private populateContextMenu(contextMenu: UI.ContextMenu.ContextMenu,
-                              gridNode: DataGrid.DataGrid.DataGridNode<unknown>): void {
-    const node = (gridNode as IDBDataGridNode);
-    const value = node.data['value'] as SDK.RemoteObject.RemoteObject | undefined;
+  private populateContextMenu(e: CustomEvent<UI.ContextMenu.ContextMenu>, {value}: Entry): void {
+    const contextMenu = e.detail;
     if (value && value.hasChildren) {
-      const cell = node.element().querySelector('.value-column');
-      if (cell) {
-        const widgetElement = cell.firstElementChild;
-        if (widgetElement) {
-          const widget = UI.Widget.Widget.get(widgetElement);
+      const tr = e.currentTarget as HTMLElement;
+      const valueTd = tr.querySelector('.value-column');
+      if (valueTd) {
+        const widgetEl = valueTd.querySelector('devtools-widget');
+        if (widgetEl) {
+          const widget = UI.Widget.Widget.get(widgetEl);
           if (widget instanceof ObjectPropertiesSectionWidget) {
             const objectUi = widget.objectPropertiesSection;
             if (objectUi) {
@@ -479,11 +450,7 @@ export class IDBDataView extends UI.View.SimpleView {
     this.objectStore = objectStore;
     this.index = index;
 
-    if (this.dataGrid) {
-      this.dataGrid.asWidget().detach();
-    }
-    this.dataGrid = this.createDataGrid();
-    this.dataGrid.setRowContextMenuCallback(this.populateContextMenu.bind(this));
+    this.#selectedRowNumber = -1;
 
     this.skipCount = 0;
     this.updateData(true);
@@ -526,6 +493,14 @@ export class IDBDataView extends UI.View.SimpleView {
       this.entries = entries;
       this.#hasMore = hasMore;
       this.#needsRefreshVisible = false;
+      if (this.entries.length === 0) {
+        this.#selectedRowNumber = -1;
+      } else {
+        this.#selectedRowNumber = Math.min(this.#selectedRowNumber, this.skipCount + this.entries.length - 1);
+        if (this.#selectedRowNumber < this.skipCount) {
+          this.#selectedRowNumber = -1;
+        }
+      }
       this.performUpdate();
       this.updatedDataForTests();
     }
@@ -542,36 +517,6 @@ export class IDBDataView extends UI.View.SimpleView {
       this.#metadata = metadata;
       this.performUpdate();
     });
-  }
-
-  private populateDataGrid(): void {
-    if (this.entries === this.#lastRenderedEntries) {
-      return;
-    }
-    this.dataGrid.rootNode().removeChildren();
-    let selectedNode: IDBDataGridNode|null = null;
-    for (let i = 0; i < this.entries.length; ++i) {
-      // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data: any = {};
-      data['number'] = i + this.skipCount;
-      data['key'] = this.entries[i].key;
-      data['primary-key'] = this.entries[i].primaryKey;
-      data['value'] = this.entries[i].value;
-
-      const node = new IDBDataGridNode(data);
-      this.dataGrid.rootNode().appendChild(node);
-      if (data['number'] <= this.#selectedRowNumber) {
-        selectedNode = node;
-      }
-    }
-
-    this.#lastRenderedEntries = this.entries;
-    if (selectedNode) {
-      selectedNode.select();
-    } else {
-      this.#selectedRowNumber = -1;
-    }
   }
 
   private renderSummaryBar(): LitTemplate {
@@ -648,14 +593,18 @@ export class IDBDataView extends UI.View.SimpleView {
     return result;
   }
 
-  private async deleteButtonClicked(node: DataGrid.DataGrid.DataGridNode<unknown>|null): Promise<void> {
-    if (!node) {
-      node = this.dataGrid.selectedNode;
-      if (!node) {
-        return;
-      }
+  private async deleteButtonClicked(): Promise<void> {
+    if (this.#selectedRowNumber < 0) {
+      return;
     }
-    const key = (this.isIndex ? node.data['primary-key'] : node.data.key as SDK.RemoteObject.RemoteObject);
+    const entry = this.entries[this.#selectedRowNumber - this.skipCount];
+    if (entry) {
+      await this.deleteEntry(entry);
+    }
+  }
+
+  private async deleteEntry(entry: Entry): Promise<void> {
+    const key = (this.isIndex ? entry.primaryKey : entry.key);
     const keyValue: IDBKeyValue = key.subtype === 'array' ? await this.resolveArrayKey(key) : key.value;
     await this.model.deleteEntries(this.databaseId, this.objectStore.name, window.IDBKeyRange.only(keyValue));
     this.refreshObjectStoreCallback();
@@ -663,44 +612,26 @@ export class IDBDataView extends UI.View.SimpleView {
 
   clear(): void {
     this.entries = [];
+    this.#selectedRowNumber = -1;
+    this.performUpdate();
+  }
+
+  private onRowSelected(rowNumber: number): void {
+    this.#selectedRowNumber = rowNumber;
     this.performUpdate();
   }
 
   override performUpdate(): void {
-    this.populateDataGrid();
-
     // clang-format off
     // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
     render(html`
       ${this.renderToolbar()}
       <div class="data-grid-container">
-        ${this.dataGrid ? this.dataGrid.element : nothing}
+        ${this.renderDataGrid()}
       </div>
       ${this.renderSummaryBar()}
     `, this.element);
     // clang-format on
-  }
-
-  override wasShown(): void {
-    super.wasShown();
-    this.dataGrid?.wasShown();
-  }
-
-  override willHide(): void {
-    super.willHide();
-    this.dataGrid?.willHide();
-  }
-
-  override elementsToRestoreScrollPositionsFor(): Element[] {
-    if (this.dataGrid) {
-      return [this.dataGrid.scrollContainer];
-    }
-    return [];
-  }
-
-  override onResize(): void {
-    super.onResize();
-    this.dataGrid?.onResize();
   }
 }
 
@@ -736,32 +667,5 @@ class ObjectPropertiesSectionWidget extends UI.Widget.Widget {
     } else {
       this.contentElement.appendChild(this.#objectPropSection.titleElement);
     }
-  }
-}
-export class IDBDataGridNode extends DataGrid.DataGrid.DataGridNode<unknown> {
-  override selectable: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(data: Record<string, any>) {
-    super(data, false);
-    this.selectable = true;
-  }
-
-  override createCell(columnIdentifier: string): HTMLElement {
-    const cell = super.createCell(columnIdentifier);
-    const value = (this.data[columnIdentifier] as SDK.RemoteObject.RemoteObject);
-
-    switch (columnIdentifier) {
-      case 'value':
-      case 'key':
-      case 'primary-key': {
-        cell.removeChildren();
-        const widget = new ObjectPropertiesSectionWidget();
-        widget.value = value;
-        widget.show(cell, null, true);
-        break;
-      }
-    }
-
-    return cell;
   }
 }
