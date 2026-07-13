@@ -499,3 +499,9 @@ ln -s src/third_party/devtools-frontend/src devtools-frontend
 If you did run `gclient sync` first, remove the devtools-frontend directory and start over.
 
 Run `gclient sync` after creating the link to fetch the dependencies for the standalone checkout.
+
+### Known issues
+
+- GN/Siso wrappers in `depot_tools` don't assume the side-by-side solutions, and
+  always use the binaries in Chromium. Please make sure updating Chromium when
+  you get a build error.
