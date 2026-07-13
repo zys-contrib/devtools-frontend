@@ -2777,7 +2777,8 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
       }
 
       const url = request.args.data.url as Platform.DevToolsPath.UrlString;
-      const resource = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(url);
+      const resource =
+          SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(SDK.TargetManager.TargetManager.instance(), url);
       if (!resource) {
         continue;
       }

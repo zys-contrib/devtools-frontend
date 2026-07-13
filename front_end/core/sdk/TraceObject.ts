@@ -10,6 +10,7 @@ import type {NetworkRequest} from './NetworkRequest.js';
 import type {RehydratingResource} from './RehydratingObject.js';
 import {ResourceTreeModel} from './ResourceTreeModel.js';
 import type {SourceMapV3} from './SourceMap.js';
+import {TargetManager} from './TargetManager.js';
 
 interface TraceObjectWithNoMetadata {
   readonly traceEvents: TraceObject['traceEvents'];
@@ -63,7 +64,8 @@ export class RevealableNetworkRequest {
     const url = syntheticNetworkRequest.args.data.url as Platform.DevToolsPath.UrlString;
     const urlWithoutHash = Common.ParsedURL.ParsedURL.urlWithoutHash(url) as Platform.DevToolsPath.UrlString;
 
-    const resource = ResourceTreeModel.resourceForURL(url) ?? ResourceTreeModel.resourceForURL(urlWithoutHash);
+    const resource = ResourceTreeModel.resourceForURL(TargetManager.instance(), url) ??
+        ResourceTreeModel.resourceForURL(TargetManager.instance(), urlWithoutHash);
     const sdkNetworkRequest = resource?.request;
     return sdkNetworkRequest ? new RevealableNetworkRequest(sdkNetworkRequest) : null;
   }

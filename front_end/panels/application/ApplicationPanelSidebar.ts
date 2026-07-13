@@ -674,7 +674,8 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
   }
 
   private initialize(): void {
-    for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames()) {
+    for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames(this.target?.targetManager() ??
+                                                                       SDK.TargetManager.TargetManager.instance())) {
       this.addCookieDocument(frame);
     }
     const interestGroupModel = this.target?.model(InterestGroupStorageModel);

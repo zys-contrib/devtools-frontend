@@ -1237,7 +1237,8 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
     }
     const {uiSourceCode} = resource;
     if (!uiSourceCode.contentType().isDocumentOrScriptOrStyleSheet()) {
-      const resource = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(url as Platform.DevToolsPath.UrlString);
+      const resource = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(
+          SDK.TargetManager.TargetManager.instance(), url as Platform.DevToolsPath.UrlString);
       if (!resource) {
         return this.status.E_NOTFOUND(url);
       }
@@ -1585,7 +1586,7 @@ export class ExtensionServer extends Common.ObjectWrapper.ObjectWrapper<EventTyp
         found = (frame.url === url) ? frame : null;
         return found;
       }
-      SDK.ResourceTreeModel.ResourceTreeModel.frames().some(hasMatchingURL);
+      SDK.ResourceTreeModel.ResourceTreeModel.frames(SDK.TargetManager.TargetManager.instance()).some(hasMatchingURL);
       return found;
     }
 

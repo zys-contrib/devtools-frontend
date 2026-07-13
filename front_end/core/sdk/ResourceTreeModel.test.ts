@@ -10,6 +10,7 @@ import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {
   addChildFrame,
+  createResource,
   getInitializedResourceTreeModel,
   getMainFrame,
   LOADER_ID,
@@ -18,8 +19,11 @@ import {
   navigate,
 } from '../../testing/ResourceTreeHelpers.js';
 import {TestUniverse} from '../../testing/TestUniverse.js';
+import * as Platform from '../platform/platform.js';
 
 import * as SDK from './sdk.js';
+
+const {urlString} = Platform.DevToolsPath;
 
 describeWithEnvironment('ResourceTreeModel', () => {
   let universe: TestUniverse;
@@ -114,7 +118,7 @@ describeWithEnvironment('ResourceTreeModel', () => {
     const subframeTarget = universe.createTarget({parentTarget: mainFrameTarget});
     const reloadMainFramePage = sinon.spy(getResourceTreeModel(mainFrameTarget), 'reloadPage');
     const reloadSubframePage = sinon.spy(getResourceTreeModel(subframeTarget), 'reloadPage');
-    SDK.ResourceTreeModel.ResourceTreeModel.reloadAllPages(undefined, undefined, universe.targetManager);
+    SDK.ResourceTreeModel.ResourceTreeModel.reloadAllPages(universe.targetManager);
 
     sinon.assert.calledOnce(reloadMainFramePage);
     sinon.assert.notCalled(reloadSubframePage);
@@ -130,6 +134,27 @@ describeWithEnvironment('ResourceTreeModel', () => {
     sinon.assert.calledOnce(reload);
     assert.deepEqual(
         reload.args[0], [{ignoreCache: undefined, loaderId: LOADER_ID, scriptToEvaluateOnLoad: undefined}]);
+  });
+
+  it('resourceForURL can find resource with or without TargetManager', async () => {
+    const target = universe.createTarget({connection});
+    await getInitializedResourceTreeModel(target);
+    const mainFrame = getMainFrame(target);
+    const url = urlString`https://example.com/script.js`;
+    const content = 'console.log("hello");';
+    const mimeType = 'text/javascript';
+    const resource = createResource(mainFrame, url, mimeType, content);
+
+    // Test with TargetManager
+    const foundResourceWithTM = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(universe.targetManager, url);
+    assert.strictEqual(foundResourceWithTM, resource);
+
+    // Test without TargetManager (using overload)
+    const targetManagerInstanceStub =
+        sinon.stub(SDK.TargetManager.TargetManager, 'instance').returns(universe.targetManager);
+    const foundResourceWithoutTM = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(url);
+    assert.strictEqual(foundResourceWithoutTM, resource);
+    targetManagerInstanceStub.restore();
   });
 
   it('identifies not top frame', async () => {

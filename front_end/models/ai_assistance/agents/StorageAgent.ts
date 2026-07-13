@@ -205,7 +205,8 @@ export class StorageAgent extends AiAgent<StorageItem> {
         }
 
         const origins = new Set<string>();
-        for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames()) {
+        for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames(
+                 SDK.TargetManager.TargetManager.instance())) {
           if (!isSamePageOrigin(frame.resourceTreeModel().target().outermostTarget(), this.context)) {
             continue;
           }
@@ -658,7 +659,7 @@ export async function getCookiesForDomain(
 
 export function findFrameForOrigin(
     context: ConversationContext<StorageItem>|undefined, origin: string): SDK.ResourceTreeModel.ResourceTreeFrame|null {
-  for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames()) {
+  for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames(SDK.TargetManager.TargetManager.instance())) {
     if (frame.securityOrigin === origin) {
       const target = frame.resourceTreeModel().target();
       if (isSamePageOrigin(target.outermostTarget(), context)) {

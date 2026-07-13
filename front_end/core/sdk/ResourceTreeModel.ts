@@ -74,19 +74,34 @@ export class ResourceTreeModel extends SDKModel<EventTypes> {
     return request.frameId ? resourceTreeModel.frameForId(request.frameId) : null;
   }
 
-  static frames(): ResourceTreeFrame[] {
+  static frames(targetManager: TargetManager): ResourceTreeFrame[] {
     const result = [];
-    for (const resourceTreeModel of TargetManager.instance().models(ResourceTreeModel)) {
+    for (const resourceTreeModel of targetManager.models(ResourceTreeModel)) {
       result.push(...resourceTreeModel.frames());
     }
     return result;
   }
 
-  static resourceForURL(url: Platform.DevToolsPath.UrlString): Resource|null {
-    for (const resourceTreeModel of TargetManager.instance().models(ResourceTreeModel)) {
+  static resourceForURL(url: Platform.DevToolsPath.UrlString): Resource|null;
+  static resourceForURL(targetManager: TargetManager, url: Platform.DevToolsPath.UrlString): Resource|null;
+  static resourceForURL(targetManagerOrUrl: TargetManager|Platform.DevToolsPath.UrlString,
+                        url?: Platform.DevToolsPath.UrlString): Resource|null {
+    let targetManager: TargetManager;
+    let actualUrl: Platform.DevToolsPath.UrlString;
+    if (typeof targetManagerOrUrl === 'string') {
+      targetManager = TargetManager.instance();
+      actualUrl = targetManagerOrUrl;
+    } else {
+      targetManager = targetManagerOrUrl;
+      if (url === undefined) {
+        throw new Error('URL must be provided when TargetManager is passed');
+      }
+      actualUrl = url;
+    }
+    for (const resourceTreeModel of targetManager.models(ResourceTreeModel)) {
       const mainFrame = resourceTreeModel.mainFrame;
       // Workers call into this with no #frames available.
-      const result = mainFrame ? mainFrame.resourceForURL(url) : null;
+      const result = mainFrame ? mainFrame.resourceForURL(actualUrl) : null;
       if (result) {
         return result;
       }
@@ -94,8 +109,7 @@ export class ResourceTreeModel extends SDKModel<EventTypes> {
     return null;
   }
 
-  static reloadAllPages(bypassCache?: boolean, scriptToEvaluateOnLoad?: string,
-                        targetManager: TargetManager = TargetManager.instance()): void {
+  static reloadAllPages(targetManager: TargetManager, bypassCache?: boolean, scriptToEvaluateOnLoad?: string): void {
     for (const resourceTreeModel of targetManager.models(ResourceTreeModel)) {
       if (resourceTreeModel.target().parentTarget()?.type() !== Type.FRAME) {
         resourceTreeModel.reloadPage(bypassCache, scriptToEvaluateOnLoad);

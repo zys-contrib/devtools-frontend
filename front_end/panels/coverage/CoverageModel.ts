@@ -808,7 +808,8 @@ export class URLCoverageInfo extends Common.ObjectWrapper.ObjectWrapper<URLCover
     if (!useFullText) {
       return null;
     }
-    const resource = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(url);
+    const resource =
+        SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(SDK.TargetManager.TargetManager.instance(), url);
     if (!resource) {
       return null;
     }
