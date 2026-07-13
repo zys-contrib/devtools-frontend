@@ -4,6 +4,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import {existsSync} from 'node:fs';
 import {styleText} from 'node:util';
 
 import {formatAsHtml, formatDiff, resultAssertionsDiff} from './diff-utils.js';
@@ -37,6 +38,17 @@ export const ResultsDBReporter = function(
   const specComplete = (_browser: any, result: any) => {
     if (result.mocha?.hasExclusiveTests) {
       this.hasExclusiveTests = true;
+    }
+    const type = result.mocha?.type;
+    if (!type) {
+      throw new Error(`Test ${result.description} does not have a type property`);
+    }
+    const file = result.mocha?.file;
+    if (type !== 'hook' && !file) {
+      throw new Error(`Test ${result.description} does not have a file property`);
+    }
+    if (file && !existsSync(file)) {
+      throw new Error(`Test file ${file} does not exist`);
     }
     const {suite, description, log, startTime, endTime, success, skipped} = result;
     const testId = ResultsDb.sanitizedTestId([...suite, description].join('/'));

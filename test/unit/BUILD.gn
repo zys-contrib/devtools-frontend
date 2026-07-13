@@ -5,6 +5,11 @@
 import("../../scripts/build/ninja/copy.gni")
 import("../../scripts/build/typescript/typescript.gni")
 
+ts_library("mocha-interface") {
+  testonly = true
+  sources = [ "mocha-interface.ts" ]
+}
+
 node_ts_library("karma") {
   sources = [
     "karma.conf.ts",
@@ -15,7 +20,10 @@ node_ts_library("karma") {
     "../conductor:implementation",
     "../shared",
   ]
-  data_deps = [ ":context" ]
+  data_deps = [
+    ":context",
+    ":mocha-interface",
+  ]
 }
 
 copy_to_gen("context") {

@@ -174,6 +174,17 @@ const ProgressWithDiffReporter = function(
     if (result.mocha?.hasExclusiveTests) {
       this.hasExclusiveTests = true;
     }
+    const type = result.mocha?.type;
+    if (!type) {
+      throw new Error(`Test ${result.description} does not have a type property`);
+    }
+    const file = result.mocha?.file;
+    if (type !== 'hook' && !file) {
+      throw new Error(`Test ${result.description} does not have a file property`);
+    }
+    if (file && !fs.existsSync(file)) {
+      throw new Error(`Test file ${file} does not exist`);
+    }
     const testId = ResultsDb.sanitizedTestId([...result.suite, result.description].join('/'));
     if (seenTestIds.has(testId)) {
       duplicateTestIds.push(testId);
@@ -258,6 +269,7 @@ module.exports = function(config: any) {
       // Global hooks in test_setup must go first
       {pattern: path.join(SOURCE_ROOT, 'node_modules/chai/**/*'), served: true, included: false},
       {pattern: path.join(SOURCE_ROOT, 'node_modules/sinon/**/*'), served: true, included: false},
+      {pattern: path.join(GEN_DIR, 'test/unit/mocha-interface.js'), served: true, included: true},
       {pattern: path.join(GEN_DIR, 'front_end', 'testing', 'test_setup.js'), type: 'module'},
       ...tests.map(pattern => ({pattern, type: 'module'})),
       ...tests.map(pattern => ({pattern: `${pattern}.map`, served: true, included: false, watched: true})),
@@ -298,8 +310,10 @@ module.exports = function(config: any) {
         ...TestConfig.mochaGrep,
         retries: TestConfig.retries,
         timeout: TestConfig.debug ? 0 : 5_000,
-        expose: ['hasExclusiveTests'],
+        expose: ['hasExclusiveTests', 'file', 'type'],
       },
+      sourceRoot: path.resolve(SOURCE_ROOT),
+      pathSeparator: path.sep,
     },
 
     plugins: [
