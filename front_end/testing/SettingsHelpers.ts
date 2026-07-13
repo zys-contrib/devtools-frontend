@@ -148,6 +148,8 @@ export const DEFAULT_SETTING_REGISTRATIONS_FOR_TEST: ReadonlyArray<ReturnType<ty
                      Common.Settings.SettingType.ENUM),
   createSettingValue(Common.Settings.SettingCategory.EMULATION, 'emulation.locations', [],
                      Common.Settings.SettingType.ARRAY),
+  createSettingValue(Common.Settings.SettingCategory.MOBILE, 'emulation.show-rulers', false),
+  createSettingValue(Common.Settings.SettingCategory.MOBILE, 'show-media-query-inspector', false),
   createSettingValue(Common.Settings.SettingCategory.GRID, 'show-grid-line-labels', 'none',
                      Common.Settings.SettingType.ENUM),
   createSettingValue(Common.Settings.SettingCategory.GRID, 'extend-grid-lines', true),

@@ -247,7 +247,8 @@ describeWithEnvironment('DeviceModeToolbar', () => {
     toolbar.requestUpdate();
     await toolbar.updateComplete;
 
-    const select = toolbar.element.querySelector('select') as HTMLSelectElement;
+    const select = toolbar.element.querySelector('select');
+    assert.instanceOf(select, HTMLSelectElement);
     assert.strictEqual(select.value, 'Responsive');
 
     // Simulate selecting "Edit"
