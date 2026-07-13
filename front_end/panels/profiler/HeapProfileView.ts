@@ -11,11 +11,13 @@ import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as CPUProfile from '../../models/cpu_profile/cpu_profile.js';
+import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as DataGrid from '../../ui/legacy/components/data_grid/data_grid.js';
 import * as PerfUI from '../../ui/legacy/components/perf_ui/perf_ui.js';
 import * as SettingsUI from '../../ui/legacy/components/settings_ui/settings_ui.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
 import * as UI from '../../ui/legacy/legacy.js';
+import {Directives, html, nothing, type TemplateResult} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import {BottomUpProfileDataGridTree} from './BottomUpProfileDataGrid.js';
@@ -161,6 +163,8 @@ const UIStrings = {
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/profiler/HeapProfileView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
+const {ref} = Directives;
+
 function convertToSamplingHeapProfile(profileHeader: SamplingHeapProfileHeader):
     Protocol.HeapProfiler.SamplingHeapProfile {
   return (profileHeader.profile || profileHeader.protocolProfile()) as Protocol.HeapProfiler.SamplingHeapProfile;
@@ -178,7 +182,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   profileHeader: SamplingHeapProfileHeader;
   readonly profileType: SamplingHeapProfileTypeBase;
   adjustedTotal: number;
-  readonly selectedSizeText: UI.Toolbar.ToolbarText = new UI.Toolbar.ToolbarText();
+  selectedSizeText: HTMLElement|undefined;
   timestamps: number[] = [];
   sizes: number[] = [];
   max: number[] = [];
@@ -189,10 +193,10 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   profileInternal: CPUProfile.ProfileTreeModel.ProfileTreeModel|null = null;
   searchableViewInternal!: UI.SearchableView.SearchableView;
   dataGrid: DataGrid.DataGrid.DataGridImpl<unknown>;
-  viewSelectComboBox!: UI.Toolbar.ToolbarComboBox;
+  viewSelectComboBox: HTMLSelectElement|undefined;
   focusButton!: UI.Toolbar.ToolbarButton;
   excludeButton!: UI.Toolbar.ToolbarButton;
-  resetButton!: UI.Toolbar.ToolbarButton;
+  resetButton: Buttons.Button.Button|undefined;
   readonly linkifierInternal: Components.Linkifier.Linkifier = new Components.Linkifier.Linkifier(maxLinkLength);
   nodeFormatter!: Formatter;
   viewType!: Common.Settings.Setting<ViewTypes>;
@@ -223,8 +227,6 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
 
     this.dataGrid = this.#createDataGrid();
 
-    this.#setupToolbar();
-
     this.profileHeader = profileHeader;
     this.profileType = profileHeader.profileType();
     this.initialize(new NodeFormatter(this));
@@ -254,23 +256,6 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     this.searchableViewInternal = new UI.SearchableView.SearchableView(this, null);
     this.searchableViewInternal.setPlaceholder(i18nString(UIStrings.findByCostMsNameOrFile));
     this.searchableViewInternal.show(this.element);
-  }
-
-  #setupToolbar(): void {
-    this.viewSelectComboBox = new UI.Toolbar.ToolbarComboBox(
-        this.changeView.bind(this), i18nString(UIStrings.profileViewMode), undefined, 'profile-view.selected-view');
-
-    this.focusButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.focusSelectedFunction), 'eye', undefined,
-                                                    'profile-view.focus-selected-function');
-    this.focusButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.focusClicked, this);
-
-    this.excludeButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.excludeSelectedFunction), 'cross', undefined,
-                                                      'profile-view.exclude-selected-function');
-    this.excludeButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.excludeClicked, this);
-
-    this.resetButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.restoreAllFunctions), 'refresh', undefined,
-                                                    'profile-view.restore-all-functions');
-    this.resetButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.resetClicked, this);
   }
 
   #createDataGrid(): DataGrid.DataGrid.DataGridImpl<unknown> {
@@ -309,8 +294,63 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     return dataGrid;
   }
 
-  override async toolbarItems(): Promise<UI.Toolbar.ToolbarItem[]> {
-    return [this.viewSelectComboBox, this.focusButton, this.excludeButton, this.resetButton, this.selectedSizeText];
+  override async toolbarItems(): Promise<TemplateResult> {
+    const currentViewType = this.viewType.get();
+    const isFlame = currentViewType === ViewTypes.FLAME;
+
+    // clang-format off
+    return html`
+      <select title=${i18nString(UIStrings.profileViewMode)} aria-label=${i18nString(UIStrings.profileViewMode)}
+              @change=${this.changeView.bind(this)}
+              jslog=${VisualLogging.dropDown('profile-view.selected-view').track({change: true})}
+              ${ref(e => { this.viewSelectComboBox = e as HTMLSelectElement; })}>
+        <option value=${ViewTypes.FLAME} ?selected=${currentViewType === ViewTypes.FLAME}>
+          ${i18nString(UIStrings.chart)}
+        </option>
+        <option value=${ViewTypes.HEAVY} ?selected=${currentViewType === ViewTypes.HEAVY}>
+          ${i18nString(UIStrings.heavyBottomUp)}
+        </option>
+        <option value=${ViewTypes.TREE} ?selected=${currentViewType === ViewTypes.TREE}>
+          ${i18nString(UIStrings.treeTopDown)}
+        </option>
+      </select>
+      <devtools-button .data=${{
+                         iconName: 'eye',
+                         variant: Buttons.Button.Variant.TOOLBAR,
+                         title: i18nString(UIStrings.focusSelectedFunction),
+                         jslogContext: 'profile-view.focus-selected-function',
+                         disabled: !this.#isNodeSelected,
+                       } as Buttons.Button.ButtonData}
+                       @click=${this.focusClicked.bind(this)}
+                       ?hidden=${isFlame}>
+      </devtools-button>
+      <devtools-button .data=${{
+                         iconName: 'cross',
+                         variant: Buttons.Button.Variant.TOOLBAR,
+                         title: i18nString(UIStrings.excludeSelectedFunction),
+                         jslogContext: 'profile-view.exclude-selected-function',
+                         disabled: !this.#isNodeSelected,
+                       } as Buttons.Button.ButtonData}
+                       @click=${this.excludeClicked.bind(this)}
+                       ?hidden=${isFlame}>
+      </devtools-button>
+      <devtools-button .data=${{
+                         iconName: 'refresh',
+                         variant: Buttons.Button.Variant.TOOLBAR,
+                         title: i18nString(UIStrings.restoreAllFunctions),
+                         jslogContext: 'profile-view.restore-all-functions',
+                         disabled: !this.#isResetEnabled,
+                       } as Buttons.Button.ButtonData}
+                       @click=${this.resetClicked.bind(this)}
+                       ?hidden=${isFlame}
+                       ${ref(e => {this.resetButton = e as Buttons.Button.Button; })}>
+        </devtools-button>
+      <span ${ref(e => { this.selectedSizeText = e as HTMLElement; })}>
+        ${this.#selectedSize !== null ?
+          i18nString(UIStrings.selectedSizeS, {PH1: i18n.ByteUtilities.bytesToString(this.#selectedSize)})
+          : nothing}
+      </span>`;
+    // clang-format on
   }
 
   onIdsRangeChanged(event: Common.EventTarget.EventTargetEvent<IdsRangeChangedEvent>): void {
@@ -405,19 +445,6 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     this.nodeFormatter = nodeFormatter;
 
     this.viewType = Common.Settings.Settings.instance().createSetting('profile-view', ViewTypes.HEAVY);
-    const viewTypes = [ViewTypes.FLAME, ViewTypes.HEAVY, ViewTypes.TREE];
-
-    const optionNames = new Map([
-      [ViewTypes.FLAME, i18nString(UIStrings.chart)],
-      [ViewTypes.HEAVY, i18nString(UIStrings.heavyBottomUp)],
-      [ViewTypes.TREE, i18nString(UIStrings.treeTopDown)],
-    ]);
-
-    const options = new Map(
-        viewTypes.map(type => [type, this.viewSelectComboBox.createOption((optionNames.get(type) as string), type)]));
-    const optionName = this.viewType.get() || viewTypes[0];
-    const option = options.get(optionName) || options.get(viewTypes[0]);
-    this.viewSelectComboBox.select((option as Element));
 
     this.changeView();
     if (this.flameChart) {
@@ -573,7 +600,9 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
       return;
     }
 
-    this.viewType.set((this.viewSelectComboBox.selectedOption() as HTMLOptionElement).value as ViewTypes);
+    if (this.viewSelectComboBox) {
+      this.viewType.set(this.viewSelectComboBox.value as ViewTypes);
+    }
     this.performUpdate();
   }
 
@@ -589,7 +618,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
 
     this.#isResetEnabled = true;
     this.performUpdate();
-    (this.resetButton.element as HTMLElement).focus();
+    this.resetButton?.focus();
     if (this.profileDataGridTree) {
       this.profileDataGridTree.focus((this.dataGrid.selectedNode as ProfileDataGridNode));
     }
@@ -607,7 +636,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
 
     this.#isResetEnabled = true;
     this.performUpdate();
-    (this.resetButton.element as HTMLElement).focus();
+    this.resetButton?.focus();
 
     selectedNode.deselect();
 
@@ -620,7 +649,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   }
 
   resetClicked(): void {
-    this.viewSelectComboBox.element.focus();
+    this.viewSelectComboBox?.focus();
     this.#isResetEnabled = false;
     this.performUpdate();
     if (this.profileDataGridTree) {
@@ -684,16 +713,18 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
 
     this.focusButton?.setVisible(isTreeOrHeavy);
     this.excludeButton?.setVisible(isTreeOrHeavy);
-    this.resetButton?.setVisible(isTreeOrHeavy);
+    this.resetButton?.classList.toggle('hidden', !isTreeOrHeavy);
 
     this.focusButton?.setEnabled(this.#isNodeSelected);
     this.excludeButton?.setEnabled(this.#isNodeSelected);
 
-    this.resetButton?.setEnabled(this.#isResetEnabled);
+    if (this.resetButton) {
+      this.resetButton.disabled = !this.#isResetEnabled;
+    }
 
-    if (this.#selectedSize !== null) {
-      this.selectedSizeText?.setText(
-          i18nString(UIStrings.selectedSizeS, {PH1: i18n.ByteUtilities.bytesToString(this.#selectedSize)}));
+    if (this.#selectedSize !== null && this.selectedSizeText) {
+      this.selectedSizeText.textContent =
+          i18nString(UIStrings.selectedSizeS, {PH1: i18n.ByteUtilities.bytesToString(this.#selectedSize)});
     }
 
     if (this.#minId !== null && this.#maxId !== null) {

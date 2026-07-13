@@ -9,6 +9,7 @@ import type * as Common from '../../core/common/common.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
+import {render} from '../../ui/lit/lit.js';
 
 import * as Profiler from './profiler.js';
 
@@ -107,7 +108,7 @@ describeWithEnvironment('HeapProfileView', () => {
     assert.strictEqual(view.columnHeader('unknown'), '');
   });
 
-  it('updates selected size text on range change', () => {
+  it('updates selected size text on range change', async () => {
     const mockHeader = createMockHeader();
 
     const view = new Profiler.HeapProfileView.HeapProfileView(mockHeader);
@@ -117,8 +118,11 @@ describeWithEnvironment('HeapProfileView', () => {
                            Parameters<typeof view.onIdsRangeChanged>[0]);
 
     sinon.assert.calledWith(setSelectionRangeStub, 0, 10);
-    assert.include(view.selectedSizeText.text(), 'Selected size:');
-    assert.include(view.selectedSizeText.text(), '999');
+    const template = await view.toolbarItems();
+    const container = document.createElement('div');
+    render(template, container);
+    assert.include(container.textContent, 'Selected size:');
+    assert.include(container.textContent, '999');
   });
 
   it('updates profile statistics on stats update', () => {
@@ -149,12 +153,12 @@ describeWithEnvironment('HeapProfileView', () => {
     assert.strictEqual(view.viewType.get(), Profiler.HeapProfileView.ViewTypes.HEAVY);
 
     // Change to TREE
-    view.viewSelectComboBox.setSelectedIndex(2);
+    view.viewType.set(Profiler.HeapProfileView.ViewTypes.TREE);
     view.changeView();
     assert.strictEqual(view.visibleView, view.dataGrid.asWidget());
 
     // Change to FLAME
-    view.viewSelectComboBox.setSelectedIndex(0);
+    view.viewType.set(Profiler.HeapProfileView.ViewTypes.FLAME);
     view.changeView();
     assert.strictEqual(view.visibleView, view.flameChart);
   });
