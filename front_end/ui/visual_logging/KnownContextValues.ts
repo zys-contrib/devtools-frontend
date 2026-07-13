@@ -4498,6 +4498,7 @@ export const knownContextValues = new Set([
   'window',
   'window-controls',
   'window-controls-overlay',
+  'window-drag',
   'windows',
   'word-break',
   'word-spacing',

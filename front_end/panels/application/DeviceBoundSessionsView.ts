@@ -508,10 +508,7 @@ const UIStrings = {
    *@description Explanation for an event outcome.
    */
   serverError: 'Endpoint transient error',
-  /**
-   *@description Explanation for an event outcome.
-   */
-  refreshQuotaExceeded: 'Refresh quota exceeded',
+
   /**
    *@description Explanation for an event outcome.
    */
@@ -1103,8 +1100,7 @@ function refreshResultToString(refreshResult: Protocol.Network.RefreshEventDetai
       return i18nString(UIStrings.unreachable);
     case Protocol.Network.RefreshEventDetailsRefreshResult.ServerError:
       return i18nString(UIStrings.serverError);
-    case Protocol.Network.RefreshEventDetailsRefreshResult.RefreshQuotaExceeded:
-      return i18nString(UIStrings.refreshQuotaExceeded);
+
     case Protocol.Network.RefreshEventDetailsRefreshResult.FatalError:
       return i18nString(UIStrings.fatalError);
     case Protocol.Network.RefreshEventDetailsRefreshResult.SigningQuotaExceeded:

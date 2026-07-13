@@ -885,6 +885,7 @@ export const generatedProperties = [
    "widows",
    "width",
    "will-change",
+   "window-drag",
    "word-break",
    "word-spacing",
    "writing-mode",
@@ -1023,11 +1024,6 @@ export const generatedProperties = [
   "runtime_flag_status": "stable"
  },
  {
-  "keywords": [
-   "none",
-   "drag",
-   "no-drag"
-  ],
   "name": "app-region"
  },
  {
@@ -6064,6 +6060,17 @@ export const generatedProperties = [
  {
   "inherited": true,
   "keywords": [
+   "none",
+   "move",
+   "no-drag"
+  ],
+  "name": "window-drag",
+  "runtime_flag": "CSSWindowDrag",
+  "runtime_flag_status": "stable"
+ },
+ {
+  "inherited": true,
+  "keywords": [
    "normal",
    "break-all",
    "keep-all",
@@ -6386,13 +6393,6 @@ export const generatedPropertyValues = {
  "animation-trigger": {
   "values": [
    "none"
-  ]
- },
- "app-region": {
-  "values": [
-   "none",
-   "drag",
-   "no-drag"
   ]
  },
  "appearance": {
@@ -9172,6 +9172,13 @@ export const generatedPropertyValues = {
  "will-change": {
   "values": [
    "auto"
+  ]
+ },
+ "window-drag": {
+  "values": [
+   "none",
+   "move",
+   "no-drag"
   ]
  },
  "word-break": {

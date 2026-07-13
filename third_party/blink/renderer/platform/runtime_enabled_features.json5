@@ -229,7 +229,11 @@
       name: "AcceleratedSmallCanvases",
       status: "stable",
     },
-
+    {
+      // crbug.com/409809747
+      name: "AccessibilityCheckIfcInPreviousTextOnLine",
+      status: "stable",
+    },
     {
       name: "AccessibilityCustomElementRoleNone",
       public: true,
@@ -2156,6 +2160,10 @@
       status: "experimental",
     },
     {
+      name: "CSSWindowDrag",
+      status: "stable",
+    },
+    {
       // CSSWG resolution to make the `zoom` property continuously
       // interpolatable. https://github.com/w3c/csswg-drafts/issues/10872
       // Ship in M150, should be removed in M152.
@@ -3227,10 +3235,10 @@
       status: {"Android": "", "default": "stable"},
     },
     {
-      name: "FontDataService",
+      name: "FontDataServiceForCSSLocalFonts",
       base_feature: "none",
       // No status, as the web platform runtime enabled feature is controlled by
-      // a Chromium level feature (kFontDataServiceAllWebContents).
+      // a Chromium level feature (kFontDataServiceForCSSLocalFonts).
     },
     {
       name: "FontFallbackForTabSize",
@@ -3287,6 +3295,13 @@
     {
       // https://github.com/flackr/reduce-motion/blob/main/explainer.md
       name: "ForceReduceMotion",
+    },
+    {
+      // Flag for rolling out the standardized behavior where fetch calls are
+      // rejected with the reason provided to the abort controller, if one was
+      // provided. See crbug.com/502133195
+      name: "ForwardReasonToFetchBodyAbort",
+      status: "experimental",
     },
     {
       name: "FractionalScrollOffsets",
@@ -4323,10 +4338,6 @@
     },
     {
       name: "NumberInputFullWidthChars",
-      status: "stable",
-    },
-    {
-      name: "OffMainThreadCSSPaint",
       status: "stable",
     },
     {
@@ -7383,7 +7394,7 @@
       // with its responseXML document.
       // https://crbug.com/466303347
       name: "XMLRustForNonXslt",
-      status: "stable",
+      status: "experimental",
     },
     {
       name: "XMLSerializerConsistentDefaultNsDeclMatching",

@@ -8452,7 +8452,7 @@ export const NativeFunctions = [
   },
   {
     name: "executeTool",
-    signatures: [["tool","input_arguments","?options"]]
+    signatures: [["tool","inputArguments","?options"]]
   },
   {
     name: "TaskController",
