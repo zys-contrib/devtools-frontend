@@ -15,11 +15,11 @@ import outermostTargetSelectorStyles from './outermostTargetSelector.css.js';
 
 const UIStrings = {
   /**
-   * @description Title of toolbar item in outermost target selector in the main toolbar
+   * @description Title of toolbar item in outermost target selector in the main toolbar.
    */
   targetNotSelected: 'Page: Not selected',
   /**
-   * @description Title of toolbar item in outermost target selector in the main toolbar
+   * @description Title of toolbar item in outermost target selector in the main toolbar.
    * @example {top} PH1
    */
   targetS: 'Page: {PH1}',

@@ -39,7 +39,7 @@ const UIStrings = {
    */
   javascriptIsDisabled: 'JavaScript is disabled',
   /**
-   * @description A message that prompts the user to open devtools for a specific environment (Node.js)
+   * @description Tooltip for the Node.js indicator prompting the user to open dedicated DevTools for Node.js.
    */
   openDedicatedTools: 'Open dedicated DevTools for `Node.js`',
 } as const;

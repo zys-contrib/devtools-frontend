@@ -64,56 +64,56 @@ import {ExecutionContextSelector} from './ExecutionContextSelector.js';
 
 const UIStrings = {
   /**
-   * @description Title of item in main
+   * @description Title of the menu item in the main toolbar to customize and control DevTools.
    */
   customizeAndControlDevtools: 'Customize and control DevTools',
   /**
-   * @description Title element text content in Main
+   * @description Label for the dock side menu options in the customize and control menu.
    */
   dockSide: 'Dock side',
   /**
-   * @description Title element title in Main
+   * @description Tooltip for the dock side menu options explaining how to restore the last dock position.
    * @example {Ctrl+Shift+D} PH1
    */
   placementOfDevtoolsRelativeToThe: 'Placement of DevTools relative to the page. ({PH1} to restore last position)',
   /**
-   * @description Text to undock the DevTools
+   * @description Tooltip and label for the button to undock DevTools into a separate window.
    */
   undockIntoSeparateWindow: 'Undock into separate window',
   /**
-   * @description Text to dock the DevTools to the bottom of the browser tab
+   * @description Tooltip and label for the button to dock DevTools to the bottom of the browser window.
    */
   dockToBottom: 'Dock to bottom',
   /**
-   * @description Text to dock the DevTools to the right of the browser tab
+   * @description Tooltip and label for the button to dock DevTools to the right of the browser window.
    */
   dockToRight: 'Dock to right',
   /**
-   * @description Text to dock the DevTools to the left of the browser tab
+   * @description Tooltip and label for the button to dock DevTools to the left of the browser window.
    */
   dockToLeft: 'Dock to left',
   /**
-   * @description Text in Main
+   * @description Action item in the customize and control menu to focus the page being debugged.
    */
   focusDebuggee: 'Focus page',
   /**
-   * @description Text in Main
+   * @description Action item in the customize and control menu to hide the Console drawer.
    */
-  hideConsoleDrawer: 'Hide console drawer',
+  hideConsoleDrawer: 'Hide Console drawer',
   /**
-   * @description Text in Main
+   * @description Action item in the customize and control menu to show the Console drawer.
    */
-  showConsoleDrawer: 'Show console drawer',
+  showConsoleDrawer: 'Show Console drawer',
   /**
-   * @description A context menu item in the Main
+   * @description Submenu item in the customize and control menu to open additional tools and panels.
    */
   moreTools: 'More tools',
   /**
-   * @description Text for the viewing the help options
+   * @description Submenu item in the customize and control menu to view help and documentation options.
    */
   help: 'Help',
   /**
-   * @description Text describing how to navigate the dock side menu
+   * @description Screen reader announcement explaining how to navigate the dock side options using arrow keys.
    */
   dockSideNavigation: 'Use left and right arrow keys to navigate the options',
   /**
@@ -121,7 +121,7 @@ const UIStrings = {
    */
   aiModelDownloaded: 'AI model downloaded',
   /**
-   * @description A title of the menu item in the main menu leading to https://github.com/ChromeDevTools/chrome-devtools-mcp.
+   * @description Title of the menu item in the customize and control menu leading to the DevTools MCP repository.
    */
   getDevToolsMcp: 'Get `DevTools MCP`'
 } as const;
