@@ -144,7 +144,7 @@ export class TargetManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
   async #waitForPromiseWithTimeout(promise: Promise<void>, timeoutMessage: string): Promise<void> {
     const {promise: timeoutPromise, resolve: timeoutResolve} = Promise.withResolvers<void>();
     const timeoutId = globalThis.setTimeout(() => {
-      Common.Console.Console.instance().warn(timeoutMessage);
+      this.getConsole().warn(timeoutMessage);
       timeoutResolve();
     }, 2000);
     await Promise.race([promise, timeoutPromise]);
