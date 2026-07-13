@@ -1,19 +1,20 @@
 // Copyright 2020 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-/* eslint-disable @devtools/no-imperative-dom-api */
 
 import type * as Common from '../../core/common/common.js';
 import * as i18n from '../../core/i18n/i18n.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as TreeOutline from '../../ui/components/tree_outline/tree_outline.js';
 import * as UI from '../../ui/legacy/legacy.js';
+import * as Lit from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import * as AccessibilityTreeUtils from './AccessibilityTreeUtils.js';
 import accessibilityTreeViewStyles from './accessibilityTreeView.css.js';
 import {ElementsPanel} from './ElementsPanel.js';
 
+const {html, render, Directives: {ref}} = Lit;
 const UIStrings = {
   /**
    * @description Text for copying, copy should be used as a verb
@@ -23,101 +24,167 @@ const UIStrings = {
 const str_ = i18n.i18n.registerUIStrings('panels/elements/AccessibilityTreeView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
+export interface ViewInput {
+  nodes: AccessibilityTreeUtils.AXTreeNode[];
+  onNodeSelected: (node: SDK.AccessibilityModel.AccessibilityNode) => void;
+  onNodeHighlight: (node: SDK.AccessibilityModel.AccessibilityNode) => void;
+  onNodeClearHighlight: () => void;
+  onCopy: (node: SDK.AccessibilityModel.AccessibilityNode) => void;
+}
+
+export interface ViewOutput {
+  expandRoots?(): Promise<void>;
+  revealNode?(ancestors: string[], nodeId: string): Promise<void>;
+}
+
+export type View = (input: ViewInput, output: ViewOutput, target: HTMLElement) => void;
+
+export const DEFAULT_VIEW: View = (input, output, target) => {
+  const treeData: TreeOutline.TreeOutline.TreeOutlineData<AccessibilityTreeUtils.AXTreeNodeData> = {
+    defaultRenderer: AccessibilityTreeUtils.accessibilityNodeRenderer,
+    tree: input.nodes,
+    filter: node => {
+      return node.ignored() || (node.role()?.value === 'generic' && !node.name()?.value) ?
+          TreeOutline.TreeOutline.FilterOption.FLATTEN :
+          TreeOutline.TreeOutline.FilterOption.SHOW;
+    },
+  };
+
+  const onTreeOutlineRef = (el?: Element): void => {
+    const treeOutline = el as TreeOutline.TreeOutline.TreeOutline<AccessibilityTreeUtils.AXTreeNodeData>| undefined;
+    if (treeOutline) {
+      output.expandRoots = () => treeOutline.expandRecursively(1);
+      output.revealNode = (ancestors: string[], nodeId: string) =>
+          treeOutline.expandNodeIds(ancestors).then(() => treeOutline.focusNodeId(nodeId));
+    } else {
+      output.expandRoots = undefined;
+      output.revealNode = undefined;
+    }
+  };
+
+  let selectedAXNode: SDK.AccessibilityModel.AccessibilityNode|null = null;
+
+  const onItemSelected =
+      (event: TreeOutline.TreeOutline.ItemSelectedEvent<AccessibilityTreeUtils.AXTreeNodeData>): void => {
+        selectedAXNode = event.data.node.treeNodeData;
+        input.onNodeSelected(selectedAXNode);
+      };
+  const onItemMouseOver =
+      (event: TreeOutline.TreeOutline.ItemMouseOverEvent<AccessibilityTreeUtils.AXTreeNodeData>): void => {
+        input.onNodeHighlight(event.data.node.treeNodeData);
+      };
+  const onItemMouseOut = (): void => {
+    input.onNodeClearHighlight();
+  };
+  const onItemContextMenu =
+      (event: TreeOutline.TreeOutline.ItemContextMenuEvent<AccessibilityTreeUtils.AXTreeNodeData>): void => {
+        event.data.originalEvent.preventDefault();
+        event.data.originalEvent.stopPropagation();
+        const contextMenu = new UI.ContextMenu.ContextMenu(event.data.originalEvent);
+        const axNode = event.data.node.treeNodeData;
+        contextMenu.clipboardSection().appendItem(i18nString(UIStrings.copy), () => input.onCopy(axNode),
+                                                  {jslogContext: 'copy'});
+        void contextMenu.show();
+      };
+
+  const onCopy = (event: ClipboardEvent): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (selectedAXNode) {
+      input.onCopy(selectedAXNode);
+    }
+  };
+
+  // clang-format off
+  render(html`
+    <div class="accessibility-tree-view-container" jslog=${VisualLogging.tree('full-accessibility')} @copy=${onCopy}>
+      <devtools-tree-outline .data=${treeData}
+                             @itemselected=${onItemSelected}
+                             @itemmouseover=${onItemMouseOver}
+                             @itemmouseout=${onItemMouseOut}
+                             @itemcontextmenu=${onItemContextMenu}
+                             ${ref(onTreeOutlineRef)}></devtools-tree-outline>
+    </div>
+  `, target);
+  // clang-format on
+};
 export class AccessibilityTreeView extends UI.Widget.VBox implements
     SDK.TargetManager.SDKModelObserver<SDK.AccessibilityModel.AccessibilityModel> {
-  private accessibilityTreeComponent: TreeOutline.TreeOutline.TreeOutline<AccessibilityTreeUtils.AXTreeNodeData>;
   private inspectedDOMNode: SDK.DOMModel.DOMNode|null = null;
   private root: SDK.AccessibilityModel.AccessibilityNode|null = null;
-  private selectedAXNode: SDK.AccessibilityModel.AccessibilityNode|null = null;
 
+  readonly #view: View;
   readonly #frameManager: SDK.FrameManager.FrameManager;
+  readonly #treeOperations: ViewOutput = {};
 
-  constructor(accessibilityTreeComponent: TreeOutline.TreeOutline.TreeOutline<AccessibilityTreeUtils.AXTreeNodeData>,
+  constructor(view: View = DEFAULT_VIEW,
               frameManager: SDK.FrameManager.FrameManager = SDK.FrameManager.FrameManager.instance()) {
     super();
+    this.#view = view;
     this.registerRequiredCSS(accessibilityTreeViewStyles);
-    this.accessibilityTreeComponent = accessibilityTreeComponent;
     this.#frameManager = frameManager;
-
-    const container = this.contentElement.createChild('div');
-
-    container.classList.add('accessibility-tree-view-container');
-    container.setAttribute('jslog', `${VisualLogging.tree('full-accessibility')}`);
-    container.appendChild(this.accessibilityTreeComponent);
 
     SDK.TargetManager.TargetManager.instance().observeModels(SDK.AccessibilityModel.AccessibilityModel, this,
                                                              {scoped: true});
-
-    // The DOM tree and accessibility are kept in sync as much as possible, so
-    // on node selection, update the currently inspected node and reveal in the
-    // DOM tree.
-    this.accessibilityTreeComponent.addEventListener('itemselected', (event: Event) => {
-      const evt = event as TreeOutline.TreeOutline.ItemSelectedEvent<AccessibilityTreeUtils.AXTreeNodeData>;
-      const axNode = evt.data.node.treeNodeData;
-      this.selectedAXNode = axNode;
-      if (!axNode.isDOMNode()) {
-        return;
-      }
-      const deferredNode = axNode.deferredDOMNode();
-      if (deferredNode) {
-        deferredNode.resolve(domNode => {
-          if (domNode) {
-            this.inspectedDOMNode = domNode;
-            void ElementsPanel.instance().revealAndSelectNode(
-                domNode, {showPanel: true, focusNode: true, highlightInOverlay: true});
-          }
-        });
-      }
-    });
-
-    this.accessibilityTreeComponent.addEventListener('itemmouseover', (event: Event) => {
-      const evt = event as TreeOutline.TreeOutline.ItemMouseOverEvent<AccessibilityTreeUtils.AXTreeNodeData>;
-      evt.data.node.treeNodeData.highlightDOMNode();
-    });
-
-    this.accessibilityTreeComponent.addEventListener('itemmouseout', () => {
-      SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
-    });
-
-    this.accessibilityTreeComponent.addEventListener('itemcontextmenu', (event: Event) => {
-      const evt = event as TreeOutline.TreeOutline.ItemContextMenuEvent<AccessibilityTreeUtils.AXTreeNodeData>;
-      this.onContextMenu(evt);
-    });
-
-    this.contentElement.addEventListener('copy', this.onCopy.bind(this));
   }
 
-  private onContextMenu(event: TreeOutline.TreeOutline.ItemContextMenuEvent<AccessibilityTreeUtils.AXTreeNodeData>):
-      void {
-    event.preventDefault();
-    event.stopPropagation();
-    const contextMenu = new UI.ContextMenu.ContextMenu(event.data.originalEvent);
-    const axNode = event.data.node.treeNodeData;
-    contextMenu.clipboardSection().appendItem(i18nString(UIStrings.copy), () => void this.copyNode(axNode),
-                                              {jslogContext: 'copy'});
-    void contextMenu.show();
-  }
-
-  private onCopy(event: ClipboardEvent): void {
-    if (!this.selectedAXNode) {
+  #onNodeSelected = (axNode: SDK.AccessibilityModel.AccessibilityNode): void => {
+    if (!axNode.isDOMNode()) {
       return;
     }
-    event.preventDefault();
-    event.stopPropagation();
-    void this.copyNode(this.selectedAXNode);
-  }
+    const deferredNode = axNode.deferredDOMNode();
+    if (deferredNode) {
+      deferredNode.resolve(domNode => {
+        if (domNode) {
+          this.inspectedDOMNode = domNode;
+          void ElementsPanel.instance().revealAndSelectNode(
+              domNode, {showPanel: true, focusNode: true, highlightInOverlay: true});
+        }
+      });
+    }
+  };
 
-  private async copyNode(axNode: SDK.AccessibilityModel.AccessibilityNode): Promise<void> {
+  #onNodeHighlight = (axNode: SDK.AccessibilityModel.AccessibilityNode): void => {
+    axNode.highlightDOMNode();
+  };
+
+  #onNodeClearHighlight = (): void => {
+    SDK.OverlayModel.OverlayModel.hideDOMNodeHighlight(SDK.TargetManager.TargetManager.instance());
+  };
+
+  #onCopy = async(axNode: SDK.AccessibilityModel.AccessibilityNode): Promise<void> => {
     const text = await axNode.axNodeToText();
     UI.UIUtils.copyTextToClipboard(text);
-  }
+  };
 
   override async wasShown(): Promise<void> {
     super.wasShown();
+    this.requestUpdate();
     await this.refreshAccessibilityTree();
     if (this.inspectedDOMNode) {
       await this.loadSubTreeIntoAccessibilityModel(this.inspectedDOMNode);
     }
+  }
+
+  override async performUpdate(): Promise<void> {
+    let nodes: AccessibilityTreeUtils.AXTreeNode[] = [];
+    if (!this.root) {
+      const frameId = this.#frameManager.getOutermostFrame()?.id;
+      if (frameId) {
+        this.root = await SDK.AccessibilityModel.getRootNode(frameId);
+      }
+    }
+    if (this.root) {
+      nodes = await AccessibilityTreeUtils.sdkNodeToAXTreeNodes(this.root);
+    }
+    const input: ViewInput = {
+      nodes,
+      onNodeSelected: this.#onNodeSelected,
+      onNodeHighlight: this.#onNodeHighlight,
+      onNodeClearHighlight: this.#onNodeClearHighlight,
+      onCopy: this.#onCopy,
+    };
+    this.#view(input, this.#treeOperations, this.contentElement);
   }
 
   async refreshAccessibilityTree(): Promise<void> {
@@ -131,30 +198,9 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
         throw new Error('No root');
       }
     }
-    await this.renderTree();
-    await this.accessibilityTreeComponent.expandRecursively(1);
-  }
-
-  async renderTree(): Promise<void> {
-    if (!this.root) {
-      const frameId = this.#frameManager.getOutermostFrame()?.id;
-      if (frameId) {
-        this.root = await SDK.AccessibilityModel.getRootNode(frameId);
-      }
-    }
-    if (!this.root) {
-      return;
-    }
-    const treeData = await AccessibilityTreeUtils.sdkNodeToAXTreeNodes(this.root);
-    this.accessibilityTreeComponent.data = {
-      defaultRenderer: AccessibilityTreeUtils.accessibilityNodeRenderer,
-      tree: treeData,
-      filter: node => {
-        return node.ignored() || (node.role()?.value === 'generic' && !node.name()?.value) ?
-            TreeOutline.TreeOutline.FilterOption.FLATTEN :
-            TreeOutline.TreeOutline.FilterOption.SHOW;
-      },
-    };
+    this.requestUpdate();
+    await this.updateComplete;
+    await this.#treeOperations.expandRoots?.();
   }
 
   // Given a selected DOM node, asks the model to load the missing subtree from the root to the
@@ -165,8 +211,12 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
     if (!inspectedAXNode) {
       return;
     }
-    await this.accessibilityTreeComponent.expandNodeIds(ancestors.map(node => node.getFrameId() + '#' + node.id()));
-    await this.accessibilityTreeComponent.focusNodeId(inspectedAXNode.getNodeId());
+    this.requestUpdate();
+    await this.updateComplete;
+    await this.#treeOperations.revealNode?.(
+        ancestors.map(node => node.getFrameId() + '#' + node.id()),
+        inspectedAXNode.getNodeId(),
+    );
   }
 
   // A node was revealed through the elements picker.
@@ -204,16 +254,15 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
     }
     if (!data.root) {
       this.root = null;
-      void this.renderTree();
+      this.requestUpdate();
       return;
     }
     const outermostFrameId = this.#frameManager.getOutermostFrame()?.id;
     if (data.root?.getFrameId() !== outermostFrameId) {
-      void this.renderTree();
+      this.requestUpdate();
       return;
     }
     this.root = data.root;
-    void this.accessibilityTreeComponent.collapseAllNodes();
 
     void this.refreshAccessibilityTree();
   }

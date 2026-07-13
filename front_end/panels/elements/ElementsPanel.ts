@@ -43,11 +43,9 @@ import type * as Protocol from '../../generated/protocol.js';
 import * as ComputedStyle from '../../models/computed_style/computed_style.js';
 import * as PanelCommon from '../../panels/common/common.js';
 import type * as Adorners from '../../ui/components/adorners/adorners.js';
-import * as TreeOutline from '../../ui/components/tree_outline/tree_outline.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
-import type {AXTreeNodeData} from './AccessibilityTreeUtils.js';
 import {AccessibilityTreeView} from './AccessibilityTreeView.js';
 import {ColorSwatchPopoverIcon} from './ColorSwatchPopoverIcon.js';
 import * as ElementsComponents from './components/components.js';
@@ -269,7 +267,7 @@ export class ElementsPanel extends UI.Panel.Panel implements UI.SearchableView.S
     this.#settings.moduleSetting('dom-word-wrap').addChangeListener(this.domWordWrapSettingChanged.bind(this));
 
     crumbsContainer.id = 'elements-crumbs';
-    this.accessibilityTreeView = new AccessibilityTreeView(new TreeOutline.TreeOutline.TreeOutline<AXTreeNodeData>());
+    this.accessibilityTreeView = new AccessibilityTreeView();
     this.breadcrumbs = new ElementsComponents.ElementsBreadcrumbs.ElementsBreadcrumbs();
     this.breadcrumbs.addEventListener('breadcrumbsnodeselected', event => {
       this.crumbNodeSelected(event);

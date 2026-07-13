@@ -19,22 +19,19 @@ const MAIN_FRAME_ID = 'MAIN_FRAME_ID' as Protocol.Page.FrameId;
 
 describeWithEnvironment('AccessibilityTreeView', () => {
   let target: SDK.Target.Target;
-  let treeComponent: TreeOutline.TreeOutline.TreeOutline<Elements.AccessibilityTreeUtils.AXTreeNodeData>;
 
   beforeEach(() => {
     stubNoopSettings();
     target = createTarget();
-    treeComponent = new TreeOutline.TreeOutline.TreeOutline<Elements.AccessibilityTreeUtils.AXTreeNodeData>();
   });
 
   const updatesUiOnEvent = (inScope: boolean) => async () => {
     SDK.TargetManager.TargetManager.instance().setScopeTarget(inScope ? target : null);
-    const view = new Elements.AccessibilityTreeView.AccessibilityTreeView(treeComponent);
+    const view = new Elements.AccessibilityTreeView.AccessibilityTreeView();
     renderElementIntoDOM(view);
 
     const model = target.model(SDK.AccessibilityModel.AccessibilityModel);
     assert.exists(model);
-    const treeComponentDataSet = sinon.spy(treeComponent, 'data', ['set']);
     sinon.stub(SDK.FrameManager.FrameManager.instance(), 'getOutermostFrame').returns({
       id: MAIN_FRAME_ID,
     } as SDK.ResourceTreeModel.ResourceTreeFrame);
@@ -47,9 +44,20 @@ describeWithEnvironment('AccessibilityTreeView', () => {
       frameId: MAIN_FRAME_ID,
     };
 
+    const renderSpy = sinon.spy(view, 'requestUpdate');
     model.loadComplete({root: rootPayload});
-    await new Promise<void>(resolve => queueMicrotask(resolve));
-    assert.strictEqual(treeComponentDataSet.set.called, inScope);
+
+    let isTreeUpdated = false;
+    if (inScope) {
+      assert.exists(renderSpy.firstCall);
+      await view.updateComplete;
+      isTreeUpdated = true;
+    } else {
+      await view.updateComplete;
+    }
+    const treeOutline = view.contentElement.querySelector('devtools-tree-outline');
+    const isTreeRendered = Boolean(treeOutline && treeOutline.data.tree.length > 0);
+    assert.strictEqual(isTreeRendered, isTreeUpdated);
     view.detach();
   };
 
@@ -58,8 +66,9 @@ describeWithEnvironment('AccessibilityTreeView', () => {
 
   describe('copying nodes', function() {
     it('copies selected node on context menu copy action', async () => {
-      const view = new Elements.AccessibilityTreeView.AccessibilityTreeView(treeComponent);
+      const view = new Elements.AccessibilityTreeView.AccessibilityTreeView();
       renderElementIntoDOM(view);
+      await view.updateComplete;
 
       const axNode = {
         id: () => '1',
@@ -76,7 +85,9 @@ describeWithEnvironment('AccessibilityTreeView', () => {
         axNodeToText: SDK.AccessibilityModel.AccessibilityNode.prototype.axNodeToText,
       } as unknown as SDK.AccessibilityModel.AccessibilityNode;
 
-      treeComponent.dispatchEvent(new TreeOutline.TreeOutline.ItemSelectedEvent({
+      const treeOutline = view.contentElement.querySelector('devtools-tree-outline');
+      assert.exists(treeOutline);
+      treeOutline.dispatchEvent(new TreeOutline.TreeOutline.ItemSelectedEvent({
         treeNodeData: axNode,
         id: '1',
       }));
@@ -88,15 +99,16 @@ describeWithEnvironment('AccessibilityTreeView', () => {
           event);
       const showStub = sinon.stub(UI.ContextMenu.ContextMenu.prototype, 'show').resolves();
 
-      treeComponent.dispatchEvent(customEvent);
+      treeOutline.dispatchEvent(customEvent);
 
       sinon.assert.called(showStub);
       view.detach();
     });
 
     it('copies selected node on copy event', async () => {
-      const view = new Elements.AccessibilityTreeView.AccessibilityTreeView(treeComponent);
+      const view = new Elements.AccessibilityTreeView.AccessibilityTreeView();
       renderElementIntoDOM(view);
+      await view.updateComplete;
 
       const axNode = {
         id: () => '1',
@@ -113,7 +125,9 @@ describeWithEnvironment('AccessibilityTreeView', () => {
         axNodeToText: SDK.AccessibilityModel.AccessibilityNode.prototype.axNodeToText,
       } as unknown as SDK.AccessibilityModel.AccessibilityNode;
 
-      treeComponent.dispatchEvent(new TreeOutline.TreeOutline.ItemSelectedEvent({
+      const treeOutline = view.contentElement.querySelector('devtools-tree-outline');
+      assert.exists(treeOutline);
+      treeOutline.dispatchEvent(new TreeOutline.TreeOutline.ItemSelectedEvent({
         treeNodeData: axNode,
         id: '1',
       }));
@@ -121,7 +135,9 @@ describeWithEnvironment('AccessibilityTreeView', () => {
       const copyStub = sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'copyText');
 
       const event = new Event('copy', {bubbles: true});
-      view.contentElement.dispatchEvent(event);
+      const container = view.contentElement.querySelector('.accessibility-tree-view-container');
+      assert.exists(container);
+      container.dispatchEvent(event);
 
       await new Promise<void>(resolve => setTimeout(resolve, 50));
       sinon.assert.calledWith(copyStub, 'heading "Title"\n');
@@ -133,7 +149,7 @@ describeWithEnvironment('AccessibilityTreeView', () => {
 
   it('renders the accessibility tree screenshot', async () => {
     SDK.TargetManager.TargetManager.instance().setScopeTarget(target);
-    const view = new Elements.AccessibilityTreeView.AccessibilityTreeView(treeComponent);
+    const view = new Elements.AccessibilityTreeView.AccessibilityTreeView();
 
     const refreshSpy = sinon.spy(view, 'refreshAccessibilityTree');
 
