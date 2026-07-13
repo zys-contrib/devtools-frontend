@@ -17,7 +17,7 @@ describe('Issue links in the console tab', () => {
     // There are several TypeErrors in the console, we don't care which one we get.
     const issueTitleFromLink = await devToolsPage.waitForFunction(async () => {
       const title = await button.evaluate(el => (el as HTMLElement).title);
-      const titleStart = 'Click to open the issue tab and show issue: ';
+      const titleStart = 'Click to open the Issues tab and show issue: ';
       if (title.startsWith(titleStart)) {
         return title.substr(titleStart.length);
       }

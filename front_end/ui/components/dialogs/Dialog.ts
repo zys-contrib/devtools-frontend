@@ -19,7 +19,7 @@ const {html} = Lit;
 const UIStrings = {
 
   /**
-   * @description Title of close button for the shortcuts dialog.
+   * @description Title of the close button in a dialog.
    */
   close: 'Close',
 } as const;
