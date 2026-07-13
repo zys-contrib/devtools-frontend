@@ -86,6 +86,7 @@ ts_library("unittests") {
   testonly = true
 
   sources = [
+    "Automapping.test.ts",
     "AutomaticFileSystemManager.test.ts",
     "AutomaticFileSystemWorkspaceBinding.test.ts",
     "NetworkPersistenceManager.test.ts",
