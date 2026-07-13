@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import '../../../ui/kit/kit.js';
-import './ExtensionView.js';
 
 import * as Host from '../../../core/host/host.js';
 import * as i18n from '../../../core/i18n/i18n.js';
@@ -28,6 +27,7 @@ import {PlayRecordingSpeed} from '../models/RecordingPlayer.js';
 import * as Actions from '../recorder-actions/recorder-actions.js';
 
 import {ControlButton} from './ControlButton.js';
+import {ExtensionView} from './ExtensionView.js';
 import recordingViewStyles from './recordingView.css.js';
 import {ReplaySection} from './ReplaySection.js';
 import {
@@ -381,8 +381,8 @@ function renderTimelineArea(input: ViewInput, output: ViewOutput): Lit.LitTempla
   if (input.extensionDescriptor) {
     // clang-format off
       return html`
-        <devtools-recorder-extension-view .descriptor=${input.extensionDescriptor}>
-        </devtools-recorder-extension-view>
+        <devtools-widget class="recorder-extension-view" ${widget(ExtensionView, {descriptor: input.extensionDescriptor})}>
+        </devtools-widget>
       `;
     // clang-format on
   }
@@ -802,9 +802,12 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
         ${
           input.extensionDescriptor
             ? html`
-            <devtools-recorder-extension-view .descriptor=${
-              input.extensionDescriptor
-            }></devtools-recorder-extension-view>` : html`
+            <devtools-widget class="recorder-extension-view" ${widget(ExtensionView, {
+              descriptor: input.extensionDescriptor,
+              onClose: () => {
+                target.dispatchEvent(new Event('recorderextensionviewclosed', {bubbles: true, composed: true}));
+              }
+            })}></devtools-widget>` : html`
           ${renderSettings(input)}
           ${renderTimelineArea(input, output)}
         `}

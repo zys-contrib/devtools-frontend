@@ -1,14 +1,11 @@
 // Copyright 2023 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-/* eslint-disable @devtools/no-lit-render-outside-of-view */
-
-import '../../../ui/legacy/legacy.js';
-import '../../../ui/kit/kit.js';
 
 import * as i18n from '../../../core/i18n/i18n.js';
 import type * as PublicExtensions from '../../../models/extensions/extensions.js';
 import * as Buttons from '../../../ui/components/buttons/buttons.js';
+import * as UI from '../../../ui/legacy/legacy.js';
 import * as Lit from '../../../ui/lit/lit.js';
 import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
 import * as Extensions from '../extensions/extensions.js';
@@ -27,106 +24,100 @@ const UIStrings = {
    */
   extension: 'Content provided by a browser extension',
 } as const;
-const str_ = i18n.i18n.registerUIStrings(
-    'panels/recorder/components/ExtensionView.ts',
-    UIStrings,
-);
+const str_ = i18n.i18n.registerUIStrings('panels/recorder/components/ExtensionView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'devtools-recorder-extension-view': ExtensionView;
-  }
-  interface HTMLElementEventMap {
-    recorderextensionviewclosed: ClosedEvent;
-  }
+export interface ViewInput {
+  descriptor: PublicExtensions.RecorderPluginManager.ViewDescriptor;
+  iframe: HTMLElement;
 }
 
-export class ClosedEvent extends Event {
-  static readonly eventName = 'recorderextensionviewclosed';
-  constructor() {
-    super(ClosedEvent.eventName, {bubbles: true, composed: true});
-  }
+export interface ViewOutput {
+  closeView: () => void;
 }
 
-export class ExtensionView extends HTMLElement {
-  readonly #shadow = this.attachShadow({mode: 'open'});
+export type View = (input: ViewInput, output: ViewOutput, target: HTMLElement) => void;
+
+export const DEFAULT_VIEW: View = (input, output, target) => {
+  const {descriptor, iframe} = input;
+  // clang-format off
+  Lit.render(
+    html`
+      <style>${extensionViewStyles}</style>
+      <div class="extension-view">
+        <header>
+          <div class="title">
+            <devtools-icon
+              class="icon"
+              title=${i18nString(UIStrings.extension)}
+              name="extension">
+            </devtools-icon>
+            ${descriptor.title}
+          </div>
+          <devtools-button
+            title=${i18nString(UIStrings.closeView)}
+            jslog=${VisualLogging.close().track({click: true})}
+            .data=${
+              {
+                variant: Buttons.Button.Variant.ICON,
+                size: Buttons.Button.Size.SMALL,
+                iconName: 'cross',
+              } as Buttons.Button.ButtonData
+            }
+            @click=${output.closeView}
+          ></devtools-button>
+        </header>
+        <main>
+          ${iframe}
+        </main>
+    </div>
+  `, target, {container: {attributes: {jslog: VisualLogging.section('extension-view')}}});
+  // clang-format on
+};
+
+export class ExtensionView extends UI.Widget.VBox {
   #descriptor?: PublicExtensions.RecorderPluginManager.ViewDescriptor;
+  #view: View;
+  #onClose?: () => void;
+  #viewOutput: ViewOutput = {
+    closeView: () => {
+      this.#onClose?.();
+    },
+  };
 
-  constructor() {
-    super();
-
-    this.setAttribute('jslog', `${VisualLogging.section('extension-view')}`);
+  set onClose(callback: () => void) {
+    this.#onClose = callback;
   }
 
-  connectedCallback(): void {
-    this.#render();
+  constructor(element?: HTMLElement, view: View = DEFAULT_VIEW) {
+    super(element, {useShadowDom: true});
+    this.#view = view;
   }
 
-  disconnectedCallback(): void {
-    if (!this.#descriptor) {
-      return;
-    }
-    Extensions.ExtensionManager.ExtensionManager.instance().getView(this.#descriptor.id).hide();
+  get descriptor(): PublicExtensions.RecorderPluginManager.ViewDescriptor|undefined {
+    return this.#descriptor;
   }
 
-  set descriptor(
-      descriptor: PublicExtensions.RecorderPluginManager.ViewDescriptor,
-  ) {
+  set descriptor(descriptor: PublicExtensions.RecorderPluginManager.ViewDescriptor|undefined) {
     this.#descriptor = descriptor;
-    this.#render();
-    Extensions.ExtensionManager.ExtensionManager.instance().getView(descriptor.id).show();
+    if (descriptor) {
+      Extensions.ExtensionManager.ExtensionManager.instance().getView(descriptor.id).show();
+    }
+    this.requestUpdate();
   }
 
-  #closeView(): void {
-    this.dispatchEvent(new ClosedEvent());
+  override willHide(): void {
+    super.willHide();
+    if (this.#descriptor) {
+      Extensions.ExtensionManager.ExtensionManager.instance().getView(this.#descriptor.id).hide();
+    }
   }
 
-  #render(): void {
+  override performUpdate(): void {
     if (!this.#descriptor) {
       return;
     }
     const iframe = Extensions.ExtensionManager.ExtensionManager.instance().getView(this.#descriptor.id).frame();
-    // clang-format off
-    Lit.render(
-      html`
-        <style>${extensionViewStyles}</style>
-        <div class="extension-view">
-          <header>
-            <div class="title">
-              <devtools-icon
-                class="icon"
-                title=${i18nString(UIStrings.extension)}
-                name="extension">
-              </devtools-icon>
-              ${this.#descriptor.title}
-            </div>
-            <devtools-button
-              title=${i18nString(UIStrings.closeView)}
-              jslog=${VisualLogging.close().track({click: true})}
-              .data=${
-                {
-                  variant: Buttons.Button.Variant.ICON,
-                  size: Buttons.Button.Size.SMALL,
-                  iconName: 'cross',
-                } as Buttons.Button.ButtonData
-              }
-              @click=${this.#closeView}
-            ></devtools-button>
-          </header>
-          <main>
-            ${iframe}
-          </main>
-      </div>
-    `,
-      this.#shadow,
-      { host: this },
-    );
-    // clang-format on
+    this.#view({descriptor: this.#descriptor, iframe}, this.#viewOutput, this.contentElement);
   }
 }
-
-customElements.define(
-    'devtools-recorder-extension-view',
-    ExtensionView,
-);
