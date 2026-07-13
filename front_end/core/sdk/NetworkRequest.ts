@@ -298,6 +298,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
   #isAdRelated: boolean;
   #isLinkPreload: boolean;
   #appliedNetworkConditionsId?: string;
+  readonly #console: Common.Console.Console;
 
   constructor(
       requestId: string,
@@ -308,6 +309,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
       loaderId: Protocol.Network.LoaderId|null,
       initiator: Protocol.Network.Initiator|null,
       hasUserGesture?: boolean,
+      console: Common.Console.Console = Common.Console.Console.instance(),
   ) {
     super();
 
@@ -321,6 +323,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
     this.#hasUserGesture = hasUserGesture;
     this.#isAdRelated = false;
     this.#isLinkPreload = false;
+    this.#console = console;
   }
 
   static create(
@@ -331,6 +334,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
       loaderId: Protocol.Network.LoaderId|null,
       initiator: Protocol.Network.Initiator|null,
       hasUserGesture?: boolean,
+      console?: Common.Console.Console,
       ): NetworkRequest {
     return new NetworkRequest(
         backendRequestId,
@@ -341,6 +345,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
         loaderId,
         initiator,
         hasUserGesture,
+        console,
     );
   }
 
@@ -348,6 +353,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
       backendRequestId: Protocol.Network.RequestId,
       requestURL: Platform.DevToolsPath.UrlString,
       initiator?: Protocol.Network.Initiator,
+      console?: Common.Console.Console,
       ): NetworkRequest {
     return new NetworkRequest(
         backendRequestId,
@@ -357,6 +363,8 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
         null,
         null,
         initiator || null,
+        undefined,
+        console,
     );
   }
 
@@ -365,6 +373,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
       url: Platform.DevToolsPath.UrlString,
       documentURL: Platform.DevToolsPath.UrlString,
       initiator: Protocol.Network.Initiator|null,
+      console?: Common.Console.Console,
       ): NetworkRequest {
     return new NetworkRequest(
         requestId,
@@ -374,6 +383,8 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
         null,
         null,
         initiator,
+        undefined,
+        console,
     );
   }
 
@@ -1217,7 +1228,8 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
   get serverTimings(): ServerTiming[]|null {
     if (typeof this.#serverTimings === 'undefined') {
       this.#serverTimings = ServerTiming.parseHeaders(
-          this.responseHeaders,
+          this.responseHeaders.map(x => ({name: x.name, value: x.value})),
+          this.#console,
       );
     }
     return this.#serverTimings;

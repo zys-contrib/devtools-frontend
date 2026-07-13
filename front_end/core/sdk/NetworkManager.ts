@@ -887,7 +887,7 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
     } else {
       networkRequest = NetworkRequest.create(
           requestId, request.url as Platform.DevToolsPath.UrlString, documentURL as Platform.DevToolsPath.UrlString,
-          frameId ?? null, loaderId, initiator, hasUserGesture);
+          frameId ?? null, loaderId, initiator, hasUserGesture, this.#manager.target().targetManager().getConsole());
       if (renderBlockingBehavior) {
         networkRequest.setRenderBlockingBehavior(renderBlockingBehavior);
       }
@@ -1009,7 +1009,8 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
 
   webSocketCreated({requestId, url: requestURL, initiator}: Protocol.Network.WebSocketCreatedEvent): void {
     const networkRequest =
-        NetworkRequest.createForSocket(requestId, requestURL as Platform.DevToolsPath.UrlString, initiator);
+        NetworkRequest.createForSocket(requestId, requestURL as Platform.DevToolsPath.UrlString, initiator,
+                                       this.#manager.target().targetManager().getConsole());
     requestToManagerMap.set(networkRequest, this.#manager);
     networkRequest.setResourceType(Common.ResourceType.resourceTypes.WebSocket);
     this.startNetworkRequest(networkRequest, null);
@@ -1214,7 +1215,7 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
     const newNetworkRequest = NetworkRequest.create(
         requestId, redirectURL, originalNetworkRequest.documentURL, originalNetworkRequest.frameId,
         originalNetworkRequest.loaderId, originalNetworkRequest.initiator(),
-        originalNetworkRequest.hasUserGesture() ?? undefined);
+        originalNetworkRequest.hasUserGesture() ?? undefined, this.#manager.target().targetManager().getConsole());
     requestToManagerMap.set(newNetworkRequest, this.#manager);
     newNetworkRequest.setRedirectSource(originalNetworkRequest);
     originalNetworkRequest.setRedirectDestination(newNetworkRequest);
@@ -1336,7 +1337,8 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
   webTransportCreated({transportId, url: requestURL, timestamp: time, initiator}:
                           Protocol.Network.WebTransportCreatedEvent): void {
     const networkRequest =
-        NetworkRequest.createForSocket(transportId, requestURL as Platform.DevToolsPath.UrlString, initiator);
+        NetworkRequest.createForSocket(transportId, requestURL as Platform.DevToolsPath.UrlString, initiator,
+                                       this.#manager.target().targetManager().getConsole());
     networkRequest.hasNetworkData = true;
     requestToManagerMap.set(networkRequest, this.#manager);
     networkRequest.setResourceType(Common.ResourceType.resourceTypes.WebTransport);
@@ -1373,8 +1375,9 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
 
   directTCPSocketCreated(event: Protocol.Network.DirectTCPSocketCreatedEvent): void {
     const requestURL = this.concatHostPort(event.remoteAddr, event.remotePort);
-    const networkRequest = NetworkRequest.createForSocket(
-        event.identifier, requestURL as Platform.DevToolsPath.UrlString, event.initiator);
+    const networkRequest =
+        NetworkRequest.createForSocket(event.identifier, requestURL as Platform.DevToolsPath.UrlString, event.initiator,
+                                       this.#manager.target().targetManager().getConsole());
     networkRequest.hasNetworkData = true;
     networkRequest.setRemoteAddress(event.remoteAddr, event.remotePort);
     networkRequest.protocol = i18n.i18n.lockedString('tcp');
@@ -1488,8 +1491,9 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
       // is not specified.
       return;
     }
-    const networkRequest = NetworkRequest.createForSocket(
-        event.identifier, requestURL as Platform.DevToolsPath.UrlString, event.initiator);
+    const networkRequest =
+        NetworkRequest.createForSocket(event.identifier, requestURL as Platform.DevToolsPath.UrlString, event.initiator,
+                                       this.#manager.target().targetManager().getConsole());
     networkRequest.hasNetworkData = true;
     if (event.options.remoteAddr && event.options.remotePort) {
       networkRequest.setRemoteAddress(event.options.remoteAddr, event.options.remotePort);
@@ -1673,9 +1677,9 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
   protected createNetworkRequest(
       requestId: Protocol.Network.RequestId, frameId: Protocol.Page.FrameId, loaderId: Protocol.Network.LoaderId,
       url: string, documentURL: string, initiator: Protocol.Network.Initiator|null): NetworkRequest {
-    const request = NetworkRequest.create(
-        requestId, url as Platform.DevToolsPath.UrlString, documentURL as Platform.DevToolsPath.UrlString, frameId,
-        loaderId, initiator);
+    const request = NetworkRequest.create(requestId, url as Platform.DevToolsPath.UrlString,
+                                          documentURL as Platform.DevToolsPath.UrlString, frameId, loaderId, initiator,
+                                          undefined, this.#manager.target().targetManager().getConsole());
     requestToManagerMap.set(request, this.#manager);
     return request;
   }

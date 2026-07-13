@@ -4,6 +4,7 @@
 
 import '../../../ui/components/request_link_icon/request_link_icon.js';
 
+import * as Common from '../../../core/common/common.js';
 import * as i18n from '../../../core/i18n/i18n.js';
 import type * as Platform from '../../../core/platform/platform.js';
 import * as SDK from '../../../core/sdk/sdk.js';
@@ -157,7 +158,7 @@ export class NetworkRequestDetails extends UI.Widget.Widget {
       // while this feature is experimental, to enable easier trials.
       if (headerName === 'server-timing' || headerName === 'server-timing-test') {
         header.name = 'server-timing';
-        this.#serverTimings = SDK.ServerTiming.ServerTiming.parseHeaders([header]);
+        this.#serverTimings = SDK.ServerTiming.ServerTiming.parseHeaders([header], Common.Console.Console.instance());
         break;
       }
     }
