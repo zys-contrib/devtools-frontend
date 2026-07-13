@@ -178,22 +178,22 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   profileHeader: SamplingHeapProfileHeader;
   readonly profileType: SamplingHeapProfileTypeBase;
   adjustedTotal: number;
-  readonly selectedSizeText: UI.Toolbar.ToolbarText;
-  timestamps: number[];
-  sizes: number[];
-  max: number[];
-  ordinals: number[];
-  totalTime: number;
-  lastOrdinal: number;
-  readonly timelineOverview: HeapTimelineOverview;
-  profileInternal: CPUProfile.ProfileTreeModel.ProfileTreeModel|null;
-  searchableViewInternal: UI.SearchableView.SearchableView;
+  readonly selectedSizeText: UI.Toolbar.ToolbarText = new UI.Toolbar.ToolbarText();
+  timestamps: number[] = [];
+  sizes: number[] = [];
+  max: number[] = [];
+  ordinals: number[] = [];
+  totalTime = 0;
+  lastOrdinal = 0;
+  readonly timelineOverview: HeapTimelineOverview = new HeapTimelineOverview();
+  profileInternal: CPUProfile.ProfileTreeModel.ProfileTreeModel|null = null;
+  searchableViewInternal!: UI.SearchableView.SearchableView;
   dataGrid: DataGrid.DataGrid.DataGridImpl<unknown>;
-  viewSelectComboBox: UI.Toolbar.ToolbarComboBox;
-  focusButton: UI.Toolbar.ToolbarButton;
-  excludeButton: UI.Toolbar.ToolbarButton;
-  resetButton: UI.Toolbar.ToolbarButton;
-  readonly linkifierInternal: Components.Linkifier.Linkifier;
+  viewSelectComboBox!: UI.Toolbar.ToolbarComboBox;
+  focusButton!: UI.Toolbar.ToolbarButton;
+  excludeButton!: UI.Toolbar.ToolbarButton;
+  resetButton!: UI.Toolbar.ToolbarButton;
+  readonly linkifierInternal: Components.Linkifier.Linkifier = new Components.Linkifier.Linkifier(maxLinkLength);
   nodeFormatter!: Formatter;
   viewType!: Common.Settings.Setting<ViewTypes>;
   bottomUpProfileDataGridTree?: BottomUpProfileDataGridTree|null;
@@ -205,18 +205,75 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   searchableElement?: ProfileDataGridTree|ProfileFlameChart;
   profileDataGridTree?: ProfileDataGridTree;
 
+  #isNodeSelected = false;
+  #isResetEnabled = false;
+  #selectedSize: number|null = null;
+  #minId: number|null = null;
+  #maxId: number|null = null;
+  #lastAppliedRange: {minId: number, maxId: number}|null = null;
+  #lastAppliedViewType: ViewTypes|null = null;
+
   constructor(profileHeader: SamplingHeapProfileHeader) {
     super({
       title: i18nString(UIStrings.profile),
       viewId: 'profile',
     });
 
-    this.profileInternal = null;
+    this.#setupSearchableView();
 
+    this.dataGrid = this.#createDataGrid();
+
+    this.#setupToolbar();
+
+    this.profileHeader = profileHeader;
+    this.profileType = profileHeader.profileType();
+    this.initialize(new NodeFormatter(this));
+    const profile = new SamplingHeapProfileModel(convertToSamplingHeapProfile(profileHeader));
+    this.adjustedTotal = profile.total;
+    this.setProfile(profile);
+
+    this.#setupTimelineOverview();
+  }
+
+  #setupTimelineOverview(): void {
+    if (this.profileType.hasTemporaryView()) {
+      this.timelineOverview.addEventListener(Events.IDS_RANGE_CHANGED, this.onIdsRangeChanged.bind(this));
+      this.timelineOverview.show(this.element, this.element.firstChild);
+      this.timelineOverview.start();
+
+      this.profileType.addEventListener(SamplingHeapProfileType.Events.STATS_UPDATE, this.onStatsUpdate, this);
+      void this.profileType.once(ProfileEvents.PROFILE_COMPLETE).then(() => {
+        this.profileType.removeEventListener(SamplingHeapProfileType.Events.STATS_UPDATE, this.onStatsUpdate, this);
+        this.timelineOverview.stop();
+        this.timelineOverview.updateGrid();
+      });
+    }
+  }
+
+  #setupSearchableView(): void {
     this.searchableViewInternal = new UI.SearchableView.SearchableView(this, null);
     this.searchableViewInternal.setPlaceholder(i18nString(UIStrings.findByCostMsNameOrFile));
     this.searchableViewInternal.show(this.element);
+  }
 
+  #setupToolbar(): void {
+    this.viewSelectComboBox = new UI.Toolbar.ToolbarComboBox(
+        this.changeView.bind(this), i18nString(UIStrings.profileViewMode), undefined, 'profile-view.selected-view');
+
+    this.focusButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.focusSelectedFunction), 'eye', undefined,
+                                                    'profile-view.focus-selected-function');
+    this.focusButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.focusClicked, this);
+
+    this.excludeButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.excludeSelectedFunction), 'cross', undefined,
+                                                      'profile-view.exclude-selected-function');
+    this.excludeButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.excludeClicked, this);
+
+    this.resetButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.restoreAllFunctions), 'refresh', undefined,
+                                                    'profile-view.restore-all-functions');
+    this.resetButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.resetClicked, this);
+  }
+
+  #createDataGrid(): DataGrid.DataGrid.DataGridImpl<unknown> {
     const columns: DataGrid.DataGrid.ColumnDescriptor[] = [];
     columns.push({
       id: 'self',
@@ -240,75 +297,28 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
       sortable: true,
     });
 
-    this.dataGrid = new DataGrid.DataGrid.DataGridImpl({
+    const dataGrid = new DataGrid.DataGrid.DataGridImpl({
       displayName: i18nString(UIStrings.profiler),
       columns,
     });
-    this.dataGrid.addEventListener(DataGrid.DataGrid.Events.SORTING_CHANGED, this.sortProfile, this);
-    this.dataGrid.addEventListener(DataGrid.DataGrid.Events.SELECTED_NODE, this.nodeSelected.bind(this, true));
-    this.dataGrid.addEventListener(DataGrid.DataGrid.Events.DESELECTED_NODE, this.nodeSelected.bind(this, false));
-    this.dataGrid.setRowContextMenuCallback(this.populateContextMenu.bind(this));
+    dataGrid.addEventListener(DataGrid.DataGrid.Events.SORTING_CHANGED, this.sortProfile, this);
+    dataGrid.addEventListener(DataGrid.DataGrid.Events.SELECTED_NODE, this.nodeSelected.bind(this, true));
+    dataGrid.addEventListener(DataGrid.DataGrid.Events.DESELECTED_NODE, this.nodeSelected.bind(this, false));
+    dataGrid.setRowContextMenuCallback(this.populateContextMenu.bind(this));
 
-    this.viewSelectComboBox = new UI.Toolbar.ToolbarComboBox(
-        this.changeView.bind(this), i18nString(UIStrings.profileViewMode), undefined, 'profile-view.selected-view');
-
-    this.focusButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.focusSelectedFunction), 'eye', undefined,
-                                                    'profile-view.focus-selected-function');
-    this.focusButton.setEnabled(false);
-    this.focusButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.focusClicked, this);
-
-    this.excludeButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.excludeSelectedFunction), 'cross', undefined,
-                                                      'profile-view.exclude-selected-function');
-    this.excludeButton.setEnabled(false);
-    this.excludeButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.excludeClicked, this);
-
-    this.resetButton = new UI.Toolbar.ToolbarButton(i18nString(UIStrings.restoreAllFunctions), 'refresh', undefined,
-                                                    'profile-view.restore-all-functions');
-    this.resetButton.setEnabled(false);
-    this.resetButton.addEventListener(UI.Toolbar.ToolbarButton.Events.CLICK, this.resetClicked, this);
-
-    this.linkifierInternal = new Components.Linkifier.Linkifier(maxLinkLength);
-
-    this.profileHeader = profileHeader;
-    this.profileType = profileHeader.profileType();
-    this.initialize(new NodeFormatter(this));
-    const profile = new SamplingHeapProfileModel(convertToSamplingHeapProfile(profileHeader));
-    this.adjustedTotal = profile.total;
-    this.setProfile(profile);
-
-    this.selectedSizeText = new UI.Toolbar.ToolbarText();
-
-    this.timestamps = [];
-    this.sizes = [];
-    this.max = [];
-    this.ordinals = [];
-    this.totalTime = 0;
-    this.lastOrdinal = 0;
-
-    this.timelineOverview = new HeapTimelineOverview();
-
-    if (this.profileType.hasTemporaryView()) {
-      this.timelineOverview.addEventListener(Events.IDS_RANGE_CHANGED, this.onIdsRangeChanged.bind(this));
-      this.timelineOverview.show(this.element, this.element.firstChild);
-      this.timelineOverview.start();
-
-      this.profileType.addEventListener(SamplingHeapProfileType.Events.STATS_UPDATE, this.onStatsUpdate, this);
-      void this.profileType.once(ProfileEvents.PROFILE_COMPLETE).then(() => {
-        this.profileType.removeEventListener(SamplingHeapProfileType.Events.STATS_UPDATE, this.onStatsUpdate, this);
-        this.timelineOverview.stop();
-        this.timelineOverview.updateGrid();
-      });
-    }
+    return dataGrid;
   }
 
   override async toolbarItems(): Promise<UI.Toolbar.ToolbarItem[]> {
     return [this.viewSelectComboBox, this.focusButton, this.excludeButton, this.resetButton, this.selectedSizeText];
   }
+
   onIdsRangeChanged(event: Common.EventTarget.EventTargetEvent<IdsRangeChangedEvent>): void {
     const {minId, maxId} = event.data;
-    this.selectedSizeText.setText(
-        i18nString(UIStrings.selectedSizeS, {PH1: i18n.ByteUtilities.bytesToString(event.data.size)}));
-    this.setSelectionRange(minId, maxId);
+    this.#selectedSize = event.data.size;
+    this.#minId = minId;
+    this.#maxId = maxId;
+    this.performUpdate();
   }
 
   setSelectionRange(minId: number, maxId: number): void {
@@ -348,15 +358,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
       this.totalTime *= 2;
     }
 
-    const samples = ({
-      sizes: this.sizes,
-      max: this.max,
-      ids: this.ordinals,
-      timestamps: this.timestamps,
-      totalTime: this.totalTime,
-    } as Samples);
-
-    this.timelineOverview.setSamples(samples);
+    this.performUpdate();
   }
 
   columnHeader(columnId: string): Common.UIString.LocalizedString {
@@ -571,45 +573,13 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
       return;
     }
 
-    this.searchableViewInternal.closeSearch();
-
-    if (this.visibleView) {
-      this.visibleView.detach();
-    }
     this.viewType.set((this.viewSelectComboBox.selectedOption() as HTMLOptionElement).value as ViewTypes);
-    switch (this.viewType.get()) {
-      case ViewTypes.FLAME:
-        this.ensureFlameChartCreated();
-        this.visibleView = this.flameChart;
-        this.searchableElement = this.flameChart;
-        break;
-      case ViewTypes.TREE:
-        this.profileDataGridTree = this.getTopDownProfileDataGridTree();
-        this.sortProfile();
-        this.visibleView = this.dataGrid.asWidget();
-        this.searchableElement = this.profileDataGridTree;
-        break;
-      case ViewTypes.HEAVY:
-        this.profileDataGridTree = this.getBottomUpProfileDataGridTree();
-        this.sortProfile();
-        this.visibleView = this.dataGrid.asWidget();
-        this.searchableElement = this.profileDataGridTree;
-        break;
-    }
-
-    const isFlame = this.viewType.get() === ViewTypes.FLAME;
-    this.focusButton.setVisible(!isFlame);
-    this.excludeButton.setVisible(!isFlame);
-    this.resetButton.setVisible(!isFlame);
-
-    if (this.visibleView) {
-      this.visibleView.show(this.searchableViewInternal.element);
-    }
+    this.performUpdate();
   }
 
   nodeSelected(selected: boolean): void {
-    this.focusButton.setEnabled(selected);
-    this.excludeButton.setEnabled(selected);
+    this.#isNodeSelected = selected;
+    this.performUpdate();
   }
 
   focusClicked(): void {
@@ -617,7 +587,8 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
       return;
     }
 
-    this.resetButton.setEnabled(true);
+    this.#isResetEnabled = true;
+    this.performUpdate();
     (this.resetButton.element as HTMLElement).focus();
     if (this.profileDataGridTree) {
       this.profileDataGridTree.focus((this.dataGrid.selectedNode as ProfileDataGridNode));
@@ -634,7 +605,8 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
       return;
     }
 
-    this.resetButton.setEnabled(true);
+    this.#isResetEnabled = true;
+    this.performUpdate();
     (this.resetButton.element as HTMLElement).focus();
 
     selectedNode.deselect();
@@ -649,7 +621,8 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
 
   resetClicked(): void {
     this.viewSelectComboBox.element.focus();
-    this.resetButton.setEnabled(false);
+    this.#isResetEnabled = false;
+    this.performUpdate();
     if (this.profileDataGridTree) {
       this.profileDataGridTree.restore();
     }
@@ -668,6 +641,82 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     this.profileDataGridTree.sort(ProfileDataGridTree.propertyComparator(sortProperty, sortAscending), false);
 
     this.refresh();
+  }
+
+  override performUpdate(): void {
+    const currentViewType = this.viewType ? this.viewType.get() : null;
+    if (currentViewType && currentViewType !== this.#lastAppliedViewType) {
+      this.searchableViewInternal.closeSearch();
+
+      if (this.visibleView) {
+        this.visibleView.detach();
+      }
+
+      switch (currentViewType) {
+        case ViewTypes.FLAME:
+          this.ensureFlameChartCreated();
+          this.visibleView = this.flameChart;
+          this.searchableElement = this.flameChart;
+          break;
+        case ViewTypes.TREE:
+          this.profileDataGridTree = this.getTopDownProfileDataGridTree();
+          this.sortProfile();
+          this.visibleView = this.dataGrid.asWidget();
+          this.searchableElement = this.profileDataGridTree;
+          break;
+        case ViewTypes.HEAVY:
+          this.profileDataGridTree = this.getBottomUpProfileDataGridTree();
+          this.sortProfile();
+          this.visibleView = this.dataGrid.asWidget();
+          this.searchableElement = this.profileDataGridTree;
+          break;
+      }
+
+      if (this.visibleView) {
+        this.visibleView.show(this.searchableViewInternal.element);
+      }
+
+      this.#lastAppliedViewType = currentViewType;
+    }
+
+    const isFlame = currentViewType === ViewTypes.FLAME;
+    const isTreeOrHeavy = !isFlame;
+
+    this.focusButton?.setVisible(isTreeOrHeavy);
+    this.excludeButton?.setVisible(isTreeOrHeavy);
+    this.resetButton?.setVisible(isTreeOrHeavy);
+
+    this.focusButton?.setEnabled(this.#isNodeSelected);
+    this.excludeButton?.setEnabled(this.#isNodeSelected);
+
+    this.resetButton?.setEnabled(this.#isResetEnabled);
+
+    if (this.#selectedSize !== null) {
+      this.selectedSizeText?.setText(
+          i18nString(UIStrings.selectedSizeS, {PH1: i18n.ByteUtilities.bytesToString(this.#selectedSize)}));
+    }
+
+    if (this.#minId !== null && this.#maxId !== null) {
+      const rangeChanged = !this.#lastAppliedRange || this.#lastAppliedRange.minId !== this.#minId ||
+          this.#lastAppliedRange.maxId !== this.#maxId;
+
+      if (rangeChanged) {
+        this.setSelectionRange(this.#minId, this.#maxId);
+        this.#lastAppliedRange = {minId: this.#minId, maxId: this.#maxId};
+      }
+    }
+
+    if (this.sizes.length > 0) {
+      const samples = ({
+        sizes: this.sizes,
+        max: this.max,
+        ids: this.ordinals,
+        timestamps: this.timestamps,
+        totalTime: this.totalTime,
+      } as Samples);
+
+      this.timelineOverview.setSamples(samples);
+    }
   }
 }
 
