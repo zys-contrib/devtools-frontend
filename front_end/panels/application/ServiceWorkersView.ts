@@ -3,6 +3,9 @@
 // found in the LICENSE file.
 /* eslint-disable @devtools/no-imperative-dom-api */
 
+import '../../ui/components/report_view/report_view.js';
+import '../../ui/kit/kit.js';
+
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
@@ -10,7 +13,6 @@ import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 import * as NetworkForward from '../../panels/network/forward/forward.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
-import {Link} from '../../ui/kit/kit.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import {Directives, html, type LitTemplate, nothing, render} from '../../ui/lit/lit.js';
@@ -182,6 +184,7 @@ const str_ = i18n.i18n.registerUIStrings('panels/application/ServiceWorkersView.
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 const {until} = Directives;
 const {widget} = UI.Widget;
+const {bindToSetting} = UI.UIUtils;
 
 let throttleDisabledForDebugging = false;
 export const setThrottleDisabledForDebugging = (enable: boolean): void => {
@@ -191,7 +194,6 @@ export const setThrottleDisabledForDebugging = (enable: boolean): void => {
 export class ServiceWorkersView extends UI.Widget.VBox implements
     SDK.TargetManager.SDKModelObserver<SDK.ServiceWorkerManager.ServiceWorkerManager> {
   currentWorkersView: UI.ReportView.ReportView;
-  private readonly toolbar: UI.Toolbar.Toolbar;
   private readonly sections: Map<SDK.ServiceWorkerManager.ServiceWorkerRegistration, Section>;
   private manager: SDK.ServiceWorkerManager.ServiceWorkerManager|null;
   private securityOriginManager: SDK.SecurityOriginManager.SecurityOriginManager|null;
@@ -215,8 +217,6 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
     this.currentWorkersView.element.classList.add('service-workers-this-origin');
     this.currentWorkersView.element.setAttribute('jslog', `${VisualLogging.section('this-origin')}`);
 
-    this.toolbar = this.currentWorkersView.createToolbar();
-
     this.sections = new Map();
 
     this.manager = null;
@@ -233,34 +233,44 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
   }
 
   private createOthersOriginView(): void {
-    const othersDiv = this.contentElement.createChild('div', 'service-workers-other-origin');
-    othersDiv.setAttribute('jslog', `${VisualLogging.section('other-origin')}`);
-    // TODO(crbug.com/1156978): Replace UI.ReportView.ReportView with ReportView.ts web component.
-    const othersView = new UI.ReportView.ReportView();
-    othersView.setHeaderVisible(false);
-    othersView.show(othersDiv);
-    const othersSection = othersView.appendSection(i18nString(UIStrings.serviceWorkersFromOtherOrigins));
-    const othersSectionRow = othersSection.appendRow();
-    const seeOthers = Link.create('chrome://serviceworker-internals', i18nString(UIStrings.seeAllRegistrations),
-                                  undefined, 'view-all', 0, /* allowPrivileged=*/ true);
-    othersSectionRow.appendChild(seeOthers);
+    // clang-format off
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`<div class="service-workers-other-origin"
+                     jslog=${VisualLogging.section('other-origin')}>
+      <devtools-report>
+        <devtools-report-section-header>
+           ${i18nString(UIStrings.serviceWorkersFromOtherOrigins)}
+        </devtools-report-section-header>
+        <devtools-report-section>
+           <devtools-link href="chrome://serviceworker-internals"
+                          jslogcontext="view-all"
+                          .allowPrivileged=${true}>
+             ${i18nString(UIStrings.seeAllRegistrations)}
+           </devtools-link>
+        </devtools-report-section>
+      </devtools-report>
+    </div>`, this.contentElement);
+    // clang-format on
   }
-
   private setupToolbar(): void {
-    this.toolbar.appendToolbarItem(
-        MobileThrottling.ThrottlingManager.throttlingManager().createOfflineToolbarCheckbox());
     const updateOnReloadSetting =
         Common.Settings.Settings.instance().createSetting('service-worker-update-on-reload', false);
-    updateOnReloadSetting.setTitle(i18nString(UIStrings.updateOnReload));
-    const forceUpdate =
-        new UI.Toolbar.ToolbarSettingCheckbox(updateOnReloadSetting, i18nString(UIStrings.onPageReloadForceTheService));
-    this.toolbar.appendToolbarItem(forceUpdate);
     const bypassServiceWorkerSetting =
         Common.Settings.Settings.instance().createSetting('bypass-service-worker', false);
-    bypassServiceWorkerSetting.setTitle(i18nString(UIStrings.bypassForNetwork));
-    const fallbackToNetwork = new UI.Toolbar.ToolbarSettingCheckbox(
-        bypassServiceWorkerSetting, i18nString(UIStrings.bypassTheServiceWorkerAndLoad));
-    this.toolbar.appendToolbarItem(fallbackToNetwork);
+    // clang-format off
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`<devtools-toolbar class="service-worker-toolbar">
+      ${MobileThrottling.ThrottlingManager.throttlingManager().createOfflineToolbarCheckbox().element}
+      <devtools-checkbox title=${i18nString(UIStrings.onPageReloadForceTheService)}
+                         ${bindToSetting(updateOnReloadSetting)}>
+        ${i18nString(UIStrings.updateOnReload)}
+      </devtools-checkbox>
+      <devtools-checkbox title=${i18nString(UIStrings.bypassTheServiceWorkerAndLoad)}
+                         ${bindToSetting(bypassServiceWorkerSetting)}>
+        ${i18nString(UIStrings.bypassForNetwork)}
+       </devtools-checkbox>
+    </devtools-toolbar>`, this.currentWorkersView.getHeaderElement() as HTMLElement);
+    // clang-format on
   }
 
   modelAdded(serviceWorkerManager: SDK.ServiceWorkerManager.ServiceWorkerManager): void {
@@ -395,11 +405,10 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
   }
 
   private getReportViewForOrigin(origin: string): UI.ReportView.ReportView|null {
-    if (this.securityOriginManager) {
-      if (this.securityOriginManager.securityOrigins().includes(origin) ||
-          this.securityOriginManager.unreachableMainSecurityOrigin() === origin) {
-        return this.currentWorkersView;
-      }
+    if (this.securityOriginManager &&
+        (this.securityOriginManager.securityOrigins().includes(origin) ||
+         this.securityOriginManager.unreachableMainSecurityOrigin() === origin)) {
+      return this.currentWorkersView;
     }
     return null;
   }
