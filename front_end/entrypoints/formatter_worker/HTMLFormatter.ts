@@ -153,7 +153,15 @@ export class HTMLFormatter {
       this.#builder.addSoftSpace();
     }
 
+    // When adding tag brackets and tag names (<, </, /, div, >), disable word space enforcement so
+    // that FormattedContentBuilder does not insert unwanted spaces (e.g. splitting </title> into </ title>).
+    const restore = !isBodyToken && !hasTokenInSet(token.type, 'attribute') ?
+        this.#builder.setEnforceSpaceBetweenWords(false) :
+        false;
     this.#builder.addToken(token.value, token.startOffset);
+    if (!isBodyToken && !hasTokenInSet(token.type, 'attribute')) {
+      this.#builder.setEnforceSpaceBetweenWords(restore);
+    }
   }
 }
 
