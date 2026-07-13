@@ -54,6 +54,14 @@ principles.
     (verifying presenter interactions and state updates) and **screenshot
     tests** (verifying layout/styling) exist before rewriting code. If coverage
     is missing, scaffold it first.
+10. **Pre-flight Clarification**: Before starting, verify if the task is
+    underspecified or ambiguous. If so, point this out and ask for
+    clarifications before proceeding.
+11. **Step Sizing & Complexity Assessment**: Assess the complexity of each step
+    beforehand. Aim for intermediate steps that involve changing or adding
+    roughly 300 lines of code. If a step is predicted to be too complex, break
+    it down into smaller substeps. The agent must stop and report back after
+    each step or substep to allow verification.
 
 --------------------------------------------------------------------------------
 
@@ -62,7 +70,9 @@ principles.
 ### Plan Generation (Gated)
 
 *   **Actions**:
-    1.  Scan the target file to determine size, complexity, legacy elements
+    1.  Verify if the task is underspecified or ambiguous. If so, ask for
+        clarifications first.
+    2.  Scan the target file to determine size, complexity, legacy elements
         (e.g., `ReportView`, `ToolbarButton`, `DataGrid`, `TreeOutline`), and
         actual class inheritance. Deconstruct the file mentally (or in the plan)
         into **Business Logic** (state, event handlers) and **Rendering Logic**
@@ -72,9 +82,9 @@ principles.
         or not. If the file contains multiple classes, plan the migration
         separately for each class, starting with the leaves and going up the
         dependency chain.
-    2.  Check the files depending on this file, to understand how the code in
+    3.  Check the files depending on this file, to understand how the code in
         this file is being used.
-    3.  **Dynamic Ordering Decision**: Determine whether to run Logic
+    4.  **Dynamic Ordering Decision**: Determine whether to run Logic
         Consolidation first or Local lit-html rendering first:
         *   **Option A (Logic First)**: Choose this if the component has a
             complex, nested state model or highly coupled event-handlers.
@@ -86,9 +96,9 @@ principles.
             DOM construction. Converting the layout to declarative Lit templates
             first (using temporary inline or local state) makes it much easier
             to isolate and group the remaining state updates afterward.
-    4.  Generate a `migration_plan.md` reflecting this ordering and outlining
+    5.  Generate a `migration_plan.md` reflecting this ordering and outlining
         the target steps.
-    5.  Halt execution and print the formatted plan in Markdown to the chat.
+    6.  Halt execution and print the formatted plan in Markdown to the chat.
         Wait for user approval.
 
 ### Baseline & Safety Scaffolding
