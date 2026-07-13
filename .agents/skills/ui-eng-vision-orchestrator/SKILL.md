@@ -11,7 +11,8 @@ DevTools views into declarative `UI.Widget` components based on lit-html,
 managing a multi-pass sequential CL pipeline to ensure each code modification is
 small, testable, and highly reviewable.
 
-Refer to [ui_engineering.md](../../../docs/ui_engineering.md) for general principles.
+Refer to [ui_engineering.md](../../../docs/ui_engineering.md) for general
+principles.
 
 --------------------------------------------------------------------------------
 
@@ -28,9 +29,12 @@ Refer to [ui_engineering.md](../../../docs/ui_engineering.md) for general princi
     file matches older patterns or generic examples. Always perform a structure
     analysis of the active file first and adapt the plan to the actual, current
     code.
-4.  **Hybrid Files**: Files may contain multiple classes in different states of
-    modernization (e.g., one partially migrated class and one fully legacy
-    class). Propose modifications only for classes with actual violations.
+4.  **Hybrid Files/Multiple Classes**: Files may contain multiple classes in
+    different states of modernization (e.g., one partially migrated class and
+    one fully legacy class). If the file being migrated contains several
+    classes, the migration needs to be done separately for each class, starting
+    with the leaves and going up the dependency chain. Propose modifications
+    only for classes with actual violations.
 5.  **Coupling Analysis**: Always check the integration files (e.g., sidebar
     files, parent panel files) where the target class is instantiated to see if
     there are any direct `.element` or `.contentElement` couplings. If found,
@@ -43,12 +47,13 @@ Refer to [ui_engineering.md](../../../docs/ui_engineering.md) for general princi
     single responsibility per CL. Do not combine technology migrations (e.g.,
     converting imperative DOM to Lit-html) with base class refactoring in the
     same diff.
-8.  **Never Break Compilation**: Run a compiler build and execute the DevTools
-    test suite between every pass.
+8.  **Strict Intermediate Stability**: The code must compile and work correctly,
+    and all tests must pass after each step. We should not split the class API
+    update from its usage update.
 9.  **Establish Comprehensive Guardrails First**: Ensure both **logic tests**
-    (verifying presenter interactions and state updates) and **screenshot tests**
-    (verifying layout/styling) exist before rewriting code. If coverage is
-    missing, scaffold it first.
+    (verifying presenter interactions and state updates) and **screenshot
+    tests** (verifying layout/styling) exist before rewriting code. If coverage
+    is missing, scaffold it first.
 
 --------------------------------------------------------------------------------
 
@@ -63,11 +68,14 @@ Refer to [ui_engineering.md](../../../docs/ui_engineering.md) for general princi
         into **Business Logic** (state, event handlers) and **Rendering Logic**
         (DOM creation, CSS classes). Reference code elements by **Name** (not
         line numbers) to ensure the plan remains valid as the codebase evolves.
-        Check if the class dependencies have been migrated to the ui eng vision or not.
+        Check if the class dependencies have been migrated to the ui eng vision
+        or not. If the file contains multiple classes, plan the migration
+        separately for each class, starting with the leaves and going up the
+        dependency chain.
     2.  Check the files depending on this file, to understand how the code in
         this file is being used.
-    3.  **Dynamic Ordering Decision**: Determine whether to run
-        Logic Consolidation first or Local lit-html rendering first:
+    3.  **Dynamic Ordering Decision**: Determine whether to run Logic
+        Consolidation first or Local lit-html rendering first:
         *   **Option A (Logic First)**: Choose this if the component has a
             complex, nested state model or highly coupled event-handlers.
             Consolidating the state variables and defining the `ViewInput`
@@ -90,8 +98,9 @@ Refer to [ui_engineering.md](../../../docs/ui_engineering.md) for general princi
 *   **Subskill to Import**: `ui-eng-vision-test-scaffolder`
 *   **Actions**:
     1.  Verify existing test coverage. Propose and add missing **logic tests**
-        for interactions and **screenshot tests** for visual validation to avoid regressions.
-    2. Pay extra attention not to skip this step.
+        for interactions and **screenshot tests** for visual validation to avoid
+        regressions.
+    2.  Pay extra attention not to skip this step.
 
 ### Logic Consolidation
 
