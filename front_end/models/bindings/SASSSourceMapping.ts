@@ -55,7 +55,8 @@ export class SASSSourceMapping implements SourceMapping {
     for (const sourceURL of sourceMap.sourceURLs()) {
       let binding = bindings.get(sourceURL);
       if (!binding) {
-        binding = new Binding(project, sourceURL, header.createPageResourceLoadInitiator());
+        binding = new Binding(project, sourceURL, header.createPageResourceLoadInitiator(),
+                              header.cssModel().target().targetManager().getPageResourceLoader());
         bindings.set(sourceURL, binding);
       }
       binding.addSourceMap(sourceMap, header.frameId);
@@ -151,15 +152,17 @@ class Binding {
   readonly #project: ContentProviderBasedProject;
   readonly #url: Platform.DevToolsPath.UrlString;
   readonly #initiator: SDK.PageResourceLoader.PageResourceLoadInitiator;
+  readonly #pageResourceLoader: SDK.PageResourceLoader.PageResourceLoader;
   referringSourceMaps: SDK.SourceMap.SourceMap[];
   uiSourceCode: Workspace.UISourceCode.UISourceCode|null;
 
-  constructor(
-      project: ContentProviderBasedProject, url: Platform.DevToolsPath.UrlString,
-      initiator: SDK.PageResourceLoader.PageResourceLoadInitiator) {
+  constructor(project: ContentProviderBasedProject, url: Platform.DevToolsPath.UrlString,
+              initiator: SDK.PageResourceLoader.PageResourceLoadInitiator,
+              pageResourceLoader: SDK.PageResourceLoader.PageResourceLoader) {
     this.#project = project;
     this.#url = url;
     this.#initiator = initiator;
+    this.#pageResourceLoader = pageResourceLoader;
 
     this.referringSourceMaps = [];
     this.uiSourceCode = null;
@@ -173,7 +176,7 @@ class Binding {
     const contentProvider = embeddedContent !== null ?
         TextUtils.StaticContentProvider.StaticContentProvider.fromString(this.#url, contentType, embeddedContent) :
         new SDK.CompilerSourceMappingContentProvider.CompilerSourceMappingContentProvider(
-            this.#url, contentType, this.#initiator);
+            this.#url, contentType, this.#initiator, this.#pageResourceLoader);
     const newUISourceCode = this.#project.createUISourceCode(this.#url, contentType);
     uiSourceCodeToBinding.set(newUISourceCode, this);
     const mimeType = Common.ResourceType.ResourceType.mimeFromURL(this.#url) || contentType.canonicalMimeType();

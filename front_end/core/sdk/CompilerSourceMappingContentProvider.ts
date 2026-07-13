@@ -7,7 +7,7 @@ import type * as Common from '../common/common.js';
 import * as i18n from '../i18n/i18n.js';
 import type * as Platform from '../platform/platform.js';
 
-import {PageResourceLoader, type PageResourceLoadInitiator} from './PageResourceLoader.js';
+import type {PageResourceLoader, PageResourceLoadInitiator} from './PageResourceLoader.js';
 
 const UIStrings = {
   /**
@@ -28,10 +28,7 @@ export class CompilerSourceMappingContentProvider implements TextUtils.ContentPr
   readonly #pageResourceLoader: PageResourceLoader;
 
   constructor(sourceURL: Platform.DevToolsPath.UrlString, contentType: Common.ResourceType.ResourceType,
-              initiator: PageResourceLoadInitiator,
-              pageResourceLoader: PageResourceLoader = initiator.target ?
-                  initiator.target.targetManager().context.get(PageResourceLoader) :
-                  PageResourceLoader.instance()) {
+              initiator: PageResourceLoadInitiator, pageResourceLoader: PageResourceLoader) {
     this.#sourceURL = sourceURL;
     this.#contentType = contentType;
     this.#initiator = initiator;

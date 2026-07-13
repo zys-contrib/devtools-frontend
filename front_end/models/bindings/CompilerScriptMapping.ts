@@ -480,7 +480,8 @@ export class CompilerScriptMapping implements DebuggerSourceMapping {
       const contentProvider = content !== null ?
           TextUtils.StaticContentProvider.StaticContentProvider.fromString(url, contentType, content) :
           new SDK.CompilerSourceMappingContentProvider.CompilerSourceMappingContentProvider(
-              url, contentType, script.createPageResourceLoadInitiator());
+              url, contentType, script.createPageResourceLoadInitiator(),
+              target.targetManager().getPageResourceLoader());
       let metadata: Workspace.UISourceCode.UISourceCodeMetadata|null = null;
       if (content !== null) {
         const encoder = new TextEncoder();

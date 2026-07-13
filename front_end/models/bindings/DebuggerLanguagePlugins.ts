@@ -1126,7 +1126,8 @@ class ModelData {
         this.uiSourceCodeToScripts.set(uiSourceCode, [script]);
 
         const contentProvider = new SDK.CompilerSourceMappingContentProvider.CompilerSourceMappingContentProvider(
-            url, Common.ResourceType.resourceTypes.SourceMapScript, initiator);
+            url, Common.ResourceType.resourceTypes.SourceMapScript, initiator,
+            script.target().targetManager().getPageResourceLoader());
         const mimeType = Common.ResourceType.ResourceType.mimeFromURL(url) || 'text/javascript';
         this.project.addUISourceCodeWithProvider(uiSourceCode, contentProvider, null, mimeType);
       } else {
