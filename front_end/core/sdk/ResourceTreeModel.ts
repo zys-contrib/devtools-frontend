@@ -18,7 +18,7 @@ import {SDKModel} from './SDKModel.js';
 import {SecurityOriginManager} from './SecurityOriginManager.js';
 import {StorageKeyManager} from './StorageKeyManager.js';
 import {Capability, type Target, Type} from './Target.js';
-import {TargetManager} from './TargetManager.js';
+import type {TargetManager} from './TargetManager.js';
 
 export class ResourceTreeModel extends SDKModel<EventTypes> {
   readonly agent: ProtocolProxyApi.PageApi;
@@ -82,26 +82,11 @@ export class ResourceTreeModel extends SDKModel<EventTypes> {
     return result;
   }
 
-  static resourceForURL(url: Platform.DevToolsPath.UrlString): Resource|null;
-  static resourceForURL(targetManager: TargetManager, url: Platform.DevToolsPath.UrlString): Resource|null;
-  static resourceForURL(targetManagerOrUrl: TargetManager|Platform.DevToolsPath.UrlString,
-                        url?: Platform.DevToolsPath.UrlString): Resource|null {
-    let targetManager: TargetManager;
-    let actualUrl: Platform.DevToolsPath.UrlString;
-    if (typeof targetManagerOrUrl === 'string') {
-      targetManager = TargetManager.instance();
-      actualUrl = targetManagerOrUrl;
-    } else {
-      targetManager = targetManagerOrUrl;
-      if (url === undefined) {
-        throw new Error('URL must be provided when TargetManager is passed');
-      }
-      actualUrl = url;
-    }
+  static resourceForURL(targetManager: TargetManager, url: Platform.DevToolsPath.UrlString): Resource|null {
     for (const resourceTreeModel of targetManager.models(ResourceTreeModel)) {
       const mainFrame = resourceTreeModel.mainFrame;
       // Workers call into this with no #frames available.
-      const result = mainFrame ? mainFrame.resourceForURL(actualUrl) : null;
+      const result = mainFrame ? mainFrame.resourceForURL(url) : null;
       if (result) {
         return result;
       }

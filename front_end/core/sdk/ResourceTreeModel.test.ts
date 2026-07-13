@@ -136,7 +136,7 @@ describeWithEnvironment('ResourceTreeModel', () => {
         reload.args[0], [{ignoreCache: undefined, loaderId: LOADER_ID, scriptToEvaluateOnLoad: undefined}]);
   });
 
-  it('resourceForURL can find resource with or without TargetManager', async () => {
+  it('resourceForURL can find resource', async () => {
     const target = universe.createTarget({connection});
     await getInitializedResourceTreeModel(target);
     const mainFrame = getMainFrame(target);
@@ -146,15 +146,8 @@ describeWithEnvironment('ResourceTreeModel', () => {
     const resource = createResource(mainFrame, url, mimeType, content);
 
     // Test with TargetManager
-    const foundResourceWithTM = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(universe.targetManager, url);
-    assert.strictEqual(foundResourceWithTM, resource);
-
-    // Test without TargetManager (using overload)
-    const targetManagerInstanceStub =
-        sinon.stub(SDK.TargetManager.TargetManager, 'instance').returns(universe.targetManager);
-    const foundResourceWithoutTM = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(url);
-    assert.strictEqual(foundResourceWithoutTM, resource);
-    targetManagerInstanceStub.restore();
+    const foundResource = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(universe.targetManager, url);
+    assert.strictEqual(foundResource, resource);
   });
 
   it('identifies not top frame', async () => {
