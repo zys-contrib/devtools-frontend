@@ -12,6 +12,7 @@ import * as Bindings from '../../models/bindings/bindings.js';
 import * as Trace from '../../models/trace/trace.js';
 import * as SourceMapsResolver from '../../models/trace_source_maps_resolver/trace_source_maps_resolver.js';
 import * as Workspace from '../../models/workspace/workspace.js';
+import * as Tracing from '../../services/tracing/tracing.js';
 import {
   dispatchClickEvent,
   doubleRaf,
@@ -194,6 +195,40 @@ describeWithEnvironment('TimelineUIUtils', function() {
        });
   });
 
+  describe('stripScriptIds', () => {
+    it('strips scriptIds from stack trace call frames and its parents recursively', () => {
+      const stackTrace: Protocol.Runtime.StackTrace = {
+        callFrames: [
+          {
+            functionName: 'foo',
+            scriptId: '1' as Protocol.Runtime.ScriptId,
+            url: 'http://example.com/foo.js',
+            lineNumber: 10,
+            columnNumber: 20,
+          },
+        ],
+        parent: {
+          callFrames: [
+            {
+              functionName: 'bar',
+              scriptId: '2' as Protocol.Runtime.ScriptId,
+              url: 'http://example.com/bar.js',
+              lineNumber: 30,
+              columnNumber: 40,
+            },
+          ],
+        },
+      };
+
+      const stripped = Timeline.TimelineUIUtils.stripScriptIds(stackTrace);
+      assert.strictEqual(stripped.callFrames[0].scriptId, '');
+      assert.strictEqual(stripped.parent?.callFrames[0].scriptId, '');
+      // Ensure original is not mutated
+      assert.strictEqual(stackTrace.callFrames[0].scriptId, '1');
+      assert.strictEqual(stackTrace.parent?.callFrames[0].scriptId, '2');
+    });
+  });
+
   describe('mapping to authored script when recording is fresh', function() {
     beforeEach(async () => {
       // Register mock script and source map.
@@ -218,9 +253,9 @@ describeWithEnvironment('TimelineUIUtils', function() {
         return;
       }
       const sourceMapManager = debuggerModel.sourceMapManager();
-      const script = debuggerModel.parsedScriptSource(
-          SCRIPT_ID_STRING, scriptUrl, 0, 0, 0, 0, 0, '', undefined, false, sourceMapUrl, true, false, length, false,
-          null, null, null, null, null, null);
+      const script = debuggerModel.parsedScriptSource(SCRIPT_ID_STRING, scriptUrl, 0, 0, 0, 0, 0, '', undefined, false,
+                                                      sourceMapUrl, true, false, length, false, null, null, null, null,
+                                                      null, null);
       await sourceMapManager.sourceMapForClientPromise(script);
     });
     it('maps to the authored script when a call frame is provided', async function() {
@@ -430,8 +465,8 @@ describeWithEnvironment('TimelineUIUtils', function() {
       if (!performConcurrentWorkEvent) {
         throw new Error('Could not find expected event');
       }
-      assert.isTrue(Timeline.TimelineUIUtils.TimelineUIUtils.testContentMatching(
-          performConcurrentWorkEvent, /perfo/, parsedTrace.data));
+      assert.isTrue(Timeline.TimelineUIUtils.TimelineUIUtils.testContentMatching(performConcurrentWorkEvent, /perfo/,
+                                                                                 parsedTrace.data));
     });
   });
 
@@ -1203,8 +1238,8 @@ describeWithEnvironment('TimelineUIUtils', function() {
       assert.strictEqual(link?.innerText, 'Fire postTask');
       dispatchClickEvent(link);
 
-      sinon.assert.calledOnceWithExactly(
-          timelinePanel.select, Timeline.TimelineSelection.selectionFromEvent(postTaskEvent));
+      sinon.assert.calledOnceWithExactly(timelinePanel.select,
+                                         Timeline.TimelineSelection.selectionFromEvent(postTaskEvent));
     });
 
     it('lets the user click the title of an event to zoom into it', async function() {
@@ -1343,9 +1378,8 @@ describeWithEnvironment('TimelineUIUtils', function() {
     const img = container.querySelector<HTMLImageElement>('.timeline-filmstrip-preview img');
     assert.isOk(img);
     const filmStripFrame = filmStrip.frames[0];
-    assert.isTrue(
-        Trace.Types.Events.isLegacySyntheticScreenshot(filmStripFrame.screenshotEvent) &&
-        img.currentSrc.includes(filmStripFrame.screenshotEvent.args.dataUri));
+    assert.isTrue(Trace.Types.Events.isLegacySyntheticScreenshot(filmStripFrame.screenshotEvent) &&
+                  img.currentSrc.includes(filmStripFrame.screenshotEvent.args.dataUri));
 
     const durationRow = container.querySelector<HTMLElement>('[data-row-title="Duration"]');
     const durationValue = durationRow?.querySelector<HTMLSpanElement>('.timeline-details-view-row-value span');
@@ -1375,10 +1409,9 @@ describeWithEnvironment('TimelineUIUtils', function() {
     const img = container.querySelector<HTMLImageElement>('.timeline-filmstrip-preview img');
     assert.isOk(img);
     const filmStripFrame = filmStrip.frames[0];
-    assert.isTrue(
-        Trace.Types.Events.isScreenshot(filmStripFrame.screenshotEvent) &&
-        img.currentSrc.includes(
-            Trace.Handlers.ModelHandlers.Screenshots.screenshotImageDataUri(filmStripFrame.screenshotEvent)));
+    assert.isTrue(Trace.Types.Events.isScreenshot(filmStripFrame.screenshotEvent) &&
+                  img.currentSrc.includes(
+                      Trace.Handlers.ModelHandlers.Screenshots.screenshotImageDataUri(filmStripFrame.screenshotEvent)));
 
     const durationRow = container.querySelector<HTMLElement>('[data-row-title="Duration"]');
     const durationValue = durationRow?.querySelector<HTMLSpanElement>('.timeline-details-view-row-value span');
@@ -1556,8 +1589,8 @@ describeWithEnvironment('TimelineUIUtils', function() {
   describe('buildDetailsNodeForMarkerEvents', () => {
     it('builds the right link for an LCP Event', async function() {
       const parsedTrace = await TraceLoader.traceEngine(this, 'web-dev.json.gz');
-      const markLCPEvent = getEventOfType(
-          parsedTrace.data.PageLoadMetrics.allMarkerEvents, Trace.Types.Events.isAnyLargestContentfulPaintCandidate);
+      const markLCPEvent = getEventOfType(parsedTrace.data.PageLoadMetrics.allMarkerEvents,
+                                          Trace.Types.Events.isAnyLargestContentfulPaintCandidate);
       const html = Timeline.TimelineUIUtils.TimelineUIUtils.buildDetailsNodeForMarkerEvents(
           markLCPEvent,
       );
@@ -1745,6 +1778,7 @@ describeWithEnvironment('TimelineUIUtils - mapping to authored function name whe
       Workers: workersData,
       Renderer: makeMockRendererHandlerData([profileCall]),
     });
+    Tracing.FreshRecording.Tracker.instance().registerFreshRecording(parsedTrace);
 
     const resolver = new SourceMapsResolver.SourceMapsResolver(parsedTrace);
     await resolver.install();
@@ -1795,6 +1829,7 @@ describeWithEnvironment('TimelineUIUtils - mapping to authored function name whe
       Workers: workersData,
       Renderer: makeMockRendererHandlerData([functionCall]),
     });
+    Tracing.FreshRecording.Tracker.instance().registerFreshRecording(parsedTrace);
 
     const resolver = new SourceMapsResolver.SourceMapsResolver(parsedTrace);
     await resolver.install();
@@ -1808,6 +1843,40 @@ describeWithEnvironment('TimelineUIUtils - mapping to authored function name whe
     );
     const detailsData = getRowDataForDetailsElement(details).find(row => row.title?.startsWith('Function'));
     assert.exists(detailsData);
-    assert.deepEqual(detailsData, {title: 'Function', value: 'someFunction @ gen.js:1:52'});
+    assert.deepEqual(detailsData, {title: 'Function', value: 'someFunction @ main.js:6:10'});
+  });
+
+  it('does not map to the authored name and script of a profile call when recording is not fresh', async function() {
+    const {script} = await loadBasicSourceMapExample(target);
+    const columnNumber = 51;
+    const profileCall =
+        makeProfileCall('function', 10, 100, Trace.Types.Events.ProcessID(1), Trace.Types.Events.ThreadID(1));
+
+    profileCall.callFrame = {
+      columnNumber,
+      functionName: 'minified',
+      lineNumber: 0,
+      scriptId: script.scriptId,
+      url: 'file://gen.js',
+    };
+    const workersData: Trace.Handlers.ModelHandlers.Workers.WorkersData = {
+      workerSessionIdEvents: [],
+      workerIdByThread: new Map(),
+      workerURLById: new Map(),
+    };
+    const parsedTrace = getBaseTraceHandlerData({
+      Samples: makeMockSamplesHandlerData([profileCall]),
+      Workers: workersData,
+      Renderer: makeMockRendererHandlerData([profileCall]),
+    });
+    // Important: we do not register this trace as a fresh recording.
+    const resolver = new SourceMapsResolver.SourceMapsResolver(parsedTrace);
+    await resolver.install();
+
+    const details = await Timeline.TimelineUIUtils.TimelineUIUtils.buildTraceEventDetails(
+        parsedTrace, profileCall, new Components.Linkifier.Linkifier(), false, null);
+    const stackTraceData = getStackTraceForDetailsElement(details);
+    assert.exists(stackTraceData);
+    assert.strictEqual(stackTraceData[0], 'minified @ gen.js:1:52');
   });
 });
