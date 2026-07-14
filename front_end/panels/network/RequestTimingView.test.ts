@@ -11,9 +11,15 @@ import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as Logs from '../../models/logs/logs.js';
 import * as NetworkTimeCalculator from '../../models/network_time_calculator/network_time_calculator.js';
-import {assertScreenshot, getCleanTextContentFromElements, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
-import {stubNoopSettings} from '../../testing/EnvironmentHelpers.js';
+import {
+  assertScreenshot,
+  getCleanTextContentFromElements,
+  raf,
+  renderElementIntoDOM
+} from '../../testing/DOMHelpers.js';
 import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
+import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
+import {setupSettingsHooks} from '../../testing/SettingsHelpers.js';
 import {createViewFunctionStub} from '../../testing/ViewFunctionHelpers.js';
 import * as ObjectUI from '../../ui/legacy/components/object_ui/object_ui.js';
 import * as UI from '../../ui/legacy/legacy.js';
@@ -69,6 +75,8 @@ function createNetworkRequest(
 
 describe('ResourceTimingView', () => {
   setupLocaleHooks();
+  setupSettingsHooks();
+  setupRuntimeHooks();
   it('RequestTimeRanges has router evaluation field with SW router source as network', async () => {
     const request = createNetworkRequest(
         Protocol.Network.ServiceWorkerRouterSource.Network, Protocol.Network.ServiceWorkerRouterSource.Network);
@@ -150,7 +158,6 @@ describe('ResourceTimingView', () => {
   });
 
   it('Timing table has router evaluation field with detail tabs', async () => {
-    stubNoopSettings();
     const request = createNetworkRequest(
         Protocol.Network.ServiceWorkerRouterSource.Network, Protocol.Network.ServiceWorkerRouterSource.Network);
 
@@ -185,7 +192,6 @@ describe('ResourceTimingView', () => {
   });
 
   it('Timing table shows throttling indicator', async () => {
-    stubNoopSettings();
     const container = document.createElement('div');
     renderElementIntoDOM(container, {includeCommonStyles: true});
 
@@ -195,15 +201,12 @@ describe('ResourceTimingView', () => {
 
     const wasThrottled = new SDK.NetworkManager.AppliedNetworkConditions(SDK.NetworkManager.Slow3GConditions, '');
     const input: Parameters<typeof Network.RequestTimingView.DEFAULT_VIEW>[0] = {
-      requestUnfinished: false,
-      requestStartTime: 0,
-      requestIssueTime: 0,
+      request,
       totalDuration: 100,
       startTime: 0,
       endTime: 100,
       timeRanges,
       calculator: new NetworkTimeCalculator.NetworkTimeCalculator(true),
-      serverTimings: [],
       wasThrottled
     };
 
@@ -218,7 +221,6 @@ describe('ResourceTimingView', () => {
   });
 
   it('correctly passes requestUnfinished to the view', async () => {
-    stubNoopSettings();
     const request = createNetworkRequest(
         Protocol.Network.ServiceWorkerRouterSource.Network, Protocol.Network.ServiceWorkerRouterSource.Network);
     request.finished = false;
@@ -232,7 +234,7 @@ describe('ResourceTimingView', () => {
     component.calculator = calculator;
 
     const input = await viewStub.nextInput;
-    assert.isTrue(input.requestUnfinished, 'requestUnfinished should be true when request is not finished');
+    assert.isFalse(input.request.finished, 'request.finished should be false when request is not finished');
 
     const requestFinished = createNetworkRequest(
         Protocol.Network.ServiceWorkerRouterSource.Network, Protocol.Network.ServiceWorkerRouterSource.Network);
@@ -241,11 +243,10 @@ describe('ResourceTimingView', () => {
     component.request = requestFinished;
 
     const inputFinished = await viewStub.nextInput;
-    assert.isFalse(inputFinished.requestUnfinished, 'requestUnfinished should be false when request is finished');
+    assert.isTrue(inputFinished.request.finished, 'request.finished should be true when request is finished');
   });
 
-  it('shows caution message in DEFAULT_VIEW if and only if requestUnfinished is true', async () => {
-    stubNoopSettings();
+  it('shows caution message in DEFAULT_VIEW if and only if request is not finished yet', async () => {
     const container = document.createElement('div');
     renderElementIntoDOM(container);
 
@@ -255,31 +256,31 @@ describe('ResourceTimingView', () => {
     const calculator = new NetworkTimeCalculator.NetworkTimeCalculator(true);
 
     const baseInput: Parameters<typeof Network.RequestTimingView.DEFAULT_VIEW>[0] = {
-      requestUnfinished: false,
-      requestStartTime: 0,
-      requestIssueTime: 0,
+      request,
       totalDuration: 100,
       startTime: 0,
       endTime: 100,
       timeRanges,
       calculator,
-      serverTimings: [],
     };
 
-    // Case 1: requestUnfinished = true
-    Network.RequestTimingView.DEFAULT_VIEW({...baseInput, requestUnfinished: true}, {}, container);
+    // Case 1: request.finished = false
+    request.finished = false;
+    Network.RequestTimingView.DEFAULT_VIEW(baseInput, {}, container);
     const cautionElementTrue = container.querySelector('.caution');
-    assert.isNotNull(cautionElementTrue, 'caution element should exist when requestUnfinished is true');
+    assert.isNotNull(cautionElementTrue, 'caution element should exist when request is not finished');
     assert.include(cautionElementTrue?.textContent, 'CAUTION: request is not finished yet!');
 
-    // Case 2: requestUnfinished = false
-    Network.RequestTimingView.DEFAULT_VIEW({...baseInput, requestUnfinished: false}, {}, container);
+    // Case 2: request.finished = true
+    const requestFinished = createNetworkRequest(Protocol.Network.ServiceWorkerRouterSource.Network,
+                                                 Protocol.Network.ServiceWorkerRouterSource.Network);
+    requestFinished.finished = true;
+    Network.RequestTimingView.DEFAULT_VIEW({...baseInput, request: requestFinished}, {}, container);
     const cautionElementFalse = container.querySelector('.caution');
-    assert.isNull(cautionElementFalse, 'caution element should not exist when requestUnfinished is false');
+    assert.isNull(cautionElementFalse, 'caution element should not exist when request is finished');
   });
 
   it('renders read-only object properties for Service Worker fetch details', async () => {
-    stubNoopSettings();
     const request = createNetworkRequest(
         Protocol.Network.ServiceWorkerRouterSource.Network, Protocol.Network.ServiceWorkerRouterSource.Network);
     request.fetchedViaServiceWorker = true;
@@ -308,6 +309,9 @@ describe('ResourceTimingView', () => {
     sinon.stub(Logs.NetworkLog.NetworkLog.instance(), 'originalRequestForURL').returns(origRequest);
     sinon.stub(Logs.NetworkLog.NetworkLog.instance(), 'originalResponseForURL').returns(response);
 
+    const populateSpy =
+        sinon.spy(ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement, 'populateChildrenIfNeeded');
+
     const component = Network.RequestTimingView.RequestTimingView.create(
         request, new NetworkTimeCalculator.NetworkTimeCalculator(true));
     const div = document.createElement('div');
@@ -316,6 +320,9 @@ describe('ResourceTimingView', () => {
     component.show(div);
 
     await component.updateComplete;
+    await Promise.all(populateSpy.returnValues);
+    await raf();
+    await UI.Widget.Widget.allUpdatesComplete;
 
     const detailsTreeElement = component.contentElement.querySelector('.network-fetch-timing-bar-details > *');
     assert.exists(detailsTreeElement);
@@ -327,7 +334,6 @@ describe('ResourceTimingView', () => {
     for (const rootElementNode of rootElements) {
       const rootElement = UI.TreeOutline.TreeElement.getTreeElementBylistItemNode(rootElementNode);
       assert.exists(rootElement);
-      await rootElement.onpopulate();
       const firstProperty = rootElement.childAt(0);
       assert.instanceOf(firstProperty, ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement);
       assert.isFalse(firstProperty.editable);
