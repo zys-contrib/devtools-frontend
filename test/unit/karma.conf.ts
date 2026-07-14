@@ -22,6 +22,7 @@ const COVERAGE_OUTPUT_DIRECTORY = 'karma-coverage';
 const tests = [
   ...loadTests(path.join(GEN_DIR, 'front_end')),
   ...loadTests(path.join(GEN_DIR, 'inspector_overlay')),
+  ...loadTests(path.join(GEN_DIR, 'test', 'harness', 'unit')),
 ];
 
 function* reporters() {

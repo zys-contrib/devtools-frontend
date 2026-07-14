@@ -18,6 +18,7 @@ module.exports = {
        [
          ...loadTests(path.join(GEN_DIR, 'front_end'), 'foundation_tests.txt'),
          ...loadTests(path.join(GEN_DIR, 'mcp'), 'foundation_tests.txt'),
+         ...loadTests(path.join(GEN_DIR, 'test', 'harness', 'unit'), 'foundation_tests.txt'),
        ],
   timeout : TestConfig.debug ? 0 : 10_000,
   reporter : path.join(
