@@ -2,20 +2,20 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import '../../../ui/kit/kit.js';
+import '../../ui/kit/kit.js';
 
-import * as i18n from '../../../core/i18n/i18n.js';
-import * as Badges from '../../../models/badges/badges.js';
-import * as Buttons from '../../../ui/components/buttons/buttons.js';
-import * as Input from '../../../ui/components/input/input.js';
-import * as UI from '../../../ui/legacy/legacy.js';
-import * as Lit from '../../../ui/lit/lit.js';
-import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
-import * as Models from '../models/models.js';
-import * as Actions from '../recorder-actions/recorder-actions.js';
+import * as i18n from '../../core/i18n/i18n.js';
+import * as Badges from '../../models/badges/badges.js';
+import * as Buttons from '../../ui/components/buttons/buttons.js';
+import * as Input from '../../ui/components/input/input.js';
+import * as UI from '../../ui/legacy/legacy.js';
+import * as Lit from '../../ui/lit/lit.js';
+import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import {ControlButton} from './ControlButton.js';
 import createRecordingViewStyles from './createRecordingView.css.js';
+import * as Models from './models/models.js';
+import * as Actions from './recorder-actions/recorder-actions.js';
 
 const {html, Directives: {ref, createRef, repeat}} = Lit;
 
@@ -97,7 +97,7 @@ const UIStrings = {
   learnMore: 'Learn more',
 } as const;
 const str_ = i18n.i18n.registerUIStrings(
-    'panels/recorder/components/CreateRecordingView.ts',
+    'panels/recorder/CreateRecordingView.ts',
     UIStrings,
 );
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -301,9 +301,11 @@ export class CreateRecordingView extends UI.Widget.Widget {
   #output: ViewOutput = {};
   #recorderSettings?: Models.RecorderSettings.RecorderSettings;
 
-  onRecordingStarted:
-      (data: {name: string, selectorTypesToRecord: Models.Schema.SelectorType[], selectorAttribute?: string}) => void =
-          () => {};
+  onRecordingStarted: (data: {
+    name: string,
+    selectorTypesToRecord: Models.Schema.SelectorType[],
+    selectorAttribute?: string,
+  }) => void = () => {};
   onRecordingCancelled = (): void => {};
 
   set recorderSettings(value: Models.RecorderSettings.RecorderSettings) {
@@ -373,39 +375,38 @@ export class CreateRecordingView extends UI.Widget.Widget {
   }
 
   override performUpdate(): void {
-    this.#view(
-        {
-          name: this.#name,
-          selectorAttribute: this.#selectorAttribute,
-          selectorTypes: this.#selectorTypes,
-          error: this.#error,
-          onRecordingCancelled: this.onRecordingCancelled,
-          onUpdate: update => {
-            if ('name' in update) {
-              this.#name = update.name;
-            } else if ('selectorAttribute' in update) {
-              this.#selectorAttribute = update.selectorAttribute;
-            } else {
-              this.#selectorTypes = this.#selectorTypes.map(item => {
-                if (item.selectorType === update.selectorType) {
-                  return {
-                    ...item,
-                    checked: update.checked,
-                  };
-                }
-                return item;
-              });
+    this.#view({
+      name: this.#name,
+      selectorAttribute: this.#selectorAttribute,
+      selectorTypes: this.#selectorTypes,
+      error: this.#error,
+      onRecordingCancelled: this.onRecordingCancelled,
+      onUpdate: update => {
+        if ('name' in update) {
+          this.#name = update.name;
+        } else if ('selectorAttribute' in update) {
+          this.#selectorAttribute = update.selectorAttribute;
+        } else {
+          this.#selectorTypes = this.#selectorTypes.map(item => {
+            if (item.selectorType === update.selectorType) {
+              return {
+                ...item,
+                checked: update.checked,
+              };
             }
-            this.requestUpdate();
-          },
-          onRecordingStarted: (): void => {
-            this.startRecording();
-          },
-          onErrorReset: () => {
-            this.#error = undefined;
-            this.requestUpdate();
-          },
-        },
-        this.#output, this.contentElement);
+            return item;
+          });
+        }
+        this.requestUpdate();
+      },
+      onRecordingStarted: (): void => {
+        this.startRecording();
+      },
+      onErrorReset: () => {
+        this.#error = undefined;
+        this.requestUpdate();
+      },
+    },
+               this.#output, this.contentElement);
   }
 }

@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import './components.js';
-
 import {assert} from 'chai';
 
 import {
@@ -11,16 +9,16 @@ import {
   dispatchKeyDownEvent,
   getEventPromise,
   renderElementIntoDOM,
-} from '../../../testing/DOMHelpers.js';
-import {setupLocaleHooks} from '../../../testing/LocaleHelpers.js';
-import type * as SuggestionInput from '../../../ui/components/suggestion_input/suggestion_input.js';
-import * as Models from '../models/models.js';
-import {installMocksForRecordingPlayer} from '../testing/RecorderHelpers.js';
+} from '../../testing/DOMHelpers.js';
+import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
+import type * as SuggestionInput from '../../ui/components/suggestion_input/suggestion_input.js';
 
-import * as Components from './components.js';
+import * as Models from './models/models.js';
+import {StepEditor} from './recorder.js';
+import {installMocksForRecordingPlayer} from './testing/RecorderHelpers.js';
 
-function getStepEditedPromise(editor: Components.StepEditor.StepEditor) {
-  return getEventPromise<Components.StepEditor.StepEditedEvent>(
+function getStepEditedPromise(editor: StepEditor.StepEditor) {
+  return getEventPromise<StepEditor.StepEditedEvent>(
              editor.element,
              'stepedited',
              )
@@ -38,8 +36,8 @@ describe('StepEditor', () => {
   setupLocaleHooks();
   async function renderEditor(
       step: Models.Schema.Step,
-      ): Promise<Components.StepEditor.StepEditor> {
-    const editor = new Components.StepEditor.StepEditor();
+      ): Promise<StepEditor.StepEditor> {
+    const editor = new StepEditor.StepEditor();
     editor.step = structuredClone(step) as typeof editor.step;
     renderElementIntoDOM(editor, {});
     await triggerMicroTaskQueue();
@@ -48,7 +46,7 @@ describe('StepEditor', () => {
   }
 
   function getInputByAttribute(
-      editor: Components.StepEditor.StepEditor,
+      editor: StepEditor.StepEditor,
       attribute: string,
       ): SuggestionInput.SuggestionInput.SuggestionInput {
     const input = editor.contentElement.querySelector(
@@ -61,7 +59,7 @@ describe('StepEditor', () => {
   }
 
   function getAllInputValues(
-      editor: Components.StepEditor.StepEditor,
+      editor: StepEditor.StepEditor,
       ): string[] {
     const result = [];
     const inputs = editor.contentElement.querySelectorAll(
@@ -74,7 +72,7 @@ describe('StepEditor', () => {
   }
 
   async function addOptionalField(
-      editor: Components.StepEditor.StepEditor,
+      editor: StepEditor.StepEditor,
       attribute: string,
       ): Promise<void> {
     const button = editor.contentElement.querySelector(
@@ -87,7 +85,7 @@ describe('StepEditor', () => {
   }
 
   async function deleteOptionalField(
-      editor: Components.StepEditor.StepEditor,
+      editor: StepEditor.StepEditor,
       attribute: string,
       ): Promise<void> {
     const button = editor.contentElement.querySelector(
@@ -100,7 +98,7 @@ describe('StepEditor', () => {
   }
 
   async function clickFrameLevelButton(
-      editor: Components.StepEditor.StepEditor,
+      editor: StepEditor.StepEditor,
       className: string,
       ): Promise<void> {
     const button = editor.contentElement.querySelector(
@@ -112,7 +110,7 @@ describe('StepEditor', () => {
   }
 
   async function clickSelectorLevelButton(
-      editor: Components.StepEditor.StepEditor,
+      editor: StepEditor.StepEditor,
       path: number[],
       className: string,
       ): Promise<void> {

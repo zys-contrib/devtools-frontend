@@ -2,17 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as i18n from '../../../core/i18n/i18n.js';
-import * as Platform from '../../../core/platform/platform.js';
-import type * as Puppeteer from '../../../third_party/puppeteer/puppeteer.js';
-import * as Buttons from '../../../ui/components/buttons/buttons.js';
-import * as SuggestionInput from '../../../ui/components/suggestion_input/suggestion_input.js';
-import * as UI from '../../../ui/legacy/legacy.js';
-import * as Lit from '../../../ui/lit/lit.js';
-import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
-import * as Models from '../models/models.js';
-import * as Util from '../util/util.js';
+import * as i18n from '../../core/i18n/i18n.js';
+import * as Platform from '../../core/platform/platform.js';
+import type * as Puppeteer from '../../third_party/puppeteer/puppeteer.js';
+import * as Buttons from '../../ui/components/buttons/buttons.js';
+import * as SuggestionInput from '../../ui/components/suggestion_input/suggestion_input.js';
+import * as UI from '../../ui/legacy/legacy.js';
+import * as Lit from '../../ui/lit/lit.js';
+import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
+import * as Models from './models/models.js';
 import {RequestSelectorAttributeEvent, SelectorPicker} from './SelectorPicker.js';
 import stepEditorStyles from './stepEditor.css.js';
 import {
@@ -27,7 +26,8 @@ import {
   type Keys,
   type OptionalKeys,
   type RequiredKeys,
-} from './util.js';
+  SharedObject,
+} from './util/util.js';
 
 const {html, render, Directives} = Lit;
 const {live} = Directives;
@@ -267,7 +267,7 @@ const UIStrings = {
    */
   unknownActionType: 'Enter a valid action type',
 } as const;
-const str_ = i18n.i18n.registerUIStrings('panels/recorder/components/StepEditor.ts', UIStrings);
+const str_ = i18n.i18n.registerUIStrings('panels/recorder/StepEditor.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 export class StepEditedEvent extends Event {
@@ -328,9 +328,9 @@ interface Puppeteer {
 }
 
 export class EditorState {
-  static #puppeteer: Util.SharedObject.SharedObject<Puppeteer> = new Util.SharedObject.SharedObject(
-      () => Models.RecordingPlayer.RecordingPlayer.connectPuppeteer(),
-      ({browser}) => Models.RecordingPlayer.RecordingPlayer.disconnectPuppeteer(browser));
+  static #puppeteer: SharedObject.SharedObject<Puppeteer> =
+      new SharedObject.SharedObject(() => Models.RecordingPlayer.RecordingPlayer.connectPuppeteer(),
+                                    ({browser}) => Models.RecordingPlayer.RecordingPlayer.disconnectPuppeteer(browser));
 
   static async default(type: Models.Schema.StepType): Promise<DeepImmutable<EditorState>> {
     const state = {type};

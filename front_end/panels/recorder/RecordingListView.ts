@@ -2,16 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import '../../../ui/kit/kit.js';
+import '../../ui/kit/kit.js';
 
-import * as i18n from '../../../core/i18n/i18n.js';
-import * as Buttons from '../../../ui/components/buttons/buttons.js';
-import * as UI from '../../../ui/legacy/legacy.js';
-import * as Lit from '../../../ui/lit/lit.js';
-import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
-import * as Models from '../models/models.js';
-import * as Actions from '../recorder-actions/recorder-actions.js';
+import * as i18n from '../../core/i18n/i18n.js';
+import * as Buttons from '../../ui/components/buttons/buttons.js';
+import * as UI from '../../ui/legacy/legacy.js';
+import * as Lit from '../../ui/lit/lit.js';
+import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
+import * as Models from './models/models.js';
+import * as Actions from './recorder-actions/recorder-actions.js';
 import recordingListViewStyles from './recordingListView.css.js';
 
 const {html} = Lit;
@@ -39,7 +39,7 @@ const UIStrings = {
   openRecording: 'Open recording',
 } as const;
 const str_ = i18n.i18n.registerUIStrings(
-    'panels/recorder/components/RecordingListView.ts',
+    'panels/recorder/RecordingListView.ts',
     UIStrings,
 );
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -238,17 +238,16 @@ export class RecordingListView extends UI.Widget.Widget {
   }
 
   override performUpdate(): void {
-    this.#view(
-        {
-          recordings: this.#recordings,
-          replayAllowed: this.#replayAllowed,
-          onCreateClick: this.#onCreateClick.bind(this),
-          onDeleteClick: this.#onDeleteClick.bind(this),
-          onOpenClick: this.#onOpenClick.bind(this),
-          onPlayRecordingClick: this.#onPlayRecordingClick.bind(this),
-          onKeyDown: this.#onKeyDown.bind(this),
-        },
-        {}, this.contentElement);
+    this.#view({
+      recordings: this.#recordings,
+      replayAllowed: this.#replayAllowed,
+      onCreateClick: this.#onCreateClick.bind(this),
+      onDeleteClick: this.#onDeleteClick.bind(this),
+      onOpenClick: this.#onOpenClick.bind(this),
+      onPlayRecordingClick: this.#onPlayRecordingClick.bind(this),
+      onKeyDown: this.#onKeyDown.bind(this),
+    },
+               {}, this.contentElement);
   }
 
   override wasShown(): void {

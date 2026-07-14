@@ -5,18 +5,18 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
-import * as Host from '../../../core/host/host.js';
+import * as Host from '../../core/host/host.js';
 import {
   describeWithEnvironment,
   setupActionRegistry,
-} from '../../../testing/EnvironmentHelpers.js';
-import {expectCall} from '../../../testing/ExpectStubCall.js';
-import {createViewFunctionStub, type ViewFunctionStub} from '../../../testing/ViewFunctionHelpers.js';
-import * as Menus from '../../../ui/components/menus/menus.js';
-import * as Converters from '../converters/converters.js';
-import * as Models from '../models/models.js';
+} from '../../testing/EnvironmentHelpers.js';
+import {expectCall} from '../../testing/ExpectStubCall.js';
+import {createViewFunctionStub, type ViewFunctionStub} from '../../testing/ViewFunctionHelpers.js';
+import * as Menus from '../../ui/components/menus/menus.js';
 
-import * as Components from './components.js';
+import * as Converters from './converters/converters.js';
+import * as Models from './models/models.js';
+import {RecordingView, StepView} from './recorder.js';
 
 describeWithEnvironment('RecordingView', () => {
   setupActionRegistry();
@@ -27,7 +27,7 @@ describeWithEnvironment('RecordingView', () => {
   const recorderSettingsMock = {
     preferredCopyFormat: Models.ConverterIds.ConverterIds.JSON,
   } as Models.RecorderSettings.RecorderSettings;
-  const views: Components.RecordingView.RecordingView[] = [];
+  const views: RecordingView.RecordingView[] = [];
 
   afterEach(() => {
     // Unregister global listeners in willHide to prevent leaks.
@@ -36,10 +36,10 @@ describeWithEnvironment('RecordingView', () => {
     }
   });
 
-  async function createView(output?: Components.RecordingView.ViewOutput): Promise<
-      [ViewFunctionStub<typeof Components.RecordingView.RecordingView>, Components.RecordingView.RecordingView]> {
-    const view = createViewFunctionStub(Components.RecordingView.RecordingView, output);
-    const component = new Components.RecordingView.RecordingView(undefined, view);
+  async function createView(output?: RecordingView.ViewOutput):
+      Promise<[ViewFunctionStub<typeof RecordingView.RecordingView>, RecordingView.RecordingView]> {
+    const view = createViewFunctionStub(RecordingView.RecordingView, output);
+    const component = new RecordingView.RecordingView(undefined, view);
     Object.assign(component, {
       replayState: {isPlaying: false, isPausedOnBreakpoint: false},
       isRecording: false,
@@ -151,7 +151,7 @@ describeWithEnvironment('RecordingView', () => {
                          .callsFake(() => {
                            void isCalled.resolve(true);
                          });
-    const event = new Components.StepView.CopyStepEvent(step);
+    const event = new StepView.CopyStepEvent(step);
 
     view.input.onCopyStep(event);
 

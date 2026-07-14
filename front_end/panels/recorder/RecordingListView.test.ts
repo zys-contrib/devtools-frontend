@@ -8,18 +8,18 @@ import sinon from 'sinon';
 import {
   describeWithEnvironment,
   setupActionRegistry,
-} from '../../../testing/EnvironmentHelpers.js';
+} from '../../testing/EnvironmentHelpers.js';
 import {
   createViewFunctionStub,
   type ViewFunctionStub,
-} from '../../../testing/ViewFunctionHelpers.js';
+} from '../../testing/ViewFunctionHelpers.js';
 
-import * as Components from './components.js';
+import {RecordingListView} from './recorder.js';
 
 describeWithEnvironment('RecordingListView', () => {
   setupActionRegistry();
 
-  const views: Components.RecordingListView.RecordingListView[] = [];
+  const views: RecordingListView.RecordingListView[] = [];
 
   afterEach(() => {
     // Unregister global listeners in willHide to prevent leaks.
@@ -28,12 +28,10 @@ describeWithEnvironment('RecordingListView', () => {
     }
   });
 
-  async function createView(output?: Components.RecordingListView.ViewOutput): Promise<[
-    ViewFunctionStub<typeof Components.RecordingListView.RecordingListView>,
-    Components.RecordingListView.RecordingListView
-  ]> {
-    const view = createViewFunctionStub(Components.RecordingListView.RecordingListView, output);
-    const component = new Components.RecordingListView.RecordingListView(undefined, view);
+  async function createView(output?: RecordingListView.ViewOutput):
+      Promise<[ViewFunctionStub<typeof RecordingListView.RecordingListView>, RecordingListView.RecordingListView]> {
+    const view = createViewFunctionStub(RecordingListView.RecordingListView, output);
+    const component = new RecordingListView.RecordingListView(undefined, view);
     component.recordings = [{storageName: 'storage-test', name: 'test'}];
     component.replayAllowed = true;
     component.wasShown();
@@ -49,8 +47,8 @@ describeWithEnvironment('RecordingListView', () => {
 
     sinon.assert.calledOnce(dispatchEventSpy);
     const event = dispatchEventSpy.firstCall.args[0];
-    assert.instanceOf(event, Components.RecordingListView.OpenRecordingEvent);
-    assert.strictEqual((event as Components.RecordingListView.OpenRecordingEvent).storageName, 'storage-test');
+    assert.instanceOf(event, RecordingListView.OpenRecordingEvent);
+    assert.strictEqual((event as RecordingListView.OpenRecordingEvent).storageName, 'storage-test');
   });
 
   it('should delete a recording', async () => {
@@ -61,7 +59,7 @@ describeWithEnvironment('RecordingListView', () => {
 
     sinon.assert.calledOnce(dispatchEventSpy);
     const event = dispatchEventSpy.firstCall.args[0];
-    assert.instanceOf(event, Components.RecordingListView.DeleteRecordingEvent);
-    assert.strictEqual((event as Components.RecordingListView.DeleteRecordingEvent).storageName, 'storage-test');
+    assert.instanceOf(event, RecordingListView.DeleteRecordingEvent);
+    assert.strictEqual((event as RecordingListView.DeleteRecordingEvent).storageName, 'storage-test');
   });
 });

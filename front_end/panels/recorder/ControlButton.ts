@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as UI from '../../../ui/legacy/legacy.js';
-import * as Lit from '../../../ui/lit/lit.js';
+import * as UI from '../../ui/legacy/legacy.js';
+import * as Lit from '../../ui/lit/lit.js';
 
 import controlButtonStyles from './controlButton.css.js';
 
@@ -74,13 +74,12 @@ export class ControlButton extends UI.Widget.Widget<ShadowRoot> {
   }
 
   override performUpdate(): void {
-    this.#view(
-        {
-          label: this.#label,
-          shape: this.#shape,
-          disabled: this.#disabled,
-          onClick: this.#onClick,
-        },
-        {}, this.contentElement);
+    this.#view({
+      label: this.#label,
+      shape: this.#shape,
+      disabled: this.#disabled,
+      onClick: this.#onClick,
+    },
+               {}, this.contentElement);
   }
 }

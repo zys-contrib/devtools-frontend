@@ -8,21 +8,21 @@ import sinon from 'sinon';
 import {
   describeWithEnvironment,
   setupActionRegistry,
-} from '../../../testing/EnvironmentHelpers.js';
+} from '../../testing/EnvironmentHelpers.js';
 import {
   createViewFunctionStub,
   type ViewFunctionStub,
-} from '../../../testing/ViewFunctionHelpers.js';
-import type * as Extensions from '../extensions/extensions.js';
-import * as Models from '../models/models.js';
+} from '../../testing/ViewFunctionHelpers.js';
 
-import * as RecorderComponents from './components.js';
+import type * as Extensions from './extensions/extensions.js';
+import * as Models from './models/models.js';
+import {ReplaySection} from './recorder.js';
 
 describeWithEnvironment('ReplaySection', () => {
   setupActionRegistry();
 
   let settings: Models.RecorderSettings.RecorderSettings;
-  const views: RecorderComponents.ReplaySection.ReplaySection[] = [];
+  const views: ReplaySection.ReplaySection[] = [];
 
   afterEach(() => {
     settings.speed = Models.RecordingPlayer.PlayRecordingSpeed.NORMAL;
@@ -35,13 +35,13 @@ describeWithEnvironment('ReplaySection', () => {
       speed: Models.RecordingPlayer.PlayRecordingSpeed = Models.RecordingPlayer.PlayRecordingSpeed.NORMAL,
       ):
       Promise<[
-        ViewFunctionStub<typeof RecorderComponents.ReplaySection.ReplaySection>,
-        RecorderComponents.ReplaySection.ReplaySection,
+        ViewFunctionStub<typeof ReplaySection.ReplaySection>,
+        ReplaySection.ReplaySection,
       ]> {
     settings = new Models.RecorderSettings.RecorderSettings();
     settings.speed = speed;
-    const view = createViewFunctionStub(RecorderComponents.ReplaySection.ReplaySection);
-    const component = new RecorderComponents.ReplaySection.ReplaySection(undefined, view);
+    const view = createViewFunctionStub(ReplaySection.ReplaySection);
+    const component = new ReplaySection.ReplaySection(undefined, view);
     component.settings = settings;
     component.replayExtensions = [];
     component.onStartReplay = () => {};

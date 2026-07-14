@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as i18n from '../../../core/i18n/i18n.js';
-import type * as PublicExtensions from '../../../models/extensions/extensions.js';
-import * as Buttons from '../../../ui/components/buttons/buttons.js';
-import * as UI from '../../../ui/legacy/legacy.js';
-import * as Lit from '../../../ui/lit/lit.js';
-import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
-import * as Extensions from '../extensions/extensions.js';
+import * as i18n from '../../core/i18n/i18n.js';
+import type * as PublicExtensions from '../../models/extensions/extensions.js';
+import * as Buttons from '../../ui/components/buttons/buttons.js';
+import * as UI from '../../ui/legacy/legacy.js';
+import * as Lit from '../../ui/lit/lit.js';
+import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
+import * as Extensions from './extensions/extensions.js';
 import extensionViewStyles from './extensionView.css.js';
 
 const {html} = Lit;
@@ -24,7 +24,7 @@ const UIStrings = {
    */
   extension: 'Content provided by a browser extension',
 } as const;
-const str_ = i18n.i18n.registerUIStrings('panels/recorder/components/ExtensionView.ts', UIStrings);
+const str_ = i18n.i18n.registerUIStrings('panels/recorder/ExtensionView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 export interface ViewInput {

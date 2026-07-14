@@ -2,17 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import '../../../ui/kit/kit.js';
+import '../../ui/kit/kit.js';
 
-import * as i18n from '../../../core/i18n/i18n.js';
-import * as Platform from '../../../core/platform/platform.js';
-import * as Menus from '../../../ui/components/menus/menus.js';
-import * as UI from '../../../ui/legacy/legacy.js';
-import * as Lit from '../../../ui/lit/lit.js';
-import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
-import type * as Converters from '../converters/converters.js';
-import * as Models from '../models/models.js';
+import * as i18n from '../../core/i18n/i18n.js';
+import * as Platform from '../../core/platform/platform.js';
+import * as Menus from '../../ui/components/menus/menus.js';
+import * as UI from '../../ui/legacy/legacy.js';
+import * as Lit from '../../ui/lit/lit.js';
+import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
+import type * as Converters from './converters/converters.js';
+import * as Models from './models/models.js';
 import {type StepEditedEvent, StepEditor} from './StepEditor.js';
 import stepViewStyles from './stepView.css.js';
 import {TimelineSection} from './TimelineSection.js';
@@ -128,7 +128,7 @@ const UIStrings = {
   breakpoints: 'Breakpoints',
 } as const;
 const str_ = i18n.i18n.registerUIStrings(
-    'panels/recorder/components/StepView.ts',
+    'panels/recorder/StepView.ts',
     UIStrings,
 );
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);

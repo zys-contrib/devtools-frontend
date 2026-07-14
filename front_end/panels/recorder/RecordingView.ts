@@ -2,32 +2,32 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import '../../../ui/kit/kit.js';
+import '../../ui/kit/kit.js';
 
-import * as Host from '../../../core/host/host.js';
-import * as i18n from '../../../core/i18n/i18n.js';
-import * as Platform from '../../../core/platform/platform.js';
-import * as SDK from '../../../core/sdk/sdk.js';
-import type * as PublicExtensions from '../../../models/extensions/extensions.js';
-import * as CodeMirror from '../../../third_party/codemirror.next/codemirror.next.js';
-import type * as PuppeteerReplay from '../../../third_party/puppeteer-replay/puppeteer-replay.js';
-import * as Buttons from '../../../ui/components/buttons/buttons.js';
-import * as CodeHighlighter from '../../../ui/components/code_highlighter/code_highlighter.js';
-import * as Dialogs from '../../../ui/components/dialogs/dialogs.js';
-import * as Input from '../../../ui/components/input/input.js';
-import type * as Menus from '../../../ui/components/menus/menus.js';
-import * as TextEditor from '../../../ui/components/text_editor/text_editor.js';
-import * as UI from '../../../ui/legacy/legacy.js';
-import * as Lit from '../../../ui/lit/lit.js';
-import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
-import type * as Converters from '../converters/converters.js';
-import type * as Extensions from '../extensions/extensions.js';
-import * as Models from '../models/models.js';
-import {PlayRecordingSpeed} from '../models/RecordingPlayer.js';
-import * as Actions from '../recorder-actions/recorder-actions.js';
+import * as Host from '../../core/host/host.js';
+import * as i18n from '../../core/i18n/i18n.js';
+import * as Platform from '../../core/platform/platform.js';
+import * as SDK from '../../core/sdk/sdk.js';
+import type * as PublicExtensions from '../../models/extensions/extensions.js';
+import * as CodeMirror from '../../third_party/codemirror.next/codemirror.next.js';
+import type * as PuppeteerReplay from '../../third_party/puppeteer-replay/puppeteer-replay.js';
+import * as Buttons from '../../ui/components/buttons/buttons.js';
+import * as CodeHighlighter from '../../ui/components/code_highlighter/code_highlighter.js';
+import * as Dialogs from '../../ui/components/dialogs/dialogs.js';
+import * as Input from '../../ui/components/input/input.js';
+import type * as Menus from '../../ui/components/menus/menus.js';
+import * as TextEditor from '../../ui/components/text_editor/text_editor.js';
+import * as UI from '../../ui/legacy/legacy.js';
+import * as Lit from '../../ui/lit/lit.js';
+import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import {ControlButton} from './ControlButton.js';
+import type * as Converters from './converters/converters.js';
+import type * as Extensions from './extensions/extensions.js';
 import {ExtensionView} from './ExtensionView.js';
+import * as Models from './models/models.js';
+import {PlayRecordingSpeed} from './models/RecordingPlayer.js';
+import * as Actions from './recorder-actions/recorder-actions.js';
 import recordingViewStyles from './recordingView.css.js';
 import {ReplaySection} from './ReplaySection.js';
 import {
@@ -151,7 +151,7 @@ const UIStrings = {
   codeSidebarClosed: 'Code sidebar closed',
 } as const;
 const str_ = i18n.i18n.registerUIStrings(
-    'panels/recorder/components/RecordingView.ts',
+    'panels/recorder/RecordingView.ts',
     UIStrings,
 );
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -648,7 +648,7 @@ function renderSections(input: ViewInput): Lit.LitTemplate {
       )}
       </div>
     `;
-        // clang-format on
+  // clang-format on
 }
 
 function renderHeader(input: ViewInput): Lit.LitTemplate {
@@ -806,8 +806,9 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
               descriptor: input.extensionDescriptor,
               onClose: () => {
                 target.dispatchEvent(new Event('recorderextensionviewclosed', {bubbles: true, composed: true}));
-              }
-            })}></devtools-widget>` : html`
+              },
+            })}>
+            </devtools-widget>` : html`
           ${renderSettings(input)}
           ${renderTimelineArea(input, output)}
         `}
@@ -911,67 +912,66 @@ export class RecordingView extends UI.Widget.Widget {
         ].find(converter => converter.getId() === this.#converterId) ??
         this.builtInConverters[0];
 
-    this.#view(
-        {
-          breakpointIndexes: this.breakpointIndexes,
-          builtInConverters: this.builtInConverters,
-          converterId: this.#converterId,
-          converterName: converter?.getFormatName(),
-          currentError: this.currentError ?? null,
-          currentStep: this.currentStep ?? null,
-          editorState: this.#editorState ?? null,
-          extensionConverters: this.extensionConverters,
-          extensionDescriptor: this.extensionDescriptor,
-          isRecording: this.isRecording,
-          isTitleInvalid: this.#isTitleInvalid,
-          lastReplayResult: this.lastReplayResult ?? null,
-          recorderSettings: this.#recorderSettings ?? null,
-          recording: this.recording,
-          recordingTogglingInProgress: this.recordingTogglingInProgress,
-          replayAllowed: this.replayAllowed,
-          replayExtensions: this.replayExtensions ?? [],
-          replaySettingsExpanded: this.#replaySettingsExpanded,
-          replayState: this.replayState,
-          sections: this.sections,
-          selectedStep: this.#selectedStep ?? null,
-          settings: this.settings ?? null,
-          showCodeView: this.#showCodeView,
+    this.#view({
+      breakpointIndexes: this.breakpointIndexes,
+      builtInConverters: this.builtInConverters,
+      converterId: this.#converterId,
+      converterName: converter?.getFormatName(),
+      currentError: this.currentError ?? null,
+      currentStep: this.currentStep ?? null,
+      editorState: this.#editorState ?? null,
+      extensionConverters: this.extensionConverters,
+      extensionDescriptor: this.extensionDescriptor,
+      isRecording: this.isRecording,
+      isTitleInvalid: this.#isTitleInvalid,
+      lastReplayResult: this.lastReplayResult ?? null,
+      recorderSettings: this.#recorderSettings ?? null,
+      recording: this.recording,
+      recordingTogglingInProgress: this.recordingTogglingInProgress,
+      replayAllowed: this.replayAllowed,
+      replayExtensions: this.replayExtensions ?? [],
+      replaySettingsExpanded: this.#replaySettingsExpanded,
+      replayState: this.replayState,
+      sections: this.sections,
+      selectedStep: this.#selectedStep ?? null,
+      settings: this.settings ?? null,
+      showCodeView: this.#showCodeView,
 
-          onAddAssertion: () => {
-            this.addAssertion?.();
-          },
-          onRecordingFinished: () => {
-            this.recordingFinished?.();
-          },
-          getSectionState: this.#getSectionState.bind(this),
-          getStepState: this.#getStepState.bind(this),
-          onAbortReplay: () => {
-            this.abortReplay?.();
-          },
-          onMeasurePerformanceClick: this.#handleMeasurePerformanceClickEvent.bind(this),
-          onTogglePlaying: (speed: PlayRecordingSpeed, extension?: Extensions.ExtensionManager.Extension) => {
-            this.playRecording?.({
-              targetPanel: TargetPanel.DEFAULT,
-              speed,
-              extension,
-            });
-          },
-          onCodeFormatChange: this.#onCodeFormatChange.bind(this),
-          onCopyStep: this.#onCopyStepEvent.bind(this),
-          onEditTitleButtonClick: this.#onEditTitleButtonClick.bind(this),
-          onNetworkConditionsChange: this.#onNetworkConditionsChange.bind(this),
-          onReplaySettingsKeydown: this.#onReplaySettingsKeydown.bind(this),
-          onSelectMenuLabelClick: this.#onSelectMenuLabelClick.bind(this),
-          onStepClick: this.#onStepClick.bind(this),
-          onStepHover: this.#onStepHover.bind(this),
-          onTimeoutInput: this.#onTimeoutInput.bind(this),
-          onTitleBlur: this.#onTitleBlur.bind(this),
-          onTitleInputKeyDown: this.#onTitleInputKeyDown.bind(this),
-          onToggleReplaySettings: this.#onToggleReplaySettings.bind(this),
-          onWrapperClick: this.#onWrapperClick.bind(this),
-          showCodeToggle: this.showCodeToggle.bind(this),
-        },
-        this.#viewOutput, this.contentElement);
+      onAddAssertion: () => {
+        this.addAssertion?.();
+      },
+      onRecordingFinished: () => {
+        this.recordingFinished?.();
+      },
+      getSectionState: this.#getSectionState.bind(this),
+      getStepState: this.#getStepState.bind(this),
+      onAbortReplay: () => {
+        this.abortReplay?.();
+      },
+      onMeasurePerformanceClick: this.#handleMeasurePerformanceClickEvent.bind(this),
+      onTogglePlaying: (speed: PlayRecordingSpeed, extension?: Extensions.ExtensionManager.Extension) => {
+        this.playRecording?.({
+          targetPanel: TargetPanel.DEFAULT,
+          speed,
+          extension,
+        });
+      },
+      onCodeFormatChange: this.#onCodeFormatChange.bind(this),
+      onCopyStep: this.#onCopyStepEvent.bind(this),
+      onEditTitleButtonClick: this.#onEditTitleButtonClick.bind(this),
+      onNetworkConditionsChange: this.#onNetworkConditionsChange.bind(this),
+      onReplaySettingsKeydown: this.#onReplaySettingsKeydown.bind(this),
+      onSelectMenuLabelClick: this.#onSelectMenuLabelClick.bind(this),
+      onStepClick: this.#onStepClick.bind(this),
+      onStepHover: this.#onStepHover.bind(this),
+      onTimeoutInput: this.#onTimeoutInput.bind(this),
+      onTitleBlur: this.#onTitleBlur.bind(this),
+      onTitleInputKeyDown: this.#onTitleInputKeyDown.bind(this),
+      onToggleReplaySettings: this.#onToggleReplaySettings.bind(this),
+      onWrapperClick: this.#onWrapperClick.bind(this),
+      showCodeToggle: this.showCodeToggle.bind(this),
+    },
+               this.#viewOutput, this.contentElement);
   }
 
   override wasShown(): void {

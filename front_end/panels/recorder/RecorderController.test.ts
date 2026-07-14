@@ -11,10 +11,9 @@ import {
 import * as RenderCoordinator from '../../ui/components/render_coordinator/render_coordinator.js';
 import * as UI from '../../ui/legacy/legacy.js';
 
-import * as Components from './components/components.js';
 import * as Models from './models/models.js';
 import {RecorderActions} from './recorder-actions/recorder-actions.js';
-import {RecorderController} from './recorder.js';
+import {RecorderController, StepView} from './recorder.js';
 
 describeWithEnvironment('RecorderController', () => {
   setupActionRegistry();
@@ -91,9 +90,9 @@ describeWithEnvironment('RecorderController', () => {
 
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.AddStep(
+          new StepView.AddStep(
               recording.flow.steps[0],
-              Components.StepView.AddStepPosition.AFTER,
+              StepView.AddStepPosition.AFTER,
               ),
       );
 
@@ -124,9 +123,9 @@ describeWithEnvironment('RecorderController', () => {
       assert.lengthOf(sections, 1);
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.AddStep(
+          new StepView.AddStep(
               sections[0],
-              Components.StepView.AddStepPosition.AFTER,
+              StepView.AddStepPosition.AFTER,
               ),
       );
 
@@ -152,9 +151,9 @@ describeWithEnvironment('RecorderController', () => {
 
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.AddStep(
+          new StepView.AddStep(
               recording.flow.steps[0],
-              Components.StepView.AddStepPosition.BEFORE,
+              StepView.AddStepPosition.BEFORE,
               ),
       );
 
@@ -180,7 +179,7 @@ describeWithEnvironment('RecorderController', () => {
 
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.RemoveStep(recording.flow.steps[0]),
+          new StepView.RemoveStep(recording.flow.steps[0]),
       );
 
       const flow = controller.getUserFlow();
@@ -194,16 +193,16 @@ describeWithEnvironment('RecorderController', () => {
 
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.AddBreakpointEvent(stepIndex),
+          new StepView.AddBreakpointEvent(stepIndex),
       );
       assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
         stepIndex,
       ]);
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.AddStep(
+          new StepView.AddStep(
               recording.flow.steps[0],
-              Components.StepView.AddStepPosition.BEFORE,
+              StepView.AddStepPosition.BEFORE,
               ),
       );
 
@@ -220,14 +219,14 @@ describeWithEnvironment('RecorderController', () => {
 
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.AddBreakpointEvent(stepIndex),
+          new StepView.AddBreakpointEvent(stepIndex),
       );
       assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
         stepIndex,
       ]);
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.RemoveStep(recording.flow.steps[0]),
+          new StepView.RemoveStep(recording.flow.steps[0]),
       );
 
       // Breakpoint index moves to the previous index
@@ -243,14 +242,14 @@ describeWithEnvironment('RecorderController', () => {
 
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.AddBreakpointEvent(stepIndex),
+          new StepView.AddBreakpointEvent(stepIndex),
       );
       assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
         stepIndex,
       ]);
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.RemoveStep(recording.flow.steps[stepIndex]),
+          new StepView.RemoveStep(recording.flow.steps[stepIndex]),
       );
 
       // Breakpoint index is removed
@@ -265,7 +264,7 @@ describeWithEnvironment('RecorderController', () => {
       assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), []);
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.AddBreakpointEvent(stepIndex),
+          new StepView.AddBreakpointEvent(stepIndex),
       );
 
       assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
@@ -280,14 +279,14 @@ describeWithEnvironment('RecorderController', () => {
 
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.AddBreakpointEvent(stepIndex),
+          new StepView.AddBreakpointEvent(stepIndex),
       );
       assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
         stepIndex,
       ]);
       await dispatchRecordingViewEvent(
           controller,
-          new Components.StepView.RemoveBreakpointEvent(stepIndex),
+          new StepView.RemoveBreakpointEvent(stepIndex),
       );
 
       assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), []);

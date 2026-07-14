@@ -185,7 +185,6 @@ group("unittests") {
     "panels/profiler:unittests",
     "panels/protocol_monitor:unittests",
     "panels/recorder:unittests",
-    "panels/recorder/components:unittests",
     "panels/recorder/converters:unittests",
     "panels/recorder/injected/selectors:unittests",
     "panels/recorder/models:unittests",

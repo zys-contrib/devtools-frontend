@@ -2,19 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as Common from '../../../core/common/common.js';
-import * as i18n from '../../../core/i18n/i18n.js';
-import * as Platform from '../../../core/platform/platform.js';
-import * as SDK from '../../../core/sdk/sdk.js';
-import type * as Protocol from '../../../generated/protocol.js';
-import * as Buttons from '../../../ui/components/buttons/buttons.js';
-import * as UI from '../../../ui/legacy/legacy.js';
-import * as Lit from '../../../ui/lit/lit.js';
-import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
-import * as Models from '../models/models.js';
-import * as Util from '../util/util.js';
+import * as Common from '../../core/common/common.js';
+import * as i18n from '../../core/i18n/i18n.js';
+import * as Platform from '../../core/platform/platform.js';
+import * as SDK from '../../core/sdk/sdk.js';
+import type * as Protocol from '../../generated/protocol.js';
+import * as Buttons from '../../ui/components/buttons/buttons.js';
+import * as UI from '../../ui/legacy/legacy.js';
+import * as Lit from '../../ui/lit/lit.js';
+import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
+import * as Models from './models/models.js';
 import selectorPickerStyles from './selectorPicker.css.js';
+import * as Util from './util/util.js';
 
 const {html} = Lit;
 
@@ -39,7 +39,7 @@ const UIStrings = {
    */
   selectorPicker: 'Select an element in the page to update selectors',
 } as const;
-const str_ = i18n.i18n.registerUIStrings('panels/recorder/components/SelectorPicker.ts', UIStrings);
+const str_ = i18n.i18n.registerUIStrings('panels/recorder/SelectorPicker.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 export interface ViewInput {

@@ -5,8 +5,8 @@
 import {assert} from 'chai';
 import type {Page} from 'puppeteer-core';
 
-import type {StepChanged} from '../../../front_end/panels/recorder/components/StepView.js';
 import type {RecorderActions} from '../../../front_end/panels/recorder/recorder-actions/recorder-actions.js';
+import type {StepChanged} from '../../../front_end/panels/recorder/StepView.js';
 import {
   changeNetworkConditions,
   fillCreateRecordingForm,
