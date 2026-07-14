@@ -49,11 +49,29 @@ describe('The Extension API', () => {
     }
     await waitForHighlightedLine(0x4b, devToolsPage);
 
-    // Is backwards compatible: accepts a callback with a missing columnNumber
+    // Accepts a callback with an explicitly undefined columnNumber
     {
       const r = await extension.evaluate(
-          // @ts-expect-error Legacy API
-          resource => new Promise(r => window.chrome.devtools.panels.openResource(resource, 0, () => r(1))), resource);
+          resource =>
+              new Promise(r => window.chrome.devtools.panels.openResource(
+                              resource, /* lineNumber */ 0, /* columnNumber */ undefined, /* callback */ () => r(1))),
+          resource);
+      assert.deepEqual(r, 1);
+    }
+    await waitForHighlightedLine(0, devToolsPage);
+
+    // Is backwards compatible for JavaScript callers: accepts a callback with a missing `columnNumber`
+    {
+      const r = await extension.evaluate(resource => new Promise(r => {
+                                           // Cast to `any` is required to bypass TypeScript compiler errors.
+                                           // We are verifying the legacy runtime behavior for JavaScript callers
+                                           // who skip the `columnNumber` argument, which is no longer statically
+                                           // allowed in TypeScript.
+                                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                           (window.chrome.devtools.panels as any)
+                                               .openResource(resource, /* lineNumber */ 0, /* callback */ () => r(1));
+                                         }),
+                                         resource);
       assert.deepEqual(r, 1);
     }
     await waitForHighlightedLine(0, devToolsPage);
@@ -97,11 +115,29 @@ describe('The Extension API', () => {
       assert.isTrue(toolbarText.includes('Line 2, Column 38'));
     }
 
-    // Is backwards compatible: accepts a callback with a missing columnNumber
+    // Accepts a callback with an explicitly undefined columnNumber
     {
       const r = await extension.evaluate(
-          // @ts-expect-error Legacy API
-          resource => new Promise(r => window.chrome.devtools.panels.openResource(resource, 2, () => r(1))), resource);
+          resource =>
+              new Promise(r => window.chrome.devtools.panels.openResource(
+                              resource, /* lineNumber */ 2, /* columnNumber */ undefined, /* callback */ () => r(1))),
+          resource);
+      assert.deepEqual(r, 1);
+      await waitForHighlightedLine(3, devToolsPage);
+    }
+
+    // Is backwards compatible for JavaScript callers: accepts a callback with a missing `columnNumber`
+    {
+      const r = await extension.evaluate(resource => new Promise(r => {
+                                           // Cast to `any` is required to bypass TypeScript compiler errors.
+                                           // We are verifying the legacy runtime behavior for JavaScript callers
+                                           // who skip the `columnNumber` argument, which is no longer statically
+                                           // allowed in TypeScript.
+                                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                           (window.chrome.devtools.panels as any)
+                                               .openResource(resource, /* lineNumber */ 2, /* callback */ () => r(1));
+                                         }),
+                                         resource);
       assert.deepEqual(r, 1);
       await waitForHighlightedLine(3, devToolsPage);
     }
