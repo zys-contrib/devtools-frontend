@@ -397,4 +397,94 @@ describe('Automapping', () => {
       clock.restore();
     }
   });
+
+  it('correctly maps and demaps resources as they come and go', async () => {
+    const url = urlString`http://example.com/path/foo.js`;
+    const fileURL = urlString`file:///var/www/scripts/foo.js`;
+    const content = 'console.log(\'foo.js!\');';
+    const time = new Date('December 1, 1989');
+
+    const persistence = backend.universe.persistence;
+    const bindings: Persistence.Persistence.PersistenceBinding[] = [];
+    const removedBindings: Persistence.Persistence.PersistenceBinding[] = [];
+
+    persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
+      bindings.push(event.data);
+    });
+    persistence.addEventListener(Persistence.Persistence.Events.BindingRemoved, event => {
+      removedBindings.push(event.data);
+    });
+
+    // 1. Add a network resource.
+    const {project: networkProject, uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
+      url,
+      mimeType: 'text/javascript',
+      content,
+      projectType: Workspace.Workspace.projectTypes.Network,
+      projectId: 'network-project',
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length),
+      universe: backend.universe,
+    });
+
+    // Wait a bit to ensure no binding is created (since the file system is missing).
+    await new Promise(resolve => setTimeout(resolve, 50));
+    assert.lengthOf(bindings, 0);
+
+    // 2. Add a file system resource.
+    const {uiSourceCode: fileSystemSourceCode, project: fileSystemProject} = createFileSystemUISourceCode({
+      url: fileURL,
+      content,
+      fileSystemPath: 'file:///var/www',
+      mimeType: 'text/javascript',
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length),
+      autoMapping: true,
+      universe: backend.universe,
+    });
+
+    const waitForBinding = (bindingList: Persistence.Persistence.PersistenceBinding[], length: number) => {
+      return new Promise<void>(resolve => {
+        const check = () => {
+          if (bindingList.length === length) {
+            resolve();
+          } else {
+            setTimeout(check, 10);
+          }
+        };
+        check();
+      });
+    };
+
+    // Wait for binding to be created.
+    await waitForBinding(bindings, 1);
+    assert.strictEqual(bindings[0].network, networkSourceCode);
+    assert.strictEqual(bindings[0].fileSystem, fileSystemSourceCode);
+
+    // 3. Remove the network resource.
+    networkProject.removeUISourceCode(url);
+
+    // Wait for binding to be removed.
+    await waitForBinding(removedBindings, 1);
+    assert.strictEqual(removedBindings[0].network, networkSourceCode);
+    assert.strictEqual(removedBindings[0].fileSystem, fileSystemSourceCode);
+
+    // 4. Re-add the network resource.
+    const newNetworkSourceCode = networkProject.createUISourceCode(url, Common.ResourceType.resourceTypes.Script);
+    const contentProvider = TextUtils.StaticContentProvider.StaticContentProvider.fromString(
+        url, Common.ResourceType.resourceTypes.Script, content);
+    const metadata = new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length);
+    networkProject.addUISourceCodeWithProvider(newNetworkSourceCode, contentProvider, metadata, 'text/javascript');
+
+    // Wait for binding to be created again.
+    await waitForBinding(bindings, 2);
+    assert.strictEqual(bindings[1].network, newNetworkSourceCode);
+    assert.strictEqual(bindings[1].fileSystem, fileSystemSourceCode);
+
+    // 5. Remove the file system.
+    fileSystemProject.dispose();
+
+    // Wait for binding to be removed again.
+    await waitForBinding(removedBindings, 2);
+    assert.strictEqual(removedBindings[1].network, newNetworkSourceCode);
+    assert.strictEqual(removedBindings[1].fileSystem, fileSystemSourceCode);
+  });
 });
