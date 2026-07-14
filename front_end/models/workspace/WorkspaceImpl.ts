@@ -5,6 +5,7 @@
 import * as Common from '../../core/common/common.js';
 import type * as Platform from '../../core/platform/platform.js';
 import * as Root from '../../core/root/root.js';
+import type * as SDK from '../../core/sdk/sdk.js';
 import type * as TextUtils from '../text_utils/text_utils.js';
 
 import type {SearchConfig} from './SearchConfig.js';
@@ -54,6 +55,8 @@ export interface Project {
    * @returns an iterator for the sources provided by this project.
    */
   uiSourceCodes(): Iterable<UISourceCode>;
+  target(): SDK.Target.Target|null;
+  setTarget(target: SDK.Target.Target|null): void;
 }
 
 /* eslint-disable @typescript-eslint/naming-convention -- Used by web_tests. */
@@ -74,6 +77,7 @@ export abstract class ProjectStore implements Project {
   readonly #type: projectTypes;
   readonly #displayName: string;
   readonly #uiSourceCodes = new Map<Platform.DevToolsPath.UrlString, UISourceCode>();
+  #target: SDK.Target.Target|null = null;
 
   constructor(workspace: WorkspaceImpl, id: string, type: projectTypes, displayName: string) {
     this.#workspace = workspace;
@@ -133,6 +137,14 @@ export abstract class ProjectStore implements Project {
 
   uiSourceCodes(): Iterable<UISourceCode> {
     return this.#uiSourceCodes.values();
+  }
+
+  target(): SDK.Target.Target|null {
+    return this.#target;
+  }
+
+  setTarget(target: SDK.Target.Target|null): void {
+    this.#target = target;
   }
 
   renameUISourceCode(uiSourceCode: UISourceCode, newName: string): void {

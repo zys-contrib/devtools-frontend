@@ -12,7 +12,6 @@ const uiSourceCodeToAttributionMap = new WeakMap<Workspace.UISourceCode.UISource
                                                    frame: SDK.ResourceTreeModel.ResourceTreeFrame,
                                                    count: number,
                                                  }>>();
-const projectToTargetMap = new WeakMap<Workspace.Workspace.Project, SDK.Target.Target>();
 
 export class NetworkProjectManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
 
@@ -132,15 +131,15 @@ export class NetworkProject {
   }
 
   static targetForUISourceCode(uiSourceCode: Workspace.UISourceCode.UISourceCode): SDK.Target.Target|null {
-    return projectToTargetMap.get(uiSourceCode.project()) || null;
+    return uiSourceCode.project().target();
   }
 
   static setTargetForProject(project: Workspace.Workspace.Project, target: SDK.Target.Target): void {
-    projectToTargetMap.set(project, target);
+    project.setTarget(target);
   }
 
   static getTargetForProject(project: Workspace.Workspace.Project): SDK.Target.Target|null {
-    return projectToTargetMap.get(project) || null;
+    return project.target();
   }
 
   static framesForUISourceCode(uiSourceCode: Workspace.UISourceCode.UISourceCode):
