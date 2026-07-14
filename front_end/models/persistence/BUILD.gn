@@ -89,6 +89,7 @@ ts_library("unittests") {
     "Automapping.test.ts",
     "AutomaticFileSystemManager.test.ts",
     "AutomaticFileSystemWorkspaceBinding.test.ts",
+    "FileSystemWorkspaceBinding.test.ts",
     "NetworkPersistenceManager.test.ts",
     "PersistenceImpl.test.ts",
     "PlatformFileSystem.test.ts",
