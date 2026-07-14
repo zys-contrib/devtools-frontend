@@ -10,7 +10,6 @@ import("../visibility.gni")
 
 devtools_module("issues_manager") {
   sources = [
-    "AttributionReportingIssue.ts",
     "BounceTrackingIssue.ts",
     "CheckFormsIssuesTrigger.ts",
     "ClientHintIssue.ts",
@@ -65,27 +64,6 @@ devtools_module("issues_manager") {
 }
 
 devtools_issue_description_files = [
-  "arInsecureContext.md",
-  "arInvalidInfoHeader.md",
-  "arInvalidRegisterOsSourceHeader.md",
-  "arInvalidRegisterOsTriggerHeader.md",
-  "arInvalidRegisterSourceHeader.md",
-  "arInvalidRegisterTriggerHeader.md",
-  "arNavigationRegistrationWithoutTransientUserActivation.md",
-  "arNavigationRegistrationUniqueScopeAlreadySet.md",
-  "arNoRegisterOsSourceHeader.md",
-  "arNoRegisterOsTriggerHeader.md",
-  "arNoRegisterSourceHeader.md",
-  "arNoRegisterTriggerHeader.md",
-  "arNoWebOrOsSupport.md",
-  "arOsSourceIgnored.md",
-  "arOsTriggerIgnored.md",
-  "arPermissionPolicyDisabled.md",
-  "arSourceAndTriggerHeaders.md",
-  "arSourceIgnored.md",
-  "arTriggerIgnored.md",
-  "arUntrustworthyReportingOrigin.md",
-  "arWebAndOsHeaders.md",
   "bounceTrackingMitigations.md",
   "clientHintMetaTagAllowListInvalidOrigin.md",
   "clientHintMetaTagModifiedHTML.md",

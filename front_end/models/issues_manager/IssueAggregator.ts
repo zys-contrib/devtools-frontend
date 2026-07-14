@@ -5,7 +5,6 @@
 import * as Common from '../../core/common/common.js';
 import type * as Protocol from '../../generated/protocol.js';
 
-import {AttributionReportingIssue} from './AttributionReportingIssue.js';
 import {ContentSecurityPolicyIssue} from './ContentSecurityPolicyIssue.js';
 import {CookieDeprecationMetadataIssue} from './CookieDeprecationMetadataIssue.js';
 import {CookieIssue} from './CookieIssue.js';
@@ -71,7 +70,6 @@ export class AggregatedIssue extends Issue {
   #selectivePermissionsInterventionIssues = new Set<SelectivePermissionsInterventionIssue>();
   #sharedArrayBufferIssues = new Set<SharedArrayBufferIssue>();
   #quirksModeIssues = new Set<QuirksModeIssue>();
-  #attributionReportingIssues = new Set<AttributionReportingIssue>();
   #genericIssues = new Set<GenericIssue>();
   #elementAccessibilityIssues = new Set<ElementAccessibilityIssue>();
   #representative?: Issue;
@@ -156,10 +154,6 @@ export class AggregatedIssue extends Issue {
 
   getQuirksModeIssues(): Iterable<QuirksModeIssue> {
     return this.#quirksModeIssues;
-  }
-
-  getAttributionReportingIssues(): ReadonlySet<AttributionReportingIssue> {
-    return this.#attributionReportingIssues;
   }
 
   getGenericIssues(): ReadonlySet<GenericIssue> {
@@ -272,9 +266,6 @@ export class AggregatedIssue extends Issue {
     }
     if (issue instanceof QuirksModeIssue) {
       this.#quirksModeIssues.add(issue);
-    }
-    if (issue instanceof AttributionReportingIssue) {
-      this.#attributionReportingIssues.add(issue);
     }
     if (issue instanceof GenericIssue) {
       this.#genericIssues.add(issue);

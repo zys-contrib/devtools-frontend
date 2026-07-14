@@ -49,7 +49,6 @@ export const enum IssueCategory {
   CONTENT_SECURITY_POLICY = 'ContentSecurityPolicy',
   LOW_TEXT_CONTRAST = 'LowTextContrast',
   CORS = 'Cors',
-  ATTRIBUTION_REPORTING = 'AttributionReporting',
   QUIRKS_MODE = 'QuirksMode',
   PERMISSION_ELEMENT = 'PermissionElement',
   SELECTIVE_PERMISSIONS_INTERVENTION = 'SelectivePermissionsIntervention',

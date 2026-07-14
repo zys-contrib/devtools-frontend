@@ -32,7 +32,6 @@ devtools_ui_module("issues") {
     "AffectedSharedArrayBufferIssueDetailsView.ts",
     "AffectedSourcesView.ts",
     "AffectedTrackingSitesView.ts",
-    "AttributionReportingIssueDetailsView.ts",
     "CorsIssueDetailsView.ts",
     "GenericIssueDetailsView.ts",
     "HiddenIssuesRow.ts",

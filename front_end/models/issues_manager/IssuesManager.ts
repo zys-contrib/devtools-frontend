@@ -6,7 +6,6 @@ import * as Common from '../../core/common/common.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 
-import {AttributionReportingIssue} from './AttributionReportingIssue.js';
 import {BounceTrackingIssue} from './BounceTrackingIssue.js';
 import {ClientHintIssue} from './ClientHintIssue.js';
 import {ConnectionAllowlistIssue} from './ConnectionAllowlistIssue.js';
@@ -91,10 +90,6 @@ const issueCodeHandlers =
           [
             Protocol.Audits.InspectorIssueCode.QuirksModeIssue,
             QuirksModeIssue.fromInspectorIssue,
-          ],
-          [
-            Protocol.Audits.InspectorIssueCode.AttributionReportingIssue,
-            AttributionReportingIssue.fromInspectorIssue,
           ],
           [
             Protocol.Audits.InspectorIssueCode.GenericIssue,

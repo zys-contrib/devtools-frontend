@@ -33,7 +33,6 @@ import {AffectedSelectivePermissionsInterventionView} from './AffectedSelectiveP
 import {AffectedSharedArrayBufferIssueDetailsView} from './AffectedSharedArrayBufferIssueDetailsView.js';
 import {AffectedSourcesView} from './AffectedSourcesView.js';
 import {AffectedTrackingSitesView} from './AffectedTrackingSitesView.js';
-import {AttributionReportingIssueDetailsView} from './AttributionReportingIssueDetailsView.js';
 import * as Components from './components/components.js';
 import type {HiddenIssuesMenuData} from './components/HideIssuesMenu.js';
 import {CorsIssueDetailsView} from './CorsIssueDetailsView.js';
@@ -254,7 +253,6 @@ export class IssueView extends UI.TreeOutline.TreeElement {
       new CorsIssueDetailsView(this, this.#issue, 'cors-details'),
       new GenericIssueDetailsView(this, this.#issue, 'generic-details'),
       new AffectedDocumentsInQuirksModeView(this, this.#issue, 'affected-documents'),
-      new AttributionReportingIssueDetailsView(this, this.#issue, 'attribution-reporting-details'),
       new AffectedRawCookieLinesView(this, this.#issue, 'affected-raw-cookies'),
       new AffectedTrackingSitesView(this, this.#issue, 'tracking-sites-details'),
       new AffectedMetadataAllowedSitesView(this, this.#issue, 'metadata-allowed-sites-details'),
