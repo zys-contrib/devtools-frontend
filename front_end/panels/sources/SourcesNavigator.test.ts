@@ -21,7 +21,10 @@ import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {dispatchEvent} from '../../testing/MockConnection.js';
 import {MockDebuggerBackend} from '../../testing/MockScopeChain.js';
 import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
-import {createContentProviderUISourceCodes} from '../../testing/UISourceCodeHelpers.js';
+import {
+  createContentProviderUISourceCodes,
+  createFileSystemUISourceCode,
+} from '../../testing/UISourceCodeHelpers.js';
 import * as UI from '../../ui/legacy/legacy.js';
 
 import * as Sources from './sources.js';
@@ -642,5 +645,93 @@ describe('NetworkNavigatorView', () => {
       await disableIgnoreListing();
       project.removeProject();
     });
+  });
+});
+
+describe('FilesNavigatorView', () => {
+  setupRuntimeHooks();
+  setupLocaleHooks();
+
+  let workspace: Workspace.Workspace.WorkspaceImpl;
+  let backend: MockDebuggerBackend;
+  let networkProjectManager: Bindings.NetworkProject.NetworkProjectManager;
+
+  beforeEach(() => {
+    backend = new MockDebuggerBackend();
+    workspace = backend.universe.workspace;
+    const targetManager = backend.universe.targetManager;
+
+    sinon.stub(Workspace.Workspace.WorkspaceImpl, 'instance').returns(workspace);
+    sinon.stub(SDK.TargetManager.TargetManager, 'instance').returns(targetManager);
+    sinon.stub(Workspace.IgnoreListManager.IgnoreListManager, 'instance').returns(backend.universe.ignoreListManager);
+    sinon.stub(Common.Settings.Settings, 'instance').returns(backend.universe.settings);
+
+    const debuggerWorkspaceBinding = backend.universe.debuggerWorkspaceBinding;
+    const breakpointManager = Breakpoints.BreakpointManager.BreakpointManager.instance({
+      forceNew: true,
+      targetManager,
+      workspace,
+      debuggerWorkspaceBinding,
+      settings: backend.universe.settings,
+    });
+    Persistence.Persistence.PersistenceImpl.instance({forceNew: true, workspace, breakpointManager});
+    Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance({forceNew: true, workspace});
+
+    const automaticFileSystemManager =
+        sinon.createStubInstance(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager);
+    sinon.stub(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager, 'instance')
+        .returns(automaticFileSystemManager);
+
+    networkProjectManager = new Bindings.NetworkProject.NetworkProjectManager();
+  });
+
+  afterEach(async () => {
+    sinon.restore();
+    await deinitializeGlobalVars();
+  });
+
+  it('shows unique names for file system UISourceCodes', async () => {
+    const {project: project1} = createFileSystemUISourceCode({
+      url: urlString`file:///home/workspace/good/foo/bar/1.js`,
+      mimeType: 'application/javascript',
+      fileSystemPath: 'file:///home/workspace/good/foo/bar',
+      universe: backend.universe,
+    });
+    const {project: project2} = createFileSystemUISourceCode({
+      url: urlString`file:///home/workspace/bad/foo/bar/2.js`,
+      mimeType: 'application/javascript',
+      fileSystemPath: 'file:///home/workspace/bad/foo/bar',
+      universe: backend.universe,
+    });
+    const {project: project3} = createFileSystemUISourceCode({
+      url: urlString`file:///home/workspace/ugly/bar/3.js`,
+      mimeType: 'application/javascript',
+      fileSystemPath: 'file:///home/workspace/ugly/bar',
+      universe: backend.universe,
+    });
+
+    const navigatorView = new Sources.SourcesNavigator.FilesNavigatorView(networkProjectManager);
+
+    const rootElement = navigatorView.scriptsTree.rootElement();
+    const children = rootElement.children();
+    assert.lengthOf(children, 3);
+    const expectedTitles = ['bad/foo/bar', 'good/foo/bar', 'ugly/bar'];
+    assert.deepEqual(children.map((c: UI.TreeOutline.TreeElement) => c.title).sort(), expectedTitles);
+
+    const badProjectNode = children.find((c: UI.TreeOutline.TreeElement) => c.title === 'bad/foo/bar');
+    assert.strictEqual(badProjectNode?.childCount(), 1);
+    assert.strictEqual(badProjectNode?.childAt(0)?.title, '2.js');
+
+    const goodProjectNode = children.find((c: UI.TreeOutline.TreeElement) => c.title === 'good/foo/bar');
+    assert.strictEqual(goodProjectNode?.childCount(), 1);
+    assert.strictEqual(goodProjectNode?.childAt(0)?.title, '1.js');
+
+    const uglyProjectNode = children.find((c: UI.TreeOutline.TreeElement) => c.title === 'ugly/bar');
+    assert.strictEqual(uglyProjectNode?.childCount(), 1);
+    assert.strictEqual(uglyProjectNode?.childAt(0)?.title, '3.js');
+
+    project1.removeProject();
+    project2.removeProject();
+    project3.removeProject();
   });
 });
