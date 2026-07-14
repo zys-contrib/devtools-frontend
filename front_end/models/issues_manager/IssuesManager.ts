@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import * as Common from '../../core/common/common.js';
+import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 
@@ -36,8 +37,6 @@ import {StylesheetLoadingIssue} from './StylesheetLoadingIssue.js';
 import {UnencodedDigestIssue} from './UnencodedDigestIssue.js';
 
 export {Events} from './IssuesManagerEvents.js';
-
-let issuesManagerInstance: IssuesManager|null = null;
 
 function createIssuesForBlockedByResponseIssue(
     issuesModel: SDK.IssuesModel.IssuesModel|null,
@@ -197,9 +196,9 @@ export function defaultHideIssueByCodeSetting(): HideIssueMenuSetting {
   return setting;
 }
 
-export function getHideIssueByCodeSetting(): Common.Settings.Setting<HideIssueMenuSetting> {
-  return Common.Settings.Settings.instance().createSetting(
-      'hide-issue-by-code-setting-experiment-2021', defaultHideIssueByCodeSetting());
+export function getHideIssueByCodeSetting(settings: Common.Settings.Settings = Common.Settings.Settings.instance()):
+    Common.Settings.Setting<HideIssueMenuSetting> {
+  return settings.createSetting('hide-issue-by-code-setting-experiment-2021', defaultHideIssueByCodeSetting());
 }
 
 /**
@@ -224,17 +223,20 @@ export class IssuesManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
   #issuesById = new Map<string, Issue>();
   #issuesByOutermostTarget: WeakMap<SDK.Target.Target, Set<Issue>> = new Map();
   #frameManager: SDK.FrameManager.FrameManager;
+  #targetManager: SDK.TargetManager.TargetManager;
 
   constructor(private readonly showThirdPartyIssuesSetting?: Common.Settings.Setting<boolean>,
               private readonly hideIssueSetting?: Common.Settings.Setting<HideIssueMenuSetting>,
-              frameManager: SDK.FrameManager.FrameManager = SDK.FrameManager.FrameManager.instance()) {
+              frameManager: SDK.FrameManager.FrameManager = SDK.FrameManager.FrameManager.instance(),
+              targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance()) {
     super();
     this.#frameManager = frameManager;
+    this.#targetManager = targetManager;
     new SourceFrameIssuesManager(this);
-    SDK.TargetManager.TargetManager.instance().observeModels(SDK.IssuesModel.IssuesModel, this);
-    SDK.TargetManager.TargetManager.instance().addModelListener(
-        SDK.ResourceTreeModel.ResourceTreeModel, SDK.ResourceTreeModel.Events.PrimaryPageChanged,
-        this.#onPrimaryPageChanged, this);
+    this.#targetManager.observeModels(SDK.IssuesModel.IssuesModel, this);
+    this.#targetManager.addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
+                                         SDK.ResourceTreeModel.Events.PrimaryPageChanged, this.#onPrimaryPageChanged,
+                                         this);
     this.#frameManager.addEventListener(SDK.FrameManager.Events.FRAME_ADDED_TO_TARGET, this.#onFrameAddedToTarget,
                                         this);
 
@@ -242,37 +244,36 @@ export class IssuesManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
     // a full update when the setting changes to get an up-to-date issues list.
     this.showThirdPartyIssuesSetting?.addChangeListener(() => this.#updateFilteredIssues());
     this.hideIssueSetting?.addChangeListener(() => this.#updateFilteredIssues());
-    SDK.TargetManager.TargetManager.instance().observeTargets(
-        {
-          targetAdded: (target: SDK.Target.Target) => {
-            if (target.outermostTarget() === target) {
-              this.#updateFilteredIssues();
-            }
-          },
-          targetRemoved: (_: SDK.Target.Target) => {},
-        },
-        {scoped: true});
+    this.#targetManager.observeTargets({
+      targetAdded: (target: SDK.Target.Target) => {
+        if (target.outermostTarget() === target) {
+          this.#updateFilteredIssues();
+        }
+      },
+      targetRemoved: (_: SDK.Target.Target) => {},
+    },
+                                       {scoped: true});
   }
 
   static instance(opts: IssuesManagerCreationOptions = {
     forceNew: false,
     ensureFirst: false,
   }): IssuesManager {
-    if (issuesManagerInstance && opts.ensureFirst) {
+    if (Root.DevToolsContext.globalInstance().has(IssuesManager) && opts.ensureFirst) {
       throw new Error(
           'IssuesManager was already created. Either set "ensureFirst" to false or make sure that this invocation is really the first one.');
     }
 
-    if (!issuesManagerInstance || opts.forceNew) {
-      issuesManagerInstance =
-          new IssuesManager(opts.showThirdPartyIssuesSetting, opts.hideIssueSetting, opts.frameManager);
+    if (!Root.DevToolsContext.globalInstance().has(IssuesManager) || opts.forceNew) {
+      Root.DevToolsContext.globalInstance().set(
+          IssuesManager, new IssuesManager(opts.showThirdPartyIssuesSetting, opts.hideIssueSetting, opts.frameManager));
     }
 
-    return issuesManagerInstance;
+    return Root.DevToolsContext.globalInstance().get(IssuesManager);
   }
 
   static removeInstance(): void {
-    issuesManagerInstance = null;
+    Root.DevToolsContext.globalInstance().delete(IssuesManager);
   }
 
   #onPrimaryPageChanged(
@@ -309,7 +310,7 @@ export class IssuesManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
     // When DevTools is opened after navigation has completed, issues may be received
     // before the outermost frame is available. Thus, we trigger a recalcuation of third-party-ness
     // when we attach to the outermost frame.
-    if (frame.isOutermostFrame() && SDK.TargetManager.TargetManager.instance().isInScope(frame.resourceTreeModel())) {
+    if (frame.isOutermostFrame() && this.#targetManager.isInScope(frame.resourceTreeModel())) {
       this.#updateFilteredIssues();
     }
   }
@@ -423,7 +424,7 @@ export class IssuesManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
   }
 
   #issueFilter(issue: Issue): boolean {
-    const scopeTarget = SDK.TargetManager.TargetManager.instance().scopeTarget();
+    const scopeTarget = this.#targetManager.scopeTarget();
     if (!scopeTarget) {
       return false;
     }
