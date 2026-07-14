@@ -53,6 +53,15 @@ export const enum CookieStatus {
 }
 
 export class CookieIssue extends Issue<Protocol.Audits.CookieIssueDetails> {
+  readonly #frameManager: SDK.FrameManager.FrameManager;
+
+  constructor(code: string, issueDetails: Protocol.Audits.CookieIssueDetails,
+              issuesModel: SDK.IssuesModel.IssuesModel|null, issueId: Protocol.Audits.IssueId|undefined,
+              frameManager: SDK.FrameManager.FrameManager) {
+    super(code, issueDetails, issuesModel, issueId);
+    this.#frameManager = frameManager;
+  }
+
   cookieId(): string {
     const details = this.details();
     if (details.cookie) {
@@ -72,9 +81,10 @@ export class CookieIssue extends Issue<Protocol.Audits.CookieIssueDetails> {
   /**
    * Returns an array of issues from a given CookieIssueDetails.
    */
-  static createIssuesFromCookieIssueDetails(
-      cookieIssueDetails: Protocol.Audits.CookieIssueDetails, issuesModel: SDK.IssuesModel.IssuesModel|null,
-      issueId: Protocol.Audits.IssueId|undefined): CookieIssue[] {
+  static createIssuesFromCookieIssueDetails(cookieIssueDetails: Protocol.Audits.CookieIssueDetails,
+                                            issuesModel: SDK.IssuesModel.IssuesModel|null,
+                                            issueId: Protocol.Audits.IssueId|undefined,
+                                            frameManager: SDK.FrameManager.FrameManager): CookieIssue[] {
     const issues: CookieIssue[] = [];
 
     // Exclusion reasons have priority. It means a cookie was blocked. Create an issue
@@ -86,7 +96,7 @@ export class CookieIssue extends Issue<Protocol.Audits.CookieIssueDetails> {
             exclusionReason, cookieIssueDetails.cookieWarningReasons, cookieIssueDetails.operation,
             cookieIssueDetails.cookieUrl as Platform.DevToolsPath.UrlString | undefined);
         if (code) {
-          issues.push(new CookieIssue(code, cookieIssueDetails, issuesModel, issueId));
+          issues.push(new CookieIssue(code, cookieIssueDetails, issuesModel, issueId, frameManager));
         }
       }
       return issues;
@@ -99,7 +109,7 @@ export class CookieIssue extends Issue<Protocol.Audits.CookieIssueDetails> {
             warningReason, [], cookieIssueDetails.operation,
             cookieIssueDetails.cookieUrl as Platform.DevToolsPath.UrlString | undefined);
         if (code) {
-          issues.push(new CookieIssue(code, cookieIssueDetails, issuesModel, issueId));
+          issues.push(new CookieIssue(code, cookieIssueDetails, issuesModel, issueId, frameManager));
         }
       }
     }
@@ -223,7 +233,7 @@ export class CookieIssue extends Issue<Protocol.Audits.CookieIssueDetails> {
   }
 
   override isCausedByThirdParty(): boolean {
-    const outermostFrame = SDK.FrameManager.FrameManager.instance().getOutermostFrame();
+    const outermostFrame = this.#frameManager.getOutermostFrame();
     return isCausedByThirdParty(outermostFrame, this.details().cookieUrl, this.details().siteForCookies);
   }
 
@@ -257,15 +267,17 @@ export class CookieIssue extends Issue<Protocol.Audits.CookieIssueDetails> {
     return;
   }
 
-  static fromInspectorIssue(
-      issuesModel: SDK.IssuesModel.IssuesModel|null, inspectorIssue: Protocol.Audits.InspectorIssue): CookieIssue[] {
+  static fromInspectorIssue(issuesModel: SDK.IssuesModel.IssuesModel|null,
+                            inspectorIssue: Protocol.Audits.InspectorIssue,
+                            frameManager: SDK.FrameManager.FrameManager): CookieIssue[] {
     const cookieIssueDetails = inspectorIssue.details.cookieIssueDetails;
     if (!cookieIssueDetails) {
       console.warn('Cookie issue without details received.');
       return [];
     }
 
-    return CookieIssue.createIssuesFromCookieIssueDetails(cookieIssueDetails, issuesModel, inspectorIssue.issueId);
+    return CookieIssue.createIssuesFromCookieIssueDetails(cookieIssueDetails, issuesModel, inspectorIssue.issueId,
+                                                          frameManager);
   }
 
   static getSubCategory(code: string): CookieIssueSubCategory {

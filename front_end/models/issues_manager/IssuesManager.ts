@@ -54,111 +54,113 @@ function createIssuesForBlockedByResponseIssue(
   return [];
 }
 
-const issueCodeHandlers = new Map<
-    Protocol.Audits.InspectorIssueCode,
-    (model: SDK.IssuesModel.IssuesModel|null, inspectorIssue: Protocol.Audits.InspectorIssue) => Issue[]>([
-  [
-    Protocol.Audits.InspectorIssueCode.CookieIssue,
-    CookieIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.MixedContentIssue,
-    MixedContentIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.HeavyAdIssue,
-    HeavyAdIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.ContentSecurityPolicyIssue,
-    ContentSecurityPolicyIssue.fromInspectorIssue,
-  ],
-  [Protocol.Audits.InspectorIssueCode.BlockedByResponseIssue, createIssuesForBlockedByResponseIssue],
-  [
-    Protocol.Audits.InspectorIssueCode.SharedArrayBufferIssue,
-    SharedArrayBufferIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.SharedDictionaryIssue,
-    SharedDictionaryIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.CorsIssue,
-    CorsIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.QuirksModeIssue,
-    QuirksModeIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.AttributionReportingIssue,
-    AttributionReportingIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.GenericIssue,
-    GenericIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.DeprecationIssue,
-    DeprecationIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.ClientHintIssue,
-    ClientHintIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.EmailVerificationRequestIssue,
-    EmailVerificationRequestIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.FederatedAuthRequestIssue,
-    FederatedAuthRequestIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.BounceTrackingIssue,
-    BounceTrackingIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.StylesheetLoadingIssue,
-    StylesheetLoadingIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.PartitioningBlobURLIssue,
-    PartitioningBlobURLIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.PropertyRuleIssue,
-    PropertyRuleIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.CookieDeprecationMetadataIssue,
-    CookieDeprecationMetadataIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.ElementAccessibilityIssue,
-    ElementAccessibilityIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.SRIMessageSignatureIssue,
-    SRIMessageSignatureIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.UnencodedDigestIssue,
-    UnencodedDigestIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.ConnectionAllowlistIssue,
-    ConnectionAllowlistIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.PermissionElementIssue,
-    PermissionElementIssue.fromInspectorIssue,
-  ],
-  [
-    Protocol.Audits.InspectorIssueCode.SelectivePermissionsInterventionIssue,
-    SelectivePermissionsInterventionIssue.fromInspectorIssue,
-  ],
-]);
+const issueCodeHandlers =
+    new Map<Protocol.Audits.InspectorIssueCode,
+            (model: SDK.IssuesModel.IssuesModel|null, inspectorIssue: Protocol.Audits.InspectorIssue,
+             frameManager: SDK.FrameManager.FrameManager) => Issue[]>(
+        [
+          [
+            Protocol.Audits.InspectorIssueCode.CookieIssue,
+            CookieIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.MixedContentIssue,
+            MixedContentIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.HeavyAdIssue,
+            HeavyAdIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.ContentSecurityPolicyIssue,
+            ContentSecurityPolicyIssue.fromInspectorIssue,
+          ],
+          [Protocol.Audits.InspectorIssueCode.BlockedByResponseIssue, createIssuesForBlockedByResponseIssue],
+          [
+            Protocol.Audits.InspectorIssueCode.SharedArrayBufferIssue,
+            SharedArrayBufferIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.SharedDictionaryIssue,
+            SharedDictionaryIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.CorsIssue,
+            CorsIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.QuirksModeIssue,
+            QuirksModeIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.AttributionReportingIssue,
+            AttributionReportingIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.GenericIssue,
+            GenericIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.DeprecationIssue,
+            DeprecationIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.ClientHintIssue,
+            ClientHintIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.EmailVerificationRequestIssue,
+            EmailVerificationRequestIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.FederatedAuthRequestIssue,
+            FederatedAuthRequestIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.BounceTrackingIssue,
+            BounceTrackingIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.StylesheetLoadingIssue,
+            StylesheetLoadingIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.PartitioningBlobURLIssue,
+            PartitioningBlobURLIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.PropertyRuleIssue,
+            PropertyRuleIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.CookieDeprecationMetadataIssue,
+            CookieDeprecationMetadataIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.ElementAccessibilityIssue,
+            ElementAccessibilityIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.SRIMessageSignatureIssue,
+            SRIMessageSignatureIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.UnencodedDigestIssue,
+            UnencodedDigestIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.ConnectionAllowlistIssue,
+            ConnectionAllowlistIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.PermissionElementIssue,
+            PermissionElementIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.SelectivePermissionsInterventionIssue,
+            SelectivePermissionsInterventionIssue.fromInspectorIssue,
+          ],
+        ]);
 
 export function isIssueCodeSupported(code: Protocol.Audits.InspectorIssueCode): boolean {
   return issueCodeHandlers.has(code);
@@ -169,10 +171,11 @@ export function isIssueCodeSupported(code: Protocol.Audits.InspectorIssueCode): 
  * Handlers are simple functions hard-coded into a map.
  */
 export function createIssuesFromProtocolIssue(
-    issuesModel: SDK.IssuesModel.IssuesModel|null, inspectorIssue: Protocol.Audits.InspectorIssue): Issue[] {
+    issuesModel: SDK.IssuesModel.IssuesModel|null, inspectorIssue: Protocol.Audits.InspectorIssue,
+    frameManager: SDK.FrameManager.FrameManager = SDK.FrameManager.FrameManager.instance()): Issue[] {
   const handler = issueCodeHandlers.get(inspectorIssue.code);
   if (handler) {
-    return handler(issuesModel, inspectorIssue);
+    return handler(issuesModel, inspectorIssue, frameManager);
   }
   console.warn(`No handler registered for issue code ${inspectorIssue.code}`);
   return [];
@@ -331,7 +334,7 @@ export class IssuesManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
   #onIssueAddedEvent(event: Common.EventTarget.EventTargetEvent<SDK.IssuesModel.IssueAddedEvent>): void {
     const {issuesModel, inspectorIssue} = event.data;
 
-    const issues = createIssuesFromProtocolIssue(issuesModel, inspectorIssue);
+    const issues = createIssuesFromProtocolIssue(issuesModel, inspectorIssue, this.#frameManager);
     for (const issue of issues) {
       this.addIssue(issuesModel, issue);
       const message = issue.maybeCreateConsoleMessage();
