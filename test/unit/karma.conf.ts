@@ -255,6 +255,25 @@ const coveragePreprocessors = TestConfig.coverage ? {
 } :
                                                     {};
 
+function testsEntrypointMiddleware(config: any) {
+  return (req: any, res: any, next: any) => {
+    if (req.url.startsWith('/base/tests.js')) {
+      res.writeHead(200, {'Content-Type': 'application/javascript'});
+      const imports = tests
+                          .map(testPath => {
+                            const relativePath = path.relative(config.basePath, testPath).replace(/\\/g, '/');
+                            const importPath = `/base/${relativePath}`;
+                            return `import ${JSON.stringify(importPath)};`;
+                          })
+                          .join('\n');
+      return res.end(imports + `window.__karma__.loaded();\n`);
+    }
+    next();
+  };
+}
+
+testsEntrypointMiddleware.$inject = ['config'];
+
 module.exports = function(config: any) {
   const targetDir = path.relative(SOURCE_ROOT, GEN_DIR);
   const devToolsRoot = path.relative(CHECKOUT_ROOT, SOURCE_ROOT);
@@ -271,7 +290,7 @@ module.exports = function(config: any) {
       {pattern: path.join(SOURCE_ROOT, 'node_modules/sinon/**/*'), served: true, included: false},
       {pattern: path.join(GEN_DIR, 'test/unit/mocha-interface.js'), served: true, included: true},
       {pattern: path.join(GEN_DIR, 'front_end', 'testing', 'test_setup.js'), type: 'module'},
-      ...tests.map(pattern => ({pattern, type: 'module'})),
+      ...tests.map(pattern => ({pattern, type: 'module', served: true, included: false})),
       ...tests.map(pattern => ({pattern: `${pattern}.map`, served: true, included: false, watched: true})),
       {pattern: path.join(GEN_DIR, 'front_end/Images/*.{svg,png}'), served: true, included: false},
       {pattern: path.join(GEN_DIR, 'front_end/core/i18n/locales/*.json'), served: true, included: false},
@@ -317,6 +336,7 @@ module.exports = function(config: any) {
     },
 
     plugins: [
+      {'middleware:esm-entry': ['factory', testsEntrypointMiddleware]},
       {[`launcher:${CustomChrome.prototype.name}`]: ['type', CustomChrome]},
       require('karma-mocha'),
       require('karma-sourcemap-loader'),
@@ -341,7 +361,7 @@ module.exports = function(config: any) {
       '/sinon': `/base/${devToolsRoot}/node_modules/sinon`,
     },
 
-    middleware: ['snapshotTester'],
+    middleware: ['esm-entry', 'snapshotTester'],
 
     coverageReporter: {
       dir: path.join(TestConfig.artifactsDir, COVERAGE_OUTPUT_DIRECTORY),

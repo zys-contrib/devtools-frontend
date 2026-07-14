@@ -50,23 +50,9 @@
       %MAPPINGS%
     </script>
     %SCRIPTS%
-    <script type="module">
-      // Relying on the script module loading order is not sufficient if modules
-      // use top-level awaits so we need to wait till all modules are actually
-      // imported.
-      await Promise.all(
-        Array.from(document.body.querySelectorAll('script[type=module]')).map(
-          script => {
-            if (script.src) {
-              return import(script.src);
-            }
-          },
-        ),
-      );
-      window.__karma__.loaded();
-    </script>
-    <script nomodule>
-      window.__karma__.loaded();
+    <script
+      type="module"
+      src="/base/tests.js">
     </script>
   </body>
 </html>
