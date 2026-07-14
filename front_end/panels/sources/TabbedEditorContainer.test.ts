@@ -6,12 +6,16 @@ import {assert} from 'chai';
 
 import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
+import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as Breakpoints from '../../models/breakpoints/breakpoints.js';
 import * as Persistence from '../../models/persistence/persistence.js';
+import type * as TextUtils from '../../models/text_utils/text_utils.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import {createFakeSetting, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
+import {MockDebuggerBackend} from '../../testing/MockScopeChain.js';
+import type {TestUniverse} from '../../testing/TestUniverse.js';
 import {createContentProviderUISourceCode, createFileSystemUISourceCode} from '../../testing/UISourceCodeHelpers.js';
 import * as UI from '../../ui/legacy/legacy.js';
 
@@ -127,6 +131,107 @@ describe('TabbedEditorContainer', () => {
             0,
         );
       });
+    });
+  });
+
+  interface LocalSerializedHistoryItem {
+    url: string;
+    resourceTypeName: string;
+    selectionRange?: TextUtils.TextRange.SerializedTextRange;
+    scrollLineNumber?: number;
+  }
+
+  describeWithEnvironment('TabbedEditorContainer View', () => {
+    let testUniverse: TestUniverse;
+    let persistence: Persistence.Persistence.PersistenceImpl;
+    let tabbedEditorContainer: Sources.TabbedEditorContainer.TabbedEditorContainer;
+    const views = new Map<Workspace.UISourceCode.UISourceCode, UI.Widget.Widget>();
+
+    beforeEach(() => {
+      views.clear();
+      const backend = new MockDebuggerBackend();
+      testUniverse = backend.universe;
+      Root.DevToolsContext.setGlobalInstance(testUniverse.context as Root.DevToolsContext.WritableDevToolsContext);
+      persistence = testUniverse.persistence;
+      void testUniverse.networkPersistenceManager;
+
+      const delegate: Sources.TabbedEditorContainer.TabbedEditorContainerDelegate = {
+        viewForFile: uiSourceCode => {
+          let view = views.get(uiSourceCode);
+          if (!view) {
+            view = new UI.Widget.Widget();
+            views.set(uiSourceCode, view);
+          }
+          return view;
+        },
+        recycleUISourceCodeFrame: () => {},
+      };
+      const setting = createFakeSetting<LocalSerializedHistoryItem[]>('previously-viewed-files', []);
+      const placeholder = document.createElement('div');
+      tabbedEditorContainer = new Sources.TabbedEditorContainer.TabbedEditorContainer(delegate, setting, placeholder);
+    });
+
+    afterEach(() => {
+      Root.DevToolsContext.setGlobalInstance(null);
+    });
+
+    it('keeps selected tab when persistence binding is created', async () => {
+      const networkUrl = urlString`https://example.com/foo.js`;
+      const fsUrlfoo = urlString`file:///var/www/foo.js`;
+      const fsUrlbar = urlString`file:///var/www/bar.js`;
+
+      const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
+        url: networkUrl,
+        mimeType: 'text/javascript',
+        projectType: Workspace.Workspace.projectTypes.Network,
+        universe: testUniverse,
+      });
+
+      const {uiSourceCode: fsSourceCode} = createFileSystemUISourceCode({
+        url: fsUrlfoo,
+        mimeType: 'text/javascript',
+        fileSystemPath: 'file:///var/www',
+        autoMapping: true,
+        universe: testUniverse,
+      });
+
+      const {uiSourceCode: barSourceCode} = createFileSystemUISourceCode({
+        url: fsUrlbar,
+        mimeType: 'text/javascript',
+        fileSystemPath: 'file:///var/www',
+        universe: testUniverse,
+      });
+
+      // Open tabs.
+      tabbedEditorContainer.showFile(barSourceCode);
+      tabbedEditorContainer.showFile(networkSourceCode);
+      tabbedEditorContainer.showFile(fsSourceCode);
+
+      const tabbedPane = tabbedEditorContainer.view as UI.TabbedPane.TabbedPane;
+
+      // Verify initial tabs.
+      let tabs = tabbedPane.tabs;
+      assert.lengthOf(tabs, 3);
+      assert.strictEqual(tabs[0].title, 'bar.js');
+      assert.strictEqual(tabbedPane.tabView(tabs[0].id), views.get(barSourceCode));
+      assert.strictEqual(tabs[1].title, 'foo.js');
+      assert.strictEqual(tabbedPane.tabView(tabs[1].id), views.get(networkSourceCode));
+      assert.strictEqual(tabs[2].title, 'foo.js');
+      assert.strictEqual(tabbedPane.tabView(tabs[2].id), views.get(fsSourceCode));
+      assert.isTrue(tabs[2].selected);
+
+      // Create binding.
+      const binding = new Persistence.Persistence.PersistenceBinding(networkSourceCode, fsSourceCode);
+      await persistence.addBinding(binding);
+
+      // Verify tabs after binding.
+      tabs = tabbedPane.tabs;
+      assert.lengthOf(tabs, 2);
+      assert.strictEqual(tabs[0].title, 'bar.js');
+      assert.strictEqual(tabbedPane.tabView(tabs[0].id), views.get(barSourceCode));
+      assert.strictEqual(tabs[1].title, 'foo.js');
+      assert.strictEqual(tabbedPane.tabView(tabs[1].id), views.get(fsSourceCode));
+      assert.isTrue(tabs[1].selected);
     });
   });
 });
