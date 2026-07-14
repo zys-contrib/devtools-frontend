@@ -173,23 +173,25 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
         return JSON.parse(input.formData);
       } catch {
       }
-      return undefined;
     }
+    return undefined;
   })();
 
-  const createPayload = (parsedFormData: unknown): TemplateResult => {
+  const createPayload = (parsedFormData: unknown): LitTemplate => {
+    if (!parsedFormData) {
+      return nothing;
+    }
     const object = new SDK.RemoteObject.LocalJSONObject(parsedFormData);
-    const section =
-        new ObjectUI.ObjectPropertiesSection.RootElement(new ObjectUI.ObjectPropertiesSection.ObjectTree(object, {
-          readOnly: true,
-          propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
-        }));
-    section.title = document.createTextNode(object.description);
-    section.listItemElement.classList.add('source-code', 'object-properties-section');
-    section.childrenListElement.classList.add('source-code', 'object-properties-section');
-    section.expand();
-    return html`<devtools-tree-wrapper
-          .treeElement=${section}></devtools-tree-wrapper>`;
+    const objectTree = new ObjectUI.ObjectPropertiesSection.ObjectTree(object, {
+      readOnly: true,
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
+    });
+    return html`
+      <li role=treeitem class="source-code object-properties-section-root-element object-properties-section" open>
+        ${object.description}
+        ${object.hasChildren ? ObjectUI.ObjectPropertiesSection.renderObjectTree(objectTree) : nothing}
+      </li>
+    `;
   };
 
   const queryStringExpandedSetting =

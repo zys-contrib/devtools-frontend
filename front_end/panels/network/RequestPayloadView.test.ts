@@ -8,7 +8,7 @@ import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 import * as TextUtils from '../../models/text_utils/text_utils.js';
-import {assertScreenshot, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
+import {assertScreenshot, raf, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import * as ObjectUI from '../../ui/legacy/components/object_ui/object_ui.js';
 import * as UI from '../../ui/legacy/legacy.js';
@@ -265,6 +265,9 @@ describeWithEnvironment('RequestPayloadView', () => {
     request.setRequestHeaders([{name: 'Content-Type', value: 'application/json'}]);
     sinon.stub(request, 'requestFormData').resolves('{"foo": "bar"}');
 
+    const populateSpy =
+        sinon.spy(ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement, 'populateChildrenIfNeeded');
+
     const view = new Network.RequestPayloadView.RequestPayloadView();
     view.request = request;
     renderElementIntoDOM(view, {includeCommonStyles: true});
@@ -272,20 +275,20 @@ describeWithEnvironment('RequestPayloadView', () => {
 
     await view.updateComplete;
 
+    // Object properties are rendered asynchronously.
+    await populateSpy.returnValues[0];
+    await raf();
+    await UI.Widget.Widget.allUpdatesComplete;
+
     const treeOutline = view.element.querySelector<HTMLElement>('.request-payload-tree');
     assert.exists(treeOutline);
     const shadowRoot = treeOutline.shadowRoot;
     assert.exists(shadowRoot);
 
-    const firstChildNode = shadowRoot.querySelector('li.object-properties-section-root-element');
+    const firstChildNode = shadowRoot.querySelector('li.object-properties-section');
     assert.exists(firstChildNode);
-
     const rootElement = UI.TreeOutline.TreeElement.getTreeElementBylistItemNode(firstChildNode);
     assert.exists(rootElement);
-
-    // Ensure children are populated
-    await rootElement.onpopulate();
-
     const firstProperty = rootElement.childAt(0);
     assert.instanceOf(firstProperty, ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement);
     assert.isFalse(firstProperty.editable);

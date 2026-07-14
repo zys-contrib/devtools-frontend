@@ -442,6 +442,7 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
   get canExpandRecursively(): boolean {
     return true;
   }
+
   get sortPropertiesAlphabetically(): boolean {
     if (this.isWasm) {
       return false;
@@ -457,7 +458,6 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
     setting.set(value);
     this.removeChildren();
   }
-
   // Performs a pre-order tree traversal over the populated children. If any children need to be populated, callers must
   // do that while walking (pre-order visitation enables that).
   * #walk(maxDepth = -1, filter?: (node: ObjectTreeNodeBase) => boolean): Generator<ObjectTreeNodeBase> {
@@ -783,6 +783,7 @@ export class ObjectTreeNode extends ObjectTreeNodeBase {
   override get canExpandRecursively(): boolean {
     return this.property.name !== '[[Prototype]]';
   }
+
   get name(): string {
     return this.property.name;
   }
@@ -806,7 +807,7 @@ export class ObjectTreeNode extends ObjectTreeNodeBase {
       } else if (isInteger.test(this.name)) {
         this.#path = `${parentPath}[${this.name}]`;
       } else {
-        this.#path = `${parentPath}[${JSON.stringify(this.name)}]`;
+        this.#path = `${parentPath}[${Platform.StringUtilities.formatAsJSLiteral(this.name)}]`;
       }
     }
     return this.#path;
@@ -1151,7 +1152,7 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
         return html`<span class=value title=${description}>${'<' + i18nString(UIStrings.unknown) + '>'}</span>`;
       }
       if (type === 'string' && typeof description === 'string') {
-        const text = JSON.stringify(description);
+        const text = Platform.StringUtilities.escapeUnicode(JSON.stringify(description));
         const tooLong = description.length > maxRenderableStringLength;
         return html`<span class="value object-value-string" title=${ifDefined(tooLong ? undefined : description)}>${
             tooLong ? widget(ExpandableTextPropertyValue, {text}) : text}</span>`;
@@ -1162,7 +1163,7 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
         return html`<span class="value object-value-trustedtype" title=${ifDefined(tooLong ? undefined : text)}>${
             tooLong ? widget(ExpandableTextPropertyValue, {text}) :
                       html`${className} <span class=object-value-string title=${description}>${
-                          JSON.stringify(description)}</span>`}</span>`;
+                          Platform.StringUtilities.escapeUnicode(JSON.stringify(description))}</span>`}</span>`;
       }
       if (type === 'function') {
         return ObjectPropertiesSection.valueElementForFunctionDescription(description, undefined, undefined, 'value');
@@ -1320,7 +1321,8 @@ export function populateObjectTreeContextMenu(
 
   if (object.object instanceof SDK.RemoteObject.LocalJSONObject) {
     const {value} = object.object;
-    const propertyValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : value;
+    const propertyValue =
+        typeof value === 'object' ? Platform.StringUtilities.escapeUnicode(JSON.stringify(value, null, 2)) : value;
     const copyValueHandler = (): void => {
       Host.userMetrics.actionTaken(Host.UserMetrics.Action.NetworkPanelCopyValue);
       Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText((propertyValue as string | undefined));
@@ -1379,7 +1381,7 @@ export function renderObjectTree(
 
   return until(promise, html`<ul class="source-code object-properties-section" role="group"></ul>`);
 }
-export class RootElement extends UI.TreeOutline.TreeElement {
+class RootElement extends UI.TreeOutline.TreeElement {
   private readonly object: ObjectTree;
   private readonly linkifier: Components.Linkifier.Linkifier|undefined;
   private readonly emptyPlaceholder: string|null|undefined;
@@ -1997,6 +1999,7 @@ export class ObjectPropertyTreeElement extends UI.TreeOutline.TreeElement {
       this.collapse();
     }
   }
+
   getContextMenu(event: Event): UI.ContextMenu.ContextMenu {
     const contextMenu = new UI.ContextMenu.ContextMenu(event);
     contextMenu.appendApplicableItems(this);
@@ -2007,7 +2010,8 @@ export class ObjectPropertyTreeElement extends UI.TreeOutline.TreeElement {
       contextMenu.appendApplicableItems(this.property.object);
       if (this.property.parent?.object instanceof SDK.RemoteObject.LocalJSONObject) {
         const {object: {value}} = this.property;
-        const propertyValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : value;
+        const propertyValue =
+            typeof value === 'object' ? Platform.StringUtilities.escapeUnicode(JSON.stringify(value, null, 2)) : value;
         const copyValueHandler = (): void => {
           Host.userMetrics.actionTaken(Host.UserMetrics.Action.NetworkPanelCopyValue);
           Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText((propertyValue as string | undefined));

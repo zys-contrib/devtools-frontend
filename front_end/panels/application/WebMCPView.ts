@@ -252,8 +252,8 @@ export interface ViewInput {
   onPaste: () => void;
 }
 
-export function filterToolCalls(
-    toolCalls: WebMCP.WebMCPModel.Call[], filterState: FilterState): WebMCP.WebMCPModel.Call[] {
+export function filterToolCalls(toolCalls: WebMCP.WebMCPModel.Call[],
+                                filterState: FilterState): WebMCP.WebMCPModel.Call[] {
   let filtered = [...toolCalls];
 
   const statusTypes = filterState.statusTypes;
@@ -734,35 +734,32 @@ export class WebMCPView extends UI.Widget.VBox {
 
   #filterButtons: FilterMenuButtons;
 
-  static createFilterButtons(
-      onToolTypesClick: (contextMenu: UI.ContextMenu.ContextMenu) => void,
-      onStatusTypesClick: (contextMenu: UI.ContextMenu.ContextMenu) => void): FilterMenuButtons {
-    const createButton =
-        (label: string, onContextMenu: (contextMenu: UI.ContextMenu.ContextMenu) => void, jsLogContext: string):
-            FilterMenuButton => {
-              const button = new UI.Toolbar.ToolbarMenuButton(
-                  onContextMenu,
-                  /* isIconDropdown=*/ false, /* useSoftMenu=*/ true, jsLogContext,
-                  /* iconName=*/ undefined,
-                  /* keepOpen=*/ true);
-              button.setText(label);
+  static createFilterButtons(onToolTypesClick: (contextMenu: UI.ContextMenu.ContextMenu) => void,
+                             onStatusTypesClick: (contextMenu: UI.ContextMenu.ContextMenu) => void): FilterMenuButtons {
+    const createButton = (label: string, onContextMenu: (contextMenu: UI.ContextMenu.ContextMenu) => void,
+                          jsLogContext: string): FilterMenuButton => {
+      const button = new UI.Toolbar.ToolbarMenuButton(onContextMenu,
+                                                      /* isIconDropdown=*/ false, /* useSoftMenu=*/ true, jsLogContext,
+                                                      /* iconName=*/ undefined,
+                                                      /* keepOpen=*/ true);
+      button.setText(label);
 
-              /* eslint-disable-next-line @devtools/no-imperative-dom-api */
-              const adorner = new Adorners.Adorner.Adorner();
-              adorner.name = 'countWrapper';
-              const countElement = document.createElement('span');
-              adorner.append(countElement);
-              adorner.classList.add('active-filters-count');
-              adorner.classList.add('hidden');
-              button.setAdorner(adorner);
+      /* eslint-disable-next-line @devtools/no-imperative-dom-api */
+      const adorner = new Adorners.Adorner.Adorner();
+      adorner.name = 'countWrapper';
+      const countElement = document.createElement('span');
+      adorner.append(countElement);
+      adorner.classList.add('active-filters-count');
+      adorner.classList.add('hidden');
+      button.setAdorner(adorner);
 
-              const setCount = (count: number): void => {
-                countElement.textContent = `${count}`;
-                count === 0 ? adorner.hide() : adorner.show();
-              };
+      const setCount = (count: number): void => {
+        countElement.textContent = `${count}`;
+        count === 0 ? adorner.hide() : adorner.show();
+      };
 
-              return {button, setCount};
-            };
+      return {button, setCount};
+    };
 
     return {
       toolTypes: createButton(i18nString(UIStrings.toolTypes), onToolTypesClick, 'webmcp.tool-types'),
@@ -968,20 +965,18 @@ export const PAYLOAD_DEFAULT_VIEW = (input: PayloadViewInput, output: object, ta
 
   const createPayload = (parsedInput: unknown): TemplateResult => {
     const object = new SDK.RemoteObject.LocalJSONObject(parsedInput);
-    const section =
-        new ObjectUI.ObjectPropertiesSection.RootElement(new ObjectUI.ObjectPropertiesSection.ObjectTree(object, {
-          readOnly: true,
-          propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
-        }));
-    section.title = document.createTextNode(object.description);
-    section.listItemElement.classList.add('source-code', 'object-properties-section');
-    section.childrenListElement.classList.add('source-code', 'object-properties-section');
-    section.expand();
+    const objectTree = new ObjectUI.ObjectPropertiesSection.ObjectTree(object, {
+      readOnly: true,
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
+    });
     return html`<devtools-tree .template=${html`
           <style>${ObjectUI.ObjectPropertiesSection.objectValueStyles}</style>
           <style>${ObjectUI.ObjectPropertiesSection.objectPropertiesSectionStyles}</style>
           <ul role="tree">
-            <devtools-tree-wrapper .treeElement=${section}></devtools-tree-wrapper>
+            <li role=treeitem class="object-properties-section-root-element object-properties-section source-code" open>
+              ${object.description}
+              ${object.hasChildren ? ObjectUI.ObjectPropertiesSection.renderObjectTree(objectTree) : nothing}
+            </li>
           </ul>
         `}></devtools-tree>`;
   };
@@ -1351,8 +1346,8 @@ export function parseToolSchema(schema: JSONSchema7): ParsedToolSchema {
     }
   }
 
-  function parseProperty(
-      name: string, propDef: JSONSchema7Definition, optional: boolean): ProtocolMonitor.JSONEditor.Parameter {
+  function parseProperty(name: string, propDef: JSONSchema7Definition,
+                         optional: boolean): ProtocolMonitor.JSONEditor.Parameter {
     if (typeof propDef === 'boolean') {
       return {
         name,

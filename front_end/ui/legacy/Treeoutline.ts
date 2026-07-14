@@ -1895,6 +1895,9 @@ export class TreeViewElement extends HTMLElementWithLightDOMTemplate {
           removeNode(treeElement);
         }
         parent.treeElement.insertChild(treeElement, index);
+        if (parent.treeElement instanceof TreeViewTreeElement) {
+          parent.treeElement.updateExpansionFromAttribute();
+        }
         if (hasBooleanAttribute(node, 'selected')) {
           treeElement.revealAndSelect(true);
         }
