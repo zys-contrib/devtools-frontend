@@ -134,10 +134,6 @@ export class NetworkProject {
     return uiSourceCode.project().target();
   }
 
-  static getTargetForProject(project: Workspace.Workspace.Project): SDK.Target.Target|null {
-    return project.target();
-  }
-
   static framesForUISourceCode(uiSourceCode: Workspace.UISourceCode.UISourceCode):
       SDK.ResourceTreeModel.ResourceTreeFrame[] {
     const target = NetworkProject.targetForUISourceCode(uiSourceCode);

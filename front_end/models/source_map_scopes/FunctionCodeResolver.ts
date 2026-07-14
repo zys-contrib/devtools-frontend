@@ -226,7 +226,7 @@ export async function getFunctionCodeFromLocation(
   const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
   const projects = debuggerWorkspaceBinding.workspace.projectsForType(Workspace.Workspace.projectTypes.Network);
   for (const project of projects) {
-    if (Bindings.NetworkProject.NetworkProject.getTargetForProject(project) !== target) {
+    if (project.target() !== target) {
       continue;
     }
     uiSourceCode = project.uiSourceCodeForURL(url);
