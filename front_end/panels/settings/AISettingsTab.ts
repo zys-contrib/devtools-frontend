@@ -76,6 +76,16 @@ const UIStrings = {
    */
   showLess: 'Show less',
   /**
+   * @description Accessible label for a button to expand an accordion for a specific setting.
+   * @example {Code suggestions} PH1
+   */
+  showMoreOfSetting: 'Show more of {PH1}',
+  /**
+   * @description Accessible label for a button to collapse an accordion for a specific setting.
+   * @example {Code suggestions} PH1
+   */
+  showLessOfSetting: 'Show less of {PH1}',
+  /**
    * @description Header for a list of feature attributes. 'When on, you’ll be able to …'.
    */
   whenOn: 'When on',
@@ -358,6 +368,9 @@ export const AI_SETTINGS_TAB_DEFAULT_VIEW: View = (input, _output, target): void
           <devtools-button
             .data=${{
               title: settingData.settingExpandState.isSettingExpanded ? i18nString(UIStrings.showLess) : i18nString(UIStrings.showMore),
+              accessibleLabel: settingData.settingExpandState.isSettingExpanded ?
+                  i18nString(UIStrings.showLessOfSetting, {PH1: settingData.settingName}) :
+                  i18nString(UIStrings.showMoreOfSetting, {PH1: settingData.settingName}),
               size: Buttons.Button.Size.SMALL,
               iconName: settingData.settingExpandState.isSettingExpanded ? 'chevron-up' : 'chevron-down',
               variant: Buttons.Button.Variant.ICON,
