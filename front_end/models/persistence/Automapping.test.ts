@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
 
 import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
@@ -224,5 +225,176 @@ describe('Automapping', () => {
     const jqueryJsBinding = bindings.find(b => b.network === networkJqueryJs);
     assert.exists(jqueryJsBinding);
     assert.strictEqual(jqueryJsBinding?.fileSystem, fsJqueryJs2);
+  });
+
+  it('verify that automapping is sane', async () => {
+    const clock = sinon.useFakeTimers({toFake: ['setTimeout']});
+    try {
+      const timestamp = new Date('December 1, 1989');
+      const bazContent = 'alert(1);';
+
+      // Network resources
+      const networkResources = [
+        {
+          url: urlString`http://example.com`,
+          mimeType: 'text/html',
+          content: '<body>this is main resource</body>',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, null),
+        },
+        {
+          url: urlString`http://example.com/path/foo.js`,
+          mimeType: 'text/javascript',
+          content: 'console.log(\'foo.js!\');',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, null),
+        },
+        {
+          url: urlString`http://example.com/bar.css?12341234`,
+          mimeType: 'text/css',
+          content: '* { box-sizing: border-box }',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, null),
+        },
+        {
+          url: urlString`http://example.com/baz.js`,
+          mimeType: 'text/javascript',
+          content: bazContent,
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(new Date('December 3, 1989'), null),
+        },
+        {
+          url: urlString`http://example.com/images/image.png`,
+          mimeType: 'image/png',
+          content: '012345',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, 6),
+        },
+        {
+          url: urlString`http://example.com/elements/module.json`,
+          mimeType: 'application/json',
+          content: 'module descriptor 1',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, null),
+        },
+        {
+          url: urlString`http://example.com/sources/module.json`,
+          mimeType: 'application/json',
+          content: 'module descriptor 2',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, null),
+        },
+      ];
+
+      const {uiSourceCodes: networkUISourceCodes} = createContentProviderUISourceCodes({
+        items: networkResources,
+        projectType: Workspace.Workspace.projectTypes.Network,
+        projectId: 'network-project',
+        universe: backend.universe,
+      });
+
+      const [networkIndexHtml,
+             networkFooJs,
+             networkBarCss,
+             networkBazJs,
+             networkImagePng,
+             networkElementsJson,
+             networkSourcesJson,
+      ] = networkUISourceCodes;
+
+      const bindings: Persistence.Persistence.PersistenceBinding[] = [];
+      const persistence = backend.universe.persistence;
+
+      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
+        bindings.push(event.data);
+      });
+
+      // Filesystem resources
+      const fileSystemResources = [
+        {
+          url: urlString`file:///var/www/index.html`,
+          mimeType: 'text/html',
+          content: '<body>this is main resource</body>',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, null),
+        },
+        {
+          url: urlString`file:///var/www/scripts/foo.js`,
+          mimeType: 'text/javascript',
+          content: 'console.log(\'foo.js!\');',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, null),
+        },
+        {
+          url: urlString`file:///var/www/styles/bar.css`,
+          mimeType: 'text/css',
+          content: '* { box-sizing: border-box }',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, null),
+        },
+        {
+          url: urlString`file:///var/www/scripts/baz.js`,
+          mimeType: 'text/javascript',
+          content: bazContent,
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(new Date('December 4, 1989'), null),
+        },
+        {
+          url: urlString`file:///var/www/images/image.png`,
+          mimeType: 'image/png',
+          content: '0123456789',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, 10),
+        },
+        {
+          url: urlString`file:///var/www/modules/elements/module.json`,
+          mimeType: 'application/json',
+          content: 'module descriptor 1',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, null),
+        },
+        {
+          url: urlString`file:///var/www/modules/sources/module.json`,
+          mimeType: 'application/json',
+          content: 'module descriptor 2',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, null),
+        },
+      ];
+
+      const fileSystemUISourceCodes = fileSystemResources.map(resource => {
+        return createFileSystemUISourceCode({
+                 url: resource.url,
+                 mimeType: resource.mimeType,
+                 content: resource.content,
+                 fileSystemPath: 'file:///var/www',
+                 metadata: resource.metadata,
+                 autoMapping: true,
+                 universe: backend.universe,
+               })
+            .uiSourceCode;
+      });
+
+      const fileSystemIndexHtml = fileSystemUISourceCodes[0];
+      const fileSystemFooJs = fileSystemUISourceCodes[1];
+      const fileSystemBarCss = fileSystemUISourceCodes[2];
+      const fileSystemElementsJson = fileSystemUISourceCodes[5];
+      const fileSystemSourcesJson = fileSystemUISourceCodes[6];
+
+      await clock.tickAsync(200);
+
+      assert.lengthOf(bindings, 5);
+
+      const indexHtmlBinding = persistence.binding(networkIndexHtml);
+      assert.exists(indexHtmlBinding);
+      assert.strictEqual(indexHtmlBinding?.fileSystem, fileSystemIndexHtml);
+
+      const fooBinding = persistence.binding(networkFooJs);
+      assert.exists(fooBinding);
+      assert.strictEqual(fooBinding?.fileSystem, fileSystemFooJs);
+
+      const barBinding = persistence.binding(networkBarCss);
+      assert.exists(barBinding);
+      assert.strictEqual(barBinding?.fileSystem, fileSystemBarCss);
+
+      const elementsBinding = persistence.binding(networkElementsJson);
+      assert.exists(elementsBinding);
+      assert.strictEqual(elementsBinding?.fileSystem, fileSystemElementsJson);
+
+      const sourcesBinding = persistence.binding(networkSourcesJson);
+      assert.exists(sourcesBinding);
+      assert.strictEqual(sourcesBinding?.fileSystem, fileSystemSourcesJson);
+
+      assert.isNull(persistence.binding(networkBazJs));
+      assert.isNull(persistence.binding(networkImagePng));
+    } finally {
+      clock.restore();
+    }
   });
 });
