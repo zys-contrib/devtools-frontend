@@ -339,4 +339,75 @@ describe('ResourceTimingView', () => {
       assert.isFalse(firstProperty.editable);
     }
   });
+
+  it('renders Service Worker timing details correctly', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                             urlString`http://devtools-frontend.test`, urlString``,
+                                                             null, null, null);
+    request.mimeType = 'text/html';
+    request.finished = true;
+    request.fetchedViaServiceWorker = true;
+
+    // Setup timing:
+    // requestTime = 100s
+    // workerStart = 10ms -> 100.010s
+    // workerReady = 30ms -> 100.030s (Startup duration = 20ms)
+    // workerFetchStart = 40ms -> 100.040s
+    // workerRespondWithSettled = 90ms -> 100.090s (respondWith duration = 50ms)
+    // sendEnd = 110ms -> 100.110s (Request to SW duration = 80ms)
+    request.timing = {
+      requestTime: 100,
+      proxyStart: -1,
+      proxyEnd: -1,
+      dnsStart: -1,
+      dnsEnd: -1,
+      connectStart: -1,
+      connectEnd: -1,
+      sslStart: -1,
+      sslEnd: -1,
+      workerStart: 10,
+      workerReady: 30,
+      workerRouterEvaluationStart: -1,
+      workerFetchStart: 40,
+      workerRespondWithSettled: 90,
+      sendStart: 100,
+      sendEnd: 110,
+      pushStart: 0,
+      pushEnd: 0,
+      receiveHeadersStart: 120,
+      receiveHeadersEnd: -1,
+    };
+    request.responseReceivedTime = 100.120;
+    request.endTime = 100.150;
+
+    const component = Network.RequestTimingView.RequestTimingView.create(
+        request, new NetworkTimeCalculator.NetworkTimeCalculator(true));
+    renderElementIntoDOM(component);
+
+    await component.updateComplete;
+
+    const rows = Array.from(component.contentElement.querySelectorAll('tr'));
+    const timingRows = rows.filter(row => row.querySelector('.network-timing-bar'));
+
+    const timingData = timingRows.map(row => {
+      const labelEl = row.querySelector('td');
+      const durationEl = row.querySelector('.network-timing-bar-title');
+      return {
+        label: labelEl?.textContent?.trim() ?? '',
+        duration: durationEl?.textContent?.trim() ?? '',
+      };
+    });
+
+    const startupRow = timingData.find(d => d.label === 'Startup');
+    assert.exists(startupRow);
+    assert.strictEqual(startupRow.duration.replace(/\s/g, ' '), '20.00 ms');
+
+    const respondWithRow = timingData.find(d => d.label === 'respondWith');
+    assert.exists(respondWithRow);
+    assert.strictEqual(respondWithRow.duration.replace(/\s/g, ' '), '50.00 ms');
+
+    const requestToSWRow = timingData.find(d => d.label === 'Request to ServiceWorker');
+    assert.exists(requestToSWRow);
+    assert.strictEqual(requestToSWRow.duration.replace(/\s/g, ' '), '80.00 ms');
+  });
 });
