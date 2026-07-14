@@ -14,6 +14,7 @@ import {
   createContentProviderUISourceCodes,
   createFileSystemUISourceCode,
 } from '../../testing/UISourceCodeHelpers.js';
+import * as TextUtils from '../text_utils/text_utils.js';
 import * as Workspace from '../workspace/workspace.js';
 
 import * as Persistence from './persistence.js';
@@ -109,5 +110,119 @@ describe('Automapping', () => {
     const sourceBinding = bindings.find(b => b.network === networkSource);
     assert.exists(sourceBinding);
     assert.strictEqual(sourceBinding?.fileSystem, fileSystemSource);
+  });
+
+  // Replaces web test: http/tests/devtools/persistence/automapping-git-folders.js
+  it('is able to map ambiguous resources based on the selected project folder', async () => {
+    const resetCssContent = '* { margin: 0 }';
+    const jqueryJsContent = 'window.superb = 1;';
+    const logo1Content = 'AAAA';
+    const logo2Content = 'BBBBBBBB';
+
+    // 1. Create network UISourceCodes
+    const {uiSourceCodes: networkSourceCodes} = createContentProviderUISourceCodes({
+      items: [
+        {
+          url: urlString`http://example.com/reset.css`,
+          mimeType: 'text/css',
+          content: resetCssContent,
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, resetCssContent.length)
+        },
+        {
+          url: urlString`http://example.com/jquery.js`,
+          mimeType: 'text/javascript',
+          content: jqueryJsContent,
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, jqueryJsContent.length)
+        },
+        {
+          url: urlString`http://example.com/logo.png`,
+          mimeType: 'image/png',
+          content: logo2Content,
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, logo2Content.length)
+        },
+      ],
+      projectType: Workspace.Workspace.projectTypes.Network,
+      projectId: 'network-project',
+      universe: backend.universe,
+    });
+    const networkResetCss = networkSourceCodes[0];
+    const networkJqueryJs = networkSourceCodes[1];
+    const networkLogo = networkSourceCodes[2];
+
+    const bindings: Persistence.Persistence.PersistenceBinding[] = [];
+    const persistence = backend.universe.persistence;
+    const bindingsCreatedPromise = new Promise<void>(resolve => {
+      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
+        bindings.push(event.data);
+        if (bindings.length === 3) {
+          resolve();
+        }
+      });
+    });
+
+    class MyTestFileSystem extends Persistence.FileSystemWorkspaceBinding.FileSystem {
+      contentMap = new Map<Workspace.UISourceCode.UISourceCode, string>();
+      constructor(fileSystemPath: string) {
+        const isolatedFileSystemManager = backend.universe.isolatedFileSystemManager;
+        const fileSystemWorkspaceBinding = new Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding(
+            isolatedFileSystemManager, backend.universe.workspace);
+        class MyTestPlatformFileSystem extends Persistence.PlatformFileSystem.PlatformFileSystem {
+          constructor() {
+            super(urlString`${fileSystemPath}`, Persistence.PlatformFileSystem.PlatformFileSystemType.WORKSPACE_PROJECT,
+                  false);
+          }
+          override supportsAutomapping(): boolean {
+            return true;
+          }
+        }
+        super(fileSystemWorkspaceBinding, new MyTestPlatformFileSystem(), backend.universe.workspace);
+      }
+      override requestFileContent(uiSourceCode: Workspace.UISourceCode.UISourceCode):
+          Promise<TextUtils.ContentData.ContentDataOrError> {
+        return Promise.resolve(
+            new TextUtils.ContentData.ContentData(this.contentMap.get(uiSourceCode) || '', false, 'text/plain'));
+      }
+      override requestMetadata(uiSourceCode: Workspace.UISourceCode.UISourceCode):
+          Promise<Workspace.UISourceCode.UISourceCodeMetadata|null> {
+        const length = (this.contentMap.get(uiSourceCode) || '').length;
+        return Promise.resolve(new Workspace.UISourceCode.UISourceCodeMetadata(null, length));
+      }
+      addFileToMap(url: string, content: string, mimeType: string): Workspace.UISourceCode.UISourceCode {
+        const uiSourceCode =
+            this.createUISourceCode(urlString`${url}`, Common.ResourceType.ResourceType.fromMimeType(mimeType));
+        this.contentMap.set(uiSourceCode, content);
+        this.addUISourceCode(uiSourceCode);
+        return uiSourceCode;
+      }
+    }
+
+    // 2. Create filesystem UISourceCodes for proj1
+    const fsProj1 = new MyTestFileSystem('file:///var/www/code/proj1');
+    fsProj1.addFileToMap('file:///var/www/code/proj1/reset.css', resetCssContent, 'text/css');
+    fsProj1.addFileToMap('file:///var/www/code/proj1/jquery.js', jqueryJsContent, 'text/javascript');
+    fsProj1.addFileToMap('file:///var/www/code/proj1/logo.png', logo1Content, 'image/png');
+
+    // 3. Create filesystem UISourceCodes for proj2
+    const fsProj2 = new MyTestFileSystem('file:///var/www/code/proj2');
+    const fsResetCss2 = fsProj2.addFileToMap('file:///var/www/code/proj2/reset.css', resetCssContent, 'text/css');
+    const fsJqueryJs2 =
+        fsProj2.addFileToMap('file:///var/www/code/proj2/jquery.js', jqueryJsContent, 'text/javascript');
+    const fsLogo2 = fsProj2.addFileToMap('file:///var/www/code/proj2/logo.png', logo2Content, 'image/png');
+
+    await bindingsCreatedPromise;
+
+    assert.lengthOf(bindings, 3);
+
+    const logoBinding = bindings.find(b => b.network === networkLogo);
+    assert.exists(logoBinding);
+    assert.strictEqual(logoBinding?.fileSystem, fsLogo2);
+
+    const resetCssBinding = bindings.find(b => b.network === networkResetCss);
+    assert.exists(resetCssBinding);
+    assert.strictEqual(resetCssBinding?.fileSystem, fsResetCss2);
+
+    const jqueryJsBinding = bindings.find(b => b.network === networkJqueryJs);
+    assert.exists(jqueryJsBinding);
+    assert.strictEqual(jqueryJsBinding?.fileSystem, fsJqueryJs2);
   });
 });
