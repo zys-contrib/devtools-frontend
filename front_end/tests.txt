@@ -56,6 +56,7 @@ core/sdk/CSSContainerQuery.test.js
 core/sdk/DebuggerModel.test.js
 core/sdk/FrameManager.test.js
 core/sdk/NetworkManager.test.js
+core/sdk/OverlayPersistentHighlighter.test.js
 core/sdk/PageResourceLoader.test.js
 core/sdk/RuntimeModel.test.js
 core/sdk/ServerSentEventsProtocol.test.js
@@ -125,7 +126,6 @@ core/sdk/EnhancedTracesParser.test.js
 core/sdk/NetworkRequest.test.js
 core/sdk/OverlayColorGenerator.test.js
 core/sdk/OverlayModel.test.js
-core/sdk/OverlayPersistentHighlighter.test.js
 core/sdk/PreloadingModel.test.js
 core/sdk/RehydratingConnection.test.js
 core/sdk/RemoteObject.test.js
@@ -228,6 +228,7 @@ models/javascript_metadata/JavaScriptMetadata.test.js
 models/live-metrics/LiveMetrics.test.js
 models/logs/NetworkLog.test.js
 models/logs/RequestResolver.test.js
+models/persistence/Automapping.test.js
 models/persistence/AutomaticFileSystemManager.test.js
 models/persistence/AutomaticFileSystemWorkspaceBinding.test.js
 models/persistence/NetworkPersistenceManager.test.js
@@ -408,6 +409,7 @@ panels/application/preloading/components/UsedPreloadingView.test.js
 panels/autofill/AutofillView.test.js
 panels/browser_debugger/CategorizedBreakpointsSidebarPane.test.js
 panels/browser_debugger/DOMBreakpointsSidebarPane.test.js
+panels/browser_debugger/XHRBreakpointsSidebarPane.test.js
 panels/browser_debugger/browser_debugger.test.js
 panels/changes/ChangesSidebar.test.js
 panels/changes/CombinedDiffView.test.js

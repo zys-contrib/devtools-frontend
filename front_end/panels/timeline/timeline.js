@@ -8621,7 +8621,7 @@ var TimelinePanel = class _TimelinePanel extends Common10.ObjectWrapper.eventMix
         continue;
       }
       const url = request.args.data.url;
-      const resource = SDK7.ResourceTreeModel.ResourceTreeModel.resourceForURL(url);
+      const resource = SDK7.ResourceTreeModel.ResourceTreeModel.resourceForURL(SDK7.TargetManager.TargetManager.instance(), url);
       if (!resource) {
         continue;
       }
@@ -15023,7 +15023,7 @@ var TimelineFlameChartNetworkDataProvider = class {
     if (!networkRequest || !Trace32.Types.Events.isSyntheticNetworkRequest(networkRequest)) {
       return;
     }
-    const timelineNetworkRequest = SDK13.TraceObject.RevealableNetworkRequest.create(networkRequest);
+    const timelineNetworkRequest = SDK13.TraceObject.RevealableNetworkRequest.create(SDK13.TargetManager.TargetManager.instance(), networkRequest);
     const contextMenu = new UI16.ContextMenu.ContextMenu(event);
     contextMenu.appendApplicableItems(timelineNetworkRequest);
     return contextMenu;
