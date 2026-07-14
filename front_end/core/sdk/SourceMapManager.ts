@@ -28,8 +28,9 @@ export class SourceMapManager<T extends FrameAssociated> extends Common.ObjectWr
     super();
 
     this.#target = target;
-    this.#factory =
-        factory ?? ((compiledURL, sourceMappingURL, payload) => new SourceMap(compiledURL, sourceMappingURL, payload));
+    this.#factory = factory ??
+        ((compiledURL, sourceMappingURL, payload) =>
+             new SourceMap(compiledURL, sourceMappingURL, payload, this.#target.targetManager().getConsole()));
   }
 
   setEnabled(isEnabled: boolean): void {

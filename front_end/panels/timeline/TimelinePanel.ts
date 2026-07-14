@@ -2711,8 +2711,8 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
       const {scriptId, scriptUrl, sourceUrl, sourceMapUrl, frame, cachedRawSourceMap} = params;
 
       if (cachedRawSourceMap) {
-        return new SDK.SourceMap.SourceMap(
-            sourceUrl, sourceMapUrl ?? '' as Platform.DevToolsPath.UrlString, cachedRawSourceMap);
+        return new SDK.SourceMap.SourceMap(sourceUrl, sourceMapUrl ?? '' as Platform.DevToolsPath.UrlString,
+                                           cachedRawSourceMap, Common.Console.Console.instance());
       }
 
       // For still-active frames, the source map is likely already fetched or at least in-flight.
@@ -2733,7 +2733,8 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
       if (!isFreshRecording && metadata?.sourceMaps && !isDataUrl) {
         const cachedSourceMap = metadata.sourceMaps.find(m => m.sourceMapUrl === sourceMapUrl);
         if (cachedSourceMap) {
-          return new SDK.SourceMap.SourceMap(sourceUrl, sourceMapUrl, cachedSourceMap.sourceMap);
+          return new SDK.SourceMap.SourceMap(sourceUrl, sourceMapUrl, cachedSourceMap.sourceMap,
+                                             Common.Console.Console.instance());
         }
       }
 
@@ -2763,7 +2764,9 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
       };
       const payload = await SDK.SourceMapManager.tryLoadSourceMap(
           TimelinePanel.instance().#resourceLoader, sourceMapUrl, initiator);
-      return payload ? new SDK.SourceMap.SourceMap(sourceUrl, sourceMapUrl, payload) : null;
+      return payload ?
+          new SDK.SourceMap.SourceMap(sourceUrl, sourceMapUrl, payload, Common.Console.Console.instance()) :
+          null;
     }
 
     const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), SOURCE_MAP_LOAD_TIMEOUT_MS));

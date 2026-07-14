@@ -4,6 +4,7 @@
 
 import {assert} from 'chai';
 
+import * as Common from '../../../core/common/common.js';
 import * as Platform from '../../../core/platform/platform.js';
 import * as SDK from '../../../core/sdk/sdk.js';
 import type * as Protocol from '../../../generated/protocol.js';
@@ -33,7 +34,7 @@ async function loadScriptFixture(
     ts: 0 as Trace.Types.Timing.Micro,
     inline: false,
     content: fixture.content,
-    sourceMap: new SDK.SourceMap.SourceMap(compiledUrl, mapUrl, fixture.sourceMapJson),
+    sourceMap: new SDK.SourceMap.SourceMap(compiledUrl, mapUrl, fixture.sourceMapJson, new Common.Console.Console()),
   };
 }
 
