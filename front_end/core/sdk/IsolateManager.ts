@@ -20,6 +20,7 @@ export class IsolateManager extends Common.ObjectWrapper.ObjectWrapper<EventType
   #pollId = 0;
   readonly #targetManager: TargetManager;
 
+  // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
   constructor(targetManager: TargetManager = TargetManager.instance()) {
     super();
     this.#targetManager = targetManager;

@@ -2120,8 +2120,10 @@ export class MultitargetNetworkManager extends Common.ObjectWrapper.ObjectWrappe
   } = {forceNew: null}): MultitargetNetworkManager {
     const {forceNew, targetManager} = opts;
     if (!Root.DevToolsContext.globalInstance().has(MultitargetNetworkManager) || forceNew) {
+      /* eslint-disable @devtools/no-instance-of-migrated-singletons */
       Root.DevToolsContext.globalInstance().set(
           MultitargetNetworkManager, new MultitargetNetworkManager(targetManager ?? TargetManager.instance()));
+      /* eslint-enable @devtools/no-instance-of-migrated-singletons */
     }
 
     return Root.DevToolsContext.globalInstance().get(MultitargetNetworkManager);

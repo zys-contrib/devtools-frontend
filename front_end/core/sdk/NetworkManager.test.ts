@@ -80,6 +80,7 @@ describe('NetworkManager', () => {
     it('returns decompressed base64 ContentData via requestPostDataContentData for gzip bodies', async () => {
       const universe = new TestUniverse();
       const connection = new MockCDPConnection();
+      // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
       SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true, targetManager: universe.targetManager});
       const originalText = 'a';
       const compressedPostData = await Common.Gzip.compress(originalText);
@@ -111,6 +112,7 @@ describe('NetworkManager', () => {
     it('returns text ContentData via requestPostDataContentData for non-base64 bodies', async () => {
       const universe = new TestUniverse();
       const connection = new MockCDPConnection();
+      // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
       SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true, targetManager: universe.targetManager});
       const plainPostData = 'a=1&b=2';
       connection.setHandler('Network.getRequestPostData', () => ({
@@ -133,6 +135,7 @@ describe('NetworkManager', () => {
     it('returns decompressed base64 ContentData via requestFormDataContentData on NetworkRequest', async () => {
       const universe = new TestUniverse();
       const connection = new MockCDPConnection();
+      // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
       SDK.NetworkManager.MultitargetNetworkManager.instance({forceNew: true, targetManager: universe.targetManager});
       const originalText = 'hello';
       const compressedPostData = await Common.Gzip.compress(originalText);

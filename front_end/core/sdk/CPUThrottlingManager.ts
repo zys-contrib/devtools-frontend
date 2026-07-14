@@ -32,8 +32,10 @@ export class CPUThrottlingManager extends Common.ObjectWrapper.ObjectWrapper<Eve
   } = {forceNew: null}): CPUThrottlingManager {
     const {forceNew} = opts;
     if (!Root.DevToolsContext.globalInstance().has(CPUThrottlingManager) || forceNew) {
+      /* eslint-disable @devtools/no-instance-of-migrated-singletons */
       const manager = new CPUThrottlingManager(opts.settings ?? Common.Settings.Settings.instance(),
                                                opts.targetManager ?? TargetManager.instance());
+      /* eslint-enable @devtools/no-instance-of-migrated-singletons */
       manager.initialize();
       Root.DevToolsContext.globalInstance().set(CPUThrottlingManager, manager);
     }

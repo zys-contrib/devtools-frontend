@@ -168,11 +168,13 @@ export class InspectorFrontendHostStub implements InspectorFrontendHostAPI {
   }
 
   openSearchResultsInNewTab(_query: string): void {
+    // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
     Common.Console.Console.instance().error(
         'Search is not enabled in hosted mode. Please inspect using chrome://inspect');
   }
 
   showItemInFolder(_fileSystemPath: Platform.DevToolsPath.RawPathString): void {
+    // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
     Common.Console.Console.instance().error(
         'Show item in folder is not enabled in hosted mode. Please inspect using chrome://inspect');
   }

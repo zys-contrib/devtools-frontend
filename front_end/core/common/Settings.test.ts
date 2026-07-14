@@ -102,7 +102,9 @@ describe('Settings instance', () => {
 
   it('throws when constructed without storage', () => {
     Common.Settings.Settings.removeInstance();  // Some tests don't clean up well.
+    // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
     assert.throws(() => Common.Settings.Settings.instance());
+    // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
     assert.throws(() => Common.Settings.Settings.instance({
       forceNew: true,
       syncedStorage: null,

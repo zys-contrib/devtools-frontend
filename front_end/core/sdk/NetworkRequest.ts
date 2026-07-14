@@ -309,6 +309,7 @@ export class NetworkRequest extends Common.ObjectWrapper.ObjectWrapper<EventType
       loaderId: Protocol.Network.LoaderId|null,
       initiator: Protocol.Network.Initiator|null,
       hasUserGesture?: boolean,
+      // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
       console: Common.Console.Console = Common.Console.Console.instance(),
   ) {
     super();

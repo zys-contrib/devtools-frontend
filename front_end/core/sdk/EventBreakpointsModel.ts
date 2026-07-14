@@ -88,6 +88,7 @@ export class EventBreakpointsManager implements SDKModelObserver<EventBreakpoint
   readonly #eventListenerBreakpoints: EventListenerBreakpoint[] = [];
   readonly #targetManager: TargetManager;
 
+  // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
   constructor(targetManager: TargetManager = TargetManager.instance()) {
     this.#targetManager = targetManager;
     this.createInstrumentationBreakpoints(Category.AUCTION_WORKLET, [
@@ -152,6 +153,7 @@ export class EventBreakpointsManager implements SDKModelObserver<EventBreakpoint
     const {forceNew, targetManager} = opts;
     if (!Root.DevToolsContext.globalInstance().has(EventBreakpointsManager) || forceNew) {
       Root.DevToolsContext.globalInstance().set(EventBreakpointsManager,
+                                                // eslint-disable-next-line @devtools/no-instance-of-migrated-singletons
                                                 new EventBreakpointsManager(targetManager ?? TargetManager.instance()));
     }
 
