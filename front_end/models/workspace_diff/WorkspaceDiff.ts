@@ -19,6 +19,7 @@ interface DiffResponse {
 export class WorkspaceDiffImpl extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
   readonly #persistence: Persistence.Persistence.PersistenceImpl;
   readonly #networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager;
+  readonly #settings: Common.Settings.Settings;
   readonly #diffs = new WeakMap<Workspace.UISourceCode.UISourceCode, UISourceCodeDiff>();
   /** used in web tests */
   private readonly loadingUISourceCodes =
@@ -30,10 +31,12 @@ export class WorkspaceDiffImpl extends Common.ObjectWrapper.ObjectWrapper<EventT
       persistence: Persistence.Persistence.PersistenceImpl = Persistence.Persistence.PersistenceImpl.instance(),
       networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager =
           Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance(),
+      settings: Common.Settings.Settings = Common.Settings.Settings.instance(),
   ) {
     super();
     this.#persistence = persistence;
     this.#networkPersistenceManager = networkPersistenceManager;
+    this.#settings = settings;
     workspace.addEventListener(Workspace.Workspace.Events.WorkingCopyChanged, this.#uiSourceCodeChanged, this);
     workspace.addEventListener(Workspace.Workspace.Events.WorkingCopyCommitted, this.#uiSourceCodeChanged, this);
     workspace.addEventListener(Workspace.Workspace.Events.UISourceCodeAdded, this.#uiSourceCodeAdded, this);
@@ -63,7 +66,7 @@ export class WorkspaceDiffImpl extends Common.ObjectWrapper.ObjectWrapper<EventT
   #uiSourceCodeDiff(uiSourceCode: Workspace.UISourceCode.UISourceCode): UISourceCodeDiff {
     let diff = this.#diffs.get(uiSourceCode);
     if (!diff) {
-      diff = new UISourceCodeDiff(uiSourceCode, this.#networkPersistenceManager);
+      diff = new UISourceCodeDiff(uiSourceCode, this.#networkPersistenceManager, this.#settings);
       this.#diffs.set(uiSourceCode, diff);
     }
     return diff;
@@ -205,16 +208,19 @@ export interface EventTypes {
 export class UISourceCodeDiff extends Common.ObjectWrapper.ObjectWrapper<UISourceCodeDiffEventTypes> {
   #uiSourceCode: Workspace.UISourceCode.UISourceCode;
   readonly #networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager;
+  readonly #settings: Common.Settings.Settings;
   #requestDiffPromise: Promise<DiffResponse|null>|null = null;
   #pendingChanges: number|null = null;
   dispose = false;
   constructor(
       uiSourceCode: Workspace.UISourceCode.UISourceCode,
       networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager,
+      settings: Common.Settings.Settings = Common.Settings.Settings.instance(),
   ) {
     super();
     this.#uiSourceCode = uiSourceCode;
     this.#networkPersistenceManager = networkPersistenceManager;
+    this.#settings = settings;
     uiSourceCode.addEventListener(Workspace.UISourceCode.Events.WorkingCopyChanged, this.#uiSourceCodeChanged, this);
     uiSourceCode.addEventListener(Workspace.UISourceCode.Events.WorkingCopyCommitted, this.#uiSourceCodeChanged, this);
   }
@@ -293,11 +299,11 @@ export class UISourceCodeDiff extends Common.ObjectWrapper.ObjectWrapper<UISourc
       return null;
     }
 
-    baseline = (await FormatterModule.ScriptFormatter.format(
-                    this.#uiSourceCode.contentType(), this.#uiSourceCode.mimeType(), baseline))
+    baseline = (await FormatterModule.ScriptFormatter.format(this.#settings, this.#uiSourceCode.contentType(),
+                                                             this.#uiSourceCode.mimeType(), baseline))
                    .formattedContent;
     const formatCurrentResult = await FormatterModule.ScriptFormatter.format(
-        this.#uiSourceCode.contentType(), this.#uiSourceCode.mimeType(), current);
+        this.#settings, this.#uiSourceCode.contentType(), this.#uiSourceCode.mimeType(), current);
     current = formatCurrentResult.formattedContent;
     const formattedCurrentMapping = formatCurrentResult.formattedMapping;
     const reNewline = /\r\n?|\n/;

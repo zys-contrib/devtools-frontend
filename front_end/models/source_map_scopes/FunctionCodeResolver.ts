@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import type * as Common from '../../core/common/common.js';
 import type * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Bindings from '../bindings/bindings.js';
@@ -41,8 +42,9 @@ interface InputData {
 
 const inputCache = new WeakMap<Workspace.UISourceCode.UISourceCode, Promise<InputData>>();
 
-async function prepareInput(uiSourceCode: Workspace.UISourceCode.UISourceCode, content: string): Promise<InputData> {
-  const formattedContent = await format(uiSourceCode, content);
+async function prepareInput(uiSourceCode: Workspace.UISourceCode.UISourceCode, content: string,
+                            settings: Common.Settings.Settings): Promise<InputData> {
+  const formattedContent = await format(uiSourceCode, content, settings);
   const text = new TextUtils.Text.Text(formattedContent ? formattedContent.formattedContent : content);
   let performanceData = uiSourceCode.getDecorationData(Workspace.UISourceCode.DecoratorType.PERFORMANCE) as
           Workspace.UISourceCode.LineColumnProfileMap |
@@ -59,14 +61,14 @@ async function prepareInput(uiSourceCode: Workspace.UISourceCode.UISourceCode, c
 }
 
 /** Formatting and parsing line endings for Text is expensive, so cache it. */
-async function prepareInputAndCache(
-    uiSourceCode: Workspace.UISourceCode.UISourceCode, content: string): Promise<InputData> {
+async function prepareInputAndCache(uiSourceCode: Workspace.UISourceCode.UISourceCode, content: string,
+                                    settings: Common.Settings.Settings): Promise<InputData> {
   let cachedPromise = inputCache.get(uiSourceCode);
   if (cachedPromise) {
     return await cachedPromise;
   }
 
-  cachedPromise = prepareInput(uiSourceCode, content);
+  cachedPromise = prepareInput(uiSourceCode, content, settings);
   inputCache.set(uiSourceCode, cachedPromise);
   return await cachedPromise;
 }
@@ -246,8 +248,8 @@ export async function getFunctionCodeFromLocation(
   return await getFunctionCodeFromRawLocation(rawLocation, options);
 }
 
-async function format(uiSourceCode: Workspace.UISourceCode.UISourceCode, content: string):
-    Promise<Formatter.ScriptFormatter.FormattedContent|null> {
+async function format(uiSourceCode: Workspace.UISourceCode.UISourceCode, content: string,
+                      settings: Common.Settings.Settings): Promise<Formatter.ScriptFormatter.FormattedContent|null> {
   const contentType = uiSourceCode.contentType();
   const shouldFormat = !contentType.isFromSourceMap() && (contentType.isDocument() || contentType.isScript()) &&
       TextUtils.TextUtils.isMinified(content);
@@ -255,7 +257,7 @@ async function format(uiSourceCode: Workspace.UISourceCode.UISourceCode, content
     return null;
   }
 
-  return await Formatter.ScriptFormatter.formatScriptContent(contentType.canonicalMimeType(), content, '\t');
+  return await Formatter.ScriptFormatter.formatScriptContent(settings, contentType.canonicalMimeType(), content, '\t');
 }
 
 /**
@@ -275,6 +277,7 @@ export async function getFunctionCodeFromRawLocation(
     return null;
   }
 
-  const inputData = await prepareInputAndCache(functionBounds.uiSourceCode, content);
+  const settings = rawLocation.debuggerModel.target().targetManager().settings;
+  const inputData = await prepareInputAndCache(functionBounds.uiSourceCode, content, settings);
   return createFunctionCode(inputData, functionBounds, options);
 }

@@ -1409,7 +1409,8 @@ async function makeSourceCodeWidget(widgetData: SourceCodeAiWidget): Promise<Wid
   let code = widgetData.data.code;
   if (TextUtils.TextUtils.isMinified(code)) {
     const canonicalMimeType = uiSourceCode?.contentType().canonicalMimeType() || 'text/javascript';
-    const formatted = await Formatter.ScriptFormatter.formatScriptContent(canonicalMimeType, code, '  ');
+    const formatted = await Formatter.ScriptFormatter.formatScriptContent(Common.Settings.Settings.instance(),
+                                                                          canonicalMimeType, code, '  ');
     code = formatted.formattedContent;
   }
 

@@ -392,7 +392,8 @@ export class SourceFrameImpl extends Common.ObjectWrapper.eventMixin<EventTypes,
       const content =
           this.rawContent instanceof CodeMirror.Text ? this.rawContent.sliceString(0) : this.rawContent || '';
       this.textEditor.state = this.placeholderEditorState(i18nString(UIStrings.formatting));
-      const formatInfo = await Formatter.ScriptFormatter.formatScriptContent(this.contentType, content);
+      const formatInfo = await Formatter.ScriptFormatter.formatScriptContent(Common.Settings.Settings.instance(),
+                                                                             this.contentType, content);
       this.formattedMap = formatInfo.formattedMapping;
       await this.setContent(formatInfo.formattedContent);
       this.prettyBaseDoc = textEditor.state.doc;
