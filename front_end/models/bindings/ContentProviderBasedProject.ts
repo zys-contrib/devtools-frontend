@@ -5,6 +5,7 @@
 import type * as Common from '../../core/common/common.js';
 import * as i18n from '../../core/i18n/i18n.js';
 import * as Platform from '../../core/platform/platform.js';
+import type * as SDK from '../../core/sdk/sdk.js';
 import * as TextUtils from '../text_utils/text_utils.js';
 import * as Workspace from '../workspace/workspace.js';
 
@@ -26,10 +27,9 @@ interface UISourceCodeData {
 export class ContentProviderBasedProject extends Workspace.Workspace.ProjectStore {
   readonly #isServiceProject: boolean;
   readonly #uiSourceCodeToData = new WeakMap<Workspace.UISourceCode.UISourceCode, UISourceCodeData>();
-  constructor(
-      workspace: Workspace.Workspace.WorkspaceImpl, id: string, type: Workspace.Workspace.projectTypes,
-      displayName: string, isServiceProject: boolean) {
-    super(workspace, id, type, displayName);
+  constructor(workspace: Workspace.Workspace.WorkspaceImpl, id: string, type: Workspace.Workspace.projectTypes,
+              displayName: string, isServiceProject: boolean, target: SDK.Target.Target|null = null) {
+    super(workspace, id, type, displayName, target);
     this.#isServiceProject = isServiceProject;
     workspace.addProject(this);
   }

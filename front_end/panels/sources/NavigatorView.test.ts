@@ -72,8 +72,7 @@ describeWithEnvironment('NavigatorView', () => {
 
     const projectType = Workspace.Workspace.projectTypes.Network;
     const project = new Bindings.ContentProviderBasedProject.ContentProviderBasedProject(
-        workspace, 'PROJECT_ID', projectType, 'Test project', false /* isServiceProject*/);
-    Bindings.NetworkProject.NetworkProject.setTargetForProject(project, target);
+        workspace, 'PROJECT_ID', projectType, 'Test project', false /* isServiceProject*/, target);
     const contentProvider = TextUtils.StaticContentProvider.StaticContentProvider.fromString(
         url, Common.ResourceType.ResourceType.fromMimeType(mimeType), content);
     const metadata = new Workspace.UISourceCode.UISourceCodeMetadata(null, null);

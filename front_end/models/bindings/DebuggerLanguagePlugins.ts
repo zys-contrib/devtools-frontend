@@ -1100,10 +1100,9 @@ class ModelData {
   project: ContentProviderBasedProject;
   readonly uiSourceCodeToScripts: Map<Workspace.UISourceCode.UISourceCode, SDK.Script.Script[]>;
   constructor(debuggerModel: SDK.DebuggerModel.DebuggerModel, workspace: Workspace.Workspace.WorkspaceImpl) {
-    this.project = new ContentProviderBasedProject(
-        workspace, 'language_plugins::' + debuggerModel.target().id(), Workspace.Workspace.projectTypes.Network, '',
-        false /* isServiceProject */);
-    NetworkProject.setTargetForProject(this.project, debuggerModel.target());
+    this.project = new ContentProviderBasedProject(workspace, 'language_plugins::' + debuggerModel.target().id(),
+                                                   Workspace.Workspace.projectTypes.Network, '',
+                                                   false /* isServiceProject */, debuggerModel.target());
 
     this.uiSourceCodeToScripts = new Map();
   }

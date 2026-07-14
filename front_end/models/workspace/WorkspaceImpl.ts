@@ -56,7 +56,6 @@ export interface Project {
    */
   uiSourceCodes(): Iterable<UISourceCode>;
   target(): SDK.Target.Target|null;
-  setTarget(target: SDK.Target.Target|null): void;
 }
 
 /* eslint-disable @typescript-eslint/naming-convention -- Used by web_tests. */
@@ -77,13 +76,15 @@ export abstract class ProjectStore implements Project {
   readonly #type: projectTypes;
   readonly #displayName: string;
   readonly #uiSourceCodes = new Map<Platform.DevToolsPath.UrlString, UISourceCode>();
-  #target: SDK.Target.Target|null = null;
+  readonly #target: SDK.Target.Target|null = null;
 
-  constructor(workspace: WorkspaceImpl, id: string, type: projectTypes, displayName: string) {
+  constructor(workspace: WorkspaceImpl, id: string, type: projectTypes, displayName: string,
+              target: SDK.Target.Target|null = null) {
     this.#workspace = workspace;
     this.#id = id;
     this.#type = type;
     this.#displayName = displayName;
+    this.#target = target;
   }
 
   id(): string {
@@ -141,10 +142,6 @@ export abstract class ProjectStore implements Project {
 
   target(): SDK.Target.Target|null {
     return this.#target;
-  }
-
-  setTarget(target: SDK.Target.Target|null): void {
-    this.#target = target;
   }
 
   renameUISourceCode(uiSourceCode: UISourceCode, newName: string): void {

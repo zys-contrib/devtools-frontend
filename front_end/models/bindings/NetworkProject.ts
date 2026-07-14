@@ -134,10 +134,6 @@ export class NetworkProject {
     return uiSourceCode.project().target();
   }
 
-  static setTargetForProject(project: Workspace.Workspace.Project, target: SDK.Target.Target): void {
-    project.setTarget(target);
-  }
-
   static getTargetForProject(project: Workspace.Workspace.Project): SDK.Target.Target|null {
     return project.target();
   }
