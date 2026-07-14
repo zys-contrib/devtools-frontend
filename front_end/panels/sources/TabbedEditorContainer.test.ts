@@ -6,6 +6,14 @@ import {assert} from 'chai';
 
 import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
+import * as SDK from '../../core/sdk/sdk.js';
+import * as Bindings from '../../models/bindings/bindings.js';
+import * as Breakpoints from '../../models/breakpoints/breakpoints.js';
+import * as Persistence from '../../models/persistence/persistence.js';
+import * as Workspace from '../../models/workspace/workspace.js';
+import {createFakeSetting, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
+import {createContentProviderUISourceCode, createFileSystemUISourceCode} from '../../testing/UISourceCodeHelpers.js';
+import * as UI from '../../ui/legacy/legacy.js';
 
 import * as Sources from './sources.js';
 
@@ -119,6 +127,82 @@ describe('TabbedEditorContainer', () => {
             0,
         );
       });
+    });
+  });
+});
+
+describeWithEnvironment('TabbedEditorContainer', () => {
+  describe('tabbed editor', () => {
+    it('doesn\'t shuffle tabs when bindings are dropped and re-added', () => {
+      const actionRegistryInstance = UI.ActionRegistry.ActionRegistry.instance({forceNew: true});
+      const workspace = Workspace.Workspace.WorkspaceImpl.instance();
+      const targetManager = SDK.TargetManager.TargetManager.instance();
+      const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(targetManager, workspace);
+      const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({forceNew: true});
+      const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance({
+        forceNew: true,
+        resourceMapping,
+        targetManager,
+        ignoreListManager,
+        workspace,
+      });
+      const breakpointManager = Breakpoints.BreakpointManager.BreakpointManager.instance({
+        forceNew: true,
+        targetManager,
+        workspace,
+        debuggerWorkspaceBinding,
+        settings: Common.Settings.Settings.instance()
+      });
+      Persistence.Persistence.PersistenceImpl.instance({forceNew: true, workspace, breakpointManager});
+      Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance({forceNew: true, workspace});
+      UI.ShortcutRegistry.ShortcutRegistry.instance({forceNew: true, actionRegistry: actionRegistryInstance});
+
+      class MockDelegate implements Sources.TabbedEditorContainer.TabbedEditorContainerDelegate {
+        viewForFile(_uiSourceCode: Workspace.UISourceCode.UISourceCode) {
+          return new UI.Widget.Widget();
+        }
+        recycleUISourceCodeFrame() {
+        }
+      }
+      const delegate = new MockDelegate();
+      const setting =
+          createFakeSetting<Sources.TabbedEditorContainer.SerializedHistoryItem[]>('previouslyViewedFilesSetting', []);
+      const tabbedEditorContainer =
+          new Sources.TabbedEditorContainer.TabbedEditorContainer(delegate, setting, document.createElement('div'));
+
+      const {uiSourceCode: uiSourceCode1} =
+          createContentProviderUISourceCode({url: urlString`http://localhost/foo.js`, mimeType: 'text/javascript'});
+      const {uiSourceCode: uiSourceCode2} =
+          createContentProviderUISourceCode({url: urlString`http://localhost/bar.js`, mimeType: 'text/javascript'});
+      const {uiSourceCode: uiSourceCode3} =
+          createContentProviderUISourceCode({url: urlString`http://localhost/baz.js`, mimeType: 'text/javascript'});
+
+      tabbedEditorContainer.showFile(uiSourceCode1);
+      tabbedEditorContainer.showFile(uiSourceCode2);
+      tabbedEditorContainer.showFile(uiSourceCode3);
+
+      const {uiSourceCode: fsUiSourceCode1} = createFileSystemUISourceCode(
+          {url: urlString`file:///var/www/devtools/persistence/resources/foo.js`, mimeType: 'text/javascript'});
+      const {uiSourceCode: fsUiSourceCode2} = createFileSystemUISourceCode(
+          {url: urlString`file:///var/www/devtools/persistence/resources/bar.js`, mimeType: 'text/javascript'});
+      const {uiSourceCode: fsUiSourceCode3} = createFileSystemUISourceCode(
+          {url: urlString`file:///var/www/devtools/persistence/resources/baz.js`, mimeType: 'text/javascript'});
+
+      const binding1 = new Persistence.Persistence.PersistenceBinding(uiSourceCode1, fsUiSourceCode1);
+      const binding2 = new Persistence.Persistence.PersistenceBinding(uiSourceCode2, fsUiSourceCode2);
+      const binding3 = new Persistence.Persistence.PersistenceBinding(uiSourceCode3, fsUiSourceCode3);
+
+      Persistence.Persistence.PersistenceImpl.instance().dispatchEventToListeners(
+          Persistence.Persistence.Events.BindingCreated, binding1);
+      Persistence.Persistence.PersistenceImpl.instance().dispatchEventToListeners(
+          Persistence.Persistence.Events.BindingCreated, binding2);
+      Persistence.Persistence.PersistenceImpl.instance().dispatchEventToListeners(
+          Persistence.Persistence.Events.BindingCreated, binding3);
+
+      const tabbedPane = tabbedEditorContainer.view as UI.TabbedPane.TabbedPane;
+      const tabTitles = tabbedPane.tabs.map(t => t.title);
+      assert.deepEqual(tabTitles, ['foo.js', 'bar.js', 'baz.js']);
+      assert.strictEqual(tabbedEditorContainer.currentFile(), fsUiSourceCode3);
     });
   });
 });

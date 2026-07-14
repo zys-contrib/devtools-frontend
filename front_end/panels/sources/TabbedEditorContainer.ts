@@ -718,7 +718,7 @@ export interface EventTypes {
 const MAX_PREVIOUSLY_VIEWED_FILES_COUNT = 30;
 const MAX_SERIALIZABLE_URL_LENGTH = 4096;
 
-interface SerializedHistoryItem {
+export interface SerializedHistoryItem {
   url: string;
   resourceTypeName: string;
   selectionRange?: TextUtils.TextRange.SerializedTextRange;
