@@ -27,8 +27,20 @@ async function runEvaluation() {
     }
     console.log('DevTools URL:', devtoolsPage.url());
 
+    devtoolsPage.on('console', msg => console.log('BROWSER LOG:', msg.text()));
+
     console.log('Reloading DevTools to ensure patch is loaded...');
-    await devtoolsPage.reload();
+    try {
+      await devtoolsPage.setCacheEnabled(false);
+      await devtoolsPage.reload({waitUntil: 'domcontentloaded', timeout: 10000});
+    } catch (e) {
+      console.log('Reload warning (proceeding anyway):', e.message);
+    }
+
+    await devtoolsPage.evaluate(() => localStorage.setItem('debugAiCodeCompletionEnabled', 'true'));
+    await devtoolsPage.evaluate(() => localStorage.setItem('debugAiServicesEnabled', 'true'));
+    await devtoolsPage.evaluate(() => localStorage.setItem('debugAiAssistancePanelEnabled', 'true'));
+    await devtoolsPage.evaluate(() => localStorage.setItem('aiAssistanceStructuredLogEnabled', 'true'));
 
     console.log('Waiting for DevTools to initialize and hook to be available...');
     try {
@@ -38,29 +50,45 @@ async function runEvaluation() {
     }
 
     console.log('Fetching test cases from DevTools...');
+    const hostConfig = await devtoolsPage.evaluate(() => self.testCss.getHostConfig());
+    console.log('Host Config:', JSON.stringify(hostConfig, null, 2));
     const testCases = await devtoolsPage.evaluate(() => self.testCss.getCases());
-    console.log(`Found ${testCases.length} test cases.`);
+    console.log(`Found ${testCases.length} test cases. Running each case 5 times.`);
 
-    let testCount = 0;
+    let totalQueries = 0;
     for (const tc of testCases) {
       console.log(`\nRunning: ${tc.name}`);
-      // Delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let successCount = 0;
+      const suggestions = new Set();
 
-      try {
-        const result = await devtoolsPage.evaluate(async (url, prefix, suffix, additionalFiles) => {
-          return await self.testCss.evaluate(url, prefix, suffix, additionalFiles);
-        }, tc.url, tc.prefix, tc.suffix, tc.additionalFiles);
+      for (let run = 1; run <= 5; run++) {
+        // Delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        try {
+          const result = await devtoolsPage.evaluate(async (url, prefix, suffix, additionalFiles) => {
+            return await self.testCss.evaluate(url, prefix, suffix, additionalFiles);
+          }, tc.url, tc.prefix, tc.suffix, tc.additionalFiles);
 
-        console.log('  Result:', result);
-      } catch (e) {
-        console.error('  Failed to run test case:', e.message);
+          if (result.hasSuggestion) {
+            successCount++;
+            for (const s of result.suggestions) {
+              suggestions.add(s);
+            }
+          }
+        } catch (e) {
+          console.error(`  [Run ${run}] Failed:`, e.message);
+        }
+
+        totalQueries++;
+        if (totalQueries % 20 === 0) {
+          console.log('[INFO] Pausing for 8 seconds to prevent rate limiting...');
+          await new Promise(resolve => setTimeout(resolve, 8000));
+        }
       }
 
-      testCount++;
-      if (testCount % 20 === 0 && testCount < testCases.length) {
-        console.log('\n[INFO] Pausing for 10 seconds to avoid rate limiting...');
-        await new Promise(resolve => setTimeout(resolve, 10000));
+      console.log(`  Result: [Success Rate: ${successCount}/5]`);
+      if (suggestions.size > 0) {
+        console.log('  Unique Suggestions:', Array.from(suggestions));
       }
     }
 
