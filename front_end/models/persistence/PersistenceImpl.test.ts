@@ -224,4 +224,78 @@ describe('PersistenceImpl', () => {
        assert.isTrue(fileSystem.isDirty());
        assert.strictEqual(fileSystem.workingCopy(), content);
      });
+
+  it('syncs content between network and filesystem UISourceCodes', async () => {
+    const url = urlString`https://example.com/script.js`;
+    const content = 'window.foo = 1;\n';
+    const {uiSourceCode: networkUISourceCode} = createContentProviderUISourceCode({
+      url,
+      content,
+      mimeType: 'text/javascript',
+      projectType: Workspace.Workspace.projectTypes.Network,
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
+      universe: backend.universe,
+    });
+
+    const mappingPromise = backend.universe.persistence.once(Persistence.Persistence.Events.BindingCreated);
+    const localUrl = urlString`file:///var/www/script.js`;
+    const {uiSourceCode: fileSystemUISourceCode} = createFileSystemUISourceCode({
+      url: localUrl,
+      mimeType: 'text/javascript',
+      content,
+      autoMapping: true,
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
+      universe: backend.universe,
+    });
+
+    const {network, fileSystem} = await mappingPromise;
+    assert.strictEqual(network, networkUISourceCode);
+    assert.strictEqual(fileSystem, fileSystemUISourceCode);
+
+    const persistence = backend.universe.persistence;
+
+    // Helper to wait for sync
+    const waitForSync = () => new Promise<void>(resolve => {
+      const stub = sinon.stub(persistence as unknown as {contentSyncedForTest: () => void}, 'contentSyncedForTest')
+                       .callsFake(() => {
+                         stub.restore();
+                         resolve();
+                       });
+    });
+
+    // 1. Change filesystem content (revision) -> verify network working copy matches.
+    let syncPromise = waitForSync();
+    fileSystemUISourceCode.addRevision('window.foo = 2;\n');
+    await syncPromise;
+    assert.strictEqual(networkUISourceCode.workingCopy(), 'window.foo = 2;\n');
+    assert.strictEqual(fileSystemUISourceCode.workingCopy(), 'window.foo = 2;\n');
+
+    // 2. Change filesystem working copy -> verify network working copy matches.
+    syncPromise = waitForSync();
+    fileSystemUISourceCode.setWorkingCopy('window.foo = 3;\n');
+    await syncPromise;
+    assert.strictEqual(networkUISourceCode.workingCopy(), 'window.foo = 3;\n');
+    assert.strictEqual(fileSystemUISourceCode.workingCopy(), 'window.foo = 3;\n');
+
+    // 3. Reset filesystem working copy -> verify network working copy matches (reverts to last revision, which is 'window.foo = 2;\n')
+    syncPromise = waitForSync();
+    fileSystemUISourceCode.resetWorkingCopy();
+    await syncPromise;
+    assert.strictEqual(networkUISourceCode.workingCopy(), 'window.foo = 2;\n');
+    assert.strictEqual(fileSystemUISourceCode.workingCopy(), 'window.foo = 2;\n');
+
+    // 4. Change network content (revision) -> verify filesystem working copy matches.
+    syncPromise = waitForSync();
+    networkUISourceCode.addRevision('window.foo = 4;\n');
+    await syncPromise;
+    assert.strictEqual(networkUISourceCode.workingCopy(), 'window.foo = 4;\n');
+    assert.strictEqual(fileSystemUISourceCode.workingCopy(), 'window.foo = 4;\n');
+
+    // 5. Change network working copy -> verify filesystem working copy matches.
+    syncPromise = waitForSync();
+    networkUISourceCode.setWorkingCopy('window.foo = 5;\n');
+    await syncPromise;
+    assert.strictEqual(networkUISourceCode.workingCopy(), 'window.foo = 5;\n');
+    assert.strictEqual(fileSystemUISourceCode.workingCopy(), 'window.foo = 5;\n');
+  });
 });
