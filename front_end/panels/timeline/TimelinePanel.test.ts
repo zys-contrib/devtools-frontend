@@ -51,10 +51,13 @@ describe('TimelinePanel', function() {
   let timeline: Timeline.TimelinePanel.TimelinePanel;
   let traceModel: Trace.TraceModel.Model;
   let resourceLoader: SDK.PageResourceLoader.PageResourceLoader;
+  let targetManager: SDK.TargetManager.TargetManager;
+  let isolateManager: SDK.IsolateManager.IsolateManager;
   beforeEach(() => {
     registerNoopActions(
         ['timeline.toggle-recording', 'timeline.record-reload', 'timeline.show-history', 'components.collect-garbage']);
-    const targetManager = SDK.TargetManager.TargetManager.instance();
+    targetManager = SDK.TargetManager.TargetManager.instance();
+    isolateManager = SDK.IsolateManager.IsolateManager.instance();
     const workspace = Workspace.Workspace.WorkspaceImpl.instance();
     const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(targetManager, workspace);
     const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({forceNew: true});
@@ -68,7 +71,8 @@ describe('TimelinePanel', function() {
     Timeline.ModificationsManager.ModificationsManager.reset();
     traceModel = Trace.TraceModel.Model.createWithAllHandlers();
     resourceLoader = {loadResource: sinon.stub()} as unknown as SDK.PageResourceLoader.PageResourceLoader;
-    timeline = Timeline.TimelinePanel.TimelinePanel.instance({forceNew: true, resourceLoader, traceModel});
+    timeline = Timeline.TimelinePanel.TimelinePanel.instance(
+        {forceNew: true, resourceLoader, targetManager, isolateManager, traceModel});
     renderElementIntoDOM(timeline);
   });
 
@@ -311,7 +315,8 @@ describe('TimelinePanel', function() {
 
     it('opens the sidebar once a trace is imported if the user has not seen it before', async function() {
       setupStubs({sidebarHasBeenOpened: false, sidebarIsShowing: false});
-      const timeline = Timeline.TimelinePanel.TimelinePanel.instance({forceNew: true, resourceLoader, traceModel});
+      const timeline = Timeline.TimelinePanel.TimelinePanel.instance(
+          {forceNew: true, resourceLoader, targetManager, isolateManager, traceModel});
       const showBothStub = sinon.stub(timeline.splitWidget(), 'showBoth').callsFake(() => {});
       const events = await TraceLoader.rawEvents(this, 'web-dev.json.gz') as Trace.Types.Events.Event[];
       await timeline.loadingComplete(events, null, null);
@@ -321,7 +326,8 @@ describe('TimelinePanel', function() {
 
     it('does not open the sidebar if the user has seen it already', async function() {
       setupStubs({sidebarHasBeenOpened: true, sidebarIsShowing: false});
-      const timeline = Timeline.TimelinePanel.TimelinePanel.instance({forceNew: true, resourceLoader, traceModel});
+      const timeline = Timeline.TimelinePanel.TimelinePanel.instance(
+          {forceNew: true, resourceLoader, targetManager, isolateManager, traceModel});
       const showBothStub = sinon.stub(timeline.splitWidget(), 'showBoth').callsFake(() => {});
       const events = await TraceLoader.rawEvents(this, 'web-dev.json.gz') as Trace.Types.Events.Event[];
       await timeline.loadingComplete(events, null, null);

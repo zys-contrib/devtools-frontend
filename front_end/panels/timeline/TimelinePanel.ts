@@ -453,10 +453,15 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
   #hiddenTracksInfoBarByParsedTrace = new WeakMap<Trace.TraceModel.ParsedTrace, UI.Infobar.Infobar|'DISMISSED'>();
 
   readonly #resourceLoader: SDK.PageResourceLoader.ResourceLoader;
+  readonly #targetManager: SDK.TargetManager.TargetManager;
+  readonly #isolateManager: SDK.IsolateManager.IsolateManager;
 
-  constructor(resourceLoader: SDK.PageResourceLoader.ResourceLoader, traceModel?: Trace.TraceModel.Model) {
+  constructor(resourceLoader: SDK.PageResourceLoader.ResourceLoader, targetManager: SDK.TargetManager.TargetManager,
+              isolateManager: SDK.IsolateManager.IsolateManager, traceModel?: Trace.TraceModel.Model) {
     super('timeline');
     this.#resourceLoader = resourceLoader;
+    this.#targetManager = targetManager;
+    this.#isolateManager = isolateManager;
     this.registerRequiredCSS(timelinePanelStyles);
     const adornerContent = document.createElement('span');
     adornerContent.innerHTML = `<div style="
@@ -717,10 +722,13 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
   static instance(opts: {
     forceNew: true,
     resourceLoader: SDK.PageResourceLoader.ResourceLoader,
+    targetManager: SDK.TargetManager.TargetManager,
+    isolateManager: SDK.IsolateManager.IsolateManager,
     traceModel?: Trace.TraceModel.Model,
   }|undefined = undefined): TimelinePanel {
     if (opts) {
-      timelinePanelInstance = new TimelinePanel(opts.resourceLoader, opts.traceModel);
+      timelinePanelInstance =
+          new TimelinePanel(opts.resourceLoader, opts.targetManager, opts.isolateManager, opts.traceModel);
     }
 
     if (!timelinePanelInstance) {
@@ -1149,7 +1157,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
 
     // Isolate selector
     if (this.#isNode) {
-      const isolateSelector = new IsolateSelector();
+      const isolateSelector = new IsolateSelector(this.#targetManager, this.#isolateManager);
       this.panelToolbar.appendSeparator();
       this.panelToolbar.appendToolbarItem(isolateSelector);
     }
