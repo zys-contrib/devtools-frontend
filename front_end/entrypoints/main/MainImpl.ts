@@ -445,7 +445,8 @@ export class MainImpl {
     IssuesManager.IssuesManager.IssuesManager.instance({
       forceNew: true,
       ensureFirst: true,
-      showThirdPartyIssuesSetting: IssuesManager.Issue.getShowThirdPartyIssuesSetting(),
+      showThirdPartyIssuesSetting:
+          IssuesManager.Issue.getShowThirdPartyIssuesSetting(Common.Settings.Settings.instance()),
       hideIssueSetting: IssuesManager.IssuesManager.getHideIssueByCodeSetting(),
     });
 

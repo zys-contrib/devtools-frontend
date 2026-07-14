@@ -271,7 +271,7 @@ export class IssuesPane extends UI.Widget.VBox {
     });
     groupByKindSettingCheckbox.setVisible(true);
 
-    const thirdPartySetting = IssuesManager.Issue.getShowThirdPartyIssuesSetting();
+    const thirdPartySetting = IssuesManager.Issue.getShowThirdPartyIssuesSetting(Common.Settings.Settings.instance());
     this.#showThirdPartyCheckbox = new UI.Toolbar.ToolbarSettingCheckbox(
         thirdPartySetting, i18nString(UIStrings.includeCookieIssuesCausedBy),
         i18nString(UIStrings.includeThirdpartyCookieIssues));

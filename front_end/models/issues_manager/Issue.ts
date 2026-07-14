@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as Common from '../../core/common/common.js';
+import type * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
 import type * as Platform from '../../core/platform/platform.js';
@@ -112,8 +112,8 @@ export function unionIssueKind(a: IssueKind, b: IssueKind): IssueKind {
   return IssueKind.IMPROVEMENT;
 }
 
-export function getShowThirdPartyIssuesSetting(): Common.Settings.Setting<boolean> {
-  return Common.Settings.Settings.instance().createSetting('show-third-party-issues', true);
+export function getShowThirdPartyIssuesSetting(settings: Common.Settings.Settings): Common.Settings.Setting<boolean> {
+  return settings.createSetting('show-third-party-issues', true);
 }
 
 export interface AffectedElement {
