@@ -331,19 +331,23 @@ class Init(RunnerCommand):
 
     @classmethod
     def generate_tests(cls, test, test_suite_dir):
-        return [{
-            "name":
-            test.name,
-            "test":
-            os.path.relpath(os.path.join(test.output_directory, output_file),
-                            test_suite_dir),
-            "script":
-            test.test_script,
-            "extension_parameters":
-            test.extension_parameters,
-            "file":
-            test.test_file
-        } for output_file in test.output_files]
+        tests = []
+        for idx, output_file in enumerate(test.output_files):
+            tests.append({
+                "name":
+                f"{test.name} ({' '.join(test.flags[idx])})",
+                "test":
+                os.path.relpath(
+                    os.path.join(test.output_directory, output_file),
+                    test_suite_dir),
+                "script":
+                test.test_script,
+                "extension_parameters":
+                test.extension_parameters,
+                "file":
+                test.test_file
+            })
+        return tests
 
     def _register_options(self, parser):
         parser.add_argument('--debug', '-d', action='store_true')
