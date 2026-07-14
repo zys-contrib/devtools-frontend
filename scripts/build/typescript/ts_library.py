@@ -65,9 +65,9 @@ def tsgoPath():
     return path.normpath(
         path.join(
             TSGO_BASE_LOCATION, *{
-                'Darwin': (darwin_path, 'src', 'lib', 'tsgo'),
-                'Linux': ('linux-amd64', 'src', 'lib', 'tsgo'),
-                'Windows': ('windows-amd64', 'src', 'lib', 'tsgo.exe'),
+                'Darwin': (darwin_path, 'src', 'lib', 'tsc'),
+                'Linux': ('linux-amd64', 'src', 'lib', 'tsc'),
+                'Windows': ('windows-amd64', 'src', 'lib', 'tsc.exe'),
             }[platform.system()]))
 
 
