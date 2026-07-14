@@ -42,6 +42,11 @@ describe('XHRBreakpointsSidebarPane', () => {
 
     const pane = BrowserDebugger.XHRBreakpointsSidebarPane.XHRBreakpointsSidebarPane.instance();
     renderElementIntoDOM(pane, {includeCommonStyles: true, width: 300});
+    // Focus highlighting can interfere with row highlighting, causing flakiness
+    // in tests.
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     await assertScreenshot('browser_debugger/xhr_breakpoints_sidebar_pane_list.png');
   });
 
@@ -61,6 +66,11 @@ describe('XHRBreakpointsSidebarPane', () => {
 
     const pane = BrowserDebugger.XHRBreakpointsSidebarPane.XHRBreakpointsSidebarPane.instance();
     renderElementIntoDOM(pane, {includeCommonStyles: true, width: 300});
+    // Focus highlighting can interfere with row highlighting, causing flakiness
+    // in tests.
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     await assertScreenshot('browser_debugger/xhr_breakpoints_sidebar_pane_hit.png');
   });
 
