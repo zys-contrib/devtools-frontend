@@ -66,6 +66,7 @@ git cl upload -d --commit-description="<description>"
 * Keep line length below 72
 * Add a "Bug: <issue number>" or "Bug: None" trailer on a separate line.
 * Amend formatter/linter changes and fix linter issues.
+* `--commit-description=*` uses the local git HEAD commit description
 
 ### Subsequent upload
 To upload an updated CL:
