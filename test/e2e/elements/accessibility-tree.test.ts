@@ -112,26 +112,23 @@ describe('Accessibility Tree in the Elements Tab', function() {
     }, `Waiting for clipboard to exactly contain ${JSON.stringify(expectedClipboardText)}`);
   });
 
-  // Test broken on Mac
-  it.skipOnPlatforms(['mac'], '[crbug.com/417929842] allows copying nodes via keyboard shortcut',
-                     async ({devToolsPage, inspectedPage}) => {
-                       await inspectedPage.goToResource('elements/accessibility-simple-page.html');
-                       await toggleAccessibilityTree(devToolsPage);
+  it('allows copying nodes via keyboard shortcut', async ({devToolsPage, inspectedPage}) => {
+    await inspectedPage.goToResource('elements/accessibility-simple-page.html');
+    await toggleAccessibilityTree(devToolsPage);
 
-                       const headingText = 'heading\xa0"Title"';
-                       const headingSelector = getAccessibilityTreeNodeSelector(headingText);
+    const headingText = 'heading\xa0"Title"';
+    const headingSelector = getAccessibilityTreeNodeSelector(headingText);
 
-                       await devToolsPage.waitForElementWithTextContent(headingText);
+    await devToolsPage.waitForElementWithTextContent(headingText);
 
-                       const expectedClipboardText =
-                           'heading "Title"\n  StaticText "Title"\n    InlineTextBox "Title"\n';
+    const expectedClipboardText = 'heading "Title"\n  StaticText "Title"\n    InlineTextBox "Title"\n';
 
-                       await devToolsPage.waitForStrictEqual(expectedClipboardText, async () => {
-                         // Sometimes doesn't register; retry until it works.
-                         await devToolsPage.click(headingSelector);
-                         await waitForSelectedTreeElementSelectorWhichIncludesText('Title', devToolsPage);
-                         await devToolsPage.pressKey('c', {control: true});
-                         return (await devToolsPage.readClipboard()).replaceAll('\r\n', '\n');
-                       }, 'Waiting for clipboard to exactly contain ' + JSON.stringify(expectedClipboardText));
-                     });
+    await devToolsPage.waitForStrictEqual(expectedClipboardText, async () => {
+      // Sometimes doesn't register; retry until it works.
+      await devToolsPage.click(headingSelector);
+      await waitForSelectedTreeElementSelectorWhichIncludesText('Title', devToolsPage);
+      await devToolsPage.pressKey('c', {control: true});
+      return (await devToolsPage.readClipboard()).replaceAll('\r\n', '\n');
+    }, 'Waiting for clipboard to exactly contain ' + JSON.stringify(expectedClipboardText));
+  });
 });

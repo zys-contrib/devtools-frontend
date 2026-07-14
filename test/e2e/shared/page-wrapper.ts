@@ -133,7 +133,8 @@ export class PageWrapper {
 
   async pressKey(key: puppeteer.KeyInput, modifiers?: KeyModifiers) {
     await this.#withKeyModifiers(async () => {
-      await this.page.keyboard.press(key);
+      // TODO: this should probably be fixed in Puppeteer.
+      await this.page.keyboard.press(key, {commands: modifiers?.control && key === 'c' ? ['copy'] : undefined});
     }, modifiers ?? {});
   }
 
