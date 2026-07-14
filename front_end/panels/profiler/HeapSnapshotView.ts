@@ -1836,7 +1836,7 @@ export class HeapProfileHeader extends ProfileHeader {
 
   transferChunk(chunk: string): void {
     if (!this.bufferedWriter) {
-      this.bufferedWriter = new Bindings.TempFile.TempFile();
+      this.bufferedWriter = new Bindings.TempFile.TempFile(Common.Console.Console.instance());
     }
     this.bufferedWriter.write([chunk]);
 
