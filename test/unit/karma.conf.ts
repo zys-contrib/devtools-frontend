@@ -331,7 +331,7 @@ module.exports = function(config: any) {
         timeout: TestConfig.debug ? 0 : 5_000,
         expose: ['hasExclusiveTests', 'file', 'type'],
       },
-      sourceRoot: path.resolve(SOURCE_ROOT),
+      checkoutRoot: path.resolve(CHECKOUT_ROOT),
       pathSeparator: path.sep,
     },
 

@@ -14,7 +14,7 @@ const mochaGlobal = (window as unknown as Record<string, {
                      }>)['Mocha'];
 
 // @ts-expect-error no types
-const sourceRoot = window.__karma__.config.sourceRoot as string;
+const checkoutRoot = window.__karma__.config.checkoutRoot as string;
 // @ts-expect-error no types
 const pathSeparator = window.__karma__.config.pathSeparator as string;
 
@@ -31,7 +31,7 @@ mochaGlobal.interfaces['devtools-bdd'] = function(suite: Mocha.Suite) {
         throw new Error('Could not find file name in stack trace');
       }
       const file = decodeURIComponent(match[1]);
-      return sourceRoot + pathSeparator + file.replace(/\//g, pathSeparator);
+      return checkoutRoot + pathSeparator + file.replace(/\//g, pathSeparator);
     }
 
     function wrapDescribe(originalFn: Mocha.SuiteFunction): Mocha.SuiteFunction;
