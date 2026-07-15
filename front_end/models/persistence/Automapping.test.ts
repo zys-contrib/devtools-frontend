@@ -34,7 +34,6 @@ describe('Automapping', () => {
     void backend.universe.persistence;
   });
 
-  // Replaces web test: http/tests/devtools/persistence/automapping-sourcemap-nameclash.js
   it('correctly maps sourcemap sources even when compiled URL matches one of the source URLs', async () => {
     const url = urlString`http://example.com/out.js`;
     const compiledContent = 'console.log("compiled");';
@@ -113,7 +112,6 @@ describe('Automapping', () => {
     assert.strictEqual(sourceBinding?.fileSystem, fileSystemSource);
   });
 
-  // Replaces web test: http/tests/devtools/persistence/automapping-git-folders.js
   it('is able to map ambiguous resources based on the selected project folder', async () => {
     const resetCssContent = '* { margin: 0 }';
     const jqueryJsContent = 'window.superb = 1;';
@@ -555,5 +553,48 @@ describe('Automapping', () => {
     const binding2 = bindings.find(b => b.network === networkScript2);
     assert.exists(binding2);
     assert.strictEqual(binding2?.fileSystem, fileSystemScript2);
+  });
+
+  it('is capable of mapping file:// urls', async () => {
+    const url = urlString`file:///usr/local/node/app.js`;
+    const content = 'console.log(\'foo.js!\');';
+
+    // 1. Create network UISourceCode
+    const {uiSourceCode: networkScript} = createContentProviderUISourceCode({
+      url,
+      mimeType: 'text/javascript',
+      content,
+      projectType: Workspace.Workspace.projectTypes.Network,
+      projectId: 'network-script-project',
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, null),
+      universe: backend.universe,
+    });
+
+    const bindings: Persistence.Persistence.PersistenceBinding[] = [];
+    const persistence = backend.universe.persistence;
+    const bindingCreatedPromise = new Promise<void>(resolve => {
+      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
+        bindings.push(event.data);
+        resolve();
+      });
+    });
+
+    // 2. Create filesystem UISourceCode
+    const {uiSourceCode: fileSystemScript} = createFileSystemUISourceCode({
+      url,
+      content,
+      fileSystemPath: 'file:///usr/local/node',
+      mimeType: 'text/javascript',
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, null),
+      autoMapping: true,
+      universe: backend.universe,
+    });
+
+    await bindingCreatedPromise;
+
+    assert.lengthOf(bindings, 1);
+    const scriptBinding = bindings[0];
+    assert.strictEqual(scriptBinding.network, networkScript);
+    assert.strictEqual(scriptBinding.fileSystem, fileSystemScript);
   });
 });
