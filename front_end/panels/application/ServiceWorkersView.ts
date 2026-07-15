@@ -277,7 +277,8 @@ function renderOriginReport(input: ServiceWorkersViewInput): LitTemplate {
   // clang-format on
 }
 
-function renderServiceWorkersView(input: ServiceWorkersViewInput, _output: undefined, target: HTMLElement): void {
+type View = (input: ServiceWorkersViewInput, output: undefined, target: HTMLElement) => void;
+export const DEFAULT_VIEW: View = (input, _output, target): void => {
   // clang-format off
   render(html`
     <!-- This Origin Report -->
@@ -292,7 +293,7 @@ function renderServiceWorkersView(input: ServiceWorkersViewInput, _output: undef
            }
          });
   // clang-format on
-}
+};
 
 let throttleDisabledForDebugging = false;
 export const setThrottleDisabledForDebugging = (enable: boolean): void => {
@@ -308,11 +309,14 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
       Map<SDK.ServiceWorkerManager.ServiceWorkerManager, Common.EventTarget.EventDescriptor[]>;
   readonly #output = undefined;
 
-  constructor() {
+  #view: (input: ServiceWorkersViewInput, output: undefined, target: HTMLElement) => void;
+
+  constructor(view: View = DEFAULT_VIEW) {
     super({
       jslog: `${VisualLogging.pane('service-workers')}`,
       useShadowDom: true,
     });
+    this.#view = view;
     this.registerRequiredCSS(serviceWorkersViewStyles);
 
     this.sections = new Map();
@@ -346,7 +350,7 @@ export class ServiceWorkersView extends UI.Widget.VBox implements
       sections: Array.from(this.sections.values()).map(data => ({...data})),
     };
 
-    renderServiceWorkersView(input, this.#output, this.contentElement);
+    this.#view(input, this.#output, this.contentElement);
   }
 
   modelAdded(serviceWorkerManager: SDK.ServiceWorkerManager.ServiceWorkerManager): void {
