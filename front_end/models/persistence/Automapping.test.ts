@@ -487,4 +487,73 @@ describe('Automapping', () => {
     assert.strictEqual(removedBindings[1].network, newNetworkSourceCode);
     assert.strictEqual(removedBindings[1].fileSystem, fileSystemSourceCode);
   });
+
+  it('correctly maps file:// URLs with special characters (URL-encoded paths)', async () => {
+    const content = 'console.log(\'foo.js!\');';
+
+    // Create network resources.
+    const {uiSourceCodes: networkScriptCodes} = createContentProviderUISourceCodes({
+      items: [
+        {
+          url: urlString`file:///usr/local/node/script%201.js`,
+          mimeType: 'text/javascript',
+          content,
+        },
+        {
+          url: urlString`file:///usr/local/node/script%25201.js`,
+          mimeType: 'text/javascript',
+          content,
+        },
+      ],
+      projectType: Workspace.Workspace.projectTypes.Network,
+      projectId: 'network-project',
+      universe: backend.universe,
+    });
+    const networkScript1 = networkScriptCodes[0];
+    const networkScript2 = networkScriptCodes[1];
+
+    const bindings: Persistence.Persistence.PersistenceBinding[] = [];
+    const persistence = backend.universe.persistence;
+
+    const bindingCreatedPromise = new Promise<void>(resolve => {
+      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
+        bindings.push(event.data);
+        if (bindings.length === 2) {
+          resolve();
+        }
+      });
+    });
+
+    // Create the first file system resource with a URL-encoded path.
+    const {uiSourceCode: fileSystemScript1} = createFileSystemUISourceCode({
+      url: urlString`file:///usr/local/node/script%201.js`,
+      content,
+      fileSystemPath: 'file:///usr/local/node',
+      mimeType: 'text/javascript',
+      autoMapping: true,
+      universe: backend.universe,
+    });
+
+    // Create the second file system resource with a double URL-encoded path.
+    const {uiSourceCode: fileSystemScript2} = createFileSystemUISourceCode({
+      url: urlString`file:///usr/local/node/script%25201.js`,
+      content,
+      fileSystemPath: 'file:///usr/local/node',
+      mimeType: 'text/javascript',
+      autoMapping: true,
+      universe: backend.universe,
+    });
+
+    await bindingCreatedPromise;
+
+    assert.lengthOf(bindings, 2);
+
+    const binding1 = bindings.find(b => b.network === networkScript1);
+    assert.exists(binding1);
+    assert.strictEqual(binding1?.fileSystem, fileSystemScript1);
+
+    const binding2 = bindings.find(b => b.network === networkScript2);
+    assert.exists(binding2);
+    assert.strictEqual(binding2?.fileSystem, fileSystemScript2);
+  });
 });
