@@ -597,4 +597,67 @@ describe('Automapping', () => {
     assert.strictEqual(scriptBinding.network, networkScript);
     assert.strictEqual(scriptBinding.fileSystem, fileSystemScript);
   });
+
+  // Replaces web test: http/tests/devtools/persistence/automapping-bind-dirty-network-sourcecode.js
+  it('binds dirty network uiSourceCodes to filesystem', async () => {
+    const url = urlString`http://127.0.0.1:8000/devtools/persistence/resources/foo.js`;
+    const fileURL = urlString`file:///var/www/devtools/persistence/resources/foo.js`;
+    const content = 'window.foo = ()=>\'foo\';';
+    const modifiedContent = 'window.bar = ()=>\'bar\';';
+
+    const persistence = backend.universe.persistence;
+    const bindings: Persistence.Persistence.PersistenceBinding[] = [];
+
+    persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
+      bindings.push(event.data);
+    });
+
+    // 1. Add a network resource.
+    const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
+      url,
+      mimeType: 'text/javascript',
+      content,
+      projectType: Workspace.Workspace.projectTypes.Network,
+      projectId: 'network-project',
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
+      universe: backend.universe,
+    });
+
+    // Make the network resource dirty.
+    networkSourceCode.setWorkingCopy(modifiedContent);
+
+    // 2. Add a file system resource.
+    const {uiSourceCode: fileSystemSourceCode} = createFileSystemUISourceCode({
+      url: fileURL,
+      content,
+      fileSystemPath: 'file:///var/www',
+      mimeType: 'text/javascript',
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
+      autoMapping: true,
+      universe: backend.universe,
+    });
+
+    const waitForBinding = (bindingList: Persistence.Persistence.PersistenceBinding[], length: number) => {
+      return new Promise<void>(resolve => {
+        const check = () => {
+          if (bindingList.length === length) {
+            resolve();
+          } else {
+            setTimeout(check, 10);
+          }
+        };
+        check();
+      });
+    };
+
+    // Wait for binding to be created.
+    await waitForBinding(bindings, 1);
+
+    assert.strictEqual(bindings[0].network, networkSourceCode);
+    assert.strictEqual(bindings[0].fileSystem, fileSystemSourceCode);
+
+    // Verify file system is dirty and its working copy is updated.
+    assert.isTrue(bindings[0].fileSystem.isDirty());
+    assert.strictEqual(bindings[0].fileSystem.workingCopy(), modifiedContent);
+  });
 });
