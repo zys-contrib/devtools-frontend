@@ -1,7 +1,6 @@
 // Copyright 2012 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-/* eslint-disable @devtools/no-imperative-dom-api */
 
 import '../../ui/components/report_view/report_view.js';
 import '../../ui/legacy/legacy.js';
@@ -234,6 +233,178 @@ declare global {
     'devtools-idb-database-view': IDBDatabaseView;
   }
 }
+export interface IndexedDBDataViewInput {
+  isIndex: boolean;
+  index: Index|null;
+  objectStore: ObjectStore;
+  entries: Entry[];
+  skipCount: number;
+  selectedRowNumber: number;
+  clearButtonEnabled: boolean;
+  hasMore: boolean;
+  keyFilter: string;
+  needsRefreshVisible: boolean;
+  metadata: ObjectStoreMetadata|null;
+
+  refreshButtonClicked: () => void;
+  clearButtonClicked: () => Promise<void>;
+  deleteButtonClicked: () => Promise<void>;
+  pageBackButtonClicked: () => void;
+  pageForwardButtonClicked: () => void;
+  onKeyFilterChange: (value: string) => void;
+  onRowSelected: (rowNumber: number) => void;
+  deleteEntry: (entry: Entry) => Promise<void>;
+  populateContextMenu: (e: CustomEvent<UI.ContextMenu.ContextMenu>, entry: Entry) => void;
+}
+
+const renderKeyPathString = (keyPathString: string): LitTemplate => {
+  return html`"<span class="source-code indexed-db-key-path">${keyPathString}</span>"`;
+};
+
+const renderKeyColumnHeader = (prefix: string, keyPath: string|string[]|null|undefined): LitTemplate => {
+  if (keyPath === undefined || keyPath === null || keyPath === '') {
+    return html`${prefix}`;
+  }
+  return html`
+    ${prefix} (${i18nString(UIStrings.keyPath)}${
+      Array.isArray(keyPath) ?
+          html`[${keyPath.map((path, i) => html`${i > 0 ? ', ' : ''}${renderKeyPathString(path)}`)}]` :
+          renderKeyPathString(keyPath)})`;
+};
+
+const renderDataGrid = (input: IndexedDBDataViewInput): LitTemplate => {
+  const keyPath = input.isIndex && input.index ? input.index.keyPath : input.objectStore.keyPath;
+  // clang-format off
+  return html`<devtools-data-grid striped style="flex: auto;" name=${i18nString(UIStrings.indexedDb)} .template=${html`
+    <style>${indexedDBViewsStyles}</style>
+    <table>
+      <tr>
+        <th id="number" fixed width="50px">#</th>
+        <th id="key">${renderKeyColumnHeader(i18nString(UIStrings.keyString), keyPath)}</th>
+        ${input.isIndex ? html`<th id="primary-key">${renderKeyColumnHeader(i18nString(UIStrings.primaryKey), input.objectStore.keyPath)}</th>` : nothing}
+        <th id="value">${i18nString(UIStrings.valueString)}</th>
+      </tr>
+      ${repeat(input.entries, (_entry, index) => index, (entry, index) => html`
+        <tr ?selected=${index + input.skipCount === input.selectedRowNumber}
+            @select=${() => input.onRowSelected(index + input.skipCount)}
+            @delete=${() => input.deleteEntry(entry)}
+            @contextmenu=${(e: CustomEvent<UI.ContextMenu.ContextMenu>) => input.populateContextMenu(e, entry)}>
+          <td>${index + input.skipCount}</td>
+          <td>${widget(ObjectPropertiesSectionWidget, {value: entry.key})}</td>
+          ${input.isIndex ? html`<td>${widget(ObjectPropertiesSectionWidget, {value: entry.primaryKey})}</td>` : nothing}
+          <td class="value-column">${widget(ObjectPropertiesSectionWidget, {value: entry.value})}</td>
+        </tr>`
+      )}
+    </table>`}>
+  </devtools-data-grid>`;
+  // clang-format on
+};
+
+const renderToolbar = (input: IndexedDBDataViewInput): LitTemplate => {
+  // clang-format off
+  return html`
+    <devtools-toolbar class="data-view-toolbar" jslog=${VisualLogging.toolbar()}>
+      <devtools-button
+        class="toolbar-button"
+        .iconName=${'refresh'}
+        .title=${i18nString(UIStrings.refresh)}
+        jslog=${VisualLogging.action('refresh').track({click: true})}
+        @click=${input.refreshButtonClicked}
+        .variant=${Buttons.Button.Variant.TOOLBAR}
+      ></devtools-button>
+      <devtools-button
+        class="toolbar-button"
+        .iconName=${'clear'}
+        .title=${i18nString(UIStrings.clearObjectStore)}
+        jslog=${VisualLogging.action('clear-all').track({click: true})}
+        @click=${input.clearButtonClicked}
+        .disabled=${input.isIndex || !input.clearButtonEnabled}
+        .variant=${Buttons.Button.Variant.TOOLBAR}>
+      </devtools-button>
+      <devtools-button
+        class="toolbar-button"
+        .iconName=${'bin'}
+        .title=${i18nString(UIStrings.deleteSelected)}
+        jslog=${VisualLogging.action('delete-selected').track({click: true})}
+        @click=${input.deleteButtonClicked}
+        .disabled=${input.selectedRowNumber < 0 || input.entries.length === 0}
+        .variant=${Buttons.Button.Variant.TOOLBAR}>
+      </devtools-button>
+
+      <div class="toolbar-divider"></div>
+
+      <devtools-button
+        class="toolbar-button"
+        .iconName=${'triangle-left'}
+        .title=${i18nString(UIStrings.showPreviousPage)}
+        .disabled=${input.skipCount <= 0}
+        @click=${input.pageBackButtonClicked}
+        .variant=${Buttons.Button.Variant.TOOLBAR}>
+      </devtools-button>
+      <devtools-button
+        class="toolbar-button"
+        .iconName=${'triangle-right'}
+        .title=${i18nString(UIStrings.showNextPage)}
+        .disabled=${!input.hasMore}
+        @click=${input.pageForwardButtonClicked}
+        .variant=${Buttons.Button.Variant.TOOLBAR}>
+      </devtools-button>
+
+      <devtools-toolbar-input
+        type="filter"
+        placeholder=${i18nString(UIStrings.filterByKey)}
+        class="key-filter-input"
+        .value=${input.keyFilter}
+        @change=${(e: CustomEvent<string>) => {
+          input.onKeyFilterChange(e.detail);
+        }}>
+      </devtools-toolbar-input>
+
+      ${input.needsRefreshVisible ?  html`
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-item stale-data-warning" title=${
+          i18nString(
+              UIStrings
+                  .someEntriesMayHaveBeenModified)}>
+          <devtools-icon name="warning" class="warning-icon"></devtools-icon>
+          <span>${i18nString(UIStrings.dataMayBeStale)}</span>
+        </div>
+      ` : nothing}
+    </devtools-toolbar>`;
+  // clang-format on
+};
+
+const renderSummaryBar = (input: IndexedDBDataViewInput): LitTemplate => {
+  const metadata = input.metadata;
+  if (!metadata) {
+    return nothing;
+  }
+  // clang-format off
+  return html`
+    <div class="object-store-summary-bar">
+      <span>${i18nString(UIStrings.totalEntriesS, { PH1: String(metadata.entriesCount)})}</span>
+      ${input.objectStore.autoIncrement ? html`
+        <span class="separator">\u2758</span>
+        <span>${i18nString(UIStrings.keyGeneratorValueS, {PH1: String(metadata.keyGeneratorValue)})}</span>`
+        : nothing}
+    </div>`;
+  // clang-format on
+};
+
+export type IDBDataViewView = (input: IndexedDBDataViewInput, output: undefined, target: HTMLElement) => void;
+
+// clang-format off
+export const IDB_DATA_VIEW_DEFAULT_VIEW: IDBDataViewView = (input, _output, target) => {
+  render(html`
+    ${renderToolbar(input)}
+    <div class="data-grid-container">
+      ${renderDataGrid(input)}
+    </div>
+    ${renderSummaryBar(input)}
+  `, target, {container: {classes: ['indexed-db-data-view', 'storage-view']}});
+};
+// clang-format on
+
 export class IDBDataView extends UI.View.SimpleView {
   private readonly model: IndexedDBModel;
   private readonly databaseId: DatabaseId;
@@ -259,14 +430,16 @@ export class IDBDataView extends UI.View.SimpleView {
   // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private lastKey?: any;
+  readonly #view: IDBDataViewView;
 
   constructor(model: IndexedDBModel, databaseId: DatabaseId, objectStore: ObjectStore, index: Index|null,
-              refreshObjectStoreCallback: () => void) {
+              refreshObjectStoreCallback: () => void, view = IDB_DATA_VIEW_DEFAULT_VIEW) {
     super({
       title: i18nString(UIStrings.idb),
       viewId: 'idb',
       jslog: `${VisualLogging.pane('indexed-db-data-view')}`,
     });
+    this.#view = view;
     this.registerRequiredCSS(indexedDBViewsStyles);
     this.registerRequiredCSS(DataGrid.dataGridStyles);
 
@@ -275,8 +448,6 @@ export class IDBDataView extends UI.View.SimpleView {
     this.isIndex = Boolean(index);
     this.refreshObjectStoreCallback = refreshObjectStoreCallback;
 
-    this.element.classList.add('indexed-db-data-view', 'storage-view');
-
     this.clearingObjectStore = false;
 
     this.pageSize = 50;
@@ -284,124 +455,6 @@ export class IDBDataView extends UI.View.SimpleView {
     this.entries = [];
 
     this.update(objectStore, index);
-  }
-
-  private renderDataGrid(): LitTemplate {
-    const keyPath = this.isIndex && this.index ? this.index.keyPath : this.objectStore.keyPath;
-    // clang-format off
-    return html`<devtools-data-grid striped style="flex: auto;" name=${i18nString(UIStrings.indexedDb)} .template=${html`
-      <style>${indexedDBViewsStyles}</style>
-      <table>
-        <tr>
-          <th id="number" fixed width="50px">#</th>
-          <th id="key">${this.renderKeyColumnHeader(i18nString(UIStrings.keyString), keyPath)}</th>
-          ${this.isIndex ? html`<th id="primary-key">${this.renderKeyColumnHeader(i18nString(UIStrings.primaryKey), this.objectStore.keyPath)}</th>` : nothing}
-          <th id="value">${i18nString(UIStrings.valueString)}</th>
-        </tr>
-        ${repeat(this.entries, (_entry, index) => index, (entry, index) => html`
-          <tr ?selected=${index + this.skipCount === this.#selectedRowNumber}
-              @select=${() => this.onRowSelected(index + this.skipCount)}
-              @delete=${() => this.deleteEntry(entry)}
-              @contextmenu=${(e: CustomEvent<UI.ContextMenu.ContextMenu>) => this.populateContextMenu(e, entry)}>
-            <td>${index + this.skipCount}</td>
-            <td>${widget(ObjectPropertiesSectionWidget, {value: entry.key})}</td>
-            ${this.isIndex ? html`<td>${widget(ObjectPropertiesSectionWidget, {value: entry.primaryKey})}</td>` : nothing}
-            <td class="value-column">${widget(ObjectPropertiesSectionWidget, {value: entry.value})}</td>
-          </tr>`
-        )}
-      </table>`}>
-    </devtools-data-grid>`;
-    // clang-format on
-  }
-
-  private renderKeyColumnHeader(prefix: string, keyPath: string|string[]|null|undefined): LitTemplate {
-    if (keyPath === undefined || keyPath === null || keyPath === '') {
-      return html`${prefix}`;
-    }
-    return html`
-      ${prefix} (${i18nString(UIStrings.keyPath)}${
-        Array.isArray(keyPath) ?
-            html`[${keyPath.map((path, i) => html`${i > 0 ? ', ' : ''}${this.renderKeyPathString(path)}`)}]` :
-            this.renderKeyPathString(keyPath)})`;
-  }
-
-  private renderKeyPathString(keyPathString: string): LitTemplate {
-    return html`"<span class="source-code indexed-db-key-path">${keyPathString}</span>"`;
-  }
-
-  private renderToolbar(): LitTemplate {
-    // clang-format off
-    return html`
-      <devtools-toolbar class="data-view-toolbar" jslog=${VisualLogging.toolbar()}>
-        <devtools-button
-          class="toolbar-button"
-          .iconName=${'refresh'}
-          .title=${i18nString(UIStrings.refresh)}
-          jslog=${VisualLogging.action('refresh').track({click: true})}
-          @click=${() => this.refreshButtonClicked()}
-          .variant=${Buttons.Button.Variant.TOOLBAR}
-        ></devtools-button>
-        <devtools-button
-          class="toolbar-button"
-          .iconName=${'clear'}
-          .title=${i18nString(UIStrings.clearObjectStore)}
-          jslog=${VisualLogging.action('clear-all').track({click: true})}
-          @click=${() => this.clearButtonClicked()}
-          .disabled=${this.isIndex || !this.#clearButtonEnabled}
-          .variant=${Buttons.Button.Variant.TOOLBAR}>
-        </devtools-button>
-        <devtools-button
-          class="toolbar-button"
-          .iconName=${'bin'}
-          .title=${i18nString(UIStrings.deleteSelected)}
-          jslog=${VisualLogging.action('delete-selected').track({click: true})}
-          @click=${() => this.deleteButtonClicked()}
-          .disabled=${this.#selectedRowNumber < 0 || this.entries.length === 0}
-          .variant=${Buttons.Button.Variant.TOOLBAR}>
-        </devtools-button>
-
-        <div class="toolbar-divider"></div>
-
-        <devtools-button
-          class="toolbar-button"
-          .iconName=${'triangle-left'}
-          .title=${i18nString(UIStrings.showPreviousPage)}
-          .disabled=${this.skipCount <= 0}
-          @click=${() => this.pageBackButtonClicked()}
-          .variant=${Buttons.Button.Variant.TOOLBAR}>
-        </devtools-button>
-        <devtools-button
-          class="toolbar-button"
-          .iconName=${'triangle-right'}
-          .title=${i18nString(UIStrings.showNextPage)}
-          .disabled=${!this.#hasMore}
-          @click=${() => this.pageForwardButtonClicked()}
-          .variant=${Buttons.Button.Variant.TOOLBAR}>
-        </devtools-button>
-
-        <devtools-toolbar-input
-          type="filter"
-          placeholder=${i18nString(UIStrings.filterByKey)}
-          class="key-filter-input"
-          .value=${this.#keyFilter}
-          @change=${(e: CustomEvent<string>) => {
-            this.#keyFilter = e.detail;
-            this.updateData(false);
-          }}>
-        </devtools-toolbar-input>
-
-        ${this.#needsRefreshVisible ?  html`
-          <div class="toolbar-divider"></div>
-          <div class="toolbar-item stale-data-warning" title=${
-            i18nString(
-                UIStrings
-                    .someEntriesMayHaveBeenModified)}>
-            <devtools-icon name="warning" class="warning-icon"></devtools-icon>
-            <span>${i18nString(UIStrings.dataMayBeStale)}</span>
-          </div>
-        ` : nothing}
-      </devtools-toolbar>`;
-    // clang-format on
   }
 
   private pageBackButtonClicked(): void {
@@ -519,23 +572,6 @@ export class IDBDataView extends UI.View.SimpleView {
     });
   }
 
-  private renderSummaryBar(): LitTemplate {
-    const metadata = this.#metadata;
-    if (!metadata) {
-      return nothing;
-    }
-    // clang-format off
-    return html`
-      <div class="object-store-summary-bar">
-        <span>${i18nString(UIStrings.totalEntriesS, { PH1: String(metadata.entriesCount)})}</span>
-        ${this.objectStore.autoIncrement ? html`
-          <span class="separator">\u2758</span>
-          <span>${i18nString(UIStrings.keyGeneratorValueS, {PH1: String(metadata.keyGeneratorValue)})}</span>`
-          : nothing}
-      </div>`;
-    // clang-format on
-  }
-
   private updatedDataForTests(): void {
     // Sniffed in tests.
   }
@@ -548,6 +584,8 @@ export class IDBDataView extends UI.View.SimpleView {
     const ok =
         await UI.UIUtils.ConfirmDialog.show(i18nString(UIStrings.objectStoreWillBeCleared),
                                             i18nString(UIStrings.confirmClearObjectStore, {PH1: this.objectStore.name}),
+                                            // TODO(b/407750537): Fix the linter false positive
+                                            // eslint-disable-next-line @devtools/no-imperative-dom-api
                                             this.element, {jslogContext: 'clear-object-store-confirmation'});
     if (ok) {
       this.#clearButtonEnabled = false;
@@ -622,22 +660,72 @@ export class IDBDataView extends UI.View.SimpleView {
   }
 
   override performUpdate(): void {
-    // clang-format off
-    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
-    render(html`
-      ${this.renderToolbar()}
-      <div class="data-grid-container">
-        ${this.renderDataGrid()}
-      </div>
-      ${this.renderSummaryBar()}
-    `, this.element);
-    // clang-format on
+    this.#view({
+      isIndex: this.isIndex,
+      index: this.index,
+      objectStore: this.objectStore,
+      entries: this.entries,
+      skipCount: this.skipCount,
+      selectedRowNumber: this.#selectedRowNumber,
+      clearButtonEnabled: this.#clearButtonEnabled,
+      hasMore: this.#hasMore,
+      keyFilter: this.#keyFilter,
+      needsRefreshVisible: this.#needsRefreshVisible,
+      metadata: this.#metadata,
+      refreshButtonClicked: this.refreshButtonClicked.bind(this),
+      clearButtonClicked: this.clearButtonClicked.bind(this),
+      deleteButtonClicked: this.deleteButtonClicked.bind(this),
+      pageBackButtonClicked: this.pageBackButtonClicked.bind(this),
+      pageForwardButtonClicked: this.pageForwardButtonClicked.bind(this),
+      onKeyFilterChange: (value: string) => {
+        this.#keyFilter = value;
+        this.updateData(false);
+      },
+      onRowSelected: this.onRowSelected.bind(this),
+      deleteEntry: this.deleteEntry.bind(this),
+      populateContextMenu: this.populateContextMenu.bind(this),
+    },
+               undefined, this.element);
   }
 }
+
+interface ObjectPropertiesSectionWidgetInput {
+  value: SDK.RemoteObject.RemoteObject|null;
+}
+
+interface ObjectPropertiesSectionWidgetOutput {
+  objectPropSection: ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection|null;
+}
+
+type ObjectPropertiesSectionWidgetView = (
+    input: ObjectPropertiesSectionWidgetInput,
+    output: ObjectPropertiesSectionWidgetOutput,
+    target: HTMLElement,
+    ) => void;
+
+const OBJECT_PROPERTIES_SECTION_WIDGET_DEFAULT_VIEW: ObjectPropertiesSectionWidgetView = (input, output, target) => {
+  if (!input.value) {
+    output.objectPropSection = null;
+    render(nothing, target);
+    return;
+  }
+  const objectPropSection = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.defaultObjectPropertiesSection(
+      input.value, undefined /* linkifier */, true /* skipProto */, true /* readOnly */);
+  output.objectPropSection = objectPropSection;
+
+  const element = input.value.hasChildren ? objectPropSection.element : objectPropSection.titleElement;
+  render(html`${element}`, target);
+};
 
 class ObjectPropertiesSectionWidget extends UI.Widget.Widget {
   #value: SDK.RemoteObject.RemoteObject|null = null;
   #objectPropSection: ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection|null = null;
+  readonly #view: ObjectPropertiesSectionWidgetView;
+
+  constructor(element?: HTMLElement, view = OBJECT_PROPERTIES_SECTION_WIDGET_DEFAULT_VIEW) {
+    super(element);
+    this.#view = view;
+  }
 
   set value(value: SDK.RemoteObject.RemoteObject|null) {
     if (this.#value === value) {
@@ -652,20 +740,8 @@ class ObjectPropertiesSectionWidget extends UI.Widget.Widget {
   }
 
   override performUpdate(): void {
-    const value = this.#value;
-    if (!value) {
-      this.contentElement.removeChildren();
-      this.#objectPropSection = null;
-      return;
-    }
-    this.contentElement.removeChildren();
-    this.#objectPropSection = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.defaultObjectPropertiesSection(
-        value, undefined /* linkifier */, true /* skipProto */, true /* readOnly */);
-
-    if (value.hasChildren) {
-      this.contentElement.appendChild(this.#objectPropSection.element);
-    } else {
-      this.contentElement.appendChild(this.#objectPropSection.titleElement);
-    }
+    const output: ObjectPropertiesSectionWidgetOutput = {objectPropSection: null};
+    this.#view({value: this.#value}, output, this.contentElement);
+    this.#objectPropSection = output.objectPropSection;
   }
 }
