@@ -3,7 +3,9 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
 
+import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {createFileSystemUISourceCode} from '../../testing/UISourceCodeHelpers.js';
@@ -51,5 +53,55 @@ describeWithEnvironment('FileSystemWorkspaceBinding', () => {
     assert.strictEqual((fooContent as TextUtils.ContentData.ContentData).text, 'foo');
     assert.strictEqual(fooSourceCode.workingCopy(), 'foo');
     assert.strictEqual(barSourceCode.workingCopy(), 'Why!?');
+  });
+
+  it('creates file atomically with content', async () => {
+    const fsPath = 'file:///var/www';
+    const {project} = createFileSystemUISourceCode({
+      url: urlString`file:///var/www/existing.js`,
+      content: 'existing content',
+      fileSystemPath: fsPath,
+      mimeType: 'text/javascript',
+    });
+
+    const platformFileSystem = project.fileSystem();
+
+    // Stub createFile to simulate successful file creation on disk.
+    const createFileStub = sinon.stub(platformFileSystem, 'createFile');
+    createFileStub.callsFake(
+        async (path: Platform.DevToolsPath.EncodedPathString, name: Platform.DevToolsPath.RawPathString|null) => {
+          return (path ? path + '/' : '') + name as Platform.DevToolsPath.EncodedPathString;
+        });
+
+    // Stub contentType to return the correct resource type.
+    const contentTypeStub = sinon.stub(platformFileSystem, 'contentType');
+    contentTypeStub.returns(Common.ResourceType.resourceTypes.Script);
+
+    const workspace = Workspace.Workspace.WorkspaceImpl.instance();
+    const addedPromise = new Promise<Workspace.UISourceCode.UISourceCode>(resolve => {
+      const listener = (event: Common.EventTarget.EventTargetEvent<Workspace.UISourceCode.UISourceCode>) => {
+        const uiSourceCode = event.data;
+        if (uiSourceCode.url() === 'file:///var/www/new_file.js') {
+          workspace.removeEventListener(Workspace.Workspace.Events.UISourceCodeAdded, listener);
+          resolve(uiSourceCode);
+        }
+      };
+      workspace.addEventListener(Workspace.Workspace.Events.UISourceCodeAdded, listener);
+    });
+
+    const newFileContent = 'new file content';
+    const uiSourceCode = await project.createFile(
+        '' as Platform.DevToolsPath.EncodedPathString,
+        'new_file.js' as Platform.DevToolsPath.RawPathString,
+        newFileContent,
+    );
+
+    assert.exists(uiSourceCode);
+    const addedUISourceCode = await addedPromise;
+    assert.strictEqual(addedUISourceCode, uiSourceCode);
+
+    const contentData = await addedUISourceCode.requestContentData();
+    assert.isFalse(TextUtils.ContentData.ContentData.isError(contentData));
+    assert.strictEqual((contentData as TextUtils.ContentData.ContentData).text, newFileContent);
   });
 });
