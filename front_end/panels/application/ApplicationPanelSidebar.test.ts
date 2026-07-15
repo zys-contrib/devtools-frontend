@@ -355,15 +355,6 @@ describeWithEnvironment('ApplicationPanelSidebar', () => {
     assert.strictEqual(expectedCall.called, inScope);
   };
 
-  it('adds interest group event on in scope event',
-     testUiUpdate(
-         Application.InterestGroupStorageModel.Events.INTEREST_GROUP_ACCESS,
-         Application.InterestGroupStorageModel.InterestGroupStorageModel, 'interestGroupTreeElement.addEvent', true));
-
-  it('does not add interest group event on out of scope event',
-     testUiUpdate(
-         Application.InterestGroupStorageModel.Events.INTEREST_GROUP_ACCESS,
-         Application.InterestGroupStorageModel.InterestGroupStorageModel, 'interestGroupTreeElement.addEvent', false));
   it('adds DOM storage on in scope event',
      testUiUpdate(
          SDK.DOMStorageModel.Events.DOM_STORAGE_ADDED, SDK.DOMStorageModel.DOMStorageModel,

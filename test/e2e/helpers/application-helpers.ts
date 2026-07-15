@@ -372,7 +372,6 @@ export function veImpressionForApplicationPanel() {
           veImpression('TreeItem', 'cache-storage'),
           veImpression('TreeItem', 'cookies'),
           veImpression('TreeItem', 'indexed-db'),
-          veImpression('TreeItem', 'interest-groups'),
           veImpression('TreeItem', 'local-storage'),
           veImpression('TreeItem', 'private-state-tokens'),
           veImpression('TreeItem', 'session-storage'),

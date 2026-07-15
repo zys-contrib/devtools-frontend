@@ -168,7 +168,6 @@ export const enum VisualLoggingTrackName {
   THREAD_MAIN = 'thread.main',
   THREAD_FRAME = 'thread.frame',
   THREAD_WORKER = 'thread.worker',
-  THREAD_AUCTION_WORKLET = 'thread.auction-worklet',
   THREAD_RASTERIZER = 'thread.rasterizer',
   THREAD_POOL = 'thread.pool',
   THREAD_OTHER = 'thread.other',
@@ -301,8 +300,6 @@ export class CompatibilityTracksAppender {
         }
         case Trace.Handlers.Threads.ThreadType.WORKER:
           return 3;
-        case Trace.Handlers.Threads.ThreadType.AUCTION_WORKLET:
-          return 3;
         case Trace.Handlers.Threads.ThreadType.RASTERIZER:
           return 4;
         case Trace.Handlers.Threads.ThreadType.THREAD_POOL:
@@ -325,20 +322,6 @@ export class CompatibilityTracksAppender {
         continue;
       }
       if ((name && HIDDEN_THREAD_NAMES.has(name)) && !showAllEvents) {
-        continue;
-      }
-
-      const matchingWorklet = this.#parsedTrace.data.AuctionWorklets.worklets.get(pid);
-      if (matchingWorklet) {
-        // Each AuctionWorklet has two key threads:
-        // 1. the Utility Thread
-        // 2. the V8 Helper Thread - either a bidder or seller. see buildNameForAuctionWorklet()
-        // There are other threads in a worklet process, but we don't render them.
-        const tids = [matchingWorklet.args.data.utilityThread.tid, matchingWorklet.args.data.v8HelperThread.tid];
-        if (tids.includes(tid)) {
-          this.#threadAppenders.push(new ThreadAppender(
-              this, this.#parsedTrace, pid, tid, '', Trace.Handlers.Threads.ThreadType.AUCTION_WORKLET, entries, tree));
-        }
         continue;
       }
 

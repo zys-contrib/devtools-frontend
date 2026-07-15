@@ -70,8 +70,6 @@ import {
   type ObjectStore,
 } from './IndexedDBModel.js';
 import {IDBDatabaseView, IDBDataView} from './IndexedDBViews.js';
-import {Events as InterestGroupModelEvents, InterestGroupStorageModel} from './InterestGroupStorageModel.js';
-import {InterestGroupTreeElement} from './InterestGroupTreeElement.js';
 import {OpenedWindowDetailsView, WorkerDetailsView} from './OpenedWindowDetailsView.js';
 import type * as PreloadingHelper from './preloading/helper/helper.js';
 import {
@@ -347,7 +345,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
   sessionStorageListTreeElement: ExpandableApplicationPanelTreeElement;
   extensionStorageListTreeElement: ExpandableApplicationPanelTreeElement;
   indexedDBListTreeElement: IndexedDBTreeElement;
-  interestGroupTreeElement: InterestGroupTreeElement;
   cookieListTreeElement: ExpandableApplicationPanelTreeElement;
   trustTokensTreeElement: TrustTokensTreeElement;
   cacheStorageListTreeElement: ServiceWorkerCacheTreeElement;
@@ -484,9 +481,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
     this.trustTokensTreeElement = new TrustTokensTreeElement(panel);
     storageTreeElement.appendChild(this.trustTokensTreeElement);
 
-    this.interestGroupTreeElement = new InterestGroupTreeElement(panel);
-    storageTreeElement.appendChild(this.interestGroupTreeElement);
-
     this.sharedStorageListTreeElement = new SharedStorageListTreeElement(panel);
     storageTreeElement.appendChild(this.sharedStorageListTreeElement);
 
@@ -583,12 +577,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
         },
         {scoped: true});
     SDK.TargetManager.TargetManager.instance().observeModels(
-        InterestGroupStorageModel, {
-          modelAdded: (model: InterestGroupStorageModel) => this.interestGroupModelAdded(model),
-          modelRemoved: (model: InterestGroupStorageModel) => this.interestGroupModelRemoved(model),
-        },
-        {scoped: true});
-    SDK.TargetManager.TargetManager.instance().observeModels(
         SharedStorageModel, {
           modelAdded: (model: SharedStorageModel) => this.sharedStorageModelAdded(model).catch(err => {
             console.error(err);
@@ -627,12 +615,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
 
     this.target = target;
 
-    const interestGroupModel = target.model(InterestGroupStorageModel);
-    if (interestGroupModel) {
-      interestGroupModel.addEventListener(
-          InterestGroupModelEvents.INTEREST_GROUP_ACCESS, this.interestGroupAccess, this);
-    }
-
     const resourceTreeModel = target.model(SDK.ResourceTreeModel.ResourceTreeModel);
     if (!resourceTreeModel) {
       return;
@@ -660,12 +642,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
           SDK.ResourceTreeModel.Events.WillLoadCachedResources, this.resetWithFrames, this);
     }
 
-    const interestGroupModel = target.model(InterestGroupStorageModel);
-    if (interestGroupModel) {
-      interestGroupModel.removeEventListener(
-          InterestGroupModelEvents.INTEREST_GROUP_ACCESS, this.interestGroupAccess, this);
-    }
-
     this.resetWithFrames();
   }
 
@@ -677,10 +653,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
     for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames(this.target?.targetManager() ??
                                                                        SDK.TargetManager.TargetManager.instance())) {
       this.addCookieDocument(frame);
-    }
-    const interestGroupModel = this.target?.model(InterestGroupStorageModel);
-    if (interestGroupModel) {
-      interestGroupModel.enable();
     }
 
     this.cacheStorageListTreeElement.initialize();
@@ -736,16 +708,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
 
   private indexedDBModelRemoved(model: IndexedDBModel): void {
     this.indexedDBListTreeElement.removeIndexedDBForModel(model);
-  }
-
-  private interestGroupModelAdded(model: InterestGroupStorageModel): void {
-    model.enable();
-    model.addEventListener(InterestGroupModelEvents.INTEREST_GROUP_ACCESS, this.interestGroupAccess, this);
-  }
-
-  private interestGroupModelRemoved(model: InterestGroupStorageModel): void {
-    model.disable();
-    model.removeEventListener(InterestGroupModelEvents.INTEREST_GROUP_ACCESS, this.interestGroupAccess, this);
   }
 
   private async sharedStorageModelAdded(model: SharedStorageModel): Promise<void> {
@@ -817,7 +779,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
   private reset(): void {
     this.domains = {};
     this.cookieListTreeElement.removeChildren();
-    this.interestGroupTreeElement.clearEvents();
     this.deviceBoundSessionsModel?.clearVisibleSites();
     this.deviceBoundSessionsModel?.clearEvents();
   }
@@ -829,11 +790,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
       this.reset();
     }
     this.addCookieDocument(frame);
-  }
-
-  private interestGroupAccess(event: Common.EventTarget.EventTargetEvent<Protocol.Storage.InterestGroupAccessedEvent>):
-      void {
-    this.interestGroupTreeElement.addEvent(event.data);
   }
 
   private addCookieDocument(frame: SDK.ResourceTreeModel.ResourceTreeFrame): void {
