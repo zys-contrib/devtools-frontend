@@ -113,6 +113,7 @@ ts_library("unittests") {
     "ResourceMapping.test.ts",
     "ResourceScriptMapping.test.ts",
     "ResourceUtils.test.ts",
+    "StylesSourceMapping.test.ts",
     "SymbolizedError.test.ts",
   ]
 
