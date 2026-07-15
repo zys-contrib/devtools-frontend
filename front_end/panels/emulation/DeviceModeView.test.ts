@@ -43,6 +43,14 @@ describeWithEnvironment('DeviceModeView', () => {
       await assertScreenshot('device_mode_view/base.png');
     });
 
+    it('renders the view with rulers', async () => {
+      showRulersSetting.set(true);
+      renderElementIntoDOM(view, {includeCommonStyles: true, width: 800, height: 600});
+      deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.Responsive, null, null);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await assertScreenshot('device_mode_view/rulers.png');
+    });
+
     describe('Logic Tests', () => {
       it('creates preset bars during initialization', () => {
         const presetsContainer = view.contentElement.querySelector('.device-mode-presets-container');
