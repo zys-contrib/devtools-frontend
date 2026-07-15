@@ -6,7 +6,6 @@ import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import type * as Platform from '../../core/platform/platform.js';
 import * as Root from '../../core/root/root.js';
-import type * as SDK from '../../core/sdk/sdk.js';
 import type {ContentDataOrError} from '../text_utils/ContentData.js';
 import type {SearchMatch} from '../text_utils/ContentProvider.js';
 import * as Workspace from '../workspace/workspace.js';
@@ -168,13 +167,6 @@ export class FileSystem implements Workspace.Workspace.Project {
 
   uiSourceCodes(): Iterable<Workspace.UISourceCode.UISourceCode> {
     return [];
-  }
-
-  target(): SDK.Target.Target|null {
-    return null;
-  }
-
-  setTarget(_target: SDK.Target.Target|null): void {
   }
 }
 
