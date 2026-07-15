@@ -233,6 +233,45 @@ describe('TabbedEditorContainer', () => {
       assert.strictEqual(tabbedPane.tabView(tabs[1].id), views.get(fsSourceCode));
       assert.isTrue(tabs[1].selected);
     });
+
+    it('replaces network tab with file system tab when persistence binding is established', async () => {
+      const networkUrl = urlString`http://127.0.0.1:8000/devtools/persistence/resources/foo.js`;
+      const fsUrl = urlString`file:///var/www/devtools/persistence/resources/foo.js`;
+
+      const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
+        url: networkUrl,
+        mimeType: 'text/javascript',
+        projectType: Workspace.Workspace.projectTypes.Network,
+        universe: testUniverse,
+      });
+
+      const {uiSourceCode: fsSourceCode} = createFileSystemUISourceCode({
+        url: fsUrl,
+        mimeType: 'text/javascript',
+        fileSystemPath: 'file:///var/www',
+        autoMapping: true,
+        universe: testUniverse,
+      });
+
+      // Open the network tab.
+      tabbedEditorContainer.showFile(networkSourceCode);
+
+      const tabbedPane = tabbedEditorContainer.view as UI.TabbedPane.TabbedPane;
+
+      // Verify that the network tab is opened.
+      let tabs = tabbedPane.tabs;
+      assert.lengthOf(tabs, 1);
+      assert.strictEqual(tabbedPane.tabView(tabs[0].id), views.get(networkSourceCode));
+
+      // Create binding.
+      const binding = new Persistence.Persistence.PersistenceBinding(networkSourceCode, fsSourceCode);
+      await persistence.addBinding(binding);
+
+      // Verify tabs after binding: network tab is replaced by the file system tab.
+      tabs = tabbedPane.tabs;
+      assert.lengthOf(tabs, 1);
+      assert.strictEqual(tabbedPane.tabView(tabs[0].id), views.get(fsSourceCode));
+    });
   });
 });
 
