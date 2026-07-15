@@ -8,7 +8,6 @@ import {
   describeWithEnvironment,
   setupActionRegistry,
 } from '../../testing/EnvironmentHelpers.js';
-import * as RenderCoordinator from '../../ui/components/render_coordinator/render_coordinator.js';
 import * as UI from '../../ui/legacy/legacy.js';
 
 import * as Models from './models/models.js';
@@ -36,8 +35,10 @@ describeWithEnvironment('RecorderController', () => {
     const controller = new RecorderController.RecorderController();
     controller.setCurrentPageForTesting(RecorderController.Pages.RECORDING_PAGE);
     controller.setCurrentRecordingForTesting(recording);
-    controller.connectedCallback();
-    await RenderCoordinator.done();
+    const div = document.createElement('div');
+    controller.markAsRoot();
+    controller.show(div);
+    await controller.updateComplete;
     return controller;
   }
 
@@ -49,8 +50,10 @@ describeWithEnvironment('RecorderController', () => {
       controller.setCurrentPageForTesting(
           RecorderController.Pages.CREATE_RECORDING_PAGE,
       );
-      controller.connectedCallback();
-      await RenderCoordinator.done();
+      const div = document.createElement('div');
+      controller.markAsRoot();
+      controller.show(div);
+      await controller.updateComplete;
 
       await controller.onRecordingCancelled();
       assert.strictEqual(controller.getCurrentPageForTesting(), previousPage);
@@ -62,7 +65,7 @@ describeWithEnvironment('RecorderController', () => {
         controller: RecorderController.RecorderController,
         event: Event,
         ): Promise<void> {
-      const recordingViewWidgetElement = controller.shadowRoot?.querySelector<HTMLElement>(
+      const recordingViewWidgetElement = controller.contentElement?.querySelector<HTMLElement>(
           '.recording-view',
       );
       if (!recordingViewWidgetElement) {
@@ -73,7 +76,7 @@ describeWithEnvironment('RecorderController', () => {
       const recordingView = widget.contentElement?.querySelector('.recording-view');
       assert.isOk(recordingView);
       recordingView?.dispatchEvent(event);
-      await RenderCoordinator.done();
+      await controller.updateComplete;
     }
 
     beforeEach(() => {
@@ -474,5 +477,4 @@ describeWithEnvironment('RecorderController', () => {
       );
     });
   });
-
 });

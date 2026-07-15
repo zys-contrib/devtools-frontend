@@ -51,8 +51,7 @@ import {
   type StepChanged
 } from './StepView.js';
 
-const {html, Decorators, Directives: {ref}, LitElement} = Lit;
-const {customElement, state} = Decorators;
+const {html, Directives: {ref}} = Lit;
 
 const UIStrings = {
   /**
@@ -177,12 +176,6 @@ const GET_EXTENSIONS_URL = 'https://goo.gle/recorder-extension-list' as Platform
 const RECORDER_EXPLANATION_URL = 'https://developer.chrome.com/docs/devtools/recorder';
 const FEEDBACK_URL = 'https://goo.gle/recorder-feedback' as Platform.DevToolsPath.UrlString;
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'devtools-recorder-controller': RecorderController;
-  }
-}
-
 interface StoredRecording {
   storageName: string;
   flow: Models.Schema.UserFlow;
@@ -225,45 +218,209 @@ function verifyFlowSize(flow: Models.Schema.UserFlow): void {
   }
 }
 
-@customElement('devtools-recorder-controller')
-export class RecorderController extends LitElement {
-  @state() declare private currentRecordingSession?: Models.RecordingSession.RecordingSession;
-  @state() declare private currentRecording: StoredRecording|undefined;
-  @state() declare private currentStep?: Models.Schema.Step;
-  @state() declare private recordingError?: Error;
+export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
+  #currentRecordingSession?: Models.RecordingSession.RecordingSession;
+  get currentRecordingSession(): Models.RecordingSession.RecordingSession|undefined {
+    return this.#currentRecordingSession;
+  }
+  set currentRecordingSession(value: Models.RecordingSession.RecordingSession|undefined) {
+    if (this.#currentRecordingSession !== value) {
+      this.#currentRecordingSession = value;
+      this.requestUpdate();
+    }
+  }
+
+  #currentRecording: StoredRecording|undefined;
+  get currentRecording(): StoredRecording|undefined {
+    return this.#currentRecording;
+  }
+  set currentRecording(value: StoredRecording|undefined) {
+    if (this.#currentRecording !== value) {
+      this.#currentRecording = value;
+      this.requestUpdate();
+    }
+  }
+
+  #currentStep?: Models.Schema.Step;
+  get currentStep(): Models.Schema.Step|undefined {
+    return this.#currentStep;
+  }
+  set currentStep(value: Models.Schema.Step|undefined) {
+    if (this.#currentStep !== value) {
+      this.#currentStep = value;
+      this.requestUpdate();
+    }
+  }
+
+  #recordingError?: Error;
+  get recordingError(): Error|undefined {
+    return this.#recordingError;
+  }
+  set recordingError(value: Error|undefined) {
+    if (this.#recordingError !== value) {
+      this.#recordingError = value;
+      this.requestUpdate();
+    }
+  }
 
   #storage = Models.RecordingStorage.RecordingStorage.instance();
   #screenshotStorage = Models.ScreenshotStorage.ScreenshotStorage.instance();
 
-  @state() declare private isRecording: boolean;
-  @state() declare private isToggling: boolean;
+  #isRecording = false;
+  get isRecording(): boolean {
+    return this.#isRecording;
+  }
+  set isRecording(value: boolean) {
+    if (this.#isRecording !== value) {
+      this.#isRecording = value;
+      this.requestUpdate();
+    }
+  }
+
+  #isToggling = false;
+  get isToggling(): boolean {
+    return this.#isToggling;
+  }
+  set isToggling(value: boolean) {
+    if (this.#isToggling !== value) {
+      this.#isToggling = value;
+      this.requestUpdate();
+    }
+  }
 
   // TODO: we keep the functionality to allow/disallow replay but right now it's not used.
   // It can be used to decide if we allow replay on a certain target for example.
   #replayAllowed = true;
-  @state() declare private recordingPlayer?: Models.RecordingPlayer.RecordingPlayer;
-  @state() declare private lastReplayResult?: Models.RecordingPlayer.ReplayResult;
+
+  #recordingPlayer?: Models.RecordingPlayer.RecordingPlayer;
+  get recordingPlayer(): Models.RecordingPlayer.RecordingPlayer|undefined {
+    return this.#recordingPlayer;
+  }
+  set recordingPlayer(value: Models.RecordingPlayer.RecordingPlayer|undefined) {
+    if (this.#recordingPlayer !== value) {
+      this.#recordingPlayer = value;
+      this.requestUpdate();
+    }
+  }
+
+  #lastReplayResult?: Models.RecordingPlayer.ReplayResult;
+  get lastReplayResult(): Models.RecordingPlayer.ReplayResult|undefined {
+    return this.#lastReplayResult;
+  }
+  set lastReplayResult(value: Models.RecordingPlayer.ReplayResult|undefined) {
+    if (this.#lastReplayResult !== value) {
+      this.#lastReplayResult = value;
+      this.requestUpdate();
+    }
+  }
+
   readonly #replayState: ReplayState = {isPlaying: false, isPausedOnBreakpoint: false};
 
-  @state() declare private currentPage: Pages;
-  @state() declare private previousPage?: Pages;
+  #currentPage: Pages = Pages.START_PAGE;
+  get currentPage(): Pages {
+    return this.#currentPage;
+  }
+  set currentPage(value: Pages) {
+    if (this.#currentPage !== value) {
+      this.#currentPage = value;
+      this.requestUpdate();
+    }
+  }
+
+  #previousPage?: Pages;
+  get previousPage(): Pages|undefined {
+    return this.#previousPage;
+  }
+  set previousPage(value: Pages|undefined) {
+    if (this.#previousPage !== value) {
+      this.#previousPage = value;
+      this.requestUpdate();
+    }
+  }
+
   #fileSelector?: HTMLInputElement;
 
-  @state() declare private sections?: Models.Section.Section[];
-  @state() declare private settings?: Models.RecordingSettings.RecordingSettings;
+  #sections?: Models.Section.Section[];
+  get sections(): Models.Section.Section[]|undefined {
+    return this.#sections;
+  }
+  set sections(value: Models.Section.Section[]|undefined) {
+    if (this.#sections !== value) {
+      this.#sections = value;
+      this.requestUpdate();
+    }
+  }
 
-  @state() declare private importError?: Error;
+  #settings?: Models.RecordingSettings.RecordingSettings;
+  get settings(): Models.RecordingSettings.RecordingSettings|undefined {
+    return this.#settings;
+  }
+  set settings(value: Models.RecordingSettings.RecordingSettings|undefined) {
+    if (this.#settings !== value) {
+      this.#settings = value;
+      this.requestUpdate();
+    }
+  }
 
-  @state() declare private exportMenuExpanded: boolean;
+  #importError?: Error;
+  get importError(): Error|undefined {
+    return this.#importError;
+  }
+  set importError(value: Error|undefined) {
+    if (this.#importError !== value) {
+      this.#importError = value;
+      this.requestUpdate();
+    }
+  }
+
+  #exportMenuExpanded = false;
+  get exportMenuExpanded(): boolean {
+    return this.#exportMenuExpanded;
+  }
+  set exportMenuExpanded(value: boolean) {
+    if (this.#exportMenuExpanded !== value) {
+      this.#exportMenuExpanded = value;
+      this.requestUpdate();
+    }
+  }
+
   #exportMenuButton: Buttons.Button.Button|undefined;
 
   #stepBreakpointIndexes = new Set<number>();
 
   #builtInConverters: readonly Converters.Converter.Converter[];
-  @state() declare private extensionConverters: Converters.Converter.Converter[];
-  @state() declare private replayExtensions: Extensions.ExtensionManager.Extension[];
+  #extensionConverters: Converters.Converter.Converter[] = [];
+  get extensionConverters(): Converters.Converter.Converter[] {
+    return this.#extensionConverters;
+  }
+  set extensionConverters(value: Converters.Converter.Converter[]) {
+    if (this.#extensionConverters !== value) {
+      this.#extensionConverters = value;
+      this.requestUpdate();
+    }
+  }
 
-  @state() declare private viewDescriptor?: PublicExtensions.RecorderPluginManager.ViewDescriptor;
+  #replayExtensions: Extensions.ExtensionManager.Extension[] = [];
+  get replayExtensions(): Extensions.ExtensionManager.Extension[] {
+    return this.#replayExtensions;
+  }
+  set replayExtensions(value: Extensions.ExtensionManager.Extension[]) {
+    if (this.#replayExtensions !== value) {
+      this.#replayExtensions = value;
+      this.requestUpdate();
+    }
+  }
+
+  #viewDescriptor?: PublicExtensions.RecorderPluginManager.ViewDescriptor;
+  get viewDescriptor(): PublicExtensions.RecorderPluginManager.ViewDescriptor|undefined {
+    return this.#viewDescriptor;
+  }
+  set viewDescriptor(value: PublicExtensions.RecorderPluginManager.ViewDescriptor|undefined) {
+    if (this.#viewDescriptor !== value) {
+      this.#viewDescriptor = value;
+      this.requestUpdate();
+    }
+  }
   #extensionViewShowRequestedListener?:
       (event: Common.EventTarget.EventTargetEvent<PublicExtensions.RecorderPluginManager.ViewDescriptor>) => void;
 
@@ -279,7 +436,8 @@ export class RecorderController extends LitElement {
   #createRecordingView?: CreateRecordingView;
 
   constructor() {
-    super();
+    const element = document.createElement('devtools-recorder-controller');
+    super(element, {useShadowDom: 'pure'});
 
     this.isRecording = false;
     this.isToggling = false;
@@ -306,11 +464,12 @@ export class RecorderController extends LitElement {
     });
 
     // used in e2e tests only.
-    this.addEventListener('setrecording', (event: Event) => this.#onSetRecording(event));
+    /* eslint-disable-next-line @devtools/no-imperative-dom-api */
+    this.element.addEventListener('setrecording', (event: Event) => this.#onSetRecording(event));
   }
 
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
+  override onDetach(): void {
+    super.onDetach();
 
     if (this.currentRecordingSession) {
       void this.currentRecordingSession.stop();
@@ -623,7 +782,7 @@ export class RecorderController extends LitElement {
         Host.userMetrics.recordingReplayFinished(Host.UserMetrics.RecordingReplayFinished.OTHER_ERROR);
       }
       // Dispatch an event for e2e testing.
-      this.dispatchEvent(new Events.ReplayFinishedEvent());
+      this.element.dispatchEvent(new Events.ReplayFinishedEvent());
     });
 
     this.recordingPlayer.addEventListener(Models.RecordingPlayer.Events.DONE, () => {
@@ -633,7 +792,7 @@ export class RecorderController extends LitElement {
       }
       this.lastReplayResult = Models.RecordingPlayer.ReplayResult.SUCCESS;
       // Dispatch an event for e2e testing.
-      this.dispatchEvent(new Events.ReplayFinishedEvent());
+      this.element.dispatchEvent(new Events.ReplayFinishedEvent());
       Host.userMetrics.recordingReplayFinished(Host.UserMetrics.RecordingReplayFinished.SUCCESS);
     });
 
@@ -708,7 +867,7 @@ export class RecorderController extends LitElement {
     this.#setCurrentRecording(await this.#storage.upsertRecording(Models.SchemaUtils.parse(json)));
     this.#setCurrentPage(Pages.RECORDING_PAGE);
     this.#clearError();
-    this.dispatchEvent(new Events.SetRecordingFinishedEvent());
+    this.element.dispatchEvent(new Events.SetRecordingFinishedEvent());
   }
 
   // Used by e2e tests to inspect the current recording.
@@ -988,7 +1147,7 @@ export class RecorderController extends LitElement {
     this.#setCurrentPage(Pages.RECORDING_PAGE);
 
     // Dispatch an event for e2e testing.
-    this.dispatchEvent(new Events.RecordingStateChangedEvent((this.currentRecording as StoredRecording).flow));
+    this.element.dispatchEvent(new Events.RecordingStateChangedEvent((this.currentRecording as StoredRecording).flow));
   }
 
   async #onRecordingFinished(): Promise<void> {
@@ -1011,7 +1170,7 @@ export class RecorderController extends LitElement {
     this.isRecording = false;
 
     // Dispatch an event for e2e testing.
-    this.dispatchEvent(new Events.RecordingStateChangedEvent(this.currentRecording.flow));
+    this.element.dispatchEvent(new Events.RecordingStateChangedEvent(this.currentRecording.flow));
   }
 
   async onRecordingCancelled(): Promise<void> {
@@ -1271,10 +1430,10 @@ export class RecorderController extends LitElement {
           })),
           replayAllowed: this.#replayAllowed,
         })}
-        @createrecording=${this.#onCreateNewRecording}
-        @deleterecording=${this.#onDeleteRecording}
-        @openrecording=${this.#onRecordingSelected}
-        @playrecording=${this.#onPlayRecordingByName}
+        @createrecording=${this.#onCreateNewRecording.bind(this)}
+        @deleterecording=${this.#onDeleteRecording.bind(this)}
+        @openrecording=${this.#onRecordingSelected.bind(this)}
+        @playrecording=${this.#onPlayRecordingByName.bind(this)}
       >
       </devtools-widget>
     `;
@@ -1294,7 +1453,7 @@ export class RecorderController extends LitElement {
             jslogcontext="learn-more"
           >${i18nString(UIStrings.learnMore)}</devtools-link>
         </div>
-        <devtools-button .variant=${Buttons.Button.Variant.TONAL} jslogContext=${Actions.RecorderActions.CREATE_RECORDING} @click=${this.#onCreateNewRecording}>${i18nString(UIStrings.createRecording)}</devtools-button>
+        <devtools-button .variant=${Buttons.Button.Variant.TONAL} jslogContext=${Actions.RecorderActions.CREATE_RECORDING} @click=${this.#onCreateNewRecording.bind(this)}>${i18nString(UIStrings.createRecording)}</devtools-button>
       </div>
     `;
     // clang-format on
@@ -1385,7 +1544,12 @@ export class RecorderController extends LitElement {
     this.exportMenuExpanded = false;
   }
 
-  protected override render(): Lit.TemplateResult {
+  override performUpdate(): void {
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    Lit.render(this.render(), this.contentElement);
+  }
+
+  protected render(): Lit.TemplateResult {
     const recordings = this.#storage.getRecordings();
     const selectValue: string = this.currentRecording ? this.currentRecording.storageName : this.currentPage;
     // clang-format off
@@ -1414,7 +1578,7 @@ export class RecorderController extends LitElement {
         <div class="wrapper">
           <div class="header" jslog=${VisualLogging.toolbar()}>
             <devtools-button
-              @click=${this.#onCreateNewRecording}
+              @click=${this.#onCreateNewRecording.bind(this)}
               .data=${
                 {
                   variant: Buttons.Button.Variant.TOOLBAR,
@@ -1440,7 +1604,7 @@ export class RecorderController extends LitElement {
                 this.isToggling
               }
               @click=${(e: Event) => e.stopPropagation()}
-              @change=${this.#onRecordingSelected}
+              @change=${this.#onRecordingSelected.bind(this)}
               jslog=${VisualLogging.dropDown('recordings').track({change: true})}
             >
               ${Lit.Directives.repeat(
@@ -1453,7 +1617,7 @@ export class RecorderController extends LitElement {
             </select>
             <div class="separator"></div>
             <devtools-button
-              @click=${this.#onImportRecording}
+              @click=${this.#onImportRecording.bind(this)}
               .data=${
                 {
                   variant: Buttons.Button.Variant.TOOLBAR,
@@ -1465,7 +1629,7 @@ export class RecorderController extends LitElement {
             ></devtools-button>
             <devtools-button
               id='origin'
-              @click=${this.#onExportRecording}
+              @click=${this.#onExportRecording.bind(this)}
               ${ref(el => {
                 if (el instanceof HTMLElement) {
                   this.#exportMenuButton = el as Buttons.Button.Button;
@@ -1482,8 +1646,8 @@ export class RecorderController extends LitElement {
               jslog=${VisualLogging.dropDown('export-recording').track({click: true})}
             ></devtools-button>
             <devtools-menu
-              @menucloserequest=${this.#onExportMenuClosed}
-              @menuitemselected=${this.#onExportOptionSelected}
+              @menucloserequest=${this.#onExportMenuClosed.bind(this)}
+              @menuitemselected=${this.#onExportOptionSelected.bind(this)}
               .origin=${this.#getExportMenuButton}
               .showDivider=${false}
               .showSelectedItem=${false}
@@ -1522,7 +1686,7 @@ export class RecorderController extends LitElement {
               </devtools-menu-group>
             </devtools-menu>
             <devtools-button
-              @click=${this.#onDeleteRecording}
+              @click=${this.#onDeleteRecording.bind(this)}
               .data=${
                 {
                   variant: Buttons.Button.Variant.TOOLBAR,

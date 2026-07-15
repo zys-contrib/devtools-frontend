@@ -20,7 +20,7 @@ export class RecorderPanel extends UI.Panel.Panel {
     super(RecorderPanel.panelName);
     this.element.setAttribute('jslog', `${VisualLogging.panel('chrome-recorder').track({resize: true})}`);
     this.#controller = new RecorderController();
-    this.contentElement.append(this.#controller);
+    this.#controller.show(this.contentElement);
     this.setHideOnDetach();
   }
 

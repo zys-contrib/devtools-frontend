@@ -283,7 +283,15 @@ export async function getCurrentRecording(
   await devToolsPage.bringToFront();
   const controller = await devToolsPage.$(RECORDER_CONTROLLER_TAG_NAME);
   const recording = (await controller?.evaluate(
-      el => JSON.stringify(el.getUserFlow()),
+      async el => {
+        const path = './ui/legacy/legacy.js';
+        const UI = await import(path);
+        const widget = UI.Widget.Widget.get(el);
+        if (!widget) {
+          throw new Error('Could not find Widget for controller element');
+        }
+        return JSON.stringify((widget as {getUserFlow(): unknown}).getUserFlow());
+      },
       ));
   return JSON.parse(recording ?? '');
 }

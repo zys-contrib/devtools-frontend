@@ -5,7 +5,6 @@
 import {assert} from 'chai';
 import type {Page} from 'puppeteer-core';
 
-import type {RecorderActions} from '../../../front_end/panels/recorder/recorder-actions/recorder-actions.js';
 import type {StepChanged} from '../../../front_end/panels/recorder/StepView.js';
 import {
   changeNetworkConditions,
@@ -868,7 +867,14 @@ describe('Recorder', function() {
     await devToolsPage.waitForFunction(async logger => {
       const controller = await getRecordingController(devToolsPage);
       const steps = await controller.evaluate(
-          c => c.getCurrentRecordingForTesting()?.flow.steps.length,
+          async c => {
+            const path = './ui/legacy/legacy.js';
+            const UI = await import(path);
+            const widget = UI.Widget.Widget.get(c);
+            return (widget as {getCurrentRecordingForTesting(): {flow: {steps: unknown[]}} | undefined})
+                .getCurrentRecordingForTesting()
+                ?.flow.steps.length;
+          },
       );
       logger.log(`Recorded ${steps} steps`);
       return steps === 4;
@@ -1093,8 +1099,15 @@ describe('Recorder', function() {
     await openPopupButton?.click();
     await devToolsPage.waitForFunction(async () => {
       const controller = await getRecordingController(devToolsPage);
-      return await controller.evaluate(c => {
-        const steps = c.getCurrentRecordingForTesting()?.flow.steps;
+      return await controller.evaluate(async c => {
+        const path = './ui/legacy/legacy.js';
+        const UI = await import(path);
+        const widget = UI.Widget.Widget.get(c);
+        const steps =
+            (widget as
+             {getCurrentRecordingForTesting(): {flow: {steps: Array<{assertedEvents?: unknown[]}>}} | undefined})
+                .getCurrentRecordingForTesting()
+                ?.flow.steps;
         return steps?.length === 3 && steps[1].assertedEvents?.length === 1;
       });
     });
@@ -1114,7 +1127,14 @@ describe('Recorder', function() {
     await devToolsPage.waitForFunction(async () => {
       const controller = await getRecordingController(devToolsPage);
       return await controller.evaluate(
-          c => c.getCurrentRecordingForTesting()?.flow.steps.length === 4,
+          async c => {
+            const path = './ui/legacy/legacy.js';
+            const UI = await import(path);
+            const widget = UI.Widget.Widget.get(c);
+            return (widget as {getCurrentRecordingForTesting(): {flow: {steps: unknown[]}} | undefined})
+                       .getCurrentRecordingForTesting()
+                       ?.flow.steps.length === 4;
+          },
       );
     });
 
@@ -1438,13 +1458,20 @@ describe('Recorder', function() {
     it('should not open create a new recording while recording', async ({inspectedPage, devToolsPage}) => {
       await startRecordingViaShortcut('recorder/recorder.html', devToolsPage, inspectedPage);
       const controller = await getRecordingController(devToolsPage);
-      await controller.evaluate(element => {
-        return element.handleActions(
-            'chrome-recorder.create-recording' as RecorderActions.CREATE_RECORDING,
-        );
+      await controller.evaluate(async element => {
+        const path = './ui/legacy/legacy.js';
+        const UI = await import(path);
+        const widget = UI.Widget.Widget.get(element);
+        return (widget as {handleActions(action: string): unknown})
+            .handleActions(
+                'chrome-recorder.create-recording',
+            );
       });
-      const page = await controller.evaluate(element => {
-        return element.getCurrentPageForTesting();
+      const page = await controller.evaluate(async element => {
+        const path = './ui/legacy/legacy.js';
+        const UI = await import(path);
+        const widget = UI.Widget.Widget.get(element);
+        return (widget as {getCurrentPageForTesting(): unknown}).getCurrentPageForTesting();
       });
 
       assert.notStrictEqual(page, 'CreateRecordingPage');
