@@ -55,29 +55,40 @@ The following is a prioritized list of architectural shortcomings and refactorin
 *   **Rationale**: High coupling hinders testing and isolation.
 *   **Action**: Eliminate direct global singleton queries. Update helpers to access parent mapping engines or pass references via constructors.
 
-### Priority 7: View-Level Dependency Injection (Universe-ification)
+### Priority 7: Universe-scoped Embedder Host and HostConfig
+*   **Problem**: `InspectorFrontendHostInstance` and `Root.Runtime.hostConfig` are treated as global mutable singletons. Core classes (`Connections`, `IsolatedFileSystemManager`, `FileManager`) and UI components access them directly, leading to global state pollution and state leaks in tests.
+*   **Rationale**: The host interface and its configuration represent the boundary between DevTools and the Chromium browser. To support multiple isolated `DevToolsUniverse` instances, both the host interface and host configuration must be scoped to the universe context.
+*   **Action**:
+    1. Store the scoped `InspectorFrontendHostAPI` (wrapped in `ScopedInspectorFrontendHost`) in the `DevToolsUniverse` context.
+    2. Refactor core classes (`Connections`, `IsolatedFileSystemManager`, `FileManager`, `UserMetrics`) to receive the scoped host via constructor injection.
+    3. Introduce a scoped `HostConfigProvider` service in the `Universe` context to manage `HostConfig` fetching and caching.
+    4. Move polling and configuration update logic from `HostConfigTracker` in `AidaClient.ts` to `HostConfigProvider`.
+    5. Provide a compatibility Proxy for `Root.Runtime.hostConfig` to allow gradual migration of the 200+ call sites.
+    6. Remove the global side-effect initialization in `InspectorFrontendHost.ts`.
+
+### Priority 8: View-Level Dependency Injection (Universe-ification)
 *   **Problem**: UI panels query global `.instance()` for bindings, causing state leaks in tests.
 *   **Rationale**: DevTools is transitioning to a scoped "Universe" architecture where dependencies are injected. UI panels should receive their dependencies rather than querying globals.
 *   **Action**:
     1. Expose bindings on `Universe` and inject them via the view loading pipeline.
     2. Leverage the view loading pipeline (`-meta.ts` files) to pass these bindings to panel constructors upon initialization, avoiding global calls in UI panels.
 
-### Priority 8: Decouple `persistence` from `bindings`
+### Priority 9: Decouple `persistence` from `bindings`
 *   **Problem**: `models/persistence` depends on `models/bindings` to check if a target is Node.js.
 *   **Rationale**: `persistence` (which maps network files to local files) should ideally only depend on `workspace` and not on the complex debugger/bindings layer.
 *   **Action**: Introduce a capability/property on `Workspace.Project` (e.g., `isNodeProject`) to avoid direct target queries.
 
-### Priority 9: Move `SourceFrameIssuesManager` to `bindings`
+### Priority 10: Move `SourceFrameIssuesManager` to `bindings`
 *   **Problem**: `models/issues_manager` depends on `workspace` and `bindings` only for placing issue badges.
 *   **Rationale**: Showing badges on source frames is a binding/presentation concern, similar to showing console messages. `issues_manager` itself should be a clean, independent leaf module.
 *   **Action**: Move `SourceFrameIssuesManager.ts` to `models/bindings/` and remove `workspace` and `bindings` dependencies from `issues_manager/BUILD.gn`.
 
-### Priority 10: Decouple UI via Interfaces / Revealers
+### Priority 11: Decouple UI via Interfaces / Revealers
 *   **Problem**: General UI components (like `Linkifier`) depend on heavy concrete bindings.
 *   **Rationale**: UI components should not be tightly coupled to complex mapping logic.
 *   **Action**: Use light interfaces or `Common.Revealer`.
 
-### Priority 11: Decouple Core Modules from `i18n` (UI Localization)
+### Priority 12: Decouple Core Modules from `i18n` (UI Localization)
 *   **Problem**: Core infra/parser modules import `i18n` for localized strings.
 *   **Rationale**: Business logic and core infrastructure should not be tied to UI localization libraries.
 *   **Action**:
