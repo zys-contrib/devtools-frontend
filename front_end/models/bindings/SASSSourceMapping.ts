@@ -26,9 +26,10 @@ export class SASSSourceMapping implements SourceMapping {
       workspace: Workspace.Workspace.WorkspaceImpl, cssWorkspaceBinding: CSSWorkspaceBinding) {
     this.#sourceMapManager = sourceMapManager;
     this.#cssWorkspaceBinding = cssWorkspaceBinding;
-    this.#project = new ContentProviderBasedProject(workspace, 'cssSourceMaps:' + target.id(),
-                                                    Workspace.Workspace.projectTypes.Network, '',
-                                                    false /* isServiceProject */, target);
+    this.#project =
+        new ContentProviderBasedProject(workspace, 'cssSourceMaps:' + target.id(),
+                                        Workspace.Workspace.projectTypes.Network, '', false /* isServiceProject */);
+    NetworkProject.setTargetForProject(this.#project, target);
 
     this.#bindings = new Map();
 

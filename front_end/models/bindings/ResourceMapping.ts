@@ -361,9 +361,10 @@ class ModelInfo {
   constructor(resourceMapping: ResourceMapping, resourceTreeModel: SDK.ResourceTreeModel.ResourceTreeModel) {
     const target = resourceTreeModel.target();
     this.resourceMapping = resourceMapping;
-    this.project = new ContentProviderBasedProject(resourceMapping.workspace, 'resources:' + target.id(),
-                                                   Workspace.Workspace.projectTypes.Network, '',
-                                                   false /* isServiceProject */, target);
+    this.project =
+        new ContentProviderBasedProject(resourceMapping.workspace, 'resources:' + target.id(),
+                                        Workspace.Workspace.projectTypes.Network, '', false /* isServiceProject */);
+    NetworkProject.setTargetForProject(this.project, target);
 
     const cssModel = target.model(SDK.CSSModel.CSSModel);
     console.assert(Boolean(cssModel));

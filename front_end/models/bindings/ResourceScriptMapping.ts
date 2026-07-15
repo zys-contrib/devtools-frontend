@@ -74,7 +74,8 @@ export class ResourceScriptMapping implements DebuggerSourceMapping {
       const projectType = script.isContentScript() ? Workspace.Workspace.projectTypes.ContentScripts :
                                                      Workspace.Workspace.projectTypes.Network;
       project = new ContentProviderBasedProject(this.#workspace, projectId, projectType, '' /* displayName */,
-                                                false /* isServiceProject */, this.debuggerModel.target());
+                                                false /* isServiceProject */);
+      NetworkProject.setTargetForProject(project, this.debuggerModel.target());
       this.#projects.set(projectId, project);
     }
     return project;

@@ -38,8 +38,10 @@ export function createContentProviderUISourceCodes(options: {
       projectType, Workspace.Workspace.projectTypes.FileSystem,
       'For creating file system UISourceCodes use \'createFileSystemUISourceCode\' helper.');
   const project = new Bindings.ContentProviderBasedProject.ContentProviderBasedProject(
-      workspace, options.projectId || 'PROJECT_ID', projectType, 'Test project', false /* isServiceProject*/,
-      options.target);
+      workspace, options.projectId || 'PROJECT_ID', projectType, 'Test project', false /* isServiceProject*/);
+  if (options.target) {
+    Bindings.NetworkProject.NetworkProject.setTargetForProject(project, options.target);
+  }
   const uiSourceCodes: Workspace.UISourceCode.UISourceCode[] = [];
   for (const item of options.items) {
     const resourceType = item.resourceType || Common.ResourceType.ResourceType.fromMimeType(item.mimeType);

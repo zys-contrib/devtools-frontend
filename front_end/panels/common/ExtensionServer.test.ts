@@ -966,7 +966,9 @@ describe('Runtime hosts policy', () => {
 
     const project = new Bindings.ContentProviderBasedProject.ContentProviderBasedProject(
         Workspace.Workspace.WorkspaceImpl.instance(), blockedTarget.id(), Workspace.Workspace.projectTypes.Network, '',
-        false /* isServiceProject */, blockedTarget);
+        false /* isServiceProject */);
+
+    Bindings.NetworkProject.NetworkProject.setTargetForProject(project, blockedTarget);
 
     const uniqueAllowedUrl = urlString`${allowedUrl}?uniqueResourceTest`;
 

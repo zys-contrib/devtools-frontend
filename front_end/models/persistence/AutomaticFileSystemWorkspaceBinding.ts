@@ -173,6 +173,9 @@ export class FileSystem implements Workspace.Workspace.Project {
   target(): SDK.Target.Target|null {
     return null;
   }
+
+  setTarget(_target: SDK.Target.Target|null): void {
+  }
 }
 
 /**
