@@ -215,6 +215,11 @@ export class MainImpl {
     this.#universe = new Foundation.Universe.Universe(creationOptions);
     Root.DevToolsContext.setGlobalInstance(this.#universe.context as Root.DevToolsContext.WritableDevToolsContext);
 
+    // Mark 'cache-disabled' as requiring user interaction when multiple CDP clients are attached.
+    if (Root.Runtime.Runtime.queryParam('hasOtherClients')) {
+      this.#universe.settings.moduleSetting('cache-disabled').setRequiresUserAction(true);
+    }
+
     Root.Runtime.experiments.cleanUpStaleExperiments();
 
     await this.requestAndRegisterLocaleData();

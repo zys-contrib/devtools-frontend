@@ -1355,7 +1355,6 @@ Common.Settings.registerSettingExtension({
   settingType: Common.Settings.SettingType.BOOLEAN,
   order: 0,
   defaultValue: false,
-  userActionCondition: 'hasOtherClients',
   options: [
     {
       value: true,

@@ -75,9 +75,6 @@ export class Settings {
           this.createSetting(settingName, evaluatedDefaultValue, storageType);
 
       setting.setTitleFunction(registration.title);
-      if (registration.userActionCondition) {
-        setting.setRequiresUserAction(Boolean(Root.Runtime.Runtime.queryParam(registration.userActionCondition)));
-      }
       setting.setRegistration(registration);
 
       this.registerModuleSetting(setting);
