@@ -337,6 +337,7 @@ devtools_entrypoint("bundle") {
     ":*",
     "../../../mcp/*",
     "../../entrypoints/main/*",
+    "../../foundation/*",
     "../../panels/application/*",
     "../../panels/console/*",
     "../../panels/console_counters/*",

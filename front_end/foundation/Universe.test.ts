@@ -165,6 +165,7 @@ describe('Universe', () => {
 
       // AuditsModel
       'Audits.enable',
+      'Audits.checkFormsIssues',
 
       // ServiceWorkerManager
       'ServiceWorker.enable',
