@@ -9,7 +9,7 @@ export declare function isIssueCodeSupported(code: Protocol.Audits.InspectorIssu
  * Each issue reported by the backend can result in multiple `Issue` instances.
  * Handlers are simple functions hard-coded into a map.
  */
-export declare function createIssuesFromProtocolIssue(issuesModel: SDK.IssuesModel.IssuesModel | null, inspectorIssue: Protocol.Audits.InspectorIssue): Issue[];
+export declare function createIssuesFromProtocolIssue(issuesModel: SDK.IssuesModel.IssuesModel | null, inspectorIssue: Protocol.Audits.InspectorIssue, frameManager?: SDK.FrameManager.FrameManager): Issue[];
 export interface IssuesManagerCreationOptions {
     forceNew: boolean;
     frameManager?: SDK.FrameManager.FrameManager;

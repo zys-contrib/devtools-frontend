@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 import * as Common from '../../core/common/common.js';
 import * as SDK from '../../core/sdk/sdk.js';
-import { AttributionReportingIssue } from './AttributionReportingIssue.js';
 import { BounceTrackingIssue } from './BounceTrackingIssue.js';
 import { ClientHintIssue } from './ClientHintIssue.js';
 import { ConnectionAllowlistIssue } from './ConnectionAllowlistIssue.js';
@@ -77,10 +76,6 @@ const issueCodeHandlers = new Map([
         QuirksModeIssue.fromInspectorIssue,
     ],
     [
-        "AttributionReportingIssue" /* Protocol.Audits.InspectorIssueCode.AttributionReportingIssue */,
-        AttributionReportingIssue.fromInspectorIssue,
-    ],
-    [
         "GenericIssue" /* Protocol.Audits.InspectorIssueCode.GenericIssue */,
         GenericIssue.fromInspectorIssue,
     ],
@@ -152,10 +147,10 @@ export function isIssueCodeSupported(code) {
  * Each issue reported by the backend can result in multiple `Issue` instances.
  * Handlers are simple functions hard-coded into a map.
  */
-export function createIssuesFromProtocolIssue(issuesModel, inspectorIssue) {
+export function createIssuesFromProtocolIssue(issuesModel, inspectorIssue, frameManager = SDK.FrameManager.FrameManager.instance()) {
     const handler = issueCodeHandlers.get(inspectorIssue.code);
     if (handler) {
-        return handler(issuesModel, inspectorIssue);
+        return handler(issuesModel, inspectorIssue, frameManager);
     }
     console.warn(`No handler registered for issue code ${inspectorIssue.code}`);
     return [];
@@ -274,7 +269,7 @@ export class IssuesManager extends Common.ObjectWrapper.ObjectWrapper {
     }
     #onIssueAddedEvent(event) {
         const { issuesModel, inspectorIssue } = event.data;
-        const issues = createIssuesFromProtocolIssue(issuesModel, inspectorIssue);
+        const issues = createIssuesFromProtocolIssue(issuesModel, inspectorIssue, this.#frameManager);
         for (const issue of issues) {
             this.addIssue(issuesModel, issue);
             const message = issue.maybeCreateConsoleMessage();
