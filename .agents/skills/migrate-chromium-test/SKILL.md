@@ -42,7 +42,10 @@ description: Use when migrating Chromium layout tests to DevTools unit tests
 - If the newly added test does not test any logic from the component but just the getters from the mocked data explain to the user that this test does not add value and it's better to close it without adding the test. Provide a command without executing it to close the issue as "Fixed".
 - If the newly added test uses too extensive mocks of CDP objects and methods explain to the user that the test should be foundation e2e test instead of unit test and we won't migrate it. Provide a command without executing it to close the issue as "Won't Fix (Infeasible)".
 
-7. Upload a CL with your changes using the `version-control` skill. Make sure the CL description has a `Fixed: <issue number>` trailer instead of `Bug: <issue number>`.
+7. Uploading a CL with your changes using the `version-control` skill. And **STRICTLY** follow the following additional template
+- **Title**: `[test-migration] Migrating <chromium-test-name> to unit test`
+- **Body**: `Migrated <link-to-chromium-test> to <devtools-test-name>`
+- **Footer**: Use `Fixed: <issue number>` trailer instead of `Bug: <issue number>`.
 
 ## Example Conversion
 
