@@ -365,4 +365,100 @@ describeWithEnvironment('RequestPayloadView', () => {
     assert.isNull(lastInput.binaryPayloadContentData,
                   'binaryPayloadContentData should be null for text request bodies');
   });
+
+  it('decodes query string parameters by default even for POST requests with JSON body', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                             urlString`https://example.com/api?foo=bar%20baz`,
+                                                             urlString``, null, null, null);
+    request.setRequestHeaders([{name: 'Content-Type', value: 'application/json'}]);
+    sinon.stub(request, 'requestFormData').resolves('{"jsonKey": "jsonVal"}');
+
+    const view = new Network.RequestPayloadView.RequestPayloadView();
+    view.request = request;
+    renderElementIntoDOM(view, {includeCommonStyles: true});
+    view.wasShown();
+
+    await view.updateComplete;
+
+    const treeOutline = view.element.querySelector<HTMLElement>('.request-payload-tree');
+    assert.isNotNull(treeOutline);
+    const shadowRoot = treeOutline.shadowRoot;
+    assert.isNotNull(shadowRoot);
+
+    const getPayloadValues = () => {
+      return Array.from(shadowRoot.querySelectorAll('.payload-value')).map(el => el.textContent).join(' ');
+    };
+
+    assert.include(getPayloadValues(), 'bar baz');
+  });
+
+  it('toggles query parameters and form data independently', async () => {
+    const request = SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                             urlString`https://example.com/api?qFoo=qBar%20qBaz`,
+                                                             urlString``, null, null, null);
+    request.setRequestHeaders([{name: 'Content-Type', value: 'application/x-www-form-urlencoded'}]);
+    sinon.stub(request, 'requestFormData').resolves('fFoo=fBar%20fBaz');
+
+    const view = new Network.RequestPayloadView.RequestPayloadView();
+    view.request = request;
+    renderElementIntoDOM(view, {includeCommonStyles: true});
+    view.wasShown();
+
+    await view.refreshFormDataPromiseForTest;
+    await view.updateComplete;
+
+    const treeOutline = view.element.querySelector<HTMLElement>('.request-payload-tree');
+    assert.isNotNull(treeOutline);
+    const shadowRoot = treeOutline.shadowRoot;
+    assert.isNotNull(shadowRoot);
+
+    const getPayloadValues = () => {
+      return Array.from(shadowRoot.querySelectorAll('.payload-value')).map(el => el.textContent).join(' ');
+    };
+
+    const getButton = (sectionTitle: string, buttonText: string) => {
+      const lis = shadowRoot.querySelectorAll('li[role="treeitem"]');
+      const section = Array.from(lis).find(li => li.textContent?.includes(sectionTitle));
+      if (!section) {
+        return null;
+      }
+      const buttons = section.querySelectorAll<HTMLElement>('.payload-toggle');
+      return Array.from(buttons).find(b => b.textContent?.includes(buttonText));
+    };
+
+    // Initial state: Both decoded
+    assert.include(getPayloadValues(), 'qBar qBaz');
+    assert.include(getPayloadValues(), 'fBar fBaz');
+
+    // Find the toggle buttons.
+    const getToggles = () => shadowRoot.querySelectorAll<HTMLElement>('.payload-toggle');
+    assert.lengthOf(getToggles(), 5);
+
+    // Toggle query parameters decoding (decoded -> encoded)
+    const viewUrlEncodedQueryBtn = getButton('Query String Parameters', 'View URL-encoded');
+    assert.exists(viewUrlEncodedQueryBtn);
+    viewUrlEncodedQueryBtn?.click();
+    await view.updateComplete;
+
+    // Query param should be encoded, form data should remain decoded
+    assert.include(getPayloadValues(), 'qBar%20qBaz');
+    assert.include(getPayloadValues(), 'fBar fBaz');
+
+    // Toggle query parameters back (encoded -> decoded)
+    const viewDecodedQueryBtn = getButton('Query String Parameters', 'View decoded');
+    assert.exists(viewDecodedQueryBtn);
+    viewDecodedQueryBtn?.click();
+    await view.updateComplete;
+    assert.include(getPayloadValues(), 'qBar qBaz');
+
+    // Toggle form data decoding (decoded -> encoded)
+    const viewUrlEncodedFormBtn = getButton('Form Data', 'View URL-encoded');
+    assert.exists(viewUrlEncodedFormBtn);
+    viewUrlEncodedFormBtn?.click();
+    await view.updateComplete;
+
+    // Form data should be encoded, query param should remain decoded
+    assert.include(getPayloadValues(), 'qBar qBaz');
+    assert.include(getPayloadValues(), 'fBar%20fBaz');
+  });
 });
