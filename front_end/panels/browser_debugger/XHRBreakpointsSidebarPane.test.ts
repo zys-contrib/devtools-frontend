@@ -17,16 +17,21 @@ import * as UI from '../../ui/legacy/legacy.js';
 import * as BrowserDebugger from './browser_debugger.js';
 
 describe('XHRBreakpointsSidebarPane', () => {
+  setupLocaleHooks();
   setupRuntimeHooks();
   setupSettingsHooks();
-  setupLocaleHooks();
 
   beforeEach(() => {
     BrowserDebugger.XHRBreakpointsSidebarPane.XHRBreakpointsSidebarPane.removeInstance();
+    UI.Context.Context.instance().setFlavor(SDK.DebuggerModel.DebuggerPausedDetails, null);
     for (const url of SDK.DOMDebuggerModel.DOMDebuggerManager.instance().xhrBreakpoints().keys()) {
       SDK.DOMDebuggerModel.DOMDebuggerManager.instance().removeXHRBreakpoint(url);
     }
     sinon.stub(UI.ViewManager.ViewManager.instance(), 'showView').resolves();
+  });
+
+  afterEach(() => {
+    BrowserDebugger.XHRBreakpointsSidebarPane.XHRBreakpointsSidebarPane.removeInstance();
   });
 
   it('renders correctly with no breakpoints', async () => {
@@ -72,6 +77,20 @@ describe('XHRBreakpointsSidebarPane', () => {
       document.activeElement.blur();
     }
     await assertScreenshot('browser_debugger/xhr_breakpoints_sidebar_pane_hit.png');
+  });
+
+  it('renders correctly when adding a new breakpoint', async () => {
+    SDK.DOMDebuggerModel.DOMDebuggerManager.instance().addXHRBreakpoint('api/v1', true);
+    const pane = BrowserDebugger.XHRBreakpointsSidebarPane.XHRBreakpointsSidebarPane.instance();
+    renderElementIntoDOM(pane, {includeCommonStyles: true, width: 300});
+    const addButton = pane.toolbarItems()[0].element;
+    assert.exists(addButton);
+    addButton.click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await assertScreenshot('browser_debugger/xhr_breakpoints_sidebar_pane_adding.png');
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
   });
 
   it('toggles breakpoint enabled state when checkbox is clicked', () => {
