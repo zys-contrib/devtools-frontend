@@ -8,9 +8,12 @@ import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as UI from '../../ui/legacy/legacy.js';
+import {Directives, html, render} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import xhrBreakpointsSidebarPaneStyles from './xhrBreakpointsSidebarPane.css.js';
+
+const {classMap, ifDefined, ref} = Directives;
 
 const UIStrings = {
   /**
@@ -63,8 +66,6 @@ const str_ = i18n.i18n.registerUIStrings('panels/browser_debugger/XHRBreakpoints
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 const containerToBreakpointEntry = new WeakMap<Element, HTMLElement>();
 
-const breakpointEntryToCheckbox = new WeakMap<Element, UI.UIUtils.CheckboxLabel>();
-
 let xhrBreakpointsSidebarPaneInstance: XHRBreakpointsSidebarPane|null = null;
 
 export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.ContextFlavorListener.ContextFlavorListener,
@@ -78,6 +79,7 @@ export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.Cont
   // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #hitBreakpoint?: any;
+  #editingBreakpoint: string|null = null;
 
   private constructor() {
     super({
@@ -138,14 +140,11 @@ export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.Cont
 
     const inputElementContainer = document.createElement('p');
     inputElementContainer.classList.add('breakpoint-condition');
-    inputElementContainer.textContent = i18nString(UIStrings.breakWhenUrlContains);
     inputElementContainer.setAttribute('jslog', `${VisualLogging.value('condition').track({change: true})}`);
-
-    const inputElement = inputElementContainer.createChild('span', 'breakpoint-condition-input');
-    UI.ARIAUtils.setLabel(inputElement, i18nString(UIStrings.urlBreakpoint));
     this.addListElement(inputElementContainer, this.#list.element.firstChild as Element | null);
 
-    const commit = (_element: Element, newText: string): void => {
+    const commit = (e: UI.TextPrompt.TextPromptElement.CommitEvent): void => {
+      const newText = e.detail;
       this.removeListElement(inputElementContainer);
       SDK.DOMDebuggerModel.DOMDebuggerManager.instance().addXHRBreakpoint(newText, true);
       this.setBreakpoint(newText);
@@ -157,8 +156,24 @@ export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.Cont
       this.update();
     };
 
-    const config = new UI.InplaceEditor.Config(commit, cancel, undefined);
-    UI.InplaceEditor.InplaceEditor.startEditing(inputElement, config);
+    // clang-format off
+    /* eslint-disable-next-line @devtools/no-lit-render-outside-of-view */
+    render(
+      html`
+        ${i18nString(UIStrings.breakWhenUrlContains)}
+        <devtools-prompt
+            value=""
+            render-as-block
+            ?editing=${true}
+            aria-label=${i18nString(UIStrings.urlBreakpoint)}
+            class="breakpoint-condition-input"
+            @commit=${commit}
+            @cancel=${cancel}>
+        </devtools-prompt>
+      `,
+      inputElementContainer
+    );
+    // clang-format on
   }
 
   heightForItem(_item: string): number {
@@ -191,54 +206,97 @@ export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.Cont
   createElementForItem(item: string): Element {
     const listItemElement = document.createElement('div');
     UI.ARIAUtils.markAsListitem(listItemElement);
-    const element = listItemElement.createChild('div', 'breakpoint-entry');
-    containerToBreakpointEntry.set(listItemElement, element);
     const enabled = SDK.DOMDebuggerModel.DOMDebuggerManager.instance().xhrBreakpoints().get(item) || false;
-    UI.ARIAUtils.markAsCheckbox(element);
-    UI.ARIAUtils.setChecked(element, enabled);
-    element.addEventListener('contextmenu', this.contextMenu.bind(this, item), true);
-
     const title = item ? i18nString(UIStrings.urlContainsS, {PH1: item}) : i18nString(UIStrings.anyXhrOrFetch);
-    const checkbox = UI.UIUtils.CheckboxLabel.create(title, enabled, undefined, undefined, /* small */ true);
-    UI.ARIAUtils.setHidden(checkbox, true);
-    UI.ARIAUtils.setLabel(element, title);
-    element.appendChild(checkbox);
-    checkbox.addEventListener('click', this.checkboxClicked.bind(this, item, enabled), false);
-    element.addEventListener('click', event => {
-      if (event.target === element) {
-        this.checkboxClicked(item, enabled);
-      }
-    }, false);
-    breakpointEntryToCheckbox.set(element, checkbox);
-    checkbox.tabIndex = -1;
-    element.tabIndex = -1;
-    if (item === this.#list.selectedItem()) {
-      element.tabIndex = 0;
-      this.setDefaultFocusedElement(element);
-    }
-    element.addEventListener('keydown', event => {
-      let handled = false;
-      if (event.key === ' ') {
-        this.checkboxClicked(item, enabled);
-        handled = true;
-      } else if (event.key === 'Enter') {
-        this.labelClicked(item);
-        handled = true;
-      }
 
-      if (handled) {
-        event.consume(true);
+    const commit = (e: UI.TextPrompt.TextPromptElement.CommitEvent): void => {
+      if (this.#editingBreakpoint !== item) {
+        return;
       }
-    });
+      const newText = e.detail;
+      this.#editingBreakpoint = null;
+      SDK.DOMDebuggerModel.DOMDebuggerManager.instance().removeXHRBreakpoint(item);
+      this.removeBreakpoint(item);
+      SDK.DOMDebuggerModel.DOMDebuggerManager.instance().addXHRBreakpoint(newText, enabled);
+      this.setBreakpoint(newText);
+      this.#list.selectItem(newText);
+      this.focus();
+    };
 
-    if (item === this.#hitBreakpoint) {
-      element.classList.add('breakpoint-hit');
-      UI.ARIAUtils.setDescription(element, i18nString(UIStrings.breakpointHit));
-    }
+    const cancel = (): void => {
+      if (this.#editingBreakpoint !== item) {
+        return;
+      }
+      this.#editingBreakpoint = null;
+      this.#list.refreshItem(item);
+      this.focus();
+    };
 
-    checkbox.classList.add('cursor-auto');
-    checkbox.addEventListener('dblclick', this.labelClicked.bind(this, item), false);
-    this.#breakpointElements.set(item, listItemElement);
+    // clang-format off
+    /* eslint-disable-next-line @devtools/no-lit-render-outside-of-view */
+    render(
+      html`
+        <div class=${classMap({'breakpoint-entry': true, 'breakpoint-hit': item === this.#hitBreakpoint})}
+             role="checkbox"
+             aria-checked=${enabled ? 'true' : 'false'}
+             aria-label=${title}
+             aria-description=${ifDefined(item === this.#hitBreakpoint ? i18nString(UIStrings.breakpointHit) : undefined)}
+             tabindex=${item === this.#list.selectedItem() ? '0' : '-1'}
+             ?autofocus=${item === this.#list.selectedItem()}
+             ${ref((el?: Element) => {
+               if (el instanceof HTMLElement) {
+                 containerToBreakpointEntry.set(listItemElement, el);
+                 this.#breakpointElements.set(item, listItemElement);
+               }
+             })}
+             @click=${(event: Event) => {
+               if (event.target === event.currentTarget) {
+                 this.checkboxClicked(item, enabled);
+               }
+             }}
+             @contextmenu=${(e: Event) => this.contextMenu(item, e)}
+             @keydown=${(event: KeyboardEvent) => {
+               let handled = false;
+               if (event.key === ' ') {
+                 this.checkboxClicked(item, enabled);
+                 handled = true;
+               } else if (event.key === 'Enter') {
+                 this.#startEditing(item);
+                 handled = true;
+               }
+               if (handled) {
+                 event.consume(true);
+               }
+             }}>
+          <devtools-checkbox
+              class="cursor-auto"
+              aria-hidden="true"
+              .checked=${enabled}
+              .small=${true}
+              .title=${title}
+              @click=${(e: Event) => e.stopPropagation()}
+              @change=${() => this.checkboxClicked(item, enabled)}
+              @dblclick=${() => this.#startEditing(item)}
+              tabindex="-1"
+              jslog=${VisualLogging.toggle().track({click: true})}>
+            <devtools-prompt
+                value=${item}
+                render-as-block
+                ?editing=${item === this.#editingBreakpoint}
+                aria-label=${title}
+                class=${classMap({'breakpoint-condition-input': item === this.#editingBreakpoint})}
+                jslog=${VisualLogging.value('condition').track({change: true})}
+                @commit=${commit}
+                @cancel=${cancel}>
+              ${title}
+            </devtools-prompt>
+          </devtools-checkbox>
+        </div>
+      `,
+      listItemElement
+    );
+    // clang-format on
+
     listItemElement.setAttribute('jslog', `${VisualLogging.item().track({
                                    click: true,
                                    dblclick: true,
@@ -262,9 +320,15 @@ export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.Cont
       if (!breakpointEntryElement) {
         throw new Error('Expected breakpoint entry to be found for an element');
       }
-      this.setDefaultFocusedElement(breakpointEntryElement);
+      const prompt =
+          _to === this.#editingBreakpoint ? toElement.querySelector('devtools-prompt') as HTMLElement | null : null;
+      this.setDefaultFocusedElement(prompt || breakpointEntryElement);
       breakpointEntryElement.tabIndex = 0;
       if (this.hasFocus()) {
+        if (prompt) {
+          prompt.focus();
+          return;
+        }
         breakpointEntryElement.focus();
       }
     }
@@ -335,46 +399,9 @@ export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.Cont
     }
   }
 
-  private labelClicked(breakKeyword: string): void {
-    const element = this.#breakpointElements.get(breakKeyword);
-    const inputElement = document.createElement('span');
-    inputElement.classList.add('breakpoint-condition');
-    inputElement.textContent = breakKeyword;
-    inputElement.setAttribute('jslog', `${VisualLogging.value('condition').track({change: true})}`);
-    if (element) {
-      this.#list.element.insertBefore(inputElement, element);
-      element.classList.add('hidden');
-    }
-
-    const commit = (inputElement: Element, newText: string, _oldText: string|null, element?: Element): void => {
-      this.removeListElement(inputElement);
-      SDK.DOMDebuggerModel.DOMDebuggerManager.instance().removeXHRBreakpoint(breakKeyword);
-      this.removeBreakpoint(breakKeyword);
-      let enabled = true;
-      if (element) {
-        const breakpointEntryElement = containerToBreakpointEntry.get(element);
-        const checkboxElement =
-            breakpointEntryElement ? breakpointEntryToCheckbox.get(breakpointEntryElement) : undefined;
-        if (checkboxElement) {
-          enabled = checkboxElement.checked;
-        }
-      }
-      SDK.DOMDebuggerModel.DOMDebuggerManager.instance().addXHRBreakpoint(newText, enabled);
-      this.setBreakpoint(newText);
-      this.#list.selectItem(newText);
-      this.focus();
-    };
-
-    const cancel = (inputElement: Element, element?: Element): void => {
-      this.removeListElement(inputElement);
-      if (element) {
-        element.classList.remove('hidden');
-      }
-      this.focus();
-    };
-
-    const config = new UI.InplaceEditor.Config(commit, cancel, element);
-    UI.InplaceEditor.InplaceEditor.startEditing(inputElement, config);
+  #startEditing(item: string): void {
+    this.#editingBreakpoint = item;
+    this.#list.refreshItem(item);
   }
 
   flavorChanged(_object: Object|null): void {
