@@ -95,6 +95,9 @@ class TestPlatformFileSystem extends Persistence.PlatformFileSystem.PlatformFile
   override supportsAutomapping(): boolean {
     return this.#autoMapping;
   }
+  override contentType(_path: string): Common.ResourceType.ResourceType {
+    return Common.ResourceType.ResourceType.fromMimeType(this.#mimeType);
+  }
   override mimeFromPath(_path: Platform.DevToolsPath.UrlString): string {
     return this.#mimeType;
   }

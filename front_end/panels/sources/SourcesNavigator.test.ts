@@ -15,6 +15,7 @@ import type * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as Breakpoints from '../../models/breakpoints/breakpoints.js';
 import * as Persistence from '../../models/persistence/persistence.js';
+import * as TextUtils from '../../models/text_utils/text_utils.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import {deinitializeGlobalVars} from '../../testing/EnvironmentHelpers.js';
 import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
@@ -733,5 +734,44 @@ describe('FilesNavigatorView', () => {
     project1.removeProject();
     project2.removeProject();
     project3.removeProject();
+  });
+
+  it('supports making a copy of a file', async () => {
+    const {uiSourceCode: originalUISourceCode, project} = createFileSystemUISourceCode({
+      url: urlString`file:///home/workspace/script.js`,
+      mimeType: 'application/javascript',
+      content: 'testme',
+      fileSystemPath: 'file:///home/workspace',
+      universe: backend.universe,
+    });
+
+    const navigatorView = new Sources.SourcesNavigator.FilesNavigatorView(networkProjectManager);
+
+    // Stub createFile on the platform file system to simulate successful creation.
+    const createFileStub = sinon.stub(project.fileSystem(), 'createFile');
+    createFileStub.callsFake((path, name) => {
+      const newFileName = name || 'NewFile';
+      const relativePath = path ? path + '/' + newFileName : newFileName;
+      return Promise.resolve(relativePath as Platform.DevToolsPath.EncodedPathString);
+    });
+
+    // Stub rename to avoid UI prompts.
+    sinon.stub(navigatorView, 'rename');
+
+    await navigatorView.create(project, '' as Platform.DevToolsPath.EncodedPathString, originalUISourceCode);
+
+    // Verify that the new file was created in the project.
+    const newFileUrl = urlString`file:///home/workspace/NewFile`;
+    const newUISourceCode = project.uiSourceCodeForURL(newFileUrl);
+    assert.exists(newUISourceCode);
+
+    // Verify content was copied.
+    const contentData = await newUISourceCode.requestContentData();
+    if (TextUtils.ContentData.ContentData.isError(contentData)) {
+      throw new Error('Content data is an error: ' + contentData.error);
+    }
+    assert.strictEqual(contentData.text, 'testme');
+
+    project.removeProject();
   });
 });
