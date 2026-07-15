@@ -932,7 +932,7 @@ export class FrameDetailsReportView extends UI.Widget.Widget {
 
   #uiSourceCodeForFrame(frame: SDK.ResourceTreeModel.ResourceTreeFrame): Workspace.UISourceCode.UISourceCode|null {
     for (const project of Workspace.Workspace.WorkspaceImpl.instance().projects()) {
-      const projectTarget = project.target();
+      const projectTarget = Bindings.NetworkProject.NetworkProject.getTargetForProject(project);
       if (projectTarget && projectTarget === frame.resourceTreeModel().target()) {
         const uiSourceCode = project.uiSourceCodeForURL(frame.url);
         if (uiSourceCode) {
