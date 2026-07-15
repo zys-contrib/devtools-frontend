@@ -2,24 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-interface KarmaMochaConfig {
-  expose?: string[];
-  reporter?: unknown;
-  require?: unknown;
-  [key: string]: unknown;
-}
+import type * as Mocha from 'mocha';
 
-interface KarmaConfig {
-  mocha?: KarmaMochaConfig;
-}
-
-interface Karma {
-  config: KarmaConfig;
-  start: () => void;
-  info: (info: {total: number}) => void;
-  result: (result: KarmaResult) => void;
-  complete: (data: {coverage?: unknown}) => void;
-}
+import {installDevtoolsBdd} from './mocha-interface.js';
 
 interface KarmaResult {
   id: string;
@@ -53,23 +38,6 @@ interface TestExt extends Mocha.Runnable {
   type?: string;
 }
 
-interface BrowserMocha extends Mocha {
-  setup(options: Record<string, unknown>): void;
-  utils?: {
-    stringify(value: unknown): string,
-  };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface Window {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  __karma__: Karma;
-  mocha: BrowserMocha;
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  __coverage__?: unknown;
-}
-
-(function() {
 const karma = window.__karma__;
 const mocha = window.mocha;
 
@@ -84,6 +52,7 @@ delete mochaConfig.require;
 
 mochaConfig.reporter = function() {};
 mocha.setup(mochaConfig);
+installDevtoolsBdd();
 
 const formatError = (error: Error): string => {
   let {stack} = error;
@@ -213,4 +182,3 @@ karma.start = () => {
     }
   });
 };
-})();

@@ -256,6 +256,8 @@ const coveragePreprocessors = TestConfig.coverage ? {
 } :
                                                     {};
 
+const setupScriptPath = path.join(GEN_DIR, 'front_end', 'testing', 'test_setup.js');
+
 function testsEntrypointMiddleware(config: any) {
   return (req: any, res: any, next: any) => {
     if (req.url.startsWith('/base/tests.js')) {
@@ -267,7 +269,10 @@ function testsEntrypointMiddleware(config: any) {
                             return `import ${JSON.stringify(importPath)};`;
                           })
                           .join('\n');
-      return res.end(imports + `window.__karma__.loaded();\n`);
+      const setupScriptImportPath = `/base/${path.relative(config.basePath, setupScriptPath).replace(/\\/g, '/')}`;
+      return res.end(`import ${JSON.stringify(setupScriptImportPath)};
+        ${imports}
+        window.__karma__.loaded();\n`);
     }
     next();
   };
@@ -287,12 +292,13 @@ module.exports = function(config: any) {
 
     files: [
       {pattern: path.join(SOURCE_ROOT, 'node_modules/mocha/mocha.js'), served: true, included: true},
-      {pattern: path.join(GEN_DIR, 'test/unit/mocha-adapter-browser.js'), served: true, included: true},
+      {pattern: path.join(GEN_DIR, 'test/unit/mocha-adapter-browser.js'), type: 'module', included: true},
       // Global hooks in test_setup must go first
+      {pattern: setupScriptPath, served: true, included: false},
+      {pattern: path.join(GEN_DIR, 'test/unit/browser-globals.js'), type: 'module', served: true, included: false},
       {pattern: path.join(SOURCE_ROOT, 'node_modules/chai/**/*'), served: true, included: false},
       {pattern: path.join(SOURCE_ROOT, 'node_modules/sinon/**/*'), served: true, included: false},
-      {pattern: path.join(GEN_DIR, 'test/unit/mocha-interface.js'), served: true, included: true},
-      {pattern: path.join(GEN_DIR, 'front_end', 'testing', 'test_setup.js'), type: 'module'},
+      {pattern: path.join(GEN_DIR, 'test/unit/mocha-interface.js'), served: true, included: false},
       ...tests.map(pattern => ({pattern, type: 'module', served: true, included: false})),
       ...tests.map(pattern => ({pattern: `${pattern}.map`, served: true, included: false, watched: true})),
       {pattern: path.join(GEN_DIR, 'front_end/Images/*.{svg,png}'), served: true, included: false},
