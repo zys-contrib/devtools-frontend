@@ -37,4 +37,15 @@ describe('RecorderPluginManager', () => {
       },
     ]);
   });
+
+  it('supports instance and removeInstance for backwards compatibility', () => {
+    const instance1 = Extensions.RecorderPluginManager.RecorderPluginManager.instance({forceNew: true});
+    const instance2 = Extensions.RecorderPluginManager.RecorderPluginManager.instance();
+    assert.strictEqual(instance1, instance2);
+
+    Extensions.RecorderPluginManager.RecorderPluginManager.removeInstance();
+    const instance3 = Extensions.RecorderPluginManager.RecorderPluginManager.instance();
+    assert.notStrictEqual(instance1, instance3);
+    Extensions.RecorderPluginManager.RecorderPluginManager.removeInstance();
+  });
 });
