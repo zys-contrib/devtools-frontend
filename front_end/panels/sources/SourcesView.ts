@@ -345,9 +345,6 @@ export class SourcesView extends Common.ObjectWrapper.eventMixin<EventTypes, typ
     if (view instanceof UI.View.SimpleView) {
       void view.toolbarItems().then(items => {
         this.#scriptViewToolbar.removeToolbarItems();
-        for (const action of getRegisteredEditorActions()) {
-          this.#scriptViewToolbar.appendToolbarItem(action.getOrCreateButton(this));
-        }
         if (Array.isArray(items)) {
           items.map(item => this.#scriptViewToolbar.appendToolbarItem(item));
         } else {
@@ -655,20 +652,6 @@ export interface EditorClosedEvent {
 export interface EventTypes {
   [Events.EDITOR_CLOSED]: EditorClosedEvent;
   [Events.EDITOR_SELECTED]: Workspace.UISourceCode.UISourceCode;
-}
-
-export interface EditorAction {
-  getOrCreateButton(sourcesView: SourcesView): UI.Toolbar.ToolbarButton;
-}
-
-const registeredEditorActions: Array<() => EditorAction> = [];
-
-export function registerEditorAction(editorAction: () => EditorAction): void {
-  registeredEditorActions.push(editorAction);
-}
-
-export function getRegisteredEditorActions(): EditorAction[] {
-  return registeredEditorActions.map(editorAction => editorAction());
 }
 
 export class SwitchFileActionDelegate implements UI.ActionRegistration.ActionDelegate {

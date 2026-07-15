@@ -45,7 +45,6 @@ devtools_ui_module("sources") {
     "FilePathScoreFunction.ts",
     "FilteredUISourceCodeListProvider.ts",
     "GoToLineQuickOpen.ts",
-    "InplaceFormatterEditorAction.ts",
     "NavigatorView.ts",
     "OpenFileQuickOpen.ts",
     "OutlineQuickOpen.ts",
