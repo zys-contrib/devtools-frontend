@@ -10,6 +10,11 @@ ts_library("mocha-interface") {
   sources = [ "mocha-interface.ts" ]
 }
 
+ts_library("mocha-adapter-browser") {
+  testonly = true
+  sources = [ "mocha-adapter-browser.ts" ]
+}
+
 node_ts_library("karma") {
   sources = [
     "karma.conf.ts",
@@ -22,6 +27,7 @@ node_ts_library("karma") {
   ]
   data_deps = [
     ":context",
+    ":mocha-adapter-browser",
     ":mocha-interface",
   ]
 }

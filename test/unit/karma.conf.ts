@@ -286,6 +286,8 @@ module.exports = function(config: any) {
     customDebugFile: path.join(GEN_DIR, 'test/unit/debug.html'),
 
     files: [
+      {pattern: path.join(SOURCE_ROOT, 'node_modules/mocha/mocha.js'), served: true, included: true},
+      {pattern: path.join(GEN_DIR, 'test/unit/mocha-adapter-browser.js'), served: true, included: true},
       // Global hooks in test_setup must go first
       {pattern: path.join(SOURCE_ROOT, 'node_modules/chai/**/*'), served: true, included: false},
       {pattern: path.join(SOURCE_ROOT, 'node_modules/sinon/**/*'), served: true, included: false},
@@ -323,8 +325,6 @@ module.exports = function(config: any) {
       },
     },
 
-    frameworks: ['mocha'],
-
     client: {
       mocha: {
         ...TestConfig.mochaGrep,
@@ -339,7 +339,6 @@ module.exports = function(config: any) {
     plugins: [
       {'middleware:esm-entry': ['factory', testsEntrypointMiddleware]},
       {[`launcher:${CustomChrome.prototype.name}`]: ['type', CustomChrome]},
-      require('karma-mocha'),
       require('karma-sourcemap-loader'),
       require('karma-spec-reporter'),
       require('karma-coverage'),
