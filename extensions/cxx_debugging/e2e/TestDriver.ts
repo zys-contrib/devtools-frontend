@@ -43,8 +43,7 @@ function pausedReasonText(reason: string) {
   return;
 }
 
-// Started failing recently, but not at every run
-describe.skip('[crbug.com/468345402] CXX Debugging Extension Test Suite', function() {
+describe('CXX Debugging Extension Test Suite', function() {
   for (const {name, test, script} of loadTests()) {
     if (!script) {
       continue;
@@ -79,10 +78,13 @@ describe.skip('[crbug.com/468345402] CXX Debugging Extension Test Suite', functi
               async () => ((await devToolsPage.getPendingEvents('DevTools.DebuggerPaused')) || []).length > 0);
 
           const stopped = await devToolsPage.waitFor(PAUSE_INDICATOR_SELECTOR);
-          const stoppedText =
-              await devToolsPage.waitForFunction(async () => await stopped.evaluate(node => node.textContent));
+          const expectedReasonText = pausedReasonText(reason);
+          const stoppedText = await devToolsPage.waitForFunction(async () => {
+            const text = await stopped.evaluate(node => node.textContent);
+            return (text === expectedReasonText || !expectedReasonText) ? text : undefined;
+          });
 
-          assert.strictEqual(stoppedText, pausedReasonText(reason));
+          assert.strictEqual(stoppedText, expectedReasonText);
 
           const pausedLocation = await retrieveTopCallFrameWithoutResuming(devToolsPage);
           if (pausedLocation?.includes('…')) {
@@ -177,17 +179,20 @@ async function readScopeView(scope: string, variable: string[]) {
       return node.getAttribute('aria-expanded');
     });
 
-    const name = await elementHandle.$('.name-and-value');
+    const name = await devToolsPage.waitFor('.name-and-value', elementHandle);
     if (isExpanded === 'false') {
-      // Clicking on an expandable element with the memory icon can result in
-      // unintentional click on the icon. This opens the memory viewer but does
-      // not propagate the click event, so the element does not expand.
-      // Selecting a child element instead eliminates this issue.
       if (name) {
         await devToolsPage.clickElement(name);
       } else {
         await devToolsPage.clickElement(elementHandle);
       }
+
+      await devToolsPage.pressKey('ArrowRight');
+
+      await devToolsPage.waitForFunction(async () => {
+        const expanded = await elementHandle.evaluate(node => node.getAttribute('aria-expanded'));
+        return expanded === 'true' ? true : undefined;
+      });
     }
 
     if (name) {
