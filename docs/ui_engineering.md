@@ -222,25 +222,38 @@ This section provides a series of examples for migrating from imperative DOM man
 
 ## Setting `className` on `this.element`
 
-Instead of setting `className` directly on `this.element`, define the component's structure declaratively using a lit-html template.
+Instead of setting `className` directly on `this.element`, define the component's structure declaratively using a lit-html template. When classes or attributes (`jslog`) must be set directly on `target` itself (for example when `target` is positioned externally via `.positionAt()`), use the `container` option in DevTools' custom `render()` (`front_end/ui/lit/render.ts`).
 
 **Before:**
 ```typescript
 class SomeWidget extends UI.Widget.Widget {
-          constructor() {
-            super();
-            this.element.className = 'some-class';
-          }
-      }
+  constructor(element?: HTMLElement) {
+    super(element, {jslog: `${VisualLogging.deviceModeRuler().track({click: true})}`});
+    this.element.className = 'some-class';
+  }
+}
 ```
 
-**After:**
+**After (when creating an inner wrapper):**
 ```typescript
-
 export const DEFAULT_VIEW = (input, _output, target) => {
   render(html`
     <div class="some-class"></div>`,
-    target, {host: input});
+    target);
+};
+```
+
+**After (when classes or attributes must be applied directly to `target` itself):**
+```typescript
+export const DEFAULT_VIEW = (input, _output, target) => {
+  render(html`
+    <div class="some-content">...</div>`,
+    target, {
+      container: {
+        classes: ['some-class'],
+        attributes: {jslog: VisualLogging.deviceModeRuler().track({click: true})},
+      },
+    });
 };
 ```
 
@@ -268,7 +281,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
     <div>
       <div></div>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -296,7 +309,7 @@ class SomeWidget extends UI.Widget.Widget {
 export const DEFAULT_VIEW = (input, _output, target) => {
   render(html`
     <div class="some-class" aria-label="some-label">some-text</div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -326,7 +339,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
     <div>
       <div class="some-class container" @click=${this.onClick.bind(this)}></div>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -353,7 +366,7 @@ class SomeWidget extends UI.Widget.Widget {
 export const DEFAULT_VIEW = (input, _output, target) => {
   render(html`
     <div style="width:100%; margin-left:10px"></div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -383,7 +396,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
     <div>
       <div class="some-class"></div>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -411,7 +424,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
     <div>
       <span class="some-class">some-text</span>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -450,7 +463,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         </devtools-toolbar-input>
       </devtools-toolbar>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -483,7 +496,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
             aria-label="accessible-placeholder" style="flex-grow:0.5; flex-shrink:1"></devtools-toolbar-input>
       </devtools-toolbar>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -523,7 +536,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         <span><div style="font-size: 12px;">💫</div></span>
       </devtools-adorner>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -558,7 +571,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
             .jslogContext=${'edit-name'}></devtools-button>
       </devtools-toolbar>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -618,7 +631,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
       <input type="text" placeholder="some-placeholder" value="some-value"
           ?disabled=${!this.enabled} checked>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -661,7 +674,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
       <devtools-button class="some-class" title=${i18nString(UIStrings.someTitle)} @click=${onClick}
           .jslogContext=${'some-button'} .variant=${Buttons.Button.Variant.PRIMARY}>Some button</devtools-button>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -689,7 +702,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
     <div>
       <div class="some-class">some-text</div>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -760,7 +773,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
       <devtools-icon name="checkmark"
           style="color:var(--icon-checkmark-green); width:14px; height:14px"></devtools-icon>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -811,7 +824,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         <devtools-checkbox ${bindToSetting(this.someOtherSetting)}>${this.someOtherSetting.title()}</devtools-checkbox>
       </devtools-toolbar>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -844,7 +857,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         <devtools-button ${bindToAction('elements.refresh-event-listeners')}></devtools-button>
       </devtools-toolbar>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -878,7 +891,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         </devtools-checkbox>
       </devtools-toolbar>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -910,7 +923,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
             @change=${this.someToolbarComboBoxClicked.bind(this)}></select>
       </devtools-toolbar>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -970,7 +983,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         <div class="toolbar-spacer"></div>
       </devtools-toolbar>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -1001,7 +1014,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
     <div>
       <iframe sandbox tabindex="-1"></iframe>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -1030,7 +1043,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
       <input class="harmony-input add-source-map" spellcheck="false" type="text"
           jslog=${VisualLogging.textField('url').track({keydown: 'Enter', change: true})}>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -1098,7 +1111,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         </table>
       </devtools-data-grid>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -1182,7 +1195,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         </devtools-split-view>
       </devtools-split-view>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -1233,7 +1246,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
       <div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0.5"
           aria-valuetext="50% done"></div>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -1265,7 +1278,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
           header: i18nString(UIStrings.nothingToSeeHere), text: this.explanation,
           link: 'http://www.google.com',})}
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -1320,7 +1333,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         </devtools-prompt>
       </devtools-checkbox>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -1366,7 +1379,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         </ul>
       `}></devtools-tree>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
@@ -1392,7 +1405,7 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         </ul>
       `}></devtools-tree>
     </div>`,
-    target, {host: input});
+    target);
 };
 ```
 
