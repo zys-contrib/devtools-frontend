@@ -84,7 +84,7 @@ export abstract class AffectedResourcesView extends UI.TreeOutline.TreeElement {
 
     this.affectedResources = this.createAffectedResources();
     this.#affectedResourcesCount = 0;
-    this.requestResolver = new Logs.RequestResolver.RequestResolver();
+    this.requestResolver = new Logs.RequestResolver.RequestResolver(Logs.NetworkLog.NetworkLog.instance());
     this.#frameListeners = [];
     this.#unresolvedFrameIds = new Set();
   }

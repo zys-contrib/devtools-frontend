@@ -345,7 +345,7 @@ export class ConsoleView extends UI.Widget.VBox implements
   private pendingSidebarMessages: ConsoleViewMessage[] = [];
   private userHasOpenedSidebarAtLeastOnce = false;
   private issueToolbarThrottle: Common.Throttler.Throttler;
-  private requestResolver = new Logs.RequestResolver.RequestResolver();
+  private requestResolver = new Logs.RequestResolver.RequestResolver(Logs.NetworkLog.NetworkLog.instance());
   private issueResolver =
       new IssuesManager.IssueResolver.IssueResolver(IssuesManager.IssuesManager.IssuesManager.instance());
   #isDetached = false;

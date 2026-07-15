@@ -243,7 +243,7 @@ export class PreloadingDetailsReportView extends LegacyWrapper.LegacyWrapper.Wra
             .data=${
               {
                 affectedRequest,
-                requestResolver: this.#data.requestResolver || new Logs.RequestResolver.RequestResolver(),
+                requestResolver: this.#data.requestResolver || new Logs.RequestResolver.RequestResolver(Logs.NetworkLog.NetworkLog.instance()),
                 displayURL: true,
                 urlToDisplay: url,
               }
