@@ -660,4 +660,54 @@ describe('Automapping', () => {
     assert.isTrue(bindings[0].fileSystem.isDirty());
     assert.strictEqual(bindings[0].fileSystem.workingCopy(), modifiedContent);
   });
+
+  it('verify that dirty fileSystem uiSourceCodes are bound to network', async () => {
+    const clock = sinon.useFakeTimers({toFake: ['setTimeout']});
+    try {
+      const url = urlString`http://127.0.0.1:8000/devtools/persistence/resources/foo.js`;
+      const fileURL = urlString`file:///var/www/devtools/persistence/resources/foo.js`;
+      const content = '\n\nwindow.foo = ()=>\'foo\';\n';
+      const dirtyContent = '\n\nwindow.foo = ()=>\'bar\';\n';
+
+      const persistence = backend.universe.persistence;
+      const bindings: Persistence.Persistence.PersistenceBinding[] = [];
+
+      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
+        bindings.push(event.data);
+      });
+
+      // 1. Create the filesystem UISourceCode.
+      const {uiSourceCode: fileSystemSourceCode} = createFileSystemUISourceCode({
+        url: fileURL,
+        content,
+        fileSystemPath: 'file:///var/www',
+        mimeType: 'text/javascript',
+        metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
+        autoMapping: true,
+        universe: backend.universe,
+      });
+
+      // 2. Make the filesystem UISourceCode dirty.
+      fileSystemSourceCode.setWorkingCopy(dirtyContent);
+      assert.isTrue(fileSystemSourceCode.isDirty());
+
+      // 3. Create the network UISourceCode.
+      const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
+        url,
+        mimeType: 'text/javascript',
+        content,
+        projectType: Workspace.Workspace.projectTypes.Network,
+        metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
+        universe: backend.universe,
+      });
+
+      await clock.tickAsync(200);
+
+      assert.lengthOf(bindings, 1);
+      assert.strictEqual(bindings[0].network, networkSourceCode);
+      assert.strictEqual(bindings[0].fileSystem, fileSystemSourceCode);
+    } finally {
+      clock.restore();
+    }
+  });
 });
