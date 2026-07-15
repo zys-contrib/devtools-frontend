@@ -24,6 +24,8 @@ description: Use when migrating Chromium layout tests to DevTools unit tests
 - If the test requires rendering, use `renderElementIntoDOM` to attach elements to a test container.
 - If testing legacy components that require internal tokens or have private methods, try to use public APIs or events instead. If impossible, consider using structural typing workarounds or updating the component to be more testable.
 - If tests require a repetitive setup extract it into a test helper function at the top of the file.
+- Code comments must be full sentences ending with a period, except when the entire comment is a URL.
+- Do not include comments of the form `// Replaces web test: http/tests/devtools/persistence/automapping-absolute-paths.js`. Since we plan to remove migrated web tests, these are not useful references.
 
 4.  **Update BUILD.gn**:
 
@@ -69,7 +71,7 @@ import {describeWithEnvironment} from '../../../../testing/EnvironmentHelpers.js
 describeWithEnvironment('DataGrid', () => {
   it('tests long text in datagrid', () => {
     // ... setup grid ...
-    // Use assertions instead of printing results
+    // Use assertions instead of printing results.
     assert.strictEqual(keyElement.textContent.length, 1500);
   });
 });
