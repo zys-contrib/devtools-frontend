@@ -3,13 +3,18 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
 
 import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
+import * as Persistence from '../../models/persistence/persistence.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {setUpEnvironment} from '../../testing/OverridesHelpers.js';
-import {createContentProviderUISourceCodes} from '../../testing/UISourceCodeHelpers.js';
+import {
+  createContentProviderUISourceCodes,
+  createFileSystemUISourceCode,
+} from '../../testing/UISourceCodeHelpers.js';
 import {render, type TemplateResult} from '../../ui/lit/lit.js';
 
 import * as Sources from './sources.js';
@@ -147,6 +152,45 @@ describeWithEnvironment('FilteredUISourceCodeListProvider', () => {
 
     assert.strictEqual(resultCount, 1);
     assert.strictEqual(resultUrl, url);
+  });
+
+  it('filters out mapped network uiSourceCodes', () => {
+    const url = 'http://www.example.com/script.js';
+    const fsUrl = 'file:///var/www/script.js';
+    const resourceType = Common.ResourceType.resourceTypes.Script;
+
+    const {workspace, project: networkProject, uiSourceCode: networkUiSourceCode} =
+        setUpEnvironmentWithUISourceCode(url, resourceType);
+
+    const {uiSourceCode: fileSystemUiSourceCode, project: fileSystemProject} = createFileSystemUISourceCode({
+      url: urlString`${fsUrl}`,
+      mimeType: 'text/javascript',
+      fileSystemPath: 'file:///var/www',
+    });
+
+    const persistenceInstance = Persistence.Persistence.PersistenceImpl.instance();
+    const binding = {
+      network: networkUiSourceCode,
+      fileSystem: fileSystemUiSourceCode,
+    } as Persistence.Persistence.PersistenceBinding;
+
+    const bindingStub = sinon.stub(persistenceInstance, 'binding');
+    bindingStub.withArgs(networkUiSourceCode).returns(binding);
+    bindingStub.withArgs(fileSystemUiSourceCode).returns(binding);
+
+    const filteredUISourceCodeListProvider =
+        new Sources.FilteredUISourceCodeListProvider.FilteredUISourceCodeListProvider();
+    filteredUISourceCodeListProvider.attach();
+
+    const itemCount = filteredUISourceCodeListProvider.itemCount();
+    assert.strictEqual(itemCount, 1);
+
+    const itemUrl = filteredUISourceCodeListProvider.itemKeyAt(0);
+    assert.strictEqual(itemUrl, fsUrl);
+
+    bindingStub.restore();
+    workspace.removeProject(networkProject);
+    fileSystemProject.dispose();
   });
 
   describe('renderItem', () => {
