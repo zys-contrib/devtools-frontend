@@ -5,6 +5,7 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
+import type * as Protocol from '../../generated/protocol.js';
 import type * as Trace from '../../models/trace/trace.js';
 import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
@@ -30,9 +31,12 @@ const fakeEvents = [
 
 describeWithEnvironment('TracingManager', () => {
   let connection: MockCDPConnection;
+  let lastStartRequest: Protocol.Tracing.StartRequest|null = null;
   beforeEach(() => {
+    lastStartRequest = null;
     connection = new MockCDPConnection();
-    connection.setSuccessHandler('Tracing.start', () => {
+    connection.setSuccessHandler('Tracing.start', request => {
+      lastStartRequest = request ?? {};
       return {};
     });
     connection.setSuccessHandler('Tracing.end', () => {
@@ -100,5 +104,25 @@ describeWithEnvironment('TracingManager', () => {
     assert.throws(() => {
       manager.stop();
     }, /Tracing is not started/);
+  });
+
+  it('does not forward screenshot params by default', async () => {
+    const target = createTarget({connection});
+    const manager = new Tracing.TracingManager.TracingManager(target);
+    const client = new FakeClient();
+    await manager.start(client, 'devtools-timeline');
+    assert.isNotNull(lastStartRequest);
+    assert.isUndefined(lastStartRequest?.screenshotMaxSize);
+    assert.isUndefined(lastStartRequest?.screenshotMaxCount);
+  });
+
+  it('forwards screenshot params when provided', async () => {
+    const target = createTarget({connection});
+    const manager = new Tracing.TracingManager.TracingManager(target);
+    const client = new FakeClient();
+    await manager.start(client, 'devtools-timeline', {screenshotMaxSize: 250, screenshotMaxCount: 1800});
+    assert.isNotNull(lastStartRequest);
+    assert.strictEqual(lastStartRequest?.screenshotMaxSize, 250);
+    assert.strictEqual(lastStartRequest?.screenshotMaxCount, 1800);
   });
 });

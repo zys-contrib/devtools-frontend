@@ -116,6 +116,32 @@ const UIStrings = {
    */
   screenshots: 'Screenshots',
   /**
+   * @description Label for the screenshot capture preset dropdown in the performance panel settings pane. The dropdown
+   * picks the per-frame resolution and maximum frame count used when capturing screenshots. Every preset is sized to
+   * stay within the same per-session memory budget.
+   */
+  screenshotCapture: 'Screenshot capture',
+  /**
+   * @description Dropdown option in the performance panel for the default screenshot capture preset (500 x 500 pixels,
+   * up to 450 frames).
+   */
+  screenshotPresetDefault: '500 x 500 px, up to 450 frames',
+  /**
+   * @description Dropdown option in the performance panel for a screenshot capture preset that uses smaller frames so
+   * more of them fit in the per-session memory budget (250 x 250 pixels, up to 1800 frames).
+   */
+  screenshotPresetMedium: '250 x 250 px, up to 1800 frames',
+  /**
+   * @description Dropdown option in the performance panel for a screenshot capture preset that uses higher-resolution
+   * frames at the cost of capturing fewer of them (1000 x 1000 pixels, up to 100 frames).
+   */
+  screenshotPresetLarge: '1000 x 1000 px, up to 100 frames',
+  /**
+   * @description Dropdown option in the performance panel for a screenshot capture preset that uses very small frames
+   * so many of them fit in the per-session memory budget (100 x 100 pixels, up to 11250 frames).
+   */
+  screenshotPresetTiny: '100 x 100 px, up to 11250 frames',
+  /**
    * @description Text for the memory of the page
    */
   memory: 'Memory',
@@ -314,6 +340,46 @@ const UIStrings = {
 const str_ = i18n.i18n.registerUIStrings('panels/timeline/TimelinePanel.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
+/**
+ * Screenshot capture presets exposed in the performance panel settings pane.
+ * Each entry pairs a maximum per-frame edge length (square frames) with a
+ * maximum frame count. All presets are sized to stay within the backend's
+ * per-session memory budget (~450 MB at 4 bytes per pixel).
+ */
+const SCREENSHOT_CAPTURE_PRESETS: ReadonlyArray<{
+  readonly key: string,
+  readonly maxSize: number,
+  readonly maxCount: number,
+  readonly label: () => Common.UIString.LocalizedString,
+}> =
+    [
+      {
+        key: '500-450',
+        maxSize: 500,
+        maxCount: 450,
+        label: () => i18nString(UIStrings.screenshotPresetDefault),
+      },
+      {
+        key: '250-1800',
+        maxSize: 250,
+        maxCount: 1800,
+        label: () => i18nString(UIStrings.screenshotPresetMedium),
+      },
+      {
+        key: '1000-100',
+        maxSize: 1000,
+        maxCount: 100,
+        label: () => i18nString(UIStrings.screenshotPresetLarge),
+      },
+      {
+        key: '100-11250',
+        maxSize: 100,
+        maxCount: 11250,
+        label: () => i18nString(UIStrings.screenshotPresetTiny),
+      },
+    ];
+const DEFAULT_SCREENSHOT_CAPTURE_PRESET_KEY = SCREENSHOT_CAPTURE_PRESETS[0].key;
+
 let timelinePanelInstance: TimelinePanel|undefined;
 
 // Total time to wait for source maps to load before giving up so trace processing can proceed.
@@ -349,6 +415,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
   private disableCaptureJSProfileSetting: Common.Settings.Setting<boolean>;
   private readonly captureLayersAndPicturesSetting: Common.Settings.Setting<boolean>;
   private readonly captureSelectorStatsSetting: Common.Settings.Setting<boolean>;
+  private readonly screenshotCaptureModeSetting: Common.Settings.Setting<string>;
   readonly #thirdPartyTracksSetting: Common.Settings.Setting<boolean>;
   private showScreenshotsSetting: Common.Settings.Setting<boolean>;
   private showMemorySetting: Common.Settings.Setting<boolean>;
@@ -501,6 +568,10 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
     this.captureSelectorStatsSetting = Common.Settings.Settings.instance().createSetting(
         'timeline-capture-selector-stats', false, Common.Settings.SettingStorageType.SESSION);
     this.captureSelectorStatsSetting.setTitle(i18nString(UIStrings.enableSelectorStats));
+    this.screenshotCaptureModeSetting = Common.Settings.Settings.instance().createSetting(
+        'timeline-screenshot-capture-mode', DEFAULT_SCREENSHOT_CAPTURE_PRESET_KEY,
+        Common.Settings.SettingStorageType.SESSION);
+    this.screenshotCaptureModeSetting.setTitle(i18nString(UIStrings.screenshotCapture));
 
     this.showScreenshotsSetting =
         Common.Settings.Settings.instance().createSetting('timeline-show-screenshots', !this.#isNode);
@@ -1297,6 +1368,31 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
         this.disableCaptureJSProfileSetting.title(), this.disableCaptureJSProfileSetting,
         i18nString(UIStrings.disablesJavascriptSampling)));
 
+    const screenshotPresetSelect = new UI.Toolbar.ToolbarComboBox(
+        () =>
+            this.screenshotCaptureModeSetting.set((screenshotPresetSelect.selectedOption() as HTMLOptionElement).value),
+        this.screenshotCaptureModeSetting.title(), '', 'screenshot-capture-mode');
+    let selectedScreenshotPresetIndex = 0;
+    for (let i = 0; i < SCREENSHOT_CAPTURE_PRESETS.length; ++i) {
+      const preset = SCREENSHOT_CAPTURE_PRESETS[i];
+      screenshotPresetSelect.addOption(
+          screenshotPresetSelect.createOption(preset.label(), preset.key, `tracing.screenshot-size.${preset.key}`));
+      if (preset.key === this.screenshotCaptureModeSetting.get()) {
+        selectedScreenshotPresetIndex = i;
+      }
+    }
+    screenshotPresetSelect.setSelectedIndex(selectedScreenshotPresetIndex);
+    const screenshotPresetPane = this.settingsPane.createChild('div');
+    screenshotPresetPane.append(this.screenshotCaptureModeSetting.title());
+    screenshotPresetPane.append(screenshotPresetSelect.element);
+    // Surface the dropdown only when the "Screenshots" checkbox is on, since the
+    // preset only affects the screenshots captured during the recording.
+    const updateScreenshotPresetVisibility = (): void => {
+      screenshotPresetPane.hidden = !this.showScreenshotsSetting.get();
+    };
+    this.showScreenshotsSetting.addChangeListener(updateScreenshotPresetVisibility);
+    updateScreenshotPresetVisibility();
+
     const thirdPartyCheckbox =
         this.createSettingCheckbox(this.#thirdPartyTracksSetting, i18nString(UIStrings.showDataAddedByExtensions));
 
@@ -1898,6 +1994,14 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
 
       const urlToTrace = await this.#evaluateInspectedURL();
 
+      // Resolve the user's screenshot capture preset (resolution x frame count).
+      // All presets are sized to fit within the backend's per-session memory
+      // budget, which the backend additionally enforces. Forward the values
+      // only when screenshots are actually being captured.
+      const screenshotPreset =
+          SCREENSHOT_CAPTURE_PRESETS.find(p => p.key === this.screenshotCaptureModeSetting.get()) ??
+          SCREENSHOT_CAPTURE_PRESETS[0];
+
       // Order is important here: we tell the controller to start recording, which enables tracing.
       await this.controller.startRecording({
         enableJSSampling: !this.disableCaptureJSProfileSetting.get(),
@@ -1905,6 +2009,9 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
         captureFilmStrip: this.showScreenshotsSetting.get(),
         captureSelectorStats: this.captureSelectorStatsSetting.get(),
         navigateToUrl: this.recordingPageReload ? urlToTrace : undefined,
+        ...(this.showScreenshotsSetting.get() ?
+                {screenshotMaxSize: screenshotPreset.maxSize, screenshotMaxCount: screenshotPreset.maxCount} :
+                {}),
       });
 
       // Once we get here, we know tracing is active.
