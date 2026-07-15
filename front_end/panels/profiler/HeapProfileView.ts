@@ -194,8 +194,8 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   searchableViewInternal!: UI.SearchableView.SearchableView;
   dataGrid: DataGrid.DataGrid.DataGridImpl<unknown>;
   viewSelectComboBox: HTMLSelectElement|undefined;
-  focusButton!: UI.Toolbar.ToolbarButton;
-  excludeButton!: UI.Toolbar.ToolbarButton;
+  focusButton: Buttons.Button.Button|undefined;
+  excludeButton: Buttons.Button.Button|undefined;
   resetButton: Buttons.Button.Button|undefined;
   readonly linkifierInternal: Components.Linkifier.Linkifier = new Components.Linkifier.Linkifier(maxLinkLength);
   nodeFormatter!: Formatter;
@@ -322,7 +322,8 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
                          disabled: !this.#isNodeSelected,
                        } as Buttons.Button.ButtonData}
                        @click=${this.focusClicked.bind(this)}
-                       ?hidden=${isFlame}>
+                       ?hidden=${isFlame}
+                       ${ref(e => { this.focusButton = e as Buttons.Button.Button; })}>
       </devtools-button>
       <devtools-button .data=${{
                          iconName: 'cross',
@@ -332,7 +333,8 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
                          disabled: !this.#isNodeSelected,
                        } as Buttons.Button.ButtonData}
                        @click=${this.excludeClicked.bind(this)}
-                       ?hidden=${isFlame}>
+                       ?hidden=${isFlame}
+                       ${ref(e => { this.excludeButton = e as Buttons.Button.Button; })}>
       </devtools-button>
       <devtools-button .data=${{
                          iconName: 'refresh',
@@ -709,16 +711,17 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     }
 
     const isFlame = currentViewType === ViewTypes.FLAME;
-    const isTreeOrHeavy = !isFlame;
 
-    this.focusButton?.setVisible(isTreeOrHeavy);
-    this.excludeButton?.setVisible(isTreeOrHeavy);
-    this.resetButton?.classList.toggle('hidden', !isTreeOrHeavy);
-
-    this.focusButton?.setEnabled(this.#isNodeSelected);
-    this.excludeButton?.setEnabled(this.#isNodeSelected);
-
+    if (this.focusButton) {
+      this.focusButton.hidden = isFlame;
+      this.focusButton.disabled = !this.#isNodeSelected;
+    }
+    if (this.excludeButton) {
+      this.excludeButton.hidden = isFlame;
+      this.excludeButton.disabled = !this.#isNodeSelected;
+    }
     if (this.resetButton) {
+      this.resetButton.hidden = isFlame;
       this.resetButton.disabled = !this.#isResetEnabled;
     }
 
@@ -1120,20 +1123,39 @@ export class SamplingHeapProfileModel extends CPUProfile.ProfileTreeModel.Profil
 
 export class NodeFormatter implements Formatter {
   readonly profileView: HeapProfileView;
+  readonly #formattedValueCache = new Map<number, string>();
+  readonly #formattedValueAccessibleTextCache = new Map<number, string>();
+  readonly #formattedPercentCache = new Map<number, string>();
+
   constructor(profileView: HeapProfileView) {
     this.profileView = profileView;
   }
 
   formatValue(value: number): string {
-    return i18n.ByteUtilities.bytesToString(value);
+    let result = this.#formattedValueCache.get(value);
+    if (!result) {
+      result = i18n.ByteUtilities.bytesToString(value);
+      this.#formattedValueCache.set(value, result);
+    }
+    return result;
   }
 
   formatValueAccessibleText(value: number): string {
-    return i18nString(UIStrings.sBytes, {PH1: value});
+    let result = this.#formattedValueAccessibleTextCache.get(value);
+    if (!result) {
+      result = i18nString(UIStrings.sBytes, {PH1: value});
+      this.#formattedValueAccessibleTextCache.set(value, result);
+    }
+    return result;
   }
 
   formatPercent(value: number, _node: ProfileDataGridNode): string {
-    return i18nString(UIStrings.formatPercent, {PH1: value.toFixed(2)});
+    let result = this.#formattedPercentCache.get(value);
+    if (!result) {
+      result = i18nString(UIStrings.formatPercent, {PH1: value.toFixed(2)});
+      this.#formattedPercentCache.set(value, result);
+    }
+    return result;
   }
 
   linkifyNode(node: ProfileDataGridNode): Element|null {
