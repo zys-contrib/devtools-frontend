@@ -11,7 +11,6 @@ import * as Bindings from '../models/bindings/bindings.js';
 import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as CrUXManager from '../models/crux-manager/crux-manager.js';
 import * as Emulation from '../models/emulation/emulation.js';
-import * as IssuesManager from '../models/issues_manager/issues_manager.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as LiveMetrics from '../models/live-metrics/live-metrics.js';
 import * as Logs from '../models/logs/logs.js';
@@ -181,9 +180,6 @@ export class Universe {
     const logManager = new Logs.LogManager.LogManager(targetManager, networkLog);
     context.set(Logs.LogManager.LogManager, logManager);
 
-    const checkFormsIssuesTrigger = new IssuesManager.CheckFormsIssuesTrigger.CheckFormsIssuesTrigger(targetManager);
-    context.set(IssuesManager.CheckFormsIssuesTrigger.CheckFormsIssuesTrigger, checkFormsIssuesTrigger);
-
     const javaScriptMetadata = new JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl();
     context.set(JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl, javaScriptMetadata);
 
@@ -204,10 +200,6 @@ export class Universe {
 
   get breakpointManager(): Breakpoints.BreakpointManager.BreakpointManager {
     return this.context.get(Breakpoints.BreakpointManager.BreakpointManager);
-  }
-
-  get checkFormsIssuesTrigger(): IssuesManager.CheckFormsIssuesTrigger.CheckFormsIssuesTrigger {
-    return this.context.get(IssuesManager.CheckFormsIssuesTrigger.CheckFormsIssuesTrigger);
   }
 
   get cpuThrottlingManager(): SDK.CPUThrottlingManager.CPUThrottlingManager {
