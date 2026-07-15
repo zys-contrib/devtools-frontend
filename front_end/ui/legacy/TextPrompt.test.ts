@@ -241,6 +241,22 @@ describe('TextPromptElement', () => {
     sinon.assert.called(cancelListener);
   });
 
+  it('prevents double commit when commit listener triggers a synchronous blur', async () => {
+    const prompt = renderPrompt(html`<devtools-prompt editing></devtools-prompt>`);
+    const commitListener = sinon.stub().callsFake(() => {
+      const placeholder = prompt.shadowRoot?.querySelector('[contenteditable]') as HTMLElement | null;
+      placeholder?.blur();
+    });
+    prompt.addEventListener('commit', commitListener);
+
+    const placeholder = prompt.shadowRoot!.querySelector('[contenteditable]') as HTMLElement;
+    assert.exists(placeholder);
+    placeholder.textContent = 'foo';
+    placeholder.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true}));
+
+    sinon.assert.calledOnce(commitListener);
+  });
+
   it('uses the value attribute when starting to edit instead of innerText', async () => {
     const prompt = renderPrompt(html`<devtools-prompt value=${'Value content'}>Initial content</devtools-prompt>`);
     prompt.setAttribute('editing', 'true');

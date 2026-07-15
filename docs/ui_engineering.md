@@ -1269,11 +1269,16 @@ export const DEFAULT_VIEW = (input, _output, target) => {
 };
 ```
 
-## Migrating `TextPrompt`
+## Migrating `TextPrompt` and `InplaceEditor`
 
-Replace imperative `TextPrompt` creation with the declarative `<devtools-prompt>` component, providing completions via `<datalist>`.
+Replace imperative `TextPrompt` or `UI.InplaceEditor` creation with the declarative `<devtools-prompt>` component, providing completions via `<datalist>`.
 
-**Before:**
+### Critical Rules for `<devtools-prompt>`:
+1. **Prompt Owns the Content (`<slot>`)**: When `editing` is `false`, `<devtools-prompt>` renders `<span class="entrypoint"><slot></slot></span>` in shadow DOM. Therefore, `<devtools-prompt>` **must contain the display text/title directly as a child** (`<devtools-prompt ...>${title}</devtools-prompt>`) and live inside the element container (e.g., inside `<devtools-checkbox>`).
+2. **Do Not Conditionally Swap Elements**: Do NOT render `<devtools-prompt>` conditionally *in place of* a `<span>` or text node (`isEditing ? html`<devtools-prompt>...` : html`<span>${title}</span>``). Mount `<devtools-prompt>` unconditionally, holding the text content at all times, and only toggle its boolean property `?editing=${item === input.editingItem}`.
+3. **Conditional Input Styling**: Because `<devtools-prompt>` is present in both display and editing modes, any input-mode borders or background classes must be applied conditionally (e.g., `class=${Directives.classMap({'condition-input': isEditing})}`) so non-editing rows remain unbordered.
+
+**Before (`InplaceEditor` or imperative `TextPrompt`):**
 ```typescript
 class SomeWidget extends UI.Widget.Widget {
   constructor() {
@@ -1286,10 +1291,15 @@ class SomeWidget extends UI.Widget.Widget {
     const promptElement = this.contentElement.createChild('span');
     prompt.attach(promptElement);
   }
+
+  #startEditing(item: string, element: HTMLElement): void {
+    const config = new UI.InplaceEditor.Config(this.#commit.bind(this), this.#cancel.bind(this), element);
+    UI.InplaceEditor.InplaceEditor.startEditing(element, config);
+  }
 }
 ```
 
-**After:**
+**After (Declarative `<devtools-prompt>` inside Lit):**
 ```typescript
 export const DEFAULT_VIEW = (input, _output, target) => {
   render(html`
@@ -1298,7 +1308,17 @@ export const DEFAULT_VIEW = (input, _output, target) => {
         <option>completion1</option>
         <option>completion2</option>
       </datalist>
-      <devtools-prompt completions="my-completions" editing></devtools-prompt>
+      <devtools-checkbox .checked=${input.enabled}>
+        <devtools-prompt
+            value=${input.item}
+            completions="my-completions"
+            ?editing=${input.item === input.editingItem}
+            class=${Directives.classMap({'prompt-editing-border': input.item === input.editingItem})}
+            @commit=${(e: CustomEvent) => input.onCommit(input.item, e.detail)}
+            @cancel=${() => input.onCancel(input.item)}>
+          ${input.title}
+        </devtools-prompt>
+      </devtools-checkbox>
     </div>`,
     target, {host: input});
 };

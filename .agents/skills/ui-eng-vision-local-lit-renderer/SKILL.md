@@ -110,7 +110,13 @@ existing element containers.
     *   The Gerrit Code Review UI cannot identify moved blocks of unchanged code.
     *   If blocks of code need to be reordered, create a "prefactoring" change that first extracts the code that needs to be reordered into a named helper functions and pause the migration, waiting user confirmation.
 
-12. **Wait for confirmation**:
+12. **Micro-Commit Strategy**:
+
+    *   Do not attempt to convert every helper method and UI component in a single monolithic commit. Break the template extraction into **small, self-contained micro-commits** (e.g., migrating one helper method, toolbar button, or list item render at a time).
+    *   Verify with build and run tests after each micro-commit to guarantee zero regressions and 100% visual parity before moving to the next compartment.
+    *   Provide the exact list of files and commit message when presenting progress so the change history remains atomic and easy to review.
+
+13. **Wait for confirmation**:
 
     *   Wait for an explicit confirmation from the user before proceeding to the
         next step.

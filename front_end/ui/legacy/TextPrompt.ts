@@ -68,7 +68,7 @@ import {cloneCustomElement, ElementFocusRestorer} from './UIUtils.js';
  * @attribute value Sets the initial text value that's edited when editing starts. If not provided, the slot's inner text is used.
  */
 export class TextPromptElement extends HTMLElement {
-  static readonly observedAttributes = ['editing', 'completions', 'placeholder', 'cancel-on-blur'];
+  static readonly observedAttributes = ['editing', 'completions', 'placeholder', 'cancel-on-blur', 'render-as-block'];
   static formAssociated = true;
   readonly #shadow = this.attachShadow({mode: 'open'});
   readonly #internals = this.attachInternals();
@@ -79,6 +79,7 @@ export class TextPromptElement extends HTMLElement {
   #completionObserver = new MutationObserver(this.#onMutate.bind(this));
   #validator?: (value: string) => null | Platform.UIString.LocalizedString;
   #cancelOnBlur = false;
+  #isEditing = false;
 
   constructor() {
     super();
@@ -99,6 +100,18 @@ export class TextPromptElement extends HTMLElement {
 
   get cancelOnBlur(): boolean {
     return this.#cancelOnBlur;
+  }
+
+  set renderAsBlock(renderAsBlock: boolean) {
+    if (renderAsBlock) {
+      this.setAttribute('render-as-block', '');
+    } else {
+      this.removeAttribute('render-as-block');
+    }
+  }
+
+  get renderAsBlock(): boolean {
+    return this.hasAttribute('render-as-block');
   }
 
   #onMutate(changes: MutationRecord[]): void {
@@ -159,6 +172,17 @@ export class TextPromptElement extends HTMLElement {
           this.#completionObserver.disconnect();
         }
         break;
+      case 'render-as-block':
+        if (this.#isEditing) {
+          if (isTruthy(newValue)) {
+            this.#textPrompt.renderAsBlock();
+            this.#entrypoint.style.display = 'block';
+          } else {
+            this.#textPrompt.renderAsInlineBlock();
+            this.#entrypoint.style.display = 'inline';
+          }
+        }
+        break;
     }
   }
 
@@ -188,6 +212,7 @@ export class TextPromptElement extends HTMLElement {
   }
 
   #startEditing(): void {
+    this.#isEditing = true;
     const truncatedTextPlaceholder = this.getAttribute('placeholder');
     const placeholder = this.#entrypoint.createChild('span');
     const initialText = this.getAttribute('value') ?? this.#slot.deepInnerText();
@@ -198,6 +223,13 @@ export class TextPromptElement extends HTMLElement {
     }
     this.#slot.remove();
 
+    if (this.renderAsBlock) {
+      this.#textPrompt.renderAsBlock();
+      this.#entrypoint.style.display = 'block';
+    } else {
+      this.#textPrompt.renderAsInlineBlock();
+      this.#entrypoint.style.display = 'inline';
+    }
     const proxy =
         this.#textPrompt.attachAndStartEditing(placeholder, e => this.#done(e, /* commit=*/ !this.#cancelOnBlur));
     proxy.addEventListener('keydown', this.#editingValueKeyDown.bind(this));
@@ -206,6 +238,7 @@ export class TextPromptElement extends HTMLElement {
   }
 
   #stopEditing(): void {
+    this.#isEditing = false;
     this.#entrypoint.removeChildren();
     this.#entrypoint.appendChild(this.#slot);
     this.#textPrompt.detach();
@@ -224,6 +257,9 @@ export class TextPromptElement extends HTMLElement {
   }
 
   #done(e: Event, commit: boolean): void {
+    if (!this.#isEditing) {
+      return;
+    }
     const target = e.target as HTMLElement;
     const text = target.textContent || '';
     if (commit) {
@@ -238,9 +274,11 @@ export class TextPromptElement extends HTMLElement {
         return;
       }
 
+      this.#isEditing = false;
       this.dispatchEvent(new TextPromptElement.CommitEvent(text));
     } else {
       this.#internals.setValidity({});
+      this.#isEditing = false;
       this.dispatchEvent(new TextPromptElement.CancelEvent());
     }
     e.consume();
@@ -365,6 +403,16 @@ export class TextPrompt extends Common.ObjectWrapper.ObjectWrapper<EventTypes> i
 
   renderAsBlock(): void {
     this.proxyElementDisplay = 'block';
+    if (this.proxyElement) {
+      (this.proxyElement as HTMLElement).style.display = 'block';
+    }
+  }
+
+  renderAsInlineBlock(): void {
+    this.proxyElementDisplay = 'inline-block';
+    if (this.proxyElement) {
+      (this.proxyElement as HTMLElement).style.display = 'inline-block';
+    }
   }
 
   /**
