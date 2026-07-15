@@ -272,6 +272,41 @@ describe('TabbedEditorContainer', () => {
       assert.lengthOf(tabs, 1);
       assert.strictEqual(tabbedPane.tabView(tabs[0].id), views.get(fsSourceCode));
     });
+
+    it('opens filesystem UISourceCode when network UISourceCode with persistence binding is shown', async () => {
+      const networkUrl = urlString`http://127.0.0.1:8000/devtools/persistence/resources/foo.js`;
+      const fsUrl = urlString`file:///var/www/devtools/persistence/resources/foo.js`;
+
+      const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
+        url: networkUrl,
+        mimeType: 'text/javascript',
+        projectType: Workspace.Workspace.projectTypes.Network,
+        universe: testUniverse,
+      });
+
+      const {uiSourceCode: fsSourceCode} = createFileSystemUISourceCode({
+        url: fsUrl,
+        mimeType: 'text/javascript',
+        fileSystemPath: 'file:///var/www',
+        autoMapping: true,
+        universe: testUniverse,
+      });
+
+      // Create binding.
+      const binding = new Persistence.Persistence.PersistenceBinding(networkSourceCode, fsSourceCode);
+      await persistence.addBinding(binding);
+
+      // Show the network file.
+      tabbedEditorContainer.showFile(networkSourceCode);
+
+      const tabbedPane = tabbedEditorContainer.view as UI.TabbedPane.TabbedPane;
+
+      // Verify that the filesystem tab is opened, not the network one.
+      const tabs = tabbedPane.tabs;
+      assert.lengthOf(tabs, 1);
+      assert.strictEqual(tabbedPane.tabView(tabs[0].id), views.get(fsSourceCode));
+      assert.strictEqual(tabbedEditorContainer.currentFile(), fsSourceCode);
+    });
   });
 });
 
