@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import * as Host from '../../core/host/host.js';
-import * as SDK from '../../core/sdk/sdk.js';
 import type * as LHModel from '../lighthouse/lighthouse.js';
 
 import {
@@ -231,7 +230,7 @@ User query: ${enhancedQuery}`;
           createExtensionScope: this.#createExtensionScope.bind(this),
           execJs: this.#execJs,
           getExecutionContextNode: () => this.context instanceof DOMNodeContext ? this.context.getItem() : null,
-          getTarget: () => SDK.TargetManager.TargetManager.instance().primaryPageTarget(),
+          getTarget: () => this.targetManager.primaryPageTarget(),
           getEstablishedOrigin: () => this.#getConversationOrigin(),
           lighthouseRecording: this.#lighthouseRecording,
         };

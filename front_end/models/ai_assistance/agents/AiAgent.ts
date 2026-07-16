@@ -6,7 +6,7 @@ import * as Host from '../../../core/host/host.js';
 import type {UrlString} from '../../../core/platform/DevToolsPath.js';
 import type * as Platform from '../../../core/platform/platform.js';
 import * as Root from '../../../core/root/root.js';
-import type * as SDK from '../../../core/sdk/sdk.js';
+import * as SDK from '../../../core/sdk/sdk.js';
 import type * as Protocol from '../../../generated/protocol.js';
 import type * as LHModel from '../../lighthouse/lighthouse.js';
 import type * as TextUtils from '../../text_utils/text_utils.js';
@@ -166,6 +166,7 @@ export interface AgentOptions {
   history?: Host.AidaClient.Content[];
   allowedOrigin?: () => AllowedOriginResult;
   lighthouseRecording?: (overrides?: LHModel.RunTypes.RunOverrides) => Promise<LHModel.ReporterTypes.ReportJSON|null>;
+  targetManager?: SDK.TargetManager.TargetManager;
 }
 
 export interface ParsedAnswer {
@@ -485,6 +486,7 @@ export abstract class AiAgent<T> {
   readonly confirmSideEffect: typeof Promise.withResolvers;
   readonly #functionDeclarations = new Map<string, FunctionDeclaration<Record<string, unknown>, unknown>>();
   readonly #allowedOrigin?: () => AllowedOriginResult;
+  readonly #targetManager: SDK.TargetManager.TargetManager;
 
   /**
    * Used in the debug mode and evals.
@@ -518,6 +520,7 @@ export abstract class AiAgent<T> {
     this.confirmSideEffect = opts.confirmSideEffectForTest ?? (() => Promise.withResolvers());
     this.#history = opts.history ?? [];
     this.#allowedOrigin = opts.allowedOrigin;
+    this.#targetManager = opts.targetManager ?? SDK.TargetManager.TargetManager.instance();
   }
 
   async enhanceQuery(query: string, selected: ConversationContext<T>|null,
@@ -532,6 +535,10 @@ export abstract class AiAgent<T> {
 
   get history(): Host.AidaClient.Content[] {
     return [...this.#history];
+  }
+
+  get targetManager(): SDK.TargetManager.TargetManager {
+    return this.#targetManager;
   }
 
   /**
