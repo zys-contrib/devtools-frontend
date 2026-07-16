@@ -837,6 +837,8 @@ str = "abc".toUpperCase();
     assert.strictEqual(formatJavaScript('/abc/g;'), '/abc/g;\n');
     assert.strictEqual(formatJavaScript('/abc/g instanceof String;'), '/abc/g instanceof String;\n');
     assert.strictEqual(formatJavaScript('/abc/ instanceof String;'), '/abc/ instanceof String;\n');
+    assert.strictEqual(formatJavaScript('/[a-z]/v;'), '/[a-z]/v;\n');
+    assert.strictEqual(formatJavaScript('/[\\p{ASCII}&&[a-z]]/v;'), '/[\\p{ASCII}&&[a-z]]/v;\n');
   });
 
   it('formats regex literals and expressions inside template literals correctly', () => {
