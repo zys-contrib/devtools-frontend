@@ -71,6 +71,7 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
   #hideableColumns = new Set<string>();
   #hiddenColumns = new Set<string>();
   #usedCreationNode: DataGridElementNode|null = null;
+  #sortingChangedScheduled = false;
 
   constructor() {
     super();
@@ -289,7 +290,7 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
     return false;
   }
 
-  #getDataRows(nodes: NodeList): HTMLElement[] {
+  #getDataRows(nodes: NodeList|Node[]): HTMLElement[] {
     return [...nodes]
         .flatMap(node => {
           if (node instanceof HTMLTableRowElement) {
@@ -303,7 +304,7 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
         .filter(node => node.querySelector('td') && !hasBooleanAttribute(node, 'placeholder'));
   }
 
-  #getStyleElements(nodes: NodeList): HTMLElement[] {
+  #getStyleElements(nodes: NodeList|Node[]): HTMLElement[] {
     return [...nodes].flatMap(node => {
       if (node instanceof HTMLStyleElement) {
         return [node];
@@ -325,10 +326,16 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
     return null;
   }
 
-  override addNodes(nodes: NodeList): void {
+  override addNodes(nodes: NodeList|Node[]): void {
     for (const element of this.#getDataRows(nodes)) {
+      if (getNode(element)) {
+        continue;
+      }
       const parentRow = element.parentElement?.closest('td')?.closest('tr');
       const parentDataGridNode = parentRow ? getNode(parentRow) : undefined;
+      if (parentRow && !parentDataGridNode) {
+        continue;
+      }
       const parentNode = parentDataGridNode || this.#dataGrid.rootNode();
       const nextNode = this.#findNextExistingNode(element);
       const index = nextNode ? parentNode.children.indexOf(nextNode) : parentNode.children.length;
@@ -353,13 +360,13 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
         node.setHighlighted(true);
       }
     }
-    for (const element of this.#getStyleElements(nodes)) {
+    for (const element of new Set(this.#getStyleElements(nodes))) {
       this.#shadowRoot.appendChild(element.cloneNode(true));
     }
-    this.#dataGrid.dispatchEventToListeners(DataGridEvents.SORTING_CHANGED);
+    this.#scheduleSortingChanged();
   }
 
-  override removeNodes(nodes: NodeList): void {
+  override removeNodes(nodes: NodeList|Node[]): void {
     for (const element of this.#getDataRows(nodes)) {
       const node = getNode(element);
       if (node) {
@@ -392,6 +399,17 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
         dataGridNode.refresh();
       }
     }
+  }
+
+  #scheduleSortingChanged(): void {
+    if (this.#sortingChangedScheduled) {
+      return;
+    }
+    this.#sortingChangedScheduled = true;
+    queueMicrotask(() => {
+      this.#sortingChangedScheduled = false;
+      this.#dataGrid.dispatchEventToListeners(DataGridEvents.SORTING_CHANGED);
+    });
   }
 
   deselectRow(): void {
@@ -430,7 +448,7 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
     // However, if we have nodes added, that will trigger a sort anyway so we
     // don't need to re-sort again.
     if (this.#dataGrid.sortColumnId() !== null && !hadAddedNodes) {
-      this.#dataGrid.dispatchEventToListeners(DataGridEvents.SORTING_CHANGED);
+      this.#scheduleSortingChanged();
     }
   }
 

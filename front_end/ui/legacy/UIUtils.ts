@@ -2186,9 +2186,28 @@ export class HTMLElementWithLightDOMTemplate extends HTMLElement {
 
   #onChange(mutationList: MutationRecord[]): void {
     this.onChange(mutationList);
-    for (const mutation of mutationList) {
-      this.removeNodes(mutation.removedNodes);
-      this.addNodes(mutation.addedNodes, mutation.nextSibling);
+    const addedNodes = new Set<Node>();
+    const removedNodes = new Set<Node>();
+    for (let i = 0; i < mutationList.length; i++) {
+      const mutation = mutationList[i];
+      for (const node of mutation.addedNodes) {
+        addedNodes.add(node);
+      }
+      for (const node of mutation.removedNodes) {
+        removedNodes.add(node);
+      }
+    }
+    if (removedNodes.size > 0) {
+      this.removeNodes([...removedNodes]);
+    }
+
+    const finalAddedNodes = [...addedNodes].filter(n => this.templateRoot.contains(n));
+    if (finalAddedNodes.length > 0) {
+      this.addNodes(finalAddedNodes);
+    }
+
+    for (let i = 0; i < mutationList.length; i++) {
+      const mutation = mutationList[i];
       this.updateNode(mutation.target, mutation.attributeName);
     }
   }
@@ -2199,10 +2218,10 @@ export class HTMLElementWithLightDOMTemplate extends HTMLElement {
   protected updateNode(_node: Node, _attributeName: string|null): void {
   }
 
-  protected addNodes(_nodes: NodeList|Node[], _nextSibling?: Node|null): void {
+  protected addNodes(_nodes: NodeList|Node[]): void {
   }
 
-  protected removeNodes(_nodes: NodeList): void {
+  protected removeNodes(_nodes: NodeList|Node[]): void {
   }
 
   static findCorrespondingElement(

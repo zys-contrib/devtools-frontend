@@ -1864,7 +1864,7 @@ export class TreeViewElement extends HTMLElementWithLightDOMTemplate {
     }
   }
 
-  protected override addNodes(nodes: NodeList|Node[], nextSibling?: Node|null): void {
+  protected override addNodes(nodes: NodeList|Node[]): void {
     for (const node of getTreeNodes(nodes)) {
       if (TreeViewTreeElement.get(node)) {
         continue;  // Not sure this can happen
@@ -1876,10 +1876,18 @@ export class TreeViewElement extends HTMLElementWithLightDOMTemplate {
       if (parent.treeElement.childCount() === 0) {
         parent.treeElement.childrenListElement.classList.add(...parent.classes.values());
       }
-      while (nextSibling && nextSibling.nodeType !== Node.ELEMENT_NODE) {
-        nextSibling = nextSibling.nextSibling;
+      let nextElement: TreeElement|null = null;
+      for (let e: Element|null = node.nextElementSibling; e; e = e.nextElementSibling) {
+        const nextTreeEl = TreeViewTreeElement.get(e);
+        if (nextTreeEl) {
+          nextElement = nextTreeEl;
+          break;
+        }
+        if (e instanceof TreeElementWrapper && e.treeElement && e.treeElement.parent === parent.treeElement) {
+          nextElement = e.treeElement;
+          break;
+        }
       }
-      const nextElement = nextSibling ? TreeViewTreeElement.get(nextSibling) : null;
       const index = nextElement ? parent.treeElement.indexOfChild(nextElement) : parent.treeElement.children().length;
       let treeElement;
       if (node instanceof HTMLLIElement) {
@@ -1906,12 +1914,12 @@ export class TreeViewElement extends HTMLElementWithLightDOMTemplate {
         }
       }
     }
-    for (const element of getStyleElements(nodes)) {
+    for (const element of new Set(getStyleElements(nodes))) {
       this.#treeOutline.shadowRoot.appendChild(element.cloneNode(true));
     }
   }
 
-  protected override removeNodes(nodes: NodeList): void {
+  protected override removeNodes(nodes: NodeList|Node[]): void {
     for (const node of getTreeNodes(nodes)) {
       if (node instanceof HTMLLIElement) {
         TreeViewTreeElement.get(node)?.remove();

@@ -190,7 +190,7 @@ describe('UIUtils', () => {
         this.additions.push(...nodes);
       }
 
-      override removeNodes(nodes: NodeList): void {
+      override removeNodes(nodes: NodeList|Node[]): void {
         this.removals.push(...nodes);
       }
     }
