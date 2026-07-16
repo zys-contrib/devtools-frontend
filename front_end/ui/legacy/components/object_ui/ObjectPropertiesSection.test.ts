@@ -12,6 +12,7 @@ import * as Protocol from '../../../../generated/protocol.js';
 import {assertScreenshot, dispatchClickEvent, renderElementIntoDOM} from '../../../../testing/DOMHelpers.js';
 import {createTarget, describeWithEnvironment} from '../../../../testing/EnvironmentHelpers.js';
 import {expectCall} from '../../../../testing/ExpectStubCall.js';
+import {render} from '../../../lit/lit.js';
 import * as UI from '../../legacy.js';
 
 import * as ObjectUI from './object_ui.js';
@@ -442,6 +443,166 @@ describeWithEnvironment('ObjectPropertyTreeElement', () => {
     expandButton.click();
     await assertScreenshot('object_ui/expanded_strings.png');
     assert.strictEqual(value.textContent, `"${longString}"`);
+  });
+
+  it('escapes bidi characters in string titles', () => {
+    const object = SDK.RemoteObject.RemoteObject.fromLocalObject({});
+    const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection(object, 'title_with_\u202Ebidi');
+
+    assert.strictEqual(section.titleElement.textContent, 'title_with_\\u202Ebidi');
+  });
+
+  it('escapes bidi characters in standalone string values', () => {
+    const object = SDK.RemoteObject.RemoteObject.fromLocalObject('\u202Ereversed_string');
+    const value = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.createPropertyValue(object, false, false);
+
+    renderElementIntoDOM(value, {
+      includeCommonStyles: true,
+      extraStyles: [ObjectUI.ObjectPropertiesSection.objectValueStyles],
+    });
+
+    assert.strictEqual(value.textContent, '"\\u202Ereversed_string"');
+  });
+
+  it('escapes bidi characters in object descriptions when hasPreview is false', () => {
+    const target = createTarget();
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel)!;
+    const object = createDeepRemoteObjectMock(runtimeModel, {});
+    sinon.stub(object, 'description').get(() => 'description_with_\u202Ebidi');
+    // Ensure preview is undefined so hasPreview is false
+    sinon.stub(object, 'preview').get(() => undefined);
+
+    const value = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.createPropertyValue(object, false, true);
+
+    renderElementIntoDOM(value, {
+      includeCommonStyles: true,
+      extraStyles: [ObjectUI.ObjectPropertiesSection.objectValueStyles],
+    });
+
+    assert.strictEqual(value.textContent, 'description_with_\\u202Ebidi');
+  });
+
+  it('escapes bidi characters in DOM node previews', () => {
+    const nodeTitle = 'div#\u202Ereversed_id.\u202Ereversed_class';
+    const result = ObjectUI.RemoteObjectPreviewFormatter.renderNodeTitle(nodeTitle);
+    assert.exists(result);
+
+    const container = document.createElement('div');
+    render(result, container);
+
+    const tagSpan = container.querySelector('.webkit-html-tag-name');
+    assert.exists(tagSpan);
+    assert.strictEqual(tagSpan.textContent, 'div');
+
+    const valueSpan = container.querySelector('.webkit-html-attribute-value');
+    assert.exists(valueSpan);
+    assert.strictEqual(valueSpan.textContent, '#\\u202Ereversed_id');
+
+    const nameSpan = container.querySelector('.webkit-html-attribute-name');
+    assert.exists(nameSpan);
+    assert.strictEqual(nameSpan.textContent, '.\\u202Ereversed_class');
+  });
+
+  it('escapes bidi characters in OBJECT_PROPERTY_DEFAULT_VIEW for expanded values', () => {
+    const target = createTarget();
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel)!;
+    const propertyValue = createDeepRemoteObjectMock(runtimeModel, {});
+    sinon.stub(propertyValue, 'hasChildren').get(() => true);
+    sinon.stub(propertyValue, 'description').get(() => 'Object_with_\u202Ebidi');
+    sinon.stub(propertyValue, 'type').get(() => 'object');
+    sinon.stub(propertyValue, 'subtype').get(() => undefined);
+
+    const property = new SDK.RemoteObject.RemoteObjectProperty('\u202Ereversed_name', propertyValue, true, true);
+    const container = document.createElement('div');
+    const input: ObjectUI.ObjectPropertiesSection.ObjectPropertyViewInput = {
+      editable: false,
+      startEditing: sinon.spy(),
+      invokeGetter: sinon.spy(),
+      onAutoComplete: sinon.spy(),
+      linkifier: undefined,
+      completions: [],
+      expanded: true,
+      editing: false,
+      editingEnded: sinon.spy(),
+      editingCommitted: sinon.spy(),
+      node: new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(property, undefined, {
+        readOnly: false,
+        propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+      }),
+    };
+    const output = {valueElement: undefined, nameElement: undefined};
+    ObjectUI.ObjectPropertiesSection.OBJECT_PROPERTY_DEFAULT_VIEW(input, output, container);
+
+    const nameElement = container.querySelector('.name');
+    assert.exists(nameElement);
+    assert.strictEqual(nameElement.textContent, '\\u202Ereversed_name');
+
+    const valueElement = container.querySelector('.value');
+    assert.exists(valueElement);
+    assert.strictEqual(valueElement.textContent, 'Object_with_\\u202Ebidi');
+  });
+
+  it('escapes bidi characters in names created via createNameElement', () => {
+    const name = '\u202Ereversed_name';
+    const element = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.createNameElement(name);
+    assert.strictEqual(element.textContent, '\\u202Ereversed_name');
+  });
+
+  it('escapes bidi characters in names with whitespace created via createNameElement', () => {
+    const name = ' \u202Ereversed_name ';
+    const element = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.createNameElement(name);
+    assert.strictEqual(element.textContent, '" \\u202Ereversed_name "');
+  });
+
+  it('escapes bidi characters in private names created via createNameElement', () => {
+    const name = '#\u202Ereversed_name';
+    const element = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.createNameElement(name, true);
+    assert.strictEqual(element.textContent, '#\\u202Ereversed_name');
+  });
+
+  it('escapes unpaired surrogates in object property names and values', () => {
+    const target = createTarget();
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel)!;
+    const object = createDeepRemoteObjectMock(runtimeModel, {});
+    const brokenSurrogate = '  \uD835\uDC14\uD835\uDC0D\uD835\uDC08\uD835\uDC02\uD835\uDC0E\uD835\uDC03\uD835';
+
+    sinon.stub(object, 'preview').get(() => ({
+                                        type: Protocol.Runtime.ObjectPreviewType.Object,
+                                        overflow: false,
+                                        properties: [
+                                          {
+                                            name: 'foo',
+                                            type: Protocol.Runtime.PropertyPreviewType.String,
+                                            value: brokenSurrogate,
+                                          },
+                                          {
+                                            name: brokenSurrogate,
+                                            type: Protocol.Runtime.PropertyPreviewType.String,
+                                            value: 'foo',
+                                          },
+                                        ],
+                                      }));
+
+    const value = ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection.createPropertyValue(object, false, true);
+
+    renderElementIntoDOM(value, {
+      includeCommonStyles: true,
+      extraStyles: [ObjectUI.ObjectPropertiesSection.objectValueStyles],
+    });
+
+    const nameElements = value.querySelectorAll('.name');
+    const valueElements = value.querySelectorAll('.object-value-string');
+
+    assert.lengthOf(nameElements, 2);
+    assert.lengthOf(valueElements, 2);
+
+    assert.strictEqual(nameElements[0].textContent, 'foo');
+    assert.strictEqual(valueElements[0].textContent,
+                       '\'  \uD835\uDC14\uD835\uDC0D\uD835\uDC08\uD835\uDC02\uD835\uDC0E\uD835\uDC03\\uD835\'');
+
+    assert.strictEqual(nameElements[1].textContent,
+                       '"  \uD835\uDC14\uD835\uDC0D\uD835\uDC08\uD835\uDC02\uD835\uDC0E\uD835\uDC03\\uD835"');
+    assert.strictEqual(valueElements[1].textContent, '\'foo\'');
   });
 });
 

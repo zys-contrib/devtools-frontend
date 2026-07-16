@@ -48,9 +48,10 @@ import {CustomPreviewComponent} from './CustomPreviewComponent.js';
 import {JavaScriptREPL} from './JavaScriptREPL.js';
 import objectPropertiesSectionStyles from './objectPropertiesSection.css.js';
 import objectValueStyles from './objectValue.css.js';
-import {RemoteObjectPreviewFormatter, renderNodeTitle} from './RemoteObjectPreviewFormatter.js';
+import {RemoteObjectPreviewFormatter, renderNodeTitle, renderTrustedType} from './RemoteObjectPreviewFormatter.js';
 
 export {objectPropertiesSectionStyles, objectValueStyles};
+
 const {widget} = UI.Widget;
 const {ref, repeat, ifDefined, classMap, until} = Directives;
 const UIStrings = {
@@ -259,8 +260,8 @@ export class ObjectTreeExpansionTracker {
     if (!(node instanceof ObjectTreeNode)) {
       return undefined;
     }
-    return node.parent?.children?.internalProperties?.find(
-        p => p.name === '[[Prototype]]' && p.children?.properties?.includes(node));
+    return node.parent?.children?.internalProperties?.find(p => p.name === '[[Prototype]]' &&
+                                                               p.children?.properties?.includes(node));
   }
 
   static #keyType(node: ObjectTreeNodeBase): keyof NodeChildren|null {
@@ -572,8 +573,8 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
       }
 
       const {properties: objectProperties, internalProperties: objectInternalProperties} =
-          await SDK.RemoteObject.RemoteObject.loadFromObjectPerProto(
-              this.object, true /* generatePreview */, true /* nonIndexedPropertiesOnly */);
+          await SDK.RemoteObject.RemoteObject.loadFromObjectPerProto(this.object, true /* generatePreview */,
+                                                                     true /* nonIndexedPropertiesOnly */);
 
       const properties = objectProperties?.map(p => new ObjectTreeNode(p, effectiveParent, {
                                                  readOnly: this.readOnly,
@@ -647,8 +648,8 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
     for (const property of properties) {
       if (property.property.isOwn) {
         if (property.property.getter) {
-          const getterProperty = new SDK.RemoteObject.RemoteObjectProperty(
-              'get ' + property.property.name, property.property.getter, false);
+          const getterProperty = new SDK.RemoteObject.RemoteObjectProperty('get ' + property.property.name,
+                                                                           property.property.getter, false);
           gettersAndSetters.push(new ObjectTreeNode(getterProperty, property.parent, {
             propertiesMode: property.propertiesMode,
             readOnly: property.readOnly,
@@ -656,8 +657,8 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
           }));
         }
         if (property.property.setter) {
-          const setterProperty = new SDK.RemoteObject.RemoteObjectProperty(
-              'set ' + property.property.name, property.property.setter, false);
+          const setterProperty = new SDK.RemoteObject.RemoteObjectProperty('set ' + property.property.name,
+                                                                           property.property.setter, false);
           gettersAndSetters.push(new ObjectTreeNode(setterProperty, property.parent, {
             propertiesMode: property.propertiesMode,
             readOnly: property.readOnly,
@@ -706,9 +707,8 @@ interface ArrayGroupRange {
 export class ArrayGroupTreeNode extends ObjectTreeNodeBase {
   readonly #object: SDK.RemoteObject.RemoteObject;
   readonly #range: ArrayGroupRange;
-  constructor(
-      object: SDK.RemoteObject.RemoteObject, range: ArrayGroupRange, parent: ObjectTreeNodeBase,
-      options: ObjectTreeOptions) {
+  constructor(object: SDK.RemoteObject.RemoteObject, range: ArrayGroupRange, parent: ObjectTreeNodeBase,
+              options: ObjectTreeOptions) {
     super(parent, options);
     this.#object = object;
     this.#range = range;
@@ -879,9 +879,8 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
   titleElement: Element;
   skipProtoInternal?: boolean;
 
-  constructor(
-      object: SDK.RemoteObject.RemoteObject, title?: string|Element|null, linkifier?: Components.Linkifier.Linkifier,
-      showOverflow?: boolean, editable = true) {
+  constructor(object: SDK.RemoteObject.RemoteObject, title?: string|Element|null,
+              linkifier?: Components.Linkifier.Linkifier, showOverflow?: boolean, editable = true) {
     super();
     this.root = new ObjectTree(object, {
       readOnly: !editable,
@@ -896,7 +895,7 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
     this.appendChild(this.#objectTreeElement);
     if (typeof title === 'string' || !title) {
       this.titleElement = this.element.createChild('span');
-      this.titleElement.textContent = title || '';
+      this.titleElement.textContent = title ? Platform.StringUtilities.escapeUnicodeAsText(title) : '';
     } else {
       this.titleElement = title;
       this.element.appendChild(title);
@@ -910,9 +909,8 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
     this.rootElement().childrenListElement.classList.add('source-code', 'object-properties-section');
   }
 
-  static defaultObjectPresentation(
-      object: SDK.RemoteObject.RemoteObject, linkifier?: Components.Linkifier.Linkifier, skipProto?: boolean,
-      readOnly?: boolean): Element {
+  static defaultObjectPresentation(object: SDK.RemoteObject.RemoteObject, linkifier?: Components.Linkifier.Linkifier,
+                                   skipProto?: boolean, readOnly?: boolean): Element {
     const objectPropertiesSection =
         ObjectPropertiesSection.defaultObjectPropertiesSection(object, linkifier, skipProto, readOnly);
     if (!object.hasChildren) {
@@ -921,9 +919,9 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
     return objectPropertiesSection.element;
   }
 
-  static defaultObjectPropertiesSection(
-      object: SDK.RemoteObject.RemoteObject, linkifier?: Components.Linkifier.Linkifier, skipProto?: boolean,
-      readOnly?: boolean): ObjectPropertiesSection {
+  static defaultObjectPropertiesSection(object: SDK.RemoteObject.RemoteObject,
+                                        linkifier?: Components.Linkifier.Linkifier, skipProto?: boolean,
+                                        readOnly?: boolean): ObjectPropertiesSection {
     const titleElement = document.createElement('span');
     titleElement.classList.add('source-code');
     const shadowRoot = UI.UIUtils.createShadowRootWithCoreStyles(titleElement, {cssFile: objectValueStyles});
@@ -1001,24 +999,25 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
     if (name === null) {
       return element;
     }
-    if (/^\s|\s$|^$|\n/.test(name)) {
-      element.textContent = `"${name.replace(/\n/g, '\u21B5')}"`;
+    const escapedName = Platform.StringUtilities.escapeUnicodeAsText(name);
+    if (/^\s|\s$|^$|\n/.test(escapedName)) {
+      element.textContent = `"${escapedName.replace(/\n/g, '\u21B5')}"`;
       return element;
     }
     if (isPrivate) {
       const privatePropertyHash = document.createElement('span');
       privatePropertyHash.classList.add('private-property-hash');
-      privatePropertyHash.textContent = name[0];
+      privatePropertyHash.textContent = escapedName[0];
       element.appendChild(privatePropertyHash);
-      element.appendChild(document.createTextNode(name.substring(1)));
+      element.appendChild(document.createTextNode(escapedName.substring(1)));
       return element;
     }
-    element.textContent = name;
+    element.textContent = escapedName;
     return element;
   }
 
-  static valueElementForFunctionDescription(
-      description?: string, includePreview?: boolean, defaultName?: string, className?: string): LitTemplate {
+  static valueElementForFunctionDescription(description?: string, includePreview?: boolean, defaultName?: string,
+                                            className?: string): LitTemplate {
     const contents =
         (description: string, defaultName: string): {prefix: string, abbreviation: string, body: string} => {
           const text = description.replace(/^function [gs]et /, 'function ')
@@ -1095,17 +1094,17 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
     }
   }
 
-  static createPropertyValueWithCustomSupport(
-      value: SDK.RemoteObject.RemoteObject, wasThrown: boolean, showPreview: boolean,
-      linkifier?: Components.Linkifier.Linkifier, isSyntheticProperty?: boolean, variableName?: string,
-      includeNullOrUndefined?: boolean): HTMLElement {
+  static createPropertyValueWithCustomSupport(value: SDK.RemoteObject.RemoteObject, wasThrown: boolean,
+                                              showPreview: boolean, linkifier?: Components.Linkifier.Linkifier,
+                                              isSyntheticProperty?: boolean, variableName?: string,
+                                              includeNullOrUndefined?: boolean): HTMLElement {
     if (value.customPreview()) {
       const result = (new CustomPreviewComponent(value)).element;
       result.classList.add('object-properties-section-custom-section');
       return result;
     }
-    return ObjectPropertiesSection.createPropertyValue(
-        value, wasThrown, showPreview, linkifier, isSyntheticProperty, variableName, includeNullOrUndefined);
+    return ObjectPropertiesSection.createPropertyValue(value, wasThrown, showPreview, linkifier, isSyntheticProperty,
+                                                       variableName, includeNullOrUndefined);
   }
 
   static getMemoryIcon(object: SDK.RemoteObject.RemoteObject, expression?: string): LitTemplate {
@@ -1132,10 +1131,9 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
     element.appendChild(fragment);
   }
 
-  static createPropertyValue(
-      value: SDK.RemoteObject.RemoteObject, wasThrown: boolean, showPreview: boolean,
-      linkifier?: Components.Linkifier.Linkifier, isSyntheticProperty = false, variableName?: string,
-      includeNullOrUndefined?: boolean): HTMLElement {
+  static createPropertyValue(value: SDK.RemoteObject.RemoteObject, wasThrown: boolean, showPreview: boolean,
+                             linkifier?: Components.Linkifier.Linkifier, isSyntheticProperty = false,
+                             variableName?: string, includeNullOrUndefined?: boolean): HTMLElement {
     const propertyValue = document.createDocumentFragment();
     const type = value.type;
     const subtype = value.subtype;
@@ -1149,21 +1147,20 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
         if (rawLocation && linkifier) {
           return html`${linkifier.linkifyRawLocation(rawLocation, Platform.DevToolsPath.EmptyUrlString, 'value')}`;
         }
-        return html`<span class=value title=${description}>${'<' + i18nString(UIStrings.unknown) + '>'}</span>`;
+        const title = description || undefined;
+        return html`<span class=value title=${ifDefined(title)}>${'<' + i18nString(UIStrings.unknown) + '>'}</span>`;
       }
       if (type === 'string' && typeof description === 'string') {
-        const text = Platform.StringUtilities.escapeUnicode(JSON.stringify(description));
+        const text = Platform.StringUtilities.escapeUnicodeAsText(JSON.stringify(description));
         const tooLong = description.length > maxRenderableStringLength;
         return html`<span class="value object-value-string" title=${ifDefined(tooLong ? undefined : description)}>${
             tooLong ? widget(ExpandableTextPropertyValue, {text}) : text}</span>`;
       }
       if (type === 'object' && subtype === 'trustedtype') {
-        const text = `${className} '${description}'`;
+        const text = `${className} "${description}"`;
         const tooLong = text.length > maxRenderableStringLength;
         return html`<span class="value object-value-trustedtype" title=${ifDefined(tooLong ? undefined : text)}>${
-            tooLong ? widget(ExpandableTextPropertyValue, {text}) :
-                      html`${className} <span class=object-value-string title=${description}>${
-                          Platform.StringUtilities.escapeUnicode(JSON.stringify(description))}</span>`}</span>`;
+            tooLong ? widget(ExpandableTextPropertyValue, {text}) : renderTrustedType(description, className)}</span>`;
       }
       if (type === 'function') {
         return ObjectPropertiesSection.valueElementForFunctionDescription(description, undefined, undefined, 'value');
@@ -1194,10 +1191,9 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
 
     if (wasThrown) {
       // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
-      render(
-          html`<span class="error value">${
-              uiI18n.getFormatLocalizedStringTemplate(str_, UIStrings.exceptionS, {PH1: contents()})}</span>`,
-          propertyValue);
+      render(html`<span class="error value">${
+                 uiI18n.getFormatLocalizedStringTemplate(str_, UIStrings.exceptionS, {PH1: contents()})}</span>`,
+             propertyValue);
     } else {
       // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
       render(contents(), propertyValue);
@@ -1209,9 +1205,8 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
     return child;
   }
 
-  static formatObjectAsFunction(
-      func: SDK.RemoteObject.RemoteObject, element: Element, linkify: boolean,
-      includePreview?: boolean): Promise<void> {
+  static formatObjectAsFunction(func: SDK.RemoteObject.RemoteObject, element: Element, linkify: boolean,
+                                includePreview?: boolean): Promise<void> {
     return func.debuggerModel().functionDetailsPromise(func).then(didGetDetails);
 
     function didGetDetails(response: SDK.DebuggerModel.FunctionDetails|null): void {
@@ -1230,16 +1225,14 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
       }
       const valueElement = document.createDocumentFragment();
       // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
-      render(
-          ObjectPropertiesSection.valueElementForFunctionDescription(func.description, includePreview, defaultName),
-          valueElement);
+      render(ObjectPropertiesSection.valueElementForFunctionDescription(func.description, includePreview, defaultName),
+             valueElement);
       element.appendChild(valueElement);
     }
   }
 
-  static isDisplayableProperty(
-      property: SDK.RemoteObject.RemoteObjectProperty,
-      parentProperty?: SDK.RemoteObject.RemoteObjectProperty): boolean {
+  static isDisplayableProperty(property: SDK.RemoteObject.RemoteObjectProperty,
+                               parentProperty?: SDK.RemoteObject.RemoteObjectProperty): boolean {
     if (!parentProperty?.synthetic) {
       return true;
     }
@@ -1272,9 +1265,9 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
           i18nString(UIStrings.expandRecursively),
           this.#objectTreeElement.expandRecursively.bind(this.#objectTreeElement, EXPANDABLE_MAX_DEPTH),
           {jslogContext: 'expand-recursively'});
-      contextMenu.viewSection().appendItem(
-          i18nString(UIStrings.collapseChildren),
-          this.#objectTreeElement.collapseChildren.bind(this.#objectTreeElement), {jslogContext: 'collapse-children'});
+      contextMenu.viewSection().appendItem(i18nString(UIStrings.collapseChildren),
+                                           this.#objectTreeElement.collapseChildren.bind(this.#objectTreeElement),
+                                           {jslogContext: 'collapse-children'});
     }
     void contextMenu.show();
   }
@@ -1321,8 +1314,9 @@ export function populateObjectTreeContextMenu(
 
   if (object.object instanceof SDK.RemoteObject.LocalJSONObject) {
     const {value} = object.object;
-    const propertyValue =
-        typeof value === 'object' ? Platform.StringUtilities.escapeUnicode(JSON.stringify(value, null, 2)) : value;
+    const propertyValue = typeof value === 'object' ?
+        Platform.StringUtilities.escapeUnicodeAsText(JSON.stringify(value, null, 2)) :
+        value;
     const copyValueHandler = (): void => {
       Host.userMetrics.actionTaken(Host.UserMetrics.Action.NetworkPanelCopyValue);
       Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText((propertyValue as string | undefined));
@@ -1444,8 +1438,8 @@ class RootElement extends UI.TreeOutline.TreeElement {
     this.removeChildren();
     const treeOutline = (this.treeOutline as ObjectPropertiesSection | null);
     const skipProto = treeOutline ? Boolean(treeOutline.skipProtoInternal) : false;
-    return await ObjectPropertyTreeElement.populate(
-        this, this.object, skipProto, false, this.linkifier, this.emptyPlaceholder);
+    return await ObjectPropertyTreeElement.populate(this, this.object, skipProto, false, this.linkifier,
+                                                    this.emptyPlaceholder);
   }
 }
 
@@ -2010,8 +2004,9 @@ export class ObjectPropertyTreeElement extends UI.TreeOutline.TreeElement {
       contextMenu.appendApplicableItems(this.property.object);
       if (this.property.parent?.object instanceof SDK.RemoteObject.LocalJSONObject) {
         const {object: {value}} = this.property;
-        const propertyValue =
-            typeof value === 'object' ? Platform.StringUtilities.escapeUnicode(JSON.stringify(value, null, 2)) : value;
+        const propertyValue = typeof value === 'object' ?
+            Platform.StringUtilities.escapeUnicodeAsText(JSON.stringify(value, null, 2)) :
+            value;
         const copyValueHandler = (): void => {
           Host.userMetrics.actionTaken(Host.UserMetrics.Action.NetworkPanelCopyValue);
           Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText((propertyValue as string | undefined));
@@ -2381,7 +2376,7 @@ export const EXPANDABLE_TEXT_DEFAULT_VIEW: ExpandableTextView = (input, output, 
                  data-text=${i18nString(UIStrings.copy)}
                  jslog=${VisualLogging.action('copy').track({click: true})}
                  ></button>
-             </span>`,
+              </span>`,
       // clang-format on
       target);
 };

@@ -313,7 +313,7 @@ export function renderNodeTitle(nodeTitle: string): LitTemplate|null {
       match[3] && html`<span class=webkit-html-attribute-name>${match[3]}</span>`}`;
 }
 
-export function renderTrustedType(description: string, className: string): LitTemplate {
+export function renderTrustedType(description: string, className: string|null): LitTemplate {
   return html`${className} <span class=object-value-string title=${description}>"${
       description.replace(/\n/g, '\u21B5')}"</span>`;
 }

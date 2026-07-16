@@ -5,7 +5,6 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
-import * as UI from '../../../front_end/ui/legacy/legacy.js';
 import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as Root from '../../core/root/root.js';
@@ -18,6 +17,7 @@ import {assertScreenshot, raf, renderElementIntoDOM} from '../../testing/DOMHelp
 import {createTarget, describeWithEnvironment, registerActions} from '../../testing/EnvironmentHelpers.js';
 import {dispatchEvent} from '../../testing/MockConnection.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
+import * as UI from '../../ui/legacy/legacy.js';
 import {html} from '../../ui/lit/lit.js';
 import * as PanelsCommon from '../common/common.js';
 

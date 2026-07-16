@@ -49,7 +49,7 @@
 .indexed-db-key-path {
   color: var(--sys-color-error);
   white-space: pre-wrap;
-  unicode-bidi: -webkit-isolate;
+  unicode-bidi: isolate;
 }
 
 .indexed-db-container {

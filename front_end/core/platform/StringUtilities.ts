@@ -50,8 +50,40 @@ const escapedReplacements = new Map([
   ['</script', '\\x3C/script'],
 ]);
 
-export const escapeUnicode = (content: string): string => {
-  return content.replaceAll(/[\p{Format}\p{Surrogate}]/gu, match => {
+const UNICODE_ESCAPE_SOURCE = '[\\p{Format}\\p{Surrogate}]';
+const UNICODE_ESCAPE_REGEX = new RegExp(UNICODE_ESCAPE_SOURCE, 'u');
+const UNICODE_ESCAPE_GLOBAL_REGEX = new RegExp(UNICODE_ESCAPE_SOURCE, 'gu');
+
+const UNICODE_ESCAPE_EXCEPT_ZWSP_SOURCE = '(?![\\u200B\\u200C\\u200D])[\\p{Format}]|\\p{Surrogate}';
+const UNICODE_ESCAPE_EXCEPT_ZWSP_REGEX = new RegExp(UNICODE_ESCAPE_EXCEPT_ZWSP_SOURCE, 'u');
+const UNICODE_ESCAPE_EXCEPT_ZWSP_GLOBAL_REGEX = new RegExp(UNICODE_ESCAPE_EXCEPT_ZWSP_SOURCE, 'gu');
+
+/**
+ * Escapes formatting and surrogate characters in the string into literal Unicode escape sequences (e.g. \u200B).
+ * Use this when displaying strings to developers for inspection (e.g. in the Console or Object properties)
+ * where you want hidden or invisible characters to be explicitly visible as literal text.
+ */
+export const escapeUnicodeAsText = (content: string): string => {
+  if (!UNICODE_ESCAPE_REGEX.test(content)) {
+    return content;
+  }
+  return content.replaceAll(UNICODE_ESCAPE_GLOBAL_REGEX, match => {
+    return match.split('').map(char => '\\u' + toHexadecimal(char.charCodeAt(0), 4)).join('');
+  });
+};
+
+/**
+ * Escapes dangerous formatting and surrogate characters (like bidi override characters) to prevent
+ * security and layout issues, but leaves safe, layout-critical zero-width formatting characters
+ * (Zero Width Space \u200B, Zero Width Non-Joiner \u200C, and Zero Width Joiner \u200D) untouched.
+ * Use this when rendering user-controlled content inside templates or HTML markup where you want formatting
+ * characters to function normally for word wrapping or rendering layout, rather than showing as literal text.
+ */
+export const safeEscapeUnicode = (content: string): string => {
+  if (!UNICODE_ESCAPE_EXCEPT_ZWSP_REGEX.test(content)) {
+    return content;
+  }
+  return content.replaceAll(UNICODE_ESCAPE_EXCEPT_ZWSP_GLOBAL_REGEX, match => {
     return match.split('').map(char => '\\u' + toHexadecimal(char.charCodeAt(0), 4)).join('');
   });
 };
@@ -176,8 +208,8 @@ export const toBase64 = (inputString: string): string => {
     shift = i % 3;
     v |= data[i] << (16 >>> shift & 24);
     if (shift === 2) {
-      encoded += String.fromCharCode(
-          encodeBits(v >>> 18 & 63), encodeBits(v >>> 12 & 63), encodeBits(v >>> 6 & 63), encodeBits(v & 63));
+      encoded += String.fromCharCode(encodeBits(v >>> 18 & 63), encodeBits(v >>> 12 & 63), encodeBits(v >>> 6 & 63),
+                                     encodeBits(v & 63));
       v = 0;
     }
   }
@@ -312,8 +344,8 @@ export const filterRegex = function(query: string): RegExp {
   return new RegExp(regexString, 'i');
 };
 
-export const createSearchRegex = function(
-    query: string, caseSensitive: boolean, isRegex: boolean, matchWholeWord = false): RegExp {
+export const createSearchRegex = function(query: string, caseSensitive: boolean, isRegex: boolean,
+                                          matchWholeWord = false): RegExp {
   const regexFlags = caseSensitive ? 'g' : 'gi';
   let regexObject;
 

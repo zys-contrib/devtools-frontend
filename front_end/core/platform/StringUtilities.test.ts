@@ -626,11 +626,19 @@ describe('StringUtilities', () => {
     });
   });
 
-  describe('escapeUnicode', () => {
+  describe('escapeUnicodeAsText', () => {
     it('escapes Unicode formatting characters and surrogates', () => {
       const inputString = '\u202e\u200b\u200d\u00ad\u{E0001}\b';
       const expectedString = '\\u202E\\u200B\\u200D\\u00AD\\uDB40\\uDC01\b';
-      assert.strictEqual(Platform.StringUtilities.escapeUnicode(inputString), expectedString);
+      assert.strictEqual(Platform.StringUtilities.escapeUnicodeAsText(inputString), expectedString);
+    });
+  });
+
+  describe('safeEscapeUnicode', () => {
+    it('escapes Unicode formatting characters and surrogates, but does not escape ZWSP, ZWNJ, and ZWJ', () => {
+      const inputString = '\u202e\u200b\u200d\u00ad\u{E0001}\b';
+      const expectedString = '\\u202E\u200B\u200D\\u00AD\\uDB40\\uDC01\b';
+      assert.strictEqual(Platform.StringUtilities.safeEscapeUnicode(inputString), expectedString);
     });
   });
 

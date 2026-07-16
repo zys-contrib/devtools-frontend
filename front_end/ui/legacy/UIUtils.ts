@@ -2124,10 +2124,6 @@ export class HTMLElementWithLightDOMTemplate extends HTMLElement {
           value['_$litType$'] === 1);
     }
 
-    function isLitDirective(value: unknown): value is {values: unknown[]} {
-      return Boolean(typeof value === 'object' && value && '_$litDirective$' in value && 'values' in value);
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function isCallable(value: unknown): value is(...args: any[]) => any {
       // Native class constructors cannot be invoked without 'new', and we shouldn't attempt to wrap them.
@@ -2148,7 +2144,7 @@ export class HTMLElementWithLightDOMTemplate extends HTMLElement {
         HTMLElementWithLightDOMTemplate.patchLitTemplate(value);
         return value;
       }
-      if (isLitDirective(value)) {
+      if (Lit.isLitDirective(value)) {
         for (let i = 0; i < value.values.length; i++) {
           const subvalue = value.values[i];
           if (isCallable(subvalue)) {
