@@ -5,9 +5,11 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
+import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../../models/bindings/bindings.js';
+import type * as TextUtils from '../../models/text_utils/text_utils.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import {renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {createTarget, describeWithEnvironment, registerNoopActions} from '../../testing/EnvironmentHelpers.js';
@@ -16,6 +18,8 @@ import * as RenderCoordinator from '../../ui/components/render_coordinator/rende
 import * as UI from '../../ui/legacy/legacy.js';
 
 import * as Coverage from './coverage.js';
+
+const {urlString} = Platform.DevToolsPath;
 
 const isShowingLandingPage = (view: Coverage.CoverageView.CoverageView) => {
   return Boolean(view.contentElement.querySelector('.empty-state'));
@@ -201,6 +205,88 @@ describeWithEnvironment('CoverageView', () => {
     sinon.assert.calledOnce(stopSpy);
     sinon.assert.calledOnce(startSpy2);
     sinon.assert.notCalled(stopSpy2);
+
+    await view.stopRecording();
+    view.willHide();
+    view.wasShown();
+    view.detach();
+    Coverage.CoverageView.CoverageView.removeInstance();
+  });
+
+  it('properly applies filter to coverage list view', async () => {
+    const {target} = setupTargetAndModels();
+    const coverageModel = target.model(Coverage.CoverageModel.CoverageModel);
+    assert.exists(coverageModel);
+
+    const jsUrl = urlString`http://example.com/devtools/coverage/resources/coverage.js`;
+    const cssUrl = urlString`http://example.com/devtools/coverage/resources/highlight-in-source.css`;
+    const htmlUrl = urlString`http://example.com/devtools/coverage/resources/basic-coverage.html`;
+
+    const jsCoverage = new Coverage.CoverageModel.URLCoverageInfo(jsUrl);
+    jsCoverage.ensureEntry(null as unknown as TextUtils.ContentProvider.ContentProvider, 568, 0, 0,
+                           Coverage.CoverageModel.CoverageType.JAVA_SCRIPT_PER_FUNCTION);
+    jsCoverage.addToSizes(411, 0);
+
+    const cssCoverage = new Coverage.CoverageModel.URLCoverageInfo(cssUrl);
+    cssCoverage.ensureEntry(null as unknown as TextUtils.ContentProvider.ContentProvider, 209, 0, 0,
+                            Coverage.CoverageModel.CoverageType.CSS);
+    cssCoverage.addToSizes(67, 0);
+
+    const htmlCoverage = new Coverage.CoverageModel.URLCoverageInfo(htmlUrl);
+    htmlCoverage.ensureEntry(null as unknown as TextUtils.ContentProvider.ContentProvider, 51, 0, 0,
+                             Coverage.CoverageModel.CoverageType.JAVA_SCRIPT_PER_FUNCTION);
+    htmlCoverage.addToSizes(51, 0);
+
+    sinon.stub(coverageModel, 'entries').returns([jsCoverage, cssCoverage, htmlCoverage]);
+
+    const view = Coverage.CoverageView.CoverageView.instance();
+    renderElementIntoDOM(view);
+    await view.startRecording({reload: false, jsCoveragePerBlock: false});
+    coverageModel.dispatchEventToListeners(Coverage.CoverageModel.Events.CoverageUpdated, []);
+    await view.updateComplete;
+
+    const resultsWidget = view.contentElement.querySelector('.results');
+    assert.exists(resultsWidget);
+    const coverageListView =
+        UI.Widget.Widget.get(resultsWidget as HTMLElement) as Coverage.CoverageListView.CoverageListView;
+    assert.exists(coverageListView);
+
+    const filterInput = view.contentElement.querySelector('devtools-toolbar-input');
+    assert.exists(filterInput);
+
+    const setFilter = async (text: string) => {
+      filterInput.dispatchEvent(new CustomEvent('change', {detail: text}));
+      await view.updateComplete;
+    };
+
+    const getItemDetails = (item: Coverage.CoverageListView.CoverageListItem) => ({
+      url: item.url,
+      size: item.size,
+      usedSize: item.usedSize,
+      unusedSize: item.unusedSize,
+    });
+
+    await setFilter('devtools');
+    assert.deepEqual(coverageListView.coverageInfo.map(getItemDetails), [
+      {url: jsUrl, size: 568, usedSize: 411, unusedSize: 157},
+      {url: cssUrl, size: 209, usedSize: 67, unusedSize: 142},
+      {url: htmlUrl, size: 51, usedSize: 51, unusedSize: 0},
+    ]);
+
+    await setFilter('CES/COV');
+    assert.deepEqual(coverageListView.coverageInfo.map(getItemDetails), [
+      {url: jsUrl, size: 568, usedSize: 411, unusedSize: 157},
+    ]);
+
+    await setFilter('no pasaran');
+    assert.deepEqual(coverageListView.coverageInfo.map(getItemDetails), []);
+
+    await setFilter('');
+    assert.deepEqual(coverageListView.coverageInfo.map(getItemDetails), [
+      {url: jsUrl, size: 568, usedSize: 411, unusedSize: 157},
+      {url: cssUrl, size: 209, usedSize: 67, unusedSize: 142},
+      {url: htmlUrl, size: 51, usedSize: 51, unusedSize: 0},
+    ]);
 
     await view.stopRecording();
     view.willHide();
