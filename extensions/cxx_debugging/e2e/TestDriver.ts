@@ -187,7 +187,9 @@ async function readScopeView(scope: string, variable: string[]) {
         await devToolsPage.clickElement(elementHandle);
       }
 
-      await devToolsPage.pressKey('ArrowRight');
+      await elementHandle.evaluate(node => {
+        node.dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowRight', bubbles: true, cancelable: true}));
+      });
 
       await devToolsPage.waitForFunction(async () => {
         const expanded = await elementHandle.evaluate(node => node.getAttribute('aria-expanded'));
