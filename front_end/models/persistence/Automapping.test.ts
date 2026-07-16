@@ -710,4 +710,95 @@ describe('Automapping', () => {
       clock.restore();
     }
   });
+
+  it('correctly maps and demaps resources as they are renamed', async () => {
+    const url = urlString`http://example.com/path/foo.js`;
+    const fileURL = urlString`file:///var/www/scripts/foo.js`;
+    const content = 'console.log(\'foo.js!\');';
+    const time = new Date('December 1, 1989');
+
+    const persistence = backend.universe.persistence;
+    const bindings: Persistence.Persistence.PersistenceBinding[] = [];
+    const removedBindings: Persistence.Persistence.PersistenceBinding[] = [];
+
+    persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
+      bindings.push(event.data);
+    });
+    persistence.addEventListener(Persistence.Persistence.Events.BindingRemoved, event => {
+      removedBindings.push(event.data);
+    });
+
+    // 1. Add a network resource.
+    const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
+      url,
+      mimeType: 'text/javascript',
+      content,
+      projectType: Workspace.Workspace.projectTypes.Network,
+      projectId: 'network-project',
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length),
+      universe: backend.universe,
+    });
+
+    // 2. Add a file system resource.
+    const {uiSourceCode: fileSystemSourceCode, project: fileSystemProject} = createFileSystemUISourceCode({
+      url: fileURL,
+      content,
+      fileSystemPath: 'file:///var/www',
+      mimeType: 'text/javascript',
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length),
+      autoMapping: true,
+      universe: backend.universe,
+    });
+
+    const waitForBinding = (bindingList: Persistence.Persistence.PersistenceBinding[], length: number) => {
+      return new Promise<void>(resolve => {
+        const check = () => {
+          if (bindingList.length === length) {
+            resolve();
+          } else {
+            setTimeout(check, 10);
+          }
+        };
+        check();
+      });
+    };
+
+    // Wait for binding to be created.
+    await waitForBinding(bindings, 1);
+    assert.strictEqual(bindings[0].network, networkSourceCode);
+    assert.strictEqual(bindings[0].fileSystem, fileSystemSourceCode);
+
+    // Stub renameFile on the platform file system to succeed.
+    const platformFileSystem = fileSystemProject.fileSystem();
+    const renameStub = sinon.stub(platformFileSystem, 'renameFile').callsFake((path, newName, callback) => {
+      callback(true, newName);
+    });
+    const contentTypeStub =
+        sinon.stub(platformFileSystem, 'contentType').returns(Common.ResourceType.resourceTypes.Script);
+
+    // 3. Rename the file system resource to bar.js.
+    const newName = 'bar.js' as Platform.DevToolsPath.RawPathString;
+    const renameSuccess = await fileSystemSourceCode.rename(newName);
+    assert.isTrue(renameSuccess);
+
+    // Wait for binding to be removed.
+    await waitForBinding(removedBindings, 1);
+    assert.strictEqual(removedBindings[0].network, networkSourceCode);
+    assert.strictEqual(removedBindings[0].fileSystem, fileSystemSourceCode);
+    assert.strictEqual(fileSystemSourceCode.url(), urlString`file:///var/www/scripts/bar.js`);
+
+    // 4. Rename it back to foo.js.
+    const oldName = 'foo.js' as Platform.DevToolsPath.RawPathString;
+    const renameSuccess2 = await fileSystemSourceCode.rename(oldName);
+    assert.isTrue(renameSuccess2);
+
+    // Wait for binding to be created again.
+    await waitForBinding(bindings, 2);
+    assert.strictEqual(bindings[1].network, networkSourceCode);
+    assert.strictEqual(bindings[1].fileSystem, fileSystemSourceCode);
+    assert.strictEqual(fileSystemSourceCode.url(), fileURL);
+
+    renameStub.restore();
+    contentTypeStub.restore();
+  });
 });
