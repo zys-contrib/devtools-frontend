@@ -23,6 +23,7 @@ function compileScriptResponse(exception?: string): Protocol.Runtime.CompileScri
 
 describeWithEnvironment('ConsoleContextSelector', () => {
   let target: SDK.Target.Target;
+  let targetContext: SDK.RuntimeModel.ExecutionContext;
   let consolePrompt: Console.ConsolePrompt.ConsolePrompt;
   let evaluateOnTarget: sinon.SinonStub;
   let compileScript: sinon.SinonStub;
@@ -39,7 +40,7 @@ describeWithEnvironment('ConsoleContextSelector', () => {
     setCodeMirrorContent('foo');
 
     target = createTarget();
-    const targetContext = createExecutionContext(target);
+    targetContext = createExecutionContext(target);
     UI.Context.Context.instance().setFlavor(SDK.RuntimeModel.ExecutionContext, targetContext);
     evaluateOnTarget = sinon.stub(target.runtimeAgent(), 'invoke_evaluate');
     compileScript = sinon.stub(target.runtimeAgent(), 'invoke_compileScript').resolves(compileScriptResponse());
@@ -89,7 +90,10 @@ describeWithEnvironment('ConsoleContextSelector', () => {
     dispatchKeydown('Enter');
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    sinon.assert.called(evaluateOnTarget);
+    sinon.assert.calledOnce(evaluateOnTarget);
+    const args = evaluateOnTarget.firstCall.args[0];
+    assert.strictEqual(args.expression, 'foo');
+    assert.strictEqual(args.uniqueContextId, targetContext.uniqueId);
   });
 
   it('allows user to enable pasting by typing \'allow pasting\'', async () => {
