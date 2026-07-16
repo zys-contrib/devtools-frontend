@@ -710,4 +710,65 @@ describeWithEnvironment('ElementsTreeOutline', () => {
 
     sinon.assert.calledWith(highlightSpy, sinon.match({node: childNode, selectorList: '*'}), 'all', true);
   });
+
+  it('updates the DOM tree structure upon changing or removing namespaced attributes', () => {
+    const aNodePayload = {
+      nodeId: 2 as Protocol.DOM.NodeId,
+      parentId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'a',
+      localName: 'a',
+      nodeValue: '',
+      childNodeCount: 0,
+      attributes: ['id', 'node', 'xlink:href', 'http://localhost'],
+    } as Protocol.DOM.Node;
+    const rootNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+      nodeId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'svg',
+      localName: 'svg',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [aNodePayload],
+      attributes: [],
+    });
+    assert.isNotNull(rootNode);
+    treeOutline.rootDOMNode = rootNode;
+
+    const aNode = rootNode.children()![0];
+    const treeElement = treeOutline.findTreeElement(aNode);
+    assert.isNotNull(treeElement);
+
+    const getAttributeValue = (name: string): string|null => {
+      const attributes = treeElement.listItemElement.getElementsByClassName('webkit-html-attribute');
+      for (const attribute of attributes) {
+        const nameElement = attribute.getElementsByClassName('webkit-html-attribute-name')[0];
+        if (nameElement?.textContent === name) {
+          const valueElement = attribute.getElementsByClassName('webkit-html-attribute-value')[0];
+          return valueElement?.textContent ? valueElement.textContent.replace(/\u200B/g, '') : '';
+        }
+      }
+      return null;
+    };
+
+    // Initial state: namespaced attribute is present
+    assert.strictEqual(aNode.getAttribute('xlink:href'), 'http://localhost');
+    assert.strictEqual(getAttributeValue('xlink:href'), 'http://localhost');
+
+    // Modify attribute
+    model.attributeModified(aNode.id, 'xlink:href', 'changed-url');
+    treeOutline.runPendingUpdates();
+
+    assert.strictEqual(aNode.getAttribute('xlink:href'), 'changed-url');
+    assert.strictEqual(getAttributeValue('xlink:href'), 'changed-url');
+
+    // Remove attribute
+    model.attributeRemoved(aNode.id, 'xlink:href');
+    treeOutline.runPendingUpdates();
+
+    assert.isUndefined(aNode.getAttribute('xlink:href'));
+    assert.isNull(getAttributeValue('xlink:href'));
+  });
 });
