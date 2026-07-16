@@ -10,6 +10,7 @@ import * as Root from '../core/root/root.js';
 import * as SDK from '../core/sdk/sdk.js';
 import type * as Foundation from '../foundation/foundation.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
+import * as Badges from '../models/badges/badges.js';
 import * as Bindings from '../models/bindings/bindings.js';
 import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as CrUXManager from '../models/crux-manager/crux-manager.js';
@@ -403,6 +404,13 @@ export class TestUniverse implements Foundation.Universe.Universe {
       this.#context.set(SDK.TargetManager.TargetManager, targetManager);
     }
     return this.#context.get(SDK.TargetManager.TargetManager);
+  }
+
+  get userBadges(): Badges.UserBadges {
+    if (!this.#context.has(Badges.UserBadges)) {
+      this.#context.set(Badges.UserBadges, new Badges.UserBadges(this.settings, this.gdpClient));
+    }
+    return this.#context.get(Badges.UserBadges);
   }
 
   get settings(): Common.Settings.Settings {

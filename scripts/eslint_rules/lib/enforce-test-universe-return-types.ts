@@ -14,6 +14,7 @@ import {createRule} from './utils/ruleCreator.ts';
  */
 const ALLOWED_RETURN_TYPES = new Set([
   'AutofillManager.AutofillManager.AutofillManager',
+  'Badges.UserBadges',
   'Common.Console.Console',
   'Common.Settings.Settings',
   'CrUXManager.CrUXManager',

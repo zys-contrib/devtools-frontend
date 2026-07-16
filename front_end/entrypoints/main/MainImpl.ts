@@ -508,8 +508,8 @@ export class MainImpl {
                                            'no-profile-and-not-eligible';
         void VisualLogging.logFunctionCall('gdp-client-initialize', contextString);
       });
-      void Badges.UserBadges.instance().initialize();
-      Badges.UserBadges.instance().addEventListener(Badges.Events.BADGE_TRIGGERED, async ev => {
+      void this.#universe.userBadges.initialize();
+      this.#universe.userBadges.addEventListener(Badges.Events.BADGE_TRIGGERED, async ev => {
         loadedPanelCommonModule ??= await import('../../panels/common/common.js') as typeof PanelCommon;
         const badgeNotification = new loadedPanelCommonModule.BadgeNotification();
         const {badge, reason} = ev.data;

@@ -7,6 +7,7 @@ import * as Host from '../core/host/host.js';
 import * as Root from '../core/root/root.js';
 import * as SDK from '../core/sdk/sdk.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
+import * as Badges from '../models/badges/badges.js';
 import * as Bindings from '../models/bindings/bindings.js';
 import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as CrUXManager from '../models/crux-manager/crux-manager.js';
@@ -186,6 +187,9 @@ export class Universe {
     const liveMetrics = new LiveMetrics.LiveMetrics(targetManager, deviceModeModel);
     context.set(LiveMetrics.LiveMetrics, liveMetrics);
 
+    const userBadges = new Badges.UserBadges(settings, gdpClient);
+    context.set(Badges.UserBadges, userBadges);
+
     this.autofillManager = new AutofillManager.AutofillManager.AutofillManager(targetManager, frameManager);
   }
 
@@ -284,6 +288,10 @@ export class Universe {
 
   get targetManager(): SDK.TargetManager.TargetManager {
     return this.context.get(SDK.TargetManager.TargetManager);
+  }
+
+  get userBadges(): Badges.UserBadges {
+    return this.context.get(Badges.UserBadges);
   }
 
   get workspace(): Workspace.Workspace.WorkspaceImpl {
