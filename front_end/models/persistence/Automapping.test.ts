@@ -46,19 +46,29 @@ describe('Automapping', () => {
       content: compiledContent,
       projectType: Workspace.Workspace.projectTypes.Network,
       projectId: 'network-script-project',
-      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, compiledContent.length),
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+          null,
+          compiledContent.length,
+          ),
       universe: backend.universe,
     });
 
     // 2. Create network UISourceCode for clashing source (SourceMapScript)
-    const {uiSourceCodes: [networkSource]} = createContentProviderUISourceCodes({
-      items: [{
-        url,
-        mimeType: 'text/javascript',
-        content: sourceContent,
-        resourceType: Common.ResourceType.resourceTypes.SourceMapScript,
-        metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, sourceContent.length),
-      }],
+    const {
+      uiSourceCodes: [networkSource],
+    } = createContentProviderUISourceCodes({
+      items: [
+        {
+          url,
+          mimeType: 'text/javascript',
+          content: sourceContent,
+          resourceType: Common.ResourceType.resourceTypes.SourceMapScript,
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              null,
+              sourceContent.length,
+              ),
+        },
+      ],
       projectType: Workspace.Workspace.projectTypes.Network,
       projectId: 'sourcemap-project',
       universe: backend.universe,
@@ -68,12 +78,15 @@ describe('Automapping', () => {
     const persistence = backend.universe.persistence;
 
     const bindingCreatedPromise = new Promise<void>(resolve => {
-      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
-        bindings.push(event.data);
-        if (bindings.length === 2) {
-          resolve();
-        }
-      });
+      persistence.addEventListener(
+          Persistence.Persistence.Events.BindingCreated,
+          event => {
+            bindings.push(event.data);
+            if (bindings.length === 2) {
+              resolve();
+            }
+          },
+      );
     });
 
     // 3. Create filesystem UISourceCodes
@@ -83,7 +96,10 @@ describe('Automapping', () => {
       content: compiledContent,
       fileSystemPath: 'file:///var/www',
       mimeType: 'text/javascript',
-      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, compiledContent.length),
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+          null,
+          compiledContent.length,
+          ),
       autoMapping: true,
       universe: backend.universe,
     });
@@ -94,7 +110,10 @@ describe('Automapping', () => {
       content: sourceContent,
       fileSystemPath: 'file:///var/www',
       mimeType: 'text/javascript',
-      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, sourceContent.length),
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+          null,
+          sourceContent.length,
+          ),
       autoMapping: true,
       universe: backend.universe,
     });
@@ -125,19 +144,28 @@ describe('Automapping', () => {
           url: urlString`http://example.com/reset.css`,
           mimeType: 'text/css',
           content: resetCssContent,
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, resetCssContent.length)
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              null,
+              resetCssContent.length,
+              ),
         },
         {
           url: urlString`http://example.com/jquery.js`,
           mimeType: 'text/javascript',
           content: jqueryJsContent,
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, jqueryJsContent.length)
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              null,
+              jqueryJsContent.length,
+              ),
         },
         {
           url: urlString`http://example.com/logo.png`,
           mimeType: 'image/png',
           content: logo2Content,
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, logo2Content.length)
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              null,
+              logo2Content.length,
+              ),
         },
       ],
       projectType: Workspace.Workspace.projectTypes.Network,
@@ -151,12 +179,15 @@ describe('Automapping', () => {
     const bindings: Persistence.Persistence.PersistenceBinding[] = [];
     const persistence = backend.universe.persistence;
     const bindingsCreatedPromise = new Promise<void>(resolve => {
-      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
-        bindings.push(event.data);
-        if (bindings.length === 3) {
-          resolve();
-        }
-      });
+      persistence.addEventListener(
+          Persistence.Persistence.Events.BindingCreated,
+          event => {
+            bindings.push(event.data);
+            if (bindings.length === 3) {
+              resolve();
+            }
+          },
+      );
     });
 
     class MyTestFileSystem extends Persistence.FileSystemWorkspaceBinding.FileSystem {
@@ -164,31 +195,55 @@ describe('Automapping', () => {
       constructor(fileSystemPath: string) {
         const isolatedFileSystemManager = backend.universe.isolatedFileSystemManager;
         const fileSystemWorkspaceBinding = new Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding(
-            isolatedFileSystemManager, backend.universe.workspace);
+            isolatedFileSystemManager,
+            backend.universe.workspace,
+        );
         class MyTestPlatformFileSystem extends Persistence.PlatformFileSystem.PlatformFileSystem {
           constructor() {
-            super(urlString`${fileSystemPath}`, Persistence.PlatformFileSystem.PlatformFileSystemType.WORKSPACE_PROJECT,
-                  false);
+            super(
+                urlString`${fileSystemPath}`,
+                Persistence.PlatformFileSystem.PlatformFileSystemType.WORKSPACE_PROJECT,
+                false,
+            );
           }
           override supportsAutomapping(): boolean {
             return true;
           }
         }
-        super(fileSystemWorkspaceBinding, new MyTestPlatformFileSystem(), backend.universe.workspace);
+        super(
+            fileSystemWorkspaceBinding,
+            new MyTestPlatformFileSystem(),
+            backend.universe.workspace,
+        );
       }
-      override requestFileContent(uiSourceCode: Workspace.UISourceCode.UISourceCode):
-          Promise<TextUtils.ContentData.ContentDataOrError> {
+      override requestFileContent(
+          uiSourceCode: Workspace.UISourceCode.UISourceCode,
+          ): Promise<TextUtils.ContentData.ContentDataOrError> {
         return Promise.resolve(
-            new TextUtils.ContentData.ContentData(this.contentMap.get(uiSourceCode) || '', false, 'text/plain'));
+            new TextUtils.ContentData.ContentData(
+                this.contentMap.get(uiSourceCode) || '',
+                false,
+                'text/plain',
+                ),
+        );
       }
-      override requestMetadata(uiSourceCode: Workspace.UISourceCode.UISourceCode):
-          Promise<Workspace.UISourceCode.UISourceCodeMetadata|null> {
+      override requestMetadata(
+          uiSourceCode: Workspace.UISourceCode.UISourceCode,
+          ): Promise<Workspace.UISourceCode.UISourceCodeMetadata|null> {
         const length = (this.contentMap.get(uiSourceCode) || '').length;
-        return Promise.resolve(new Workspace.UISourceCode.UISourceCodeMetadata(null, length));
+        return Promise.resolve(
+            new Workspace.UISourceCode.UISourceCodeMetadata(null, length),
+        );
       }
-      addFileToMap(url: string, content: string, mimeType: string): Workspace.UISourceCode.UISourceCode {
-        const uiSourceCode =
-            this.createUISourceCode(urlString`${url}`, Common.ResourceType.ResourceType.fromMimeType(mimeType));
+      addFileToMap(
+          url: string,
+          content: string,
+          mimeType: string,
+          ): Workspace.UISourceCode.UISourceCode {
+        const uiSourceCode = this.createUISourceCode(
+            urlString`${url}`,
+            Common.ResourceType.ResourceType.fromMimeType(mimeType),
+        );
         this.contentMap.set(uiSourceCode, content);
         this.addUISourceCode(uiSourceCode);
         return uiSourceCode;
@@ -197,16 +252,39 @@ describe('Automapping', () => {
 
     // 2. Create filesystem UISourceCodes for proj1
     const fsProj1 = new MyTestFileSystem('file:///var/www/code/proj1');
-    fsProj1.addFileToMap('file:///var/www/code/proj1/reset.css', resetCssContent, 'text/css');
-    fsProj1.addFileToMap('file:///var/www/code/proj1/jquery.js', jqueryJsContent, 'text/javascript');
-    fsProj1.addFileToMap('file:///var/www/code/proj1/logo.png', logo1Content, 'image/png');
+    fsProj1.addFileToMap(
+        'file:///var/www/code/proj1/reset.css',
+        resetCssContent,
+        'text/css',
+    );
+    fsProj1.addFileToMap(
+        'file:///var/www/code/proj1/jquery.js',
+        jqueryJsContent,
+        'text/javascript',
+    );
+    fsProj1.addFileToMap(
+        'file:///var/www/code/proj1/logo.png',
+        logo1Content,
+        'image/png',
+    );
 
     // 3. Create filesystem UISourceCodes for proj2
     const fsProj2 = new MyTestFileSystem('file:///var/www/code/proj2');
-    const fsResetCss2 = fsProj2.addFileToMap('file:///var/www/code/proj2/reset.css', resetCssContent, 'text/css');
-    const fsJqueryJs2 =
-        fsProj2.addFileToMap('file:///var/www/code/proj2/jquery.js', jqueryJsContent, 'text/javascript');
-    const fsLogo2 = fsProj2.addFileToMap('file:///var/www/code/proj2/logo.png', logo2Content, 'image/png');
+    const fsResetCss2 = fsProj2.addFileToMap(
+        'file:///var/www/code/proj2/reset.css',
+        resetCssContent,
+        'text/css',
+    );
+    const fsJqueryJs2 = fsProj2.addFileToMap(
+        'file:///var/www/code/proj2/jquery.js',
+        jqueryJsContent,
+        'text/javascript',
+    );
+    const fsLogo2 = fsProj2.addFileToMap(
+        'file:///var/www/code/proj2/logo.png',
+        logo2Content,
+        'image/png',
+    );
 
     await bindingsCreatedPromise;
 
@@ -237,7 +315,10 @@ describe('Automapping', () => {
           url: urlString`http://example.com`,
           mimeType: 'text/html',
           content: '<body>this is main resource</body>',
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, null),
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              timestamp,
+              null,
+              ),
         },
         {
           url: urlString`http://example.com/path/foo.js`,
@@ -249,19 +330,28 @@ describe('Automapping', () => {
           url: urlString`http://example.com/bar.css?12341234`,
           mimeType: 'text/css',
           content: '* { box-sizing: border-box }',
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, null),
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              timestamp,
+              null,
+              ),
         },
         {
           url: urlString`http://example.com/baz.js`,
           mimeType: 'text/javascript',
           content: bazContent,
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(new Date('December 3, 1989'), null),
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              new Date('December 3, 1989'),
+              null,
+              ),
         },
         {
           url: urlString`http://example.com/images/image.png`,
           mimeType: 'image/png',
           content: '012345',
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, 6),
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              timestamp,
+              6,
+              ),
         },
         {
           url: urlString`http://example.com/elements/module.json`,
@@ -296,9 +386,12 @@ describe('Automapping', () => {
       const bindings: Persistence.Persistence.PersistenceBinding[] = [];
       const persistence = backend.universe.persistence;
 
-      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
-        bindings.push(event.data);
-      });
+      persistence.addEventListener(
+          Persistence.Persistence.Events.BindingCreated,
+          event => {
+            bindings.push(event.data);
+          },
+      );
 
       // Filesystem resources
       const fileSystemResources = [
@@ -306,7 +399,10 @@ describe('Automapping', () => {
           url: urlString`file:///var/www/index.html`,
           mimeType: 'text/html',
           content: '<body>this is main resource</body>',
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, null),
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              timestamp,
+              null,
+              ),
         },
         {
           url: urlString`file:///var/www/scripts/foo.js`,
@@ -318,19 +414,28 @@ describe('Automapping', () => {
           url: urlString`file:///var/www/styles/bar.css`,
           mimeType: 'text/css',
           content: '* { box-sizing: border-box }',
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, null),
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              timestamp,
+              null,
+              ),
         },
         {
           url: urlString`file:///var/www/scripts/baz.js`,
           mimeType: 'text/javascript',
           content: bazContent,
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(new Date('December 4, 1989'), null),
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              new Date('December 4, 1989'),
+              null,
+              ),
         },
         {
           url: urlString`file:///var/www/images/image.png`,
           mimeType: 'image/png',
           content: '0123456789',
-          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(timestamp, 10),
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              timestamp,
+              10,
+              ),
         },
         {
           url: urlString`file:///var/www/modules/elements/module.json`,
@@ -406,12 +511,18 @@ describe('Automapping', () => {
     const bindings: Persistence.Persistence.PersistenceBinding[] = [];
     const removedBindings: Persistence.Persistence.PersistenceBinding[] = [];
 
-    persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
-      bindings.push(event.data);
-    });
-    persistence.addEventListener(Persistence.Persistence.Events.BindingRemoved, event => {
-      removedBindings.push(event.data);
-    });
+    persistence.addEventListener(
+        Persistence.Persistence.Events.BindingCreated,
+        event => {
+          bindings.push(event.data);
+        },
+    );
+    persistence.addEventListener(
+        Persistence.Persistence.Events.BindingRemoved,
+        event => {
+          removedBindings.push(event.data);
+        },
+    );
 
     // 1. Add a network resource.
     const {project: networkProject, uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
@@ -420,7 +531,10 @@ describe('Automapping', () => {
       content,
       projectType: Workspace.Workspace.projectTypes.Network,
       projectId: 'network-project',
-      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length),
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+          time,
+          content.length,
+          ),
       universe: backend.universe,
     });
 
@@ -434,12 +548,18 @@ describe('Automapping', () => {
       content,
       fileSystemPath: 'file:///var/www',
       mimeType: 'text/javascript',
-      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length),
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+          time,
+          content.length,
+          ),
       autoMapping: true,
       universe: backend.universe,
     });
 
-    const waitForBinding = (bindingList: Persistence.Persistence.PersistenceBinding[], length: number) => {
+    const waitForBinding = (
+        bindingList: Persistence.Persistence.PersistenceBinding[],
+        length: number,
+        ) => {
       return new Promise<void>(resolve => {
         const check = () => {
           if (bindingList.length === length) {
@@ -466,11 +586,25 @@ describe('Automapping', () => {
     assert.strictEqual(removedBindings[0].fileSystem, fileSystemSourceCode);
 
     // 4. Re-add the network resource.
-    const newNetworkSourceCode = networkProject.createUISourceCode(url, Common.ResourceType.resourceTypes.Script);
+    const newNetworkSourceCode = networkProject.createUISourceCode(
+        url,
+        Common.ResourceType.resourceTypes.Script,
+    );
     const contentProvider = TextUtils.StaticContentProvider.StaticContentProvider.fromString(
-        url, Common.ResourceType.resourceTypes.Script, content);
-    const metadata = new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length);
-    networkProject.addUISourceCodeWithProvider(newNetworkSourceCode, contentProvider, metadata, 'text/javascript');
+        url,
+        Common.ResourceType.resourceTypes.Script,
+        content,
+    );
+    const metadata = new Workspace.UISourceCode.UISourceCodeMetadata(
+        time,
+        content.length,
+    );
+    networkProject.addUISourceCodeWithProvider(
+        newNetworkSourceCode,
+        contentProvider,
+        metadata,
+        'text/javascript',
+    );
 
     // Wait for binding to be created again.
     await waitForBinding(bindings, 2);
@@ -514,12 +648,15 @@ describe('Automapping', () => {
     const persistence = backend.universe.persistence;
 
     const bindingCreatedPromise = new Promise<void>(resolve => {
-      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
-        bindings.push(event.data);
-        if (bindings.length === 2) {
-          resolve();
-        }
-      });
+      persistence.addEventListener(
+          Persistence.Persistence.Events.BindingCreated,
+          event => {
+            bindings.push(event.data);
+            if (bindings.length === 2) {
+              resolve();
+            }
+          },
+      );
     });
 
     // Create the first file system resource with a URL-encoded path.
@@ -573,10 +710,13 @@ describe('Automapping', () => {
     const bindings: Persistence.Persistence.PersistenceBinding[] = [];
     const persistence = backend.universe.persistence;
     const bindingCreatedPromise = new Promise<void>(resolve => {
-      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
-        bindings.push(event.data);
-        resolve();
-      });
+      persistence.addEventListener(
+          Persistence.Persistence.Events.BindingCreated,
+          event => {
+            bindings.push(event.data);
+            resolve();
+          },
+      );
     });
 
     // 2. Create filesystem UISourceCode
@@ -608,20 +748,28 @@ describe('Automapping', () => {
     const persistence = backend.universe.persistence;
     const bindings: Persistence.Persistence.PersistenceBinding[] = [];
 
-    persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
-      bindings.push(event.data);
-    });
+    persistence.addEventListener(
+        Persistence.Persistence.Events.BindingCreated,
+        event => {
+          bindings.push(event.data);
+        },
+    );
 
     // 1. Add a network resource.
-    const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
-      url,
-      mimeType: 'text/javascript',
-      content,
-      projectType: Workspace.Workspace.projectTypes.Network,
-      projectId: 'network-project',
-      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
-      universe: backend.universe,
-    });
+    const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode(
+        {
+          url,
+          mimeType: 'text/javascript',
+          content,
+          projectType: Workspace.Workspace.projectTypes.Network,
+          projectId: 'network-project',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              null,
+              content.length,
+              ),
+          universe: backend.universe,
+        },
+    );
 
     // Make the network resource dirty.
     networkSourceCode.setWorkingCopy(modifiedContent);
@@ -632,12 +780,18 @@ describe('Automapping', () => {
       content,
       fileSystemPath: 'file:///var/www',
       mimeType: 'text/javascript',
-      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+          null,
+          content.length,
+          ),
       autoMapping: true,
       universe: backend.universe,
     });
 
-    const waitForBinding = (bindingList: Persistence.Persistence.PersistenceBinding[], length: number) => {
+    const waitForBinding = (
+        bindingList: Persistence.Persistence.PersistenceBinding[],
+        length: number,
+        ) => {
       return new Promise<void>(resolve => {
         const check = () => {
           if (bindingList.length === length) {
@@ -672,20 +826,28 @@ describe('Automapping', () => {
       const persistence = backend.universe.persistence;
       const bindings: Persistence.Persistence.PersistenceBinding[] = [];
 
-      persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
-        bindings.push(event.data);
-      });
+      persistence.addEventListener(
+          Persistence.Persistence.Events.BindingCreated,
+          event => {
+            bindings.push(event.data);
+          },
+      );
 
       // 1. Create the filesystem UISourceCode.
-      const {uiSourceCode: fileSystemSourceCode} = createFileSystemUISourceCode({
-        url: fileURL,
-        content,
-        fileSystemPath: 'file:///var/www',
-        mimeType: 'text/javascript',
-        metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
-        autoMapping: true,
-        universe: backend.universe,
-      });
+      const {uiSourceCode: fileSystemSourceCode} = createFileSystemUISourceCode(
+          {
+            url: fileURL,
+            content,
+            fileSystemPath: 'file:///var/www',
+            mimeType: 'text/javascript',
+            metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+                null,
+                content.length,
+                ),
+            autoMapping: true,
+            universe: backend.universe,
+          },
+      );
 
       // 2. Make the filesystem UISourceCode dirty.
       fileSystemSourceCode.setWorkingCopy(dirtyContent);
@@ -697,7 +859,10 @@ describe('Automapping', () => {
         mimeType: 'text/javascript',
         content,
         projectType: Workspace.Workspace.projectTypes.Network,
-        metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, content.length),
+        metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+            null,
+            content.length,
+            ),
         universe: backend.universe,
       });
 
@@ -721,23 +886,34 @@ describe('Automapping', () => {
     const bindings: Persistence.Persistence.PersistenceBinding[] = [];
     const removedBindings: Persistence.Persistence.PersistenceBinding[] = [];
 
-    persistence.addEventListener(Persistence.Persistence.Events.BindingCreated, event => {
-      bindings.push(event.data);
-    });
-    persistence.addEventListener(Persistence.Persistence.Events.BindingRemoved, event => {
-      removedBindings.push(event.data);
-    });
+    persistence.addEventListener(
+        Persistence.Persistence.Events.BindingCreated,
+        event => {
+          bindings.push(event.data);
+        },
+    );
+    persistence.addEventListener(
+        Persistence.Persistence.Events.BindingRemoved,
+        event => {
+          removedBindings.push(event.data);
+        },
+    );
 
     // 1. Add a network resource.
-    const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode({
-      url,
-      mimeType: 'text/javascript',
-      content,
-      projectType: Workspace.Workspace.projectTypes.Network,
-      projectId: 'network-project',
-      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length),
-      universe: backend.universe,
-    });
+    const {uiSourceCode: networkSourceCode} = createContentProviderUISourceCode(
+        {
+          url,
+          mimeType: 'text/javascript',
+          content,
+          projectType: Workspace.Workspace.projectTypes.Network,
+          projectId: 'network-project',
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              time,
+              content.length,
+              ),
+          universe: backend.universe,
+        },
+    );
 
     // 2. Add a file system resource.
     const {uiSourceCode: fileSystemSourceCode, project: fileSystemProject} = createFileSystemUISourceCode({
@@ -745,12 +921,18 @@ describe('Automapping', () => {
       content,
       fileSystemPath: 'file:///var/www',
       mimeType: 'text/javascript',
-      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(time, content.length),
+      metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+          time,
+          content.length,
+          ),
       autoMapping: true,
       universe: backend.universe,
     });
 
-    const waitForBinding = (bindingList: Persistence.Persistence.PersistenceBinding[], length: number) => {
+    const waitForBinding = (
+        bindingList: Persistence.Persistence.PersistenceBinding[],
+        length: number,
+        ) => {
       return new Promise<void>(resolve => {
         const check = () => {
           if (bindingList.length === length) {
@@ -785,7 +967,10 @@ describe('Automapping', () => {
     await waitForBinding(removedBindings, 1);
     assert.strictEqual(removedBindings[0].network, networkSourceCode);
     assert.strictEqual(removedBindings[0].fileSystem, fileSystemSourceCode);
-    assert.strictEqual(fileSystemSourceCode.url(), urlString`file:///var/www/scripts/bar.js`);
+    assert.strictEqual(
+        fileSystemSourceCode.url(),
+        urlString`file:///var/www/scripts/bar.js`,
+    );
 
     // 4. Rename it back to foo.js.
     const oldName = 'foo.js' as Platform.DevToolsPath.RawPathString;
@@ -800,5 +985,181 @@ describe('Automapping', () => {
 
     renameStub.restore();
     contentTypeStub.restore();
+  });
+  it('correctly maps sourcemap sources with non-exact match', async () => {
+    const cssContent = 'body { color: red; }';
+    const scssContent = '$color: red; body { color: $color; }';
+
+    class MultiFileTestPlatformFileSystem extends Persistence.PlatformFileSystem.PlatformFileSystem {
+      readonly #autoMapping: boolean;
+      readonly #files = new Set<Platform.DevToolsPath.UrlString>();
+
+      constructor(path: Platform.DevToolsPath.UrlString, autoMapping: boolean) {
+        super(
+            path,
+            Persistence.PlatformFileSystem.PlatformFileSystemType.WORKSPACE_PROJECT,
+            false,
+        );
+        this.#autoMapping = autoMapping;
+      }
+
+      addFile(url: Platform.DevToolsPath.UrlString): void {
+        this.#files.add(url);
+      }
+
+      override supportsAutomapping(): boolean {
+        return this.#autoMapping;
+      }
+
+      override mimeFromPath(path: Platform.DevToolsPath.UrlString): string {
+        const ext = Common.ParsedURL.ParsedURL.extractExtension(path);
+        return Common.ResourceType.mimeTypeByExtension.get(ext) || 'text/plain';
+      }
+
+      override searchInPath(
+          _query: string,
+          _progress: Common.Progress.Progress,
+          ): Promise<string[]> {
+        return Promise.resolve([...this.#files]);
+      }
+    }
+
+    class MultiFileTestFileSystem extends Persistence.FileSystemWorkspaceBinding.FileSystem {
+      readonly #files = new Map<string, {content: string, metadata: Workspace.UISourceCode.UISourceCodeMetadata}>();
+
+      addMockFile(
+          url: string,
+          content: string,
+          metadata: Workspace.UISourceCode.UISourceCodeMetadata,
+          ): void {
+        this.#files.set(url, {content, metadata});
+      }
+
+      override requestFileContent(
+          uiSourceCode: Workspace.UISourceCode.UISourceCode,
+          ): Promise<TextUtils.ContentData.ContentDataOrError> {
+        const file = this.#files.get(uiSourceCode.url());
+        if (!file) {
+          return Promise.resolve({error: 'File not found'});
+        }
+        return Promise.resolve(
+            new TextUtils.ContentData.ContentData(
+                file.content,
+                /* isBase64 */ false,
+                'text/plain',
+                ),
+        );
+      }
+
+      override requestMetadata(
+          uiSourceCode: Workspace.UISourceCode.UISourceCode,
+          ): Promise<Workspace.UISourceCode.UISourceCodeMetadata|null> {
+        const file = this.#files.get(uiSourceCode.url());
+        return Promise.resolve(file ? file.metadata : null);
+      }
+    }
+
+    // 1. Create network project with both CSS and SCSS files
+    const {
+      uiSourceCodes: [networkCSS, networkSCSS],
+    } = createContentProviderUISourceCodes({
+      items: [
+        {
+          url: urlString`http://example.com/assets/s.css`,
+          mimeType: 'text/css',
+          content: cssContent,
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(
+              null,
+              cssContent.length,
+              ),
+        },
+        {
+          url: urlString`http://example.com/assets/s.scss`,
+          mimeType: 'text/x-scss',
+          content: scssContent,
+          resourceType: Common.ResourceType.resourceTypes.SourceMapStyleSheet,
+          metadata: new Workspace.UISourceCode.UISourceCodeMetadata(null, null),
+        },
+      ],
+      projectType: Workspace.Workspace.projectTypes.Network,
+      projectId: 'network-project',
+      universe: backend.universe,
+    });
+
+    const bindings: Persistence.Persistence.PersistenceBinding[] = [];
+    const persistence = backend.universe.persistence;
+
+    const bindingCreatedPromise = new Promise<void>(resolve => {
+      persistence.addEventListener(
+          Persistence.Persistence.Events.BindingCreated,
+          event => {
+            bindings.push(event.data);
+            if (bindings.length === 2) {
+              resolve();
+            }
+          },
+      );
+    });
+
+    const timestamp = new Date('December 1, 1989');
+
+    // 2. Create filesystem project with both CSS and SCSS files
+    const workspace = backend.universe.workspace;
+    const isolatedFileSystemManager = backend.universe.isolatedFileSystemManager;
+    const fileSystemWorkspaceBinding = new Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding(
+        isolatedFileSystemManager,
+        workspace,
+    );
+    const fileSystemPath = urlString`file:///var/www`;
+
+    const platformFileSystem = new MultiFileTestPlatformFileSystem(
+        fileSystemPath,
+        true,
+    );
+    const project = new MultiFileTestFileSystem(
+        fileSystemWorkspaceBinding,
+        platformFileSystem,
+        workspace,
+    );
+
+    // Add dist/s.css
+    const cssUrl = urlString`file:///var/www/dist/s.css`;
+    platformFileSystem.addFile(cssUrl);
+    const cssMetadata = new Workspace.UISourceCode.UISourceCodeMetadata(
+        timestamp,
+        cssContent.length,
+    );
+    project.addMockFile(cssUrl, cssContent, cssMetadata);
+    const fileSystemCSS = project.createUISourceCode(
+        cssUrl,
+        Common.ResourceType.ResourceType.fromMimeType('text/css'),
+    );
+    project.addUISourceCode(fileSystemCSS);
+
+    // Add src/s.scss
+    const scssUrl = urlString`file:///var/www/src/s.scss`;
+    platformFileSystem.addFile(scssUrl);
+    const scssMetadata = new Workspace.UISourceCode.UISourceCodeMetadata(
+        timestamp,
+        scssContent.length,
+    );
+    project.addMockFile(scssUrl, scssContent, scssMetadata);
+    const fileSystemSCSS = project.createUISourceCode(
+        scssUrl,
+        Common.ResourceType.ResourceType.fromMimeType('text/x-scss'),
+    );
+    project.addUISourceCode(fileSystemSCSS);
+
+    await bindingCreatedPromise;
+
+    assert.lengthOf(bindings, 2);
+
+    const cssBinding = bindings.find(b => b.network === networkCSS);
+    assert.exists(cssBinding);
+    assert.strictEqual(cssBinding?.fileSystem, fileSystemCSS);
+
+    const scssBinding = bindings.find(b => b.network === networkSCSS);
+    assert.exists(scssBinding);
+    assert.strictEqual(scssBinding?.fileSystem, fileSystemSCSS);
   });
 });
