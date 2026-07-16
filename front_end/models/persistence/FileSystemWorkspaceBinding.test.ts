@@ -36,11 +36,25 @@ describeWithEnvironment('FileSystemWorkspaceBinding', () => {
     const workspace = Workspace.Workspace.WorkspaceImpl.instance();
 
     // Ensure the UISourceCodes are added to the workspace
-    assert.strictEqual(workspace.uiSourceCodeForURL(urlString`file:///var/www/foo.js`), fooSourceCode);
-    assert.strictEqual(workspace.uiSourceCodeForURL(urlString`file:///var/www_suffix/bar.js`), barSourceCode);
+    assert.strictEqual(
+        workspace.uiSourceCodeForURL(urlString`file:///var/www/foo.js`),
+        fooSourceCode,
+    );
+    assert.strictEqual(
+        workspace.uiSourceCodeForURL(urlString`file:///var/www_suffix/bar.js`),
+        barSourceCode,
+    );
 
-    assert.strictEqual(fooSourceCode.project(), project1, 'foo.js should be in the first filesystem project');
-    assert.strictEqual(barSourceCode.project(), project2, 'bar.js should be in the second filesystem project');
+    assert.strictEqual(
+        fooSourceCode.project(),
+        project1,
+        'foo.js should be in the first filesystem project',
+    );
+    assert.strictEqual(
+        barSourceCode.project(),
+        project2,
+        'bar.js should be in the second filesystem project',
+    );
 
     // Make sure path isolation works and it does not incorrectly truncate paths.
     assert.strictEqual(project1.fileSystemPath(), fsPath1);
@@ -50,7 +64,10 @@ describeWithEnvironment('FileSystemWorkspaceBinding', () => {
     barSourceCode.setWorkingCopy('Why!?');
     const fooContent = await fooSourceCode.requestContentData();
     assert.isNotOk(TextUtils.ContentData.ContentData.isError(fooContent));
-    assert.strictEqual((fooContent as TextUtils.ContentData.ContentData).text, 'foo');
+    assert.strictEqual(
+        (fooContent as TextUtils.ContentData.ContentData).text,
+        'foo',
+    );
     assert.strictEqual(fooSourceCode.workingCopy(), 'foo');
     assert.strictEqual(barSourceCode.workingCopy(), 'Why!?');
   });
@@ -69,25 +86,39 @@ describeWithEnvironment('FileSystemWorkspaceBinding', () => {
     // Stub createFile to simulate successful file creation on disk.
     const createFileStub = sinon.stub(platformFileSystem, 'createFile');
     createFileStub.callsFake(
-        async (path: Platform.DevToolsPath.EncodedPathString, name: Platform.DevToolsPath.RawPathString|null) => {
-          return (path ? path + '/' : '') + name as Platform.DevToolsPath.EncodedPathString;
-        });
+        async (
+            path: Platform.DevToolsPath.EncodedPathString,
+            name: Platform.DevToolsPath.RawPathString|null,
+            ) => {
+          return ((path ? path + '/' : '') + name) as Platform.DevToolsPath.EncodedPathString;
+        },
+    );
 
     // Stub contentType to return the correct resource type.
     const contentTypeStub = sinon.stub(platformFileSystem, 'contentType');
     contentTypeStub.returns(Common.ResourceType.resourceTypes.Script);
 
     const workspace = Workspace.Workspace.WorkspaceImpl.instance();
-    const addedPromise = new Promise<Workspace.UISourceCode.UISourceCode>(resolve => {
-      const listener = (event: Common.EventTarget.EventTargetEvent<Workspace.UISourceCode.UISourceCode>) => {
-        const uiSourceCode = event.data;
-        if (uiSourceCode.url() === 'file:///var/www/new_file.js') {
-          workspace.removeEventListener(Workspace.Workspace.Events.UISourceCodeAdded, listener);
-          resolve(uiSourceCode);
-        }
-      };
-      workspace.addEventListener(Workspace.Workspace.Events.UISourceCodeAdded, listener);
-    });
+    const addedPromise = new Promise<Workspace.UISourceCode.UISourceCode>(
+        resolve => {
+          const listener = (
+              event: Common.EventTarget.EventTargetEvent<Workspace.UISourceCode.UISourceCode>,
+              ) => {
+            const uiSourceCode = event.data;
+            if (uiSourceCode.url() === 'file:///var/www/new_file.js') {
+              workspace.removeEventListener(
+                  Workspace.Workspace.Events.UISourceCodeAdded,
+                  listener,
+              );
+              resolve(uiSourceCode);
+            }
+          };
+          workspace.addEventListener(
+              Workspace.Workspace.Events.UISourceCodeAdded,
+              listener,
+          );
+        },
+    );
 
     const newFileContent = 'new file content';
     const uiSourceCode = await project.createFile(
@@ -102,6 +133,81 @@ describeWithEnvironment('FileSystemWorkspaceBinding', () => {
 
     const contentData = await addedUISourceCode.requestContentData();
     assert.isFalse(TextUtils.ContentData.ContentData.isError(contentData));
-    assert.strictEqual((contentData as TextUtils.ContentData.ContentData).text, newFileContent);
+    assert.strictEqual(
+        (contentData as TextUtils.ContentData.ContentData).text,
+        newFileContent,
+    );
+  });
+  describe('FileSystem', () => {
+    it('deletes file from PlatformFileSystem and removes it from Project', async () => {
+      const fileSystemPath = urlString`file:///var/www`;
+      const fileUrl = urlString`${fileSystemPath}/script.js`;
+      const {uiSourceCode, project} = createFileSystemUISourceCode({
+        url: fileUrl,
+        mimeType: 'text/javascript',
+        content: 'testme',
+        fileSystemPath,
+      });
+
+      const platformFileSystem = project.fileSystem();
+      const deleteFileStub = sinon.stub(platformFileSystem, 'deleteFile').resolves(true);
+
+      assert.lengthOf([...project.uiSourceCodes()], 1);
+      assert.strictEqual([...project.uiSourceCodes()][0], uiSourceCode);
+
+      const workspace = Workspace.Workspace.WorkspaceImpl.instance();
+      const uiSourceCodeRemovedPromise = new Promise<void>(resolve => {
+        const listener = (
+            event: Common.EventTarget.EventTargetEvent<Workspace.UISourceCode.UISourceCode>,
+            ) => {
+          if (event.data === uiSourceCode) {
+            workspace.removeEventListener(
+                Workspace.Workspace.Events.UISourceCodeRemoved,
+                listener,
+            );
+            resolve();
+          }
+        };
+        workspace.addEventListener(
+            Workspace.Workspace.Events.UISourceCodeRemoved,
+            listener,
+        );
+      });
+
+      project.deleteFile(uiSourceCode);
+
+      await uiSourceCodeRemovedPromise;
+
+      sinon.assert.callCount(deleteFileStub, 1);
+      assert.strictEqual(
+          deleteFileStub.firstCall.args[0],
+          '/script.js' as Platform.DevToolsPath.EncodedPathString,
+      );
+      assert.lengthOf([...project.uiSourceCodes()], 0);
+    });
+
+    it('does not remove file from Project if PlatformFileSystem deletion fails', async () => {
+      const fileSystemPath = urlString`file:///var/www`;
+      const fileUrl = urlString`${fileSystemPath}/script.js`;
+      const {uiSourceCode, project} = createFileSystemUISourceCode({
+        url: fileUrl,
+        mimeType: 'text/javascript',
+        content: 'testme',
+        fileSystemPath,
+      });
+
+      const platformFileSystem = project.fileSystem();
+      const deleteFileStub = sinon.stub(platformFileSystem, 'deleteFile').resolves(false);
+
+      assert.lengthOf([...project.uiSourceCodes()], 1);
+
+      project.deleteFile(uiSourceCode);
+
+      await deleteFileStub.firstCall.returnValue;
+
+      sinon.assert.callCount(deleteFileStub, 1);
+      assert.lengthOf([...project.uiSourceCodes()], 1);
+      assert.strictEqual([...project.uiSourceCodes()][0], uiSourceCode);
+    });
   });
 });
