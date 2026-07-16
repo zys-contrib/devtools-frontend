@@ -1263,6 +1263,74 @@ var RecorderExtensionEndpoint_exports = {};
 __export(RecorderExtensionEndpoint_exports, {
   RecorderExtensionEndpoint: () => RecorderExtensionEndpoint
 });
+var RecorderExtensionEndpoint = class extends ExtensionEndpoint {
+  name;
+  mediaType;
+  capabilities;
+  #extensionOrigin;
+  #recorderPluginManager;
+  constructor(name, port, capabilities, extensionOrigin, recorderPluginManager, mediaType) {
+    super(port);
+    this.name = name;
+    this.mediaType = mediaType;
+    this.capabilities = capabilities;
+    this.#extensionOrigin = extensionOrigin;
+    this.#recorderPluginManager = recorderPluginManager;
+  }
+  getName() {
+    return this.name;
+  }
+  getOrigin() {
+    return this.#extensionOrigin;
+  }
+  getCapabilities() {
+    return this.capabilities;
+  }
+  getMediaType() {
+    return this.mediaType;
+  }
+  handleEvent({ event }) {
+    switch (event) {
+      case "unregisteredRecorderExtensionPlugin": {
+        this.disconnect();
+        this.#recorderPluginManager.removePlugin(this);
+        break;
+      }
+      default:
+        throw new Error(`Unrecognized Recorder extension endpoint event: ${event}`);
+    }
+  }
+  /**
+   * In practice, `recording` is a UserFlow[1], but we avoid defining this type on the
+   * API in order to prevent dependencies between Chrome and puppeteer. Extensions
+   * are responsible for working out potential compatibility issues.
+   *
+   * [1]: https://github.com/puppeteer/replay/blob/main/src/Schema.ts#L245
+   */
+  stringify(recording) {
+    return this.sendRequest("stringify", { recording });
+  }
+  /**
+   * In practice, `step` is a Step[1], but we avoid defining this type on the
+   * API in order to prevent dependencies between Chrome and puppeteer. Extensions
+   * are responsible for working out compatibility issues.
+   *
+   * [1]: https://github.com/puppeteer/replay/blob/main/src/Schema.ts#L243
+   */
+  stringifyStep(step) {
+    return this.sendRequest("stringifyStep", { step });
+  }
+  /**
+   * In practice, `recording` is a UserFlow[1], but we avoid defining this type on the
+   * API in order to prevent dependencies between Chrome and puppeteer. Extensions
+   * are responsible for working out potential compatibility issues.
+   *
+   * [1]: https://github.com/puppeteer/replay/blob/main/src/Schema.ts#L245
+   */
+  replay(recording) {
+    return this.sendRequest("replay", { recording });
+  }
+};
 
 // gen/front_end/models/extensions/RecorderPluginManager.js
 var RecorderPluginManager_exports = {};
@@ -1307,74 +1375,6 @@ var RecorderPluginManager = class _RecorderPluginManager extends Common.ObjectWr
       throw new Error(`View with id ${id} is not found.`);
     }
     this.dispatchEventToListeners("showViewRequested", descriptor);
-  }
-};
-
-// gen/front_end/models/extensions/RecorderExtensionEndpoint.js
-var RecorderExtensionEndpoint = class extends ExtensionEndpoint {
-  name;
-  mediaType;
-  capabilities;
-  #extensionOrigin;
-  constructor(name, port, capabilities, extensionOrigin, mediaType) {
-    super(port);
-    this.name = name;
-    this.mediaType = mediaType;
-    this.capabilities = capabilities;
-    this.#extensionOrigin = extensionOrigin;
-  }
-  getName() {
-    return this.name;
-  }
-  getOrigin() {
-    return this.#extensionOrigin;
-  }
-  getCapabilities() {
-    return this.capabilities;
-  }
-  getMediaType() {
-    return this.mediaType;
-  }
-  handleEvent({ event }) {
-    switch (event) {
-      case "unregisteredRecorderExtensionPlugin": {
-        this.disconnect();
-        RecorderPluginManager.instance().removePlugin(this);
-        break;
-      }
-      default:
-        throw new Error(`Unrecognized Recorder extension endpoint event: ${event}`);
-    }
-  }
-  /**
-   * In practice, `recording` is a UserFlow[1], but we avoid defining this type on the
-   * API in order to prevent dependencies between Chrome and puppeteer. Extensions
-   * are responsible for working out potential compatibility issues.
-   *
-   * [1]: https://github.com/puppeteer/replay/blob/main/src/Schema.ts#L245
-   */
-  stringify(recording) {
-    return this.sendRequest("stringify", { recording });
-  }
-  /**
-   * In practice, `step` is a Step[1], but we avoid defining this type on the
-   * API in order to prevent dependencies between Chrome and puppeteer. Extensions
-   * are responsible for working out compatibility issues.
-   *
-   * [1]: https://github.com/puppeteer/replay/blob/main/src/Schema.ts#L243
-   */
-  stringifyStep(step) {
-    return this.sendRequest("stringifyStep", { step });
-  }
-  /**
-   * In practice, `recording` is a UserFlow[1], but we avoid defining this type on the
-   * API in order to prevent dependencies between Chrome and puppeteer. Extensions
-   * are responsible for working out potential compatibility issues.
-   *
-   * [1]: https://github.com/puppeteer/replay/blob/main/src/Schema.ts#L245
-   */
-  replay(recording) {
-    return this.sendRequest("replay", { recording });
   }
 };
 export {
