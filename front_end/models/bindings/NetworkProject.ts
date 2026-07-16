@@ -12,9 +12,9 @@ const uiSourceCodeToAttributionMap = new WeakMap<Workspace.UISourceCode.UISource
                                                    frame: SDK.ResourceTreeModel.ResourceTreeFrame,
                                                    count: number,
                                                  }>>();
-const projectToTargetMap = new WeakMap<Workspace.Workspace.Project, SDK.Target.Target>();
 
 export class NetworkProjectManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
+  readonly #projectToTargetMap = new WeakMap<Workspace.Workspace.Project, SDK.Target.Target>();
 
   static instance({forceNew}: {
     forceNew: boolean,
@@ -28,6 +28,18 @@ export class NetworkProjectManager extends Common.ObjectWrapper.ObjectWrapper<Ev
 
   static removeInstance(): void {
     Root.DevToolsContext.globalInstance().delete(NetworkProjectManager);
+  }
+
+  setTargetForProject(project: Workspace.Workspace.Project, target: SDK.Target.Target): void {
+    this.#projectToTargetMap.set(project, target);
+  }
+
+  getTargetForProject(project: Workspace.Workspace.Project): SDK.Target.Target|null {
+    return this.#projectToTargetMap.get(project) ?? null;
+  }
+
+  getTargetForUISourceCode(uiSourceCode: Workspace.UISourceCode.UISourceCode): SDK.Target.Target|null {
+    return this.#projectToTargetMap.get(uiSourceCode.project()) ?? null;
   }
 }
 
@@ -132,15 +144,15 @@ export class NetworkProject {
   }
 
   static targetForUISourceCode(uiSourceCode: Workspace.UISourceCode.UISourceCode): SDK.Target.Target|null {
-    return projectToTargetMap.get(uiSourceCode.project()) || null;
+    return NetworkProjectManager.instance().getTargetForUISourceCode(uiSourceCode);
   }
 
   static setTargetForProject(project: Workspace.Workspace.Project, target: SDK.Target.Target): void {
-    projectToTargetMap.set(project, target);
+    NetworkProjectManager.instance().setTargetForProject(project, target);
   }
 
   static getTargetForProject(project: Workspace.Workspace.Project): SDK.Target.Target|null {
-    return projectToTargetMap.get(project) || null;
+    return NetworkProjectManager.instance().getTargetForProject(project);
   }
 
   static framesForUISourceCode(uiSourceCode: Workspace.UISourceCode.UISourceCode):
