@@ -5382,6 +5382,11 @@
       status: "stable",
     },
     {
+      // Killswitch M151.
+      name: "ScrollingContentsCullRectOnScrollNode",
+      status: "stable",
+    },
+    {
       // https://github.com/w3c/csswg-drafts/issues/9576
       name: "ScrollIntoViewAlignAuto",
       status: "experimental",
@@ -5714,7 +5719,7 @@
       // Lets declarative shadow roots opt into manual slot assignment.
       // crbug.com/493315747
       name: "ShadowRootSlotAssignment",
-      status: "experimental",
+      status: "stable",
     },
     {
       name: "SharedArrayBuffer",
@@ -6883,6 +6888,10 @@
       name: "WebAudioConfigurableRenderQuantum",
       origin_trial_feature_name: "WebAudioConfigurableRenderQuantum",
       status: "experimental",
+    },
+    {
+      name: "WebAudioRustFft",
+      status: "stable",
     },
     // WebAuth is disabled on Android versions prior to N (7.0) due to lack of
     // supporting APIs, see runtime_features.cc.

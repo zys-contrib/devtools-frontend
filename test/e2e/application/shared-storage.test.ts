@@ -20,7 +20,8 @@ import {
 
 const SITE = 'https://localhost';
 
-describe('The Application Tab', () => {
+// Skipped because Shared Storage API is deprecated and stubbed in Blink (crbug.com/462465887).
+describe.skip('[crbug.com/462465887]: The Application Tab', () => {
   it('shows Shared Storage events', async ({devToolsPage, inspectedPage}) => {
     await navigateToApplicationTab('shared-storage', devToolsPage, inspectedPage);
 

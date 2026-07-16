@@ -943,7 +943,6 @@ export namespace Audits {
   }
 
   export const enum MixedContentResourceType {
-    AttributionSrc = 'AttributionSrc',
     Audio = 'Audio',
     Beacon = 'Beacon',
     CSPReport = 'CSPReport',
@@ -2507,11 +2506,6 @@ export namespace Browser {
     buckets: Bucket[];
   }
 
-  export const enum PrivacySandboxAPI {
-    BiddingAndAuctionServices = 'BiddingAndAuctionServices',
-    TrustedKeyValue = 'TrustedKeyValue',
-  }
-
   export interface SetPermissionRequest {
     /**
      * Descriptor of permission to override.
@@ -2741,17 +2735,6 @@ export namespace Browser {
 
   export interface AddPrivacySandboxEnrollmentOverrideRequest {
     url: string;
-  }
-
-  export interface AddPrivacySandboxCoordinatorKeyConfigRequest {
-    api: PrivacySandboxAPI;
-    coordinatorOrigin: string;
-    keyConfig: string;
-    /**
-     * BrowserContext to perform the action in. When omitted, default browser
-     * context is used.
-     */
-    browserContextId?: BrowserContextID;
   }
 
   /**
@@ -18318,53 +18301,11 @@ export namespace Storage {
   }
 
   /**
-   * Protected audience interest group auction identifier.
-   */
-  export type InterestGroupAuctionId = OpaqueIdentifier<string, 'Protocol.Storage.InterestGroupAuctionId'>;
-
-  /**
-   * Enum of interest group access types.
-   */
-  export const enum InterestGroupAccessType {
-    Join = 'join',
-    Leave = 'leave',
-    Update = 'update',
-    Loaded = 'loaded',
-    Bid = 'bid',
-    Win = 'win',
-    AdditionalBid = 'additionalBid',
-    AdditionalBidWin = 'additionalBidWin',
-    TopLevelBid = 'topLevelBid',
-    TopLevelAdditionalBid = 'topLevelAdditionalBid',
-    Clear = 'clear',
-  }
-
-  /**
-   * Enum of auction events.
-   */
-  export const enum InterestGroupAuctionEventType {
-    Started = 'started',
-    ConfigResolved = 'configResolved',
-  }
-
-  /**
-   * Enum of network fetches auctions can do.
-   */
-  export const enum InterestGroupAuctionFetchType {
-    BidderJs = 'bidderJs',
-    BidderWasm = 'bidderWasm',
-    SellerJs = 'sellerJs',
-    BidderTrustedSignals = 'bidderTrustedSignals',
-    SellerTrustedSignals = 'sellerTrustedSignals',
-  }
-
-  /**
    * Enum of shared storage access scopes.
    */
   export const enum SharedStorageAccessScope {
     Window = 'window',
     SharedStorageWorklet = 'sharedStorageWorklet',
-    ProtectedAudienceWorklet = 'protectedAudienceWorklet',
     Header = 'header',
   }
 
@@ -18797,29 +18738,6 @@ export namespace Storage {
     didDeleteTokens: boolean;
   }
 
-  export interface GetInterestGroupDetailsRequest {
-    ownerOrigin: string;
-    name: string;
-  }
-
-  export interface GetInterestGroupDetailsResponse extends ProtocolResponseWithError {
-    /**
-     * This largely corresponds to:
-     * https://wicg.github.io/turtledove/#dictdef-generatebidinterestgroup
-     * but has absolute expirationTime instead of relative lifetimeMs and
-     * also adds joiningOrigin.
-     */
-    details: any;
-  }
-
-  export interface SetInterestGroupTrackingRequest {
-    enable: boolean;
-  }
-
-  export interface SetInterestGroupAuctionTrackingRequest {
-    enable: boolean;
-  }
-
   export interface GetSharedStorageMetadataRequest {
     ownerOrigin: string;
   }
@@ -18879,12 +18797,6 @@ export namespace Storage {
 
   export interface GetRelatedWebsiteSetsResponse extends ProtocolResponseWithError {
     sets: RelatedWebsiteSet[];
-  }
-
-  export interface SetProtectedAudienceKAnonymityRequest {
-    owner: string;
-    name: string;
-    hashes: binary[];
   }
 
   /**
@@ -18969,66 +18881,6 @@ export namespace Storage {
      * Storage bucket to update.
      */
     bucketId: string;
-  }
-
-  /**
-   * One of the interest groups was accessed. Note that these events are global
-   * to all targets sharing an interest group store.
-   */
-  export interface InterestGroupAccessedEvent {
-    accessTime: Network.TimeSinceEpoch;
-    type: InterestGroupAccessType;
-    ownerOrigin: string;
-    name: string;
-    /**
-     * For topLevelBid/topLevelAdditionalBid, and when appropriate,
-     * win and additionalBidWin
-     */
-    componentSellerOrigin?: string;
-    /**
-     * For bid or somethingBid event, if done locally and not on a server.
-     */
-    bid?: number;
-    bidCurrency?: string;
-    /**
-     * For non-global events --- links to interestGroupAuctionEvent
-     */
-    uniqueAuctionId?: InterestGroupAuctionId;
-  }
-
-  /**
-   * An auction involving interest groups is taking place. These events are
-   * target-specific.
-   */
-  export interface InterestGroupAuctionEventOccurredEvent {
-    eventTime: Network.TimeSinceEpoch;
-    type: InterestGroupAuctionEventType;
-    uniqueAuctionId: InterestGroupAuctionId;
-    /**
-     * Set for child auctions.
-     */
-    parentAuctionId?: InterestGroupAuctionId;
-    /**
-     * Set for started and configResolved
-     */
-    auctionConfig?: any;
-  }
-
-  /**
-   * Specifies which auctions a particular network fetch may be related to, and
-   * in what role. Note that it is not ordered with respect to
-   * Network.requestWillBeSent (but will happen before loadingFinished
-   * loadingFailed).
-   */
-  export interface InterestGroupAuctionNetworkRequestCreatedEvent {
-    type: InterestGroupAuctionFetchType;
-    requestId: Network.RequestId;
-    /**
-     * This is the set of the auctions using the worklet that issued this
-     * request.  In the case of trusted signals, it's possible that only some of
-     * them actually care about the keys being queried.
-     */
-    auctions: InterestGroupAuctionId[];
   }
 
   /**

@@ -273,16 +273,6 @@ export class ServiceWorkerCacheModel extends SDKModel<EventTypes> implements Pro
   indexedDBContentUpdated(_event: Protocol.Storage.IndexedDBContentUpdatedEvent): void {
   }
 
-  interestGroupAuctionEventOccurred(_event: Protocol.Storage.InterestGroupAuctionEventOccurredEvent): void {
-  }
-
-  interestGroupAccessed(_event: Protocol.Storage.InterestGroupAccessedEvent): void {
-  }
-
-  interestGroupAuctionNetworkRequestCreated(_event: Protocol.Storage.InterestGroupAuctionNetworkRequestCreatedEvent):
-      void {
-  }
-
   sharedStorageAccessed(_event: Protocol.Storage.SharedStorageAccessedEvent): void {
   }
 
