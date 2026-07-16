@@ -24,6 +24,7 @@ import {SnapshotTester} from '../../../testing/SnapshotTester.js';
 import {TestUniverse} from '../../../testing/TestUniverse.js';
 import {allThreadEntriesInTrace} from '../../../testing/TraceHelpers.js';
 import {TraceLoader} from '../../../testing/TraceLoader.js';
+import * as Bindings from '../../bindings/bindings.js';
 import * as Logs from '../../logs/logs.js';
 import type * as SourceMapScopes from '../../source_map_scopes/source_map_scopes.js';
 import * as TextUtils from '../../text_utils/text_utils.js';
@@ -72,6 +73,8 @@ describe('PerformanceAgent', function() {
   beforeEach(() => {
     universe = new TestUniverse();
     sinon.stub(SDK.TargetManager.TargetManager, 'instance').returns(universe.targetManager);
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
   });
 
   afterEach(async () => {

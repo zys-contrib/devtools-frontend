@@ -216,14 +216,15 @@ function createFunctionCode(
  */
 export async function getFunctionCodeFromLocation(
     target: SDK.Target.Target, url: Platform.DevToolsPath.UrlString, line: number, column: number,
-    options?: CreateFunctionCodeOptions): Promise<FunctionCode|null> {
+    options?: CreateFunctionCodeOptions,
+    debuggerWorkspaceBinding =
+        Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()): Promise<FunctionCode|null> {
   const debuggerModel = target.model(SDK.DebuggerModel.DebuggerModel);
   if (!debuggerModel) {
     throw new Error('missing debugger model');
   }
 
   let uiSourceCode: Workspace.UISourceCode.UISourceCode|null = null;
-  const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
   const projects = debuggerWorkspaceBinding.workspace.projectsForType(Workspace.Workspace.projectTypes.Network);
   for (const project of projects) {
     if (Bindings.NetworkProject.NetworkProject.getTargetForProject(project) !== target) {
@@ -245,7 +246,7 @@ export async function getFunctionCodeFromLocation(
     return null;
   }
 
-  return await getFunctionCodeFromRawLocation(rawLocation, options);
+  return await getFunctionCodeFromRawLocation(rawLocation, options, debuggerWorkspaceBinding);
 }
 
 async function format(uiSourceCode: Workspace.UISourceCode.UISourceCode, content: string,
@@ -264,8 +265,9 @@ async function format(uiSourceCode: Workspace.UISourceCode.UISourceCode, content
  * Returns a {@link FunctionCode} for the given raw location.
  */
 export async function getFunctionCodeFromRawLocation(
-    rawLocation: SDK.DebuggerModel.Location, options?: CreateFunctionCodeOptions): Promise<FunctionCode|null> {
-  const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
+    rawLocation: SDK.DebuggerModel.Location, options?: CreateFunctionCodeOptions,
+    debuggerWorkspaceBinding =
+        Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()): Promise<FunctionCode|null> {
   const functionBounds = await debuggerWorkspaceBinding.functionBoundsAtRawLocation(rawLocation);
   if (!functionBounds) {
     return null;
