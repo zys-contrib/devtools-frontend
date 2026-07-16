@@ -6,6 +6,7 @@ import * as Common from '../core/common/common.js';
 import * as Host from '../core/host/host.js';
 import * as Root from '../core/root/root.js';
 import * as SDK from '../core/sdk/sdk.js';
+import * as AiAssistance from '../models/ai_assistance/ai_assistance.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
 import * as Badges from '../models/badges/badges.js';
 import * as Bindings from '../models/bindings/bindings.js';
@@ -190,6 +191,9 @@ export class Universe {
     const userBadges = new Badges.UserBadges(settings, gdpClient);
     context.set(Badges.UserBadges, userBadges);
 
+    const aiHistoryStorage = new AiAssistance.AiHistoryStorage.AiHistoryStorage(settings);
+    context.set(AiAssistance.AiHistoryStorage.AiHistoryStorage, aiHistoryStorage);
+
     this.autofillManager = new AutofillManager.AutofillManager.AutofillManager(targetManager, frameManager);
   }
 
@@ -200,6 +204,10 @@ export class Universe {
   get automaticFileSystemWorkspaceBinding():
       Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding {
     return this.context.get(Persistence.AutomaticFileSystemWorkspaceBinding.AutomaticFileSystemWorkspaceBinding);
+  }
+
+  get aiHistoryStorage(): AiAssistance.AiHistoryStorage.AiHistoryStorage {
+    return this.context.get(AiAssistance.AiHistoryStorage.AiHistoryStorage);
   }
 
   get breakpointManager(): Breakpoints.BreakpointManager.BreakpointManager {

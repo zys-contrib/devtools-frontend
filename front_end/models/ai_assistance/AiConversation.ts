@@ -72,6 +72,8 @@ export interface AiConversationOptions {
   onInspectElement?: () => Promise<SDK.DOMModel.DOMNode|null>;
   networkTimeCalculator?: NetworkTimeCalculator.NetworkTransferTimeCalculator;
   lighthouseRecording?: (overrides?: LHModel.RunTypes.RunOverrides) => Promise<LHModel.ReporterTypes.ReportJSON|null>;
+  aiHistoryStorage?: AiHistoryStorage;
+  targetManager?: SDK.TargetManager.TargetManager;
 }
 
 export class AiConversation {
@@ -110,6 +112,8 @@ export class AiConversation {
   #lighthouseRecording?: (overrides?: LHModel.RunTypes.RunOverrides) => Promise<LHModel.ReporterTypes.ReportJSON|null>;
   #onInspectElement?: () => Promise<SDK.DOMModel.DOMNode|null>;
   #networkTimeCalculator?: NetworkTimeCalculator.NetworkTransferTimeCalculator;
+  readonly #aiHistoryStorage: AiHistoryStorage;
+  readonly #targetManager: SDK.TargetManager.TargetManager;
 
   constructor(options: AiConversationOptions) {
     const {
@@ -123,6 +127,8 @@ export class AiConversation {
       onInspectElement,
       networkTimeCalculator,
       lighthouseRecording,
+      aiHistoryStorage = AiHistoryStorage.instance(),
+      targetManager = SDK.TargetManager.TargetManager.instance(),
     } = options;
     this.#changeManager = changeManager;
     this.#aidaClient = aidaClient;
@@ -130,6 +136,8 @@ export class AiConversation {
     this.#onInspectElement = onInspectElement;
     this.#networkTimeCalculator = networkTimeCalculator;
     this.#lighthouseRecording = lighthouseRecording;
+    this.#aiHistoryStorage = aiHistoryStorage;
+    this.#targetManager = targetManager;
 
     this.id = id;
     this.#isReadOnly = isReadOnly;
@@ -208,7 +216,7 @@ export class AiConversation {
   }
 
   #reconstructHistory(historyWithoutImages: ResponseData[]): ResponseData[] {
-    const imageHistory = AiHistoryStorage.instance().getImageHistory();
+    const imageHistory = this.#aiHistoryStorage.getImageHistory();
     if (imageHistory && imageHistory.length > 0) {
       const history: ResponseData[] = [];
       for (const data of historyWithoutImages) {
@@ -286,12 +294,12 @@ export class AiConversation {
 
   async addHistoryItem(item: ResponseData): Promise<void> {
     this.history.push(item);
-    await AiHistoryStorage.instance().upsertHistoryEntry(this.serialize());
+    await this.#aiHistoryStorage.upsertHistoryEntry(this.serialize());
     if (item.type === ResponseType.USER_QUERY) {
-      void AiHistoryStorage.instance().addRecentPrompt(item.query);
+      void this.#aiHistoryStorage.addRecentPrompt(item.query);
       if (item.imageId && item.imageInput && 'inlineData' in item.imageInput) {
         const inlineData = item.imageInput.inlineData;
-        await AiHistoryStorage.instance().upsertImage({
+        await this.#aiHistoryStorage.upsertImage({
           id: item.imageId,
           data: inlineData.data,
           mimeType: inlineData.mimeType,
@@ -361,6 +369,7 @@ export class AiConversation {
       lighthouseRecording: this.#lighthouseRecording,
       allowedOrigin: this.allowedOrigin,
       history,
+      targetManager: this.#targetManager,
     };
 
     this.#agent = Root.Runtime.hostConfig.devToolsAiV2Architecture?.enabled ? new AiAgent2(options) :
@@ -397,18 +406,18 @@ export class AiConversation {
           } = {},
           ): AsyncGenerator<ResponseData, void, void> {
     this.#navigationOccurredDuringRun = false;
-    const originAtRunStart = getPrimaryPageOrigin();
+    const originAtRunStart = getPrimaryPageOrigin(this.#targetManager);
     const listener = (): void => {
       // If an unexpected navigation to a different origin occurred
       // during processing the user's request, we don't want to allow
       // the agent to run any function calls and retrieve data from the new origin.
       // Performance agent and accessibility agent navigate to 'about://' or 'chrome://terms'
-      const newOrigin = getPrimaryPageOrigin();
+      const newOrigin = getPrimaryPageOrigin(this.#targetManager);
       if (originAtRunStart !== newOrigin && newOrigin && !ALLOWED_PAGE_NAVIGATIONS.includes(newOrigin)) {
         this.#navigationOccurredDuringRun = true;
       }
     };
-    const targetManager = SDK.TargetManager.TargetManager.instance();
+    const targetManager = this.#targetManager;
     targetManager.addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
                                    SDK.ResourceTreeModel.Events.PrimaryPageChanged, listener, this);
 
@@ -524,7 +533,7 @@ export class AiConversation {
     if (this.#origin) {
       return {origin: this.#origin};
     }
-    this.#origin = getPrimaryPageOrigin();
+    this.#origin = getPrimaryPageOrigin(this.#targetManager);
 
     return {origin: this.#origin};
   };
@@ -538,8 +547,10 @@ function isAiAssistanceContextSelectionAgentEnabled(): boolean {
   return Boolean(Root.Runtime.hostConfig.devToolsAiAssistanceContextSelectionAgent?.enabled);
 }
 
-function getPrimaryPageOrigin(): Platform.DevToolsPath.UrlString|undefined {
-  const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+function getPrimaryPageOrigin(
+    targetManager: SDK.TargetManager.TargetManager,
+    ): Platform.DevToolsPath.UrlString|undefined {
+  const target = targetManager.primaryPageTarget();
   const inspectedURL = target?.inspectedURL();
   return inspectedURL ? new Common.ParsedURL.ParsedURL(inspectedURL).securityOrigin() : undefined;
 }

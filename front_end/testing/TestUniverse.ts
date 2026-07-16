@@ -9,6 +9,7 @@ import * as Host from '../core/host/host.js';
 import * as Root from '../core/root/root.js';
 import * as SDK from '../core/sdk/sdk.js';
 import type * as Foundation from '../foundation/foundation.js';
+import * as AiAssistance from '../models/ai_assistance/ai_assistance.js';
 import * as AutofillManager from '../models/autofill_manager/autofill_manager.js';
 import * as Badges from '../models/badges/badges.js';
 import * as Bindings from '../models/bindings/bindings.js';
@@ -61,6 +62,14 @@ export class TestUniverse implements Foundation.Universe.Universe {
    */
   createTarget(options: Parameters<typeof createTarget>[0] = {}): SDK.Target.Target {
     return createTarget({...options, targetManager: this.targetManager});
+  }
+
+  get aiHistoryStorage(): AiAssistance.AiHistoryStorage.AiHistoryStorage {
+    if (!this.#context.has(AiAssistance.AiHistoryStorage.AiHistoryStorage)) {
+      this.#context.set(AiAssistance.AiHistoryStorage.AiHistoryStorage,
+                        new AiAssistance.AiHistoryStorage.AiHistoryStorage(this.settings));
+    }
+    return this.#context.get(AiAssistance.AiHistoryStorage.AiHistoryStorage);
   }
 
   get autofillManager(): AutofillManager.AutofillManager.AutofillManager {
