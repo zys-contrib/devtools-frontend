@@ -129,7 +129,6 @@ group("unittests") {
     "models/emulation:unittests",
     "models/extensions:unittests",
     "models/geometry:unittests",
-    "models/har:unittests",
     "models/issues_manager:unittests",
     "models/javascript_metadata:unittests",
     "models/live-metrics:unittests",
@@ -137,7 +136,6 @@ group("unittests") {
     "models/persistence:unittests",
     "models/project_settings:unittests",
     "models/source_map_scopes:unittests",
-    "models/text_utils:unittests",
     "models/trace:unittests",
     "models/trace/extras:unittests",
     "models/trace/handlers:unittests",
@@ -283,9 +281,11 @@ group("foundation_unittests") {
     "models/ai_assistance:foundation_unittests",
     "models/crux-manager:foundation_unittests",
     "models/formatter:unittests",
+    "models/har:unittests",
     "models/heap_snapshot:unittests",
     "models/issues_manager:foundation_unittests",
     "models/stack_trace:unittests",
+    "models/text_utils:unittests",
     "models/workspace:foundation_unittests",
   ]
 }
