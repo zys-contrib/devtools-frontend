@@ -42,9 +42,21 @@ description: Use when migrating Chromium layout tests to DevTools unit tests
 - If the newly added test does not test any logic from the component but just the getters from the mocked data explain to the user that this test does not add value and it's better to close it without adding the test. Provide a command without executing it to close the issue as "Fixed".
 - If the newly added test uses too extensive mocks of CDP objects and methods explain to the user that the test should be foundation e2e test instead of unit test and we won't migrate it. Provide a command without executing it to close the issue as "Won't Fix (Infeasible)".
 
-7. Uploading a CL with your changes using the `version-control` skill following this example:
+7. **Upload the CL:**
 
-```
+## Commit message & CL upload requirements
+
+When committing and uploading CLs, **STRICTLY** follow this format and constraints:
+
+1. **Title line**: `[test-migration] Migrate <short test name> test to unit test`
+2. **Body**: `This CL migrates the legacy layout test <long test name> to a unit test in <new test name>. <optional additional explanation>`
+2. **Body appendix**: `https://crsrc.org/c/third_party/blink/web_tests/<long test name>;drc=4d51e9cab50efd0f8029c45a486e199a1d519fd1`
+3. **Bug line**: `Fixed: <issue number>`
+4. **Formatting constraints**: Wrap all lines to a maximum of 72 characters per line.
+
+Example commit message:
+
+```text
 [test-migration] Migrate console-eval-global test to unit test
 
 This CL migrates the legacy layout test
@@ -57,6 +69,8 @@ https://crsrc.org/c/third_party/blink/web_tests/http/tests/devtools/console/cons
 
 Fixed: <issue number>
 ```
+
+Use the `version-control` skill to upload the CL.
 
 ## Example Conversion
 
