@@ -9,9 +9,10 @@ import * as path from 'node:path';
 import type {Page, ScreenshotOptions, Target} from 'puppeteer-core';
 import puppeteer from 'puppeteer-core';
 
+import {generateExactTestId} from '../../front_end/testing/TestIdGeneration.js';
 import {resultAssertionsDiff} from '../../test/conductor/diff-utils.js';
 import {formatAsPatch, ResultsDBReporter} from '../../test/conductor/karma-resultsdb-reporter.js';
-import {CHECKOUT_ROOT, GEN_DIR, SOURCE_ROOT} from '../../test/conductor/paths.js';
+import {CHECKOUT_ROOT, GEN_DIR, SOURCE_ROOT, TEST_ID_REGEX} from '../../test/conductor/paths.js';
 import * as ResultsDb from '../../test/conductor/resultsdb.js';
 import {loadTests, TestConfig} from '../../test/conductor/test_config.js';
 import {ScreenshotError, ScreenshotErrorReporter} from '../conductor/screenshot-error.js';
@@ -28,10 +29,10 @@ const tests = [
 function* reporters() {
   if (ResultsDb.available()) {
     yield 'resultsdb';
-    yield 'spec';
+    yield 'exact-test-id';
   } else {
     yield 'screenshots';
-    yield TestConfig.verbose ? 'spec' : 'progress-diff';
+    yield TestConfig.verbose ? 'exact-test-id' : 'progress-diff';
   }
   if (TestConfig.coverage) {
     yield 'coverage';
@@ -168,9 +169,6 @@ const ProgressWithDiffReporter = function(
     this: any, formatError: unknown, reportSlow: unknown, useColors: unknown, browserConsoleLogOptions: unknown) {
   BaseProgressReporter.call(this, formatError, reportSlow, useColors, browserConsoleLogOptions);
 
-  const seenTestIds = new Set<string>();
-  const duplicateTestIds: string[] = [];
-
   const onSpecComplete = (result: any) => {
     if (result.mocha?.hasExclusiveTests) {
       this.hasExclusiveTests = true;
@@ -186,11 +184,6 @@ const ProgressWithDiffReporter = function(
     if (file && !fs.existsSync(file)) {
       throw new Error(`Test file ${file} does not exist`);
     }
-    const testId = ResultsDb.sanitizedTestId([...result.suite, result.description].join('/'));
-    if (seenTestIds.has(testId)) {
-      duplicateTestIds.push(testId);
-    }
-    seenTestIds.add(testId);
   };
 
   const baseSpecFailure = this.specFailure;
@@ -234,10 +227,6 @@ const ProgressWithDiffReporter = function(
       baseOnRunComplete.apply(this, arguments);
     }
 
-    if (duplicateTestIds.length > 0) {
-      throw new Error(`duplicate test id(s): ${duplicateTestIds.join(', ')}`);
-    }
-
     browsers.forEach((browser: any) => {
       const {total, success, failed, skipped} = browser.lastResult;
       if (total !== success + failed + skipped && !this.hasExclusiveTests) {
@@ -248,6 +237,27 @@ const ProgressWithDiffReporter = function(
 };
 ProgressWithDiffReporter.$inject =
     ['formatError', 'config.reportSlowerThan', 'config.colors', 'config.browserConsoleLogOptions'];
+
+const ExactTestIdReporter = function(this: any, baseReporterDecorator: any) {
+  baseReporterDecorator(this);
+
+  this.specSuccess = function(_browser: any, result: any) {
+    const file = result.mocha?.file;
+    const suite = result.suite || [];
+    const description = result.description;
+    const {exactTestId} = generateExactTestId(GEN_DIR, file, [...suite, description]);
+    this.write(`[PASS] ${exactTestId} ${result.time}ms\n`);
+  };
+
+  this.specFailure = function(_browser: any, result: any) {
+    const file = result.mocha?.file;
+    const suite = result.suite || [];
+    const description = result.description;
+    const {exactTestId} = generateExactTestId(GEN_DIR, file, [...suite, description]);
+    this.write(`[FAIL] ${exactTestId} ${result.time}ms\n`);
+  };
+};
+ExactTestIdReporter.$inject = ['baseReporterDecorator'];
 
 const coveragePreprocessors = TestConfig.coverage ? {
   [path.join(GEN_DIR, 'front_end/!(third_party)/**/!(*.test).{js,mjs}')]: ['coverage'],
@@ -340,14 +350,15 @@ module.exports = function(config: any) {
       },
       checkoutRoot: path.resolve(CHECKOUT_ROOT),
       pathSeparator: path.sep,
+      testIds: TestConfig.tests.filter(t => TEST_ID_REGEX.test(t)),
     },
 
     plugins: [
       {'middleware:esm-entry': ['factory', testsEntrypointMiddleware]},
       {[`launcher:${CustomChrome.prototype.name}`]: ['type', CustomChrome]},
       require('karma-sourcemap-loader'),
-      require('karma-spec-reporter'),
       require('karma-coverage'),
+      {'reporter:exact-test-id': ['type', ExactTestIdReporter]},
       {'reporter:resultsdb': ['type', ResultsDBReporter]},
       {'reporter:screenshots': ['type', ScreenshotErrorReporter]},
       {'reporter:progress-diff': ['type', ProgressWithDiffReporter]},

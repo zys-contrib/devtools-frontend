@@ -6,7 +6,6 @@ import * as fs from 'node:fs';
 import * as http from 'node:http';
 
 import type {ArtifactGroup} from './screenshot-error.js';
-import {TestConfig} from './test_config.js';
 
 /**
  * This type mirrors test_result.proto but it might fall behind.
@@ -14,13 +13,27 @@ import {TestConfig} from './test_config.js';
  * https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/resultdb/sink/proto/v1/test_result.proto
  **/
 export interface TestResult {
-  testId: SanitizedTestId;
+  testId?: string;
+  testIdStructured?: {
+    moduleName: string,
+    moduleScheme: string,
+    coarseName: string,
+    fineName: string,
+    caseNameComponents: string[],
+  };
   expected?: boolean;
   status?: 'PASS'|'FAIL'|'SKIP';
   summaryHtml?: string;
   duration?: string;
   tags?: Array<{key: string, value: string}>;
   artifacts?: ArtifactGroup;
+  testMetadata?: {
+    name: string,
+    location?: {
+      repo: string,
+      fileName: string,
+    },
+  };
 }
 
 export type SanitizedTestId = string&{
@@ -36,6 +49,26 @@ export type SanitizedTestId = string&{
  **/
 export function sanitizedTestId(rawTestId: string): SanitizedTestId {
   return rawTestId.replace(/[^\x20-\x7E]/g, '').substring(0, 512) as SanitizedTestId;
+}
+
+export function buildTestProperties(exactTestId: string, coarseName: string, fineName: string, caseName: string) {
+  return {
+    testId: sanitizedTestId(exactTestId),
+    testIdStructured: {
+      moduleName: 'devtools-frontend',
+      moduleScheme: 'mocha',
+      coarseName,
+      fineName,
+      caseNameComponents: caseName.split(':'),
+    },
+    testMetadata: {
+      name: exactTestId,
+      location: {
+        repo: 'https://chromium.googlesource.com/devtools/devtools-frontend',
+        fileName: `//${coarseName}${fineName}`,
+      },
+    },
+  };
 }
 
 interface SinkData {
@@ -74,8 +107,6 @@ export function available(): boolean {
 
 let pendingResults: TestResult[] = [];
 let timer: ReturnType<typeof setTimeout>|undefined;
-
-const seenTestIds = new Set<string>();
 
 function stringifyTestResults(results: TestResult[]): string {
   const testResults = results.map(result => {
@@ -116,18 +147,6 @@ function takeAndSendResults() {
       Authorization: `ResultSink ${sinkData.authToken}`,
     },
   };
-
-  const duplicateTestIds = [];
-  for (const t of testResults) {
-    if (seenTestIds.has(t.testId)) {
-      duplicateTestIds.push(t.testId);
-    }
-    seenTestIds.add(t.testId);
-  }
-
-  if (!TestConfig.allowDuplicateTestIds && duplicateTestIds.length > 0) {
-    throw new Error(`duplicate test id(s): ${duplicateTestIds.join(', ')}`);
-  }
 
   // As per ResultSink documentation, this will always be a localhost connection
   // and can be treated as reliable as a local file write.

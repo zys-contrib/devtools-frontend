@@ -13,6 +13,7 @@ export const CHECKOUT_ROOT = path.join(__dirname, '..', build.CHECKOUT_ROOT);
 export const BUILD_ROOT = path.join(__dirname, '..', build.BUILD_ROOT);
 export const GEN_DIR = path.normalize(path.join(__dirname, '..', '..'));
 export const BUILD_WITH_CHROMIUM = build.BUILD_WITH_CHROMIUM;
+export const TEST_ID_REGEX = /^(.*\.[tj]s):(.*)$/;
 
 export function rebase(fromRoot: string, toRoot: string, filename: string, newExt?: string) {
   if (!path.isAbsolute(filename) || !path.isAbsolute(fromRoot) || !path.isAbsolute(toRoot)) {
@@ -57,6 +58,35 @@ export class PathPair {
     const buildPath = rebase(SOURCE_ROOT, GEN_DIR, absPath, '.js');
 
     return new PathPair(sourcePath, buildPath);
+  }
+}
+
+// Test is either identified by the test file or a test file + the id for the
+// subtest in that file.
+export class TestId<Pair extends PathPair = PathPair> {
+  protected constructor(readonly pathPair: Pair, readonly subTestId?: string) {
+  }
+
+  toBuildTestId() {
+    if (!this.subTestId) {
+      return this.pathPair.buildPath;
+    }
+    return `${this.pathPair.buildPath}:${this.subTestId}`;
+  }
+
+  static create(testId: string) {
+    let subTestId = undefined;
+    let pathname = testId;
+    if (TEST_ID_REGEX.test(testId)) {
+      const match = testId.match(TEST_ID_REGEX)!;
+      subTestId = match[2];
+      pathname = match[1];
+    }
+    const pathPair = PathPair.get(pathname);
+    if (!pathPair) {
+      return null;
+    }
+    return new TestId(pathPair, subTestId);
   }
 }
 

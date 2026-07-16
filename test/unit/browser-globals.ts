@@ -15,6 +15,7 @@ export interface KarmaConfig {
   mocha?: KarmaMochaConfig;
   checkoutRoot?: string;
   pathSeparator?: string;
+  testIds: string[];
 }
 
 export interface Karma {

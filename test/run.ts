@@ -17,6 +17,8 @@ import {
   isContainedInDirectory,
   PathPair,
   SOURCE_ROOT,
+  TEST_ID_REGEX,
+  TestId,
 } from './conductor/paths.js';
 
 const options =
@@ -154,17 +156,17 @@ class Tests {
     this.extraPaths = extraPaths.filter((p): p is[string, PathPair] => p[1] !== null).map(p => p[1]);
   }
 
-  match(path: PathPair) {
+  match(path: TestId) {
     return [this.suite, ...this.extraPaths].some(
-        pathToCheck => isContainedInDirectory(path.buildPath, pathToCheck.buildPath));
+        pathToCheck => isContainedInDirectory(path.pathPair.buildPath, pathToCheck.buildPath));
   }
 
-  protected run(tests: PathPair[], args: string[]) {
+  protected run(tests: TestId[], args: string[]) {
     const argumentsForNode = [
       ...args,
       ...(options['auto-watch'] ? ['--auto-watch', '--no-single-run'] : []),
       '--',
-      ...tests.map(t => t.buildPath),
+      ...tests.map(t => t.pathPair.buildPath),
       ...(options['verbose'] ? [`--verbose=${options['verbose']}`] : []),
       ...forwardOptions(),
     ];
@@ -184,7 +186,7 @@ class Tests {
 }
 
 class MochaFrontendTests extends Tests {
-  override run(tests: PathPair[]) {
+  override run(tests: TestId[]) {
     return super.run(
         tests,
         [
@@ -195,7 +197,7 @@ class MochaFrontendTests extends Tests {
 }
 
 class MochaTests extends Tests {
-  override run(tests: PathPair[]) {
+  override run(tests: TestId[]) {
     const args = [
       path.join(this.suite.buildPath, 'run-mocha.js'),
     ];
@@ -232,12 +234,18 @@ class ScriptPathPair extends PathPair {
   }
 }
 
+class ScriptTestId extends TestId {
+  static getFromTestId(testId: TestId) {
+    return new ScriptTestId(ScriptPathPair.getFromPair(testId.pathPair), testId.subTestId);
+  }
+}
+
 class ScriptsMochaTests extends Tests {
   override readonly cwd = SOURCE_ROOT;
 
-  override run(tests: PathPair[]) {
+  override run(tests: TestId[]) {
     return super.run(
-        tests.map(test => ScriptPathPair.getFromPair(test)),
+        tests.map(test => ScriptTestId.getFromTestId(test)),
         [
           MOCHA_BIN_PATH,
           // Some test require spinning up a TypeScript
@@ -249,15 +257,37 @@ class ScriptsMochaTests extends Tests {
     );
   }
 
-  override match(path: PathPair): boolean {
+  override match(path: TestId): boolean {
     return [this.suite, ...this.extraPaths].some(
-        pathToCheck => isContainedInDirectory(path.sourcePath, pathToCheck.sourcePath));
+        pathToCheck => isContainedInDirectory(path.pathPair.sourcePath, pathToCheck.sourcePath));
   }
 }
 
 class KarmaTests extends Tests {
-  override run(tests: PathPair[]) {
-    return super.run(tests, [
+  protected runInternal(tests: TestId[], args: string[]) {
+    const argumentsForNode = [
+      ...args,
+      ...(options['auto-watch'] ? ['--auto-watch', '--no-single-run'] : []),
+      '--',
+      ...tests.map(t => t.toBuildTestId()),
+      ...(options['verbose'] ? [`--verbose=${options['verbose']}`] : []),
+      ...forwardOptions(),
+    ];
+    if (options['debug-driver']) {
+      argumentsForNode.unshift('--inspect-brk');
+    } else if (options['debug'] && !argumentsForNode.includes('--inspect-brk')) {
+      argumentsForNode.unshift('--inspect');
+    }
+    const result = runProcess(process.argv[0], argumentsForNode, {
+      encoding: 'utf-8',
+      stdio: 'inherit',
+      cwd: this.cwd,
+    });
+    return !result.error && (result.status ?? 1) === 0;
+  }
+
+  override run(tests: TestId[]) {
+    return this.runInternal(tests, [
       path.join(SOURCE_ROOT, 'node_modules', 'karma', 'bin', 'karma'),
       'start',
       path.join(GEN_DIR, 'test', 'unit', 'karma.conf.js'),
@@ -299,36 +329,39 @@ function main() {
     }
   }
 
-  const suites = new Map<MochaTests, PathPair[]>();
-  const testFiles = tests
-                        .map(t => {
-                          // The builders will use e2e_non_hosted path until we
-                          // have no branch that contains the path. After that
-                          // we can update the builders to use the new path.
-                          // In the mean time the runner will accept both e2e
-                          // and e2e_non_hosted paths and transform the
-                          // e2e_non_hosted path internally to e2e. After we
-                          // update infra I can come in and remove this.
-                          return t.replace('e2e_non_hosted', 'e2e');
-                        })
-                        .flatMap(t => {
-                          const globbed = fs.globSync(t);
-                          return globbed.length > 0 ? globbed : t;
-                        });
-  for (const t of testFiles) {
-    const repoPath = PathPair.get(t);
-    if (!repoPath) {
+  const suites = new Map<MochaTests, TestId[]>();
+  const testIds = tests
+                      .map(t => {
+                        // The builders will use e2e_non_hosted path until we
+                        // have no branch that contains the path. After that
+                        // we can update the builders to use the new path.
+                        // In the mean time the runner will accept both e2e
+                        // and e2e_non_hosted paths and transform the
+                        // e2e_non_hosted path internally to e2e. After we
+                        // update infra I can come in and remove this.
+                        return t.replace('e2e_non_hosted', 'e2e');
+                      })
+                      .flatMap(t => {
+                        if (TEST_ID_REGEX.test(t)) {
+                          return [t];
+                        }
+                        const globbed = fs.globSync(t);
+                        return globbed.length > 0 ? globbed : [t];
+                      });
+  for (const t of testIds) {
+    const testId = TestId.create(t);
+    if (!testId) {
       console.error(`Could not locate the test input for '${t}'`);
       continue;
     }
 
-    const suite = testKinds.find(kind => kind.match(repoPath));
+    const suite = testKinds.find(kind => kind.match(testId));
     if (suite === undefined) {
-      console.error(`Unknown test suite for '${repoPath.sourcePath}'`);
+      console.error(`Unknown test suite for '${testId.pathPair.sourcePath}'`);
       continue;
     }
 
-    suites.get(suite)?.push(repoPath) ?? suites.set(suite, [repoPath]);
+    suites.get(suite)?.push(testId) ?? suites.set(suite, [testId]);
   }
 
   if (suites.size > 0) {
@@ -338,7 +371,7 @@ function main() {
   if (tests.length > 0) {
     return 1;
   }
-  const success = testKinds.every(kind => kind.run([kind.suite]));
+  const success = testKinds.every(kind => kind.run([TestId.create(kind.suite.sourcePath)!]));
   return success ? 0 : 1;
 }
 

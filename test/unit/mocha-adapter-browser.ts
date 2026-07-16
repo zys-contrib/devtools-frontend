@@ -4,6 +4,8 @@
 
 import type * as Mocha from 'mocha';
 
+import {computeBuildTestId} from '../../front_end/testing/TestIdGeneration.js';
+
 import {installDevtoolsBdd} from './mocha-interface.js';
 
 interface KarmaResult {
@@ -117,6 +119,31 @@ const reportTestResult = (test: TestExt) => {
 karma.start = () => {
   const reportedTests = new Set<TestExt>();
   const failedSuites = new Set<Mocha.Suite>();
+  const testIds = new Set(karma.config.testIds);
+  const seenTestIds = new Set<string>();
+
+  function shouldIncludeTest(test: Mocha.Test) {
+    if (!test.file) {
+      throw new Error(`Test ${test.titlePath()} does not have a file.`);
+    }
+    const testId = computeBuildTestId(test.file, test.titlePath());
+    if (seenTestIds.has(testId)) {
+      throw new Error(`Duplicate test ${testId}`);
+    }
+    seenTestIds.add(testId);
+    if (testIds.size === 0) {
+      return true;
+    }
+    return testIds.has(testId);
+  }
+
+  function pruneSuite(suite: Mocha.Suite) {
+    suite.tests = suite.tests.filter(shouldIncludeTest);
+    suite.suites.forEach(pruneSuite);
+  }
+
+  pruneSuite(mocha.suite);
+
   const runner = mocha.run(() => {
     // Find all tests that were never reported (e.g. because Mocha aborted on a hook failure)
     const reportUnrunTests = (suite: Mocha.Suite, hasFailedHook: boolean) => {

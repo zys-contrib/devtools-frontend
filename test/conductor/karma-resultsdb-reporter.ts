@@ -7,7 +7,10 @@
 import {existsSync} from 'node:fs';
 import {styleText} from 'node:util';
 
+import {generateExactTestId} from '../../front_end/testing/TestIdGeneration.js';
+
 import {formatAsHtml, formatDiff, resultAssertionsDiff} from './diff-utils.js';
+import {GEN_DIR} from './paths.js';
 import * as ResultsDb from './resultsdb.js';
 import {ScreenshotError} from './screenshot-error.js';
 
@@ -51,7 +54,7 @@ export const ResultsDBReporter = function(
       throw new Error(`Test file ${file} does not exist`);
     }
     const {suite, description, log, startTime, endTime, success, skipped} = result;
-    const testId = ResultsDb.sanitizedTestId([...suite, description].join('/'));
+    const {exactTestId, coarseName, fineName, caseName} = generateExactTestId(GEN_DIR, file, [...suite, description]);
     const expected = success || skipped;
     const status = skipped ? 'SKIP' : success ? 'PASS' : 'FAIL';
     let duration = '.001s';
@@ -75,7 +78,7 @@ export const ResultsDBReporter = function(
       }
       summaryHtml = summaryLines.join('\n');
 
-      const consoleHeader = `==== ${status}: ${testId}`;
+      const consoleHeader = `==== ${status}: ${exactTestId}`;
       this.write(`${consoleHeader}\n${messages.join('\n\n')}\n`);
       const patch = formatAsPatch(assertionDiff);
       if (patch) {
@@ -86,10 +89,16 @@ export const ResultsDBReporter = function(
         throw new Error('Bailing (bail option is enabled)');
       }
     } else if (skipped) {
-      this.write(`==== ${status}: ${testId}\n\n`);
+      this.write(`==== ${status}: ${exactTestId}\n\n`);
     }
 
-    const testResult: ResultsDb.TestResult = {testId, duration, status, expected, summaryHtml};
+    const testResult: ResultsDb.TestResult = {
+      duration,
+      status,
+      expected,
+      summaryHtml,
+      ...ResultsDb.buildTestProperties(exactTestId, coarseName, fineName, caseName)
+    };
 
     if (result.log?.[0]?.startsWith('Error: ScreenshotError')) {
       const screenshotError = ScreenshotError.errors.shift();

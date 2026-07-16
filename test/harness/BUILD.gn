@@ -29,7 +29,11 @@ ts_e2e_library("e2e_fixtures") {
 
 devtools_foundation_module("unit_fixtures") {
   testonly = true
-  sources = [ "unit/unit.test.ts" ]
+  sources = [
+    "unit/duplicate.test.ts",
+    "unit/hooks.test.ts",
+    "unit/unit.test.ts",
+  ]
   deps = [ "../../front_end/testing" ]
 }
 

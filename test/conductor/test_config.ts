@@ -10,7 +10,7 @@ import yargs from 'yargs';
 import {hideBin} from 'yargs/helpers';
 
 import {asArray, commandLineArgs, DiffBehaviors} from './commandline.js';
-import {BUILD_ROOT, defaultChromePath, SOURCE_ROOT} from './paths.js';
+import {BUILD_ROOT, defaultChromePath, SOURCE_ROOT, TEST_ID_REGEX} from './paths.js';
 import {shardFilter} from './sharding.js';
 
 const argv = yargs(hideBin(process.argv)).parseSync()['_'] as string[];
@@ -159,12 +159,16 @@ export function loadTests(testDirectory: string, filename = 'tests.txt') {
                     .map(t => t.trim())
                     .filter(t => t.length > 0)
                     .map(t => path.normalize(path.join(testDirectory, t)))
-                    .filter(t => TestConfig.tests.some((spec: string) => t.startsWith(spec)))
+                    .filter(t => TestConfig.tests.some((spec: string) => {
+                      if (TEST_ID_REGEX.test(spec)) {
+                        spec = spec.match(TEST_ID_REGEX)![1];
+                      }
+                      return t.startsWith(spec);
+                    }))
                     // To keep sharding deterministic, use the relative path from the test directory, NOT the
                     // absolute file path on disk. Also replace backward slashes with forward slashes so sharding stays
                     // the same across windows, linux and mac.
                     .filter(t => shardFilter(TestConfig, path.relative(testDirectory, t).replaceAll('\\', '/')));
-
   if (TestConfig.shuffle) {
     for (let i = tests.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

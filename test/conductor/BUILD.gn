@@ -12,6 +12,8 @@ group("conductor") {
 }
 
 node_ts_library("implementation") {
+  deps = [ "../../front_end/testing" ]
+
   sources = [
     "async-scope.ts",
     "commandline.ts",

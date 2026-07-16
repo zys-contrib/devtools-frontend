@@ -8,4 +8,8 @@ describe('unit', () => {
   it('should run a basic unit test successfully', () => {
     assert.strictEqual(1 + 1, 2, 'Math works');
   });
+
+  it('should run a basic unit test successfully', () => {
+    assert.strictEqual(1 + 1, 2, 'Math works');
+  });
 });

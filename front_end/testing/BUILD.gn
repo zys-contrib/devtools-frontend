@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("../../scripts/build/ninja/copy.gni")
+import("../../scripts/build/ninja/devtools_module.gni")
 import("../../scripts/build/typescript/typescript.gni")
 
 ts_library("testing") {
@@ -62,6 +63,7 @@ ts_library("testing") {
   data_deps = [ "../core/i18n/locales" ]
 
   deps = [
+    ":test_id_generation",
     "../../extension-api",
     "../core/common:bundle",
     "../core/host:bundle",
@@ -113,6 +115,18 @@ ts_library("testing") {
   ]
 }
 
+devtools_foundation_module("test_id_generation") {
+  sources = [ "TestIdGeneration.ts" ]
+}
+
+devtools_foundation_module("foundation_unittests") {
+  testonly = true
+
+  sources = [ "TestIdGeneration.test.ts" ]
+
+  deps = [ ":test_id_generation" ]
+}
+
 ts_library("unittests") {
   testonly = true
 
@@ -125,6 +139,7 @@ ts_library("unittests") {
   ]
 
   deps = [
+    ":foundation_unittests",
     ":testing",
     "../core/protocol_client:bundle",
     "../generated",
