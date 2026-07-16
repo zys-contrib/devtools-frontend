@@ -1,0 +1,32 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+import path from 'node:path';
+
+import {GEN_DIR} from '../../test/conductor/paths.js';
+import {loadTests, TestConfig} from '../conductor/test_config.js';
+import {run} from '../shared/run-mocha.js';
+
+void run({
+  allowUncaught: false,
+  require: [
+    'source-map-support/register.js',
+    path.join(GEN_DIR, 'test', 'unit', 'mocha-hooks.js'),
+  ],
+  spec: [
+    ...loadTests(path.join(GEN_DIR, 'front_end'), 'foundation_tests.txt'),
+    ...loadTests(path.join(GEN_DIR, 'mcp'), 'foundation_tests.txt'),
+    ...loadTests(path.join(GEN_DIR, 'test', 'harness', 'unit'), 'foundation_tests.txt'),
+  ],
+  timeout: TestConfig.debug ? 0 : 10_000,
+  reporter: path.join(
+      path.dirname(__dirname),
+      'shared',
+      'mocha-resultsdb-reporter',
+      ),
+  retries: TestConfig.retries,
+  suiteName: 'unit',
+  slow: 1000,
+  ...TestConfig.mochaGrep,
+});

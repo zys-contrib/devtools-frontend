@@ -29,7 +29,7 @@ node_ts_library("karma") {
   sources = [
     "karma.conf.ts",
     "mocha-hooks.ts",
-    "mocharc.ts",
+    "run-mocha.ts",
   ]
   deps = [
     "../conductor:implementation",

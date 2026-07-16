@@ -5,12 +5,17 @@
 import("../../scripts/build/ninja/devtools_module.gni")
 import("../../scripts/build/typescript/typescript.gni")
 
-group("harness") {
+node_ts_library("harness") {
+  sources = [ "run-mocha.ts" ]
+
   deps = [
     ":e2e_fixtures",
-    ":foundation_test_inputs",
-    ":test_inputs",
     ":unit_fixtures",
+  ]
+  data_deps = [
+    ":e2e_test_inputs",
+    ":foundation_test_inputs",
+    ":unit_test_inputs",
   ]
 }
 
@@ -36,10 +41,18 @@ generated_file("foundation_test_inputs") {
   deps = [ ":unit_fixtures" ]
 }
 
-generated_file("test_inputs") {
+generated_file("unit_test_inputs") {
   outputs = [ "$target_gen_dir/unit/tests.txt" ]
   data_keys = [ "tests" ]
   rebase = "$target_gen_dir/unit"
 
   deps = [ ":unit_fixtures" ]
+}
+
+generated_file("e2e_test_inputs") {
+  outputs = [ "$target_gen_dir/e2e/tests.txt" ]
+  data_keys = [ "tests" ]
+  rebase = target_gen_dir
+
+  deps = [ ":e2e_fixtures" ]
 }

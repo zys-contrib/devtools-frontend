@@ -83,12 +83,8 @@ class DevToolsTestHarness(unittest.TestCase):
 
     def run_e2e_test(self, test_file):
         abs_test_file = self._resolve_test_file(test_file)
-        return self.run_test_with_rdb([
-            "node_modules/mocha/bin/mocha", "--config",
-            "out/Default/gen/test/e2e/mocharc.js", "-u",
-            "out/Default/gen/test/e2e/conductor/mocha-interface.js",
-            abs_test_file
-        ])
+        return self.run_test_with_rdb(
+            ["out/Default/gen/test/harness/run-mocha.js", abs_test_file])
 
     def test_unit_fixture(self):
         results = self.run_unit_test("test/harness/unit/unit.test.ts")

@@ -53,7 +53,7 @@ node_ts_library("tests") {
     "throttling",
     "webaudio",
   ]
-  sources = [ "mocharc.ts" ]
+  sources = [ "run-mocha.ts" ]
 }
 
 generated_file("test_inputs") {

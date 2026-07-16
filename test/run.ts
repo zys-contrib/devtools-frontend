@@ -159,12 +159,12 @@ class Tests {
         pathToCheck => isContainedInDirectory(path.buildPath, pathToCheck.buildPath));
   }
 
-  protected run(tests: PathPair[], args: string[], positionalTestArgs = true) {
+  protected run(tests: PathPair[], args: string[]) {
     const argumentsForNode = [
       ...args,
       ...(options['auto-watch'] ? ['--auto-watch', '--no-single-run'] : []),
       '--',
-      ...tests.map(t => positionalTestArgs ? t.buildPath : `--tests=${t.buildPath}`),
+      ...tests.map(t => t.buildPath),
       ...(options['verbose'] ? [`--verbose=${options['verbose']}`] : []),
       ...forwardOptions(),
     ];
@@ -188,12 +188,8 @@ class MochaFrontendTests extends Tests {
     return super.run(
         tests,
         [
-          MOCHA_BIN_PATH,
-          '--config',
-          path.join(this.suite.buildPath, '..', 'test', 'unit', 'mocharc.js'),
+          path.join(this.suite.buildPath, '..', 'test', 'unit', 'run-mocha.js'),
         ],
-        /* positionalTestArgs= */ false,  // Mocha interprets positional arguments as test files itself. Work around
-                                          // that by passing the tests as dashed args instead.
     );
   }
 }
@@ -201,11 +197,7 @@ class MochaFrontendTests extends Tests {
 class MochaTests extends Tests {
   override run(tests: PathPair[]) {
     const args = [
-      MOCHA_BIN_PATH,
-      '--config',
-      path.join(this.suite.buildPath, 'mocharc.js'),
-      '-u',
-      path.join(this.suite.buildPath, '..', 'e2e', 'conductor', 'mocha-interface.js'),
+      path.join(this.suite.buildPath, 'run-mocha.js'),
     ];
 
     if (options['debug']) {
@@ -226,8 +218,6 @@ class MochaTests extends Tests {
     return super.run(
         tests,
         args,
-        /* positionalTestArgs= */ false,  // Mocha interprets positional arguments as test files itself. Work around
-                                          // that by passing the tests as dashed args instead.
     );
   }
 }
