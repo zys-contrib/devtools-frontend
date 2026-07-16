@@ -826,6 +826,182 @@ describeWithEnvironment('ConsoleView', () => {
     });
   });
 
+  describe('filtering', () => {
+    let target: ReturnType<typeof createTarget>;
+    let consoleModel: SDK.ConsoleModel.ConsoleModel|null;
+
+    beforeEach(() => {
+      target = createTarget();
+      SDK.TargetManager.TargetManager.instance().setScopeTarget(target);
+      consoleModel = target.model(SDK.ConsoleModel.ConsoleModel);
+      assert.exists(consoleModel);
+      consoleView.markAsRoot();
+      renderElementIntoDOM(consoleView);
+
+      addMessage(consoleModel, target, 'sample info', Protocol.Runtime.ConsoleAPICalledEventType.Info,
+                 Protocol.Log.LogEntryLevel.Info);
+      addMessage(consoleModel, target, 'sample log', Protocol.Runtime.ConsoleAPICalledEventType.Log,
+                 Protocol.Log.LogEntryLevel.Info);
+      addMessage(consoleModel, target, 'sample warning', Protocol.Runtime.ConsoleAPICalledEventType.Warning,
+                 Protocol.Log.LogEntryLevel.Warning);
+      addMessage(consoleModel, target, 'sample debug', Protocol.Runtime.ConsoleAPICalledEventType.Debug,
+                 Protocol.Log.LogEntryLevel.Verbose);
+      addMessage(consoleModel, target, 'sample error', Protocol.Runtime.ConsoleAPICalledEventType.Error,
+                 Protocol.Log.LogEntryLevel.Error);
+      addMessage(consoleModel, target, 'abc info', Protocol.Runtime.ConsoleAPICalledEventType.Info,
+                 Protocol.Log.LogEntryLevel.Info);
+      addMessage(consoleModel, target, 'def info', Protocol.Runtime.ConsoleAPICalledEventType.Info,
+                 Protocol.Log.LogEntryLevel.Info);
+      addMessage(consoleModel, target, 'abc warn', Protocol.Runtime.ConsoleAPICalledEventType.Warning,
+                 Protocol.Log.LogEntryLevel.Warning);
+      addMessage(consoleModel, target, 'def warn', Protocol.Runtime.ConsoleAPICalledEventType.Warning,
+                 Protocol.Log.LogEntryLevel.Warning);
+      consoleModel.addMessage(
+          createConsoleMessage(target, '\'Should be always visible\'', SDK.ConsoleModel.FrontendMessageType.Command));
+      consoleModel.addMessage(
+          createConsoleMessage(target, '\'Should be always visible\'', SDK.ConsoleModel.FrontendMessageType.Result));
+    });
+
+    it('shows messages for all levels', async () => {
+      const levels = Console.ConsoleFilter.ConsoleFilter.allLevelsFilterValue();
+      Common.Settings.Settings.instance().createSetting('message-level-filters', levels).set(levels);
+      await consoleView.getScheduledRefreshPromiseForTest();
+
+      const messages = await getConsoleMessages();
+      assert.deepEqual(messages, [
+        'sample info',
+        'sample log',
+        'sample warning',
+        'sample debug',
+        'sample error',
+        'abc info',
+        'def info',
+        'abc warn',
+        'def warn',
+        '"\'Should be always visible\'"',
+      ]);
+    });
+
+    it('shows messages for default levels', async () => {
+      const levels = Console.ConsoleFilter.ConsoleFilter.defaultLevelsFilterValue();
+      Common.Settings.Settings.instance().createSetting('message-level-filters', levels).set(levels);
+      await consoleView.getScheduledRefreshPromiseForTest();
+
+      const messages = await getConsoleMessages();
+      assert.deepEqual(messages, [
+        'sample info',
+        'sample log',
+        'sample warning',
+        'sample error',
+        'abc info',
+        'def info',
+        'abc warn',
+        'def warn',
+        '"\'Should be always visible\'"',
+      ]);
+    });
+
+    it('shows messages for verbose level', async () => {
+      const levels = Console.ConsoleFilter.ConsoleFilter.singleLevelMask(Protocol.Log.LogEntryLevel.Verbose);
+      Common.Settings.Settings.instance().createSetting('message-level-filters', levels).set(levels);
+      await consoleView.getScheduledRefreshPromiseForTest();
+
+      const messages = await getConsoleMessages();
+      assert.deepEqual(messages, [
+        'sample debug',
+        '"\'Should be always visible\'"',
+      ]);
+    });
+
+    it('shows messages for info level', async () => {
+      const levels = Console.ConsoleFilter.ConsoleFilter.singleLevelMask(Protocol.Log.LogEntryLevel.Info);
+      Common.Settings.Settings.instance().createSetting('message-level-filters', levels).set(levels);
+      await consoleView.getScheduledRefreshPromiseForTest();
+
+      const messages = await getConsoleMessages();
+      assert.deepEqual(messages, [
+        'sample info',
+        'sample log',
+        'abc info',
+        'def info',
+        '"\'Should be always visible\'"',
+      ]);
+    });
+
+    it('shows messages for warning and error levels', async () => {
+      const levels = {
+        [Protocol.Log.LogEntryLevel.Warning]: true,
+        [Protocol.Log.LogEntryLevel.Error]: true,
+      };
+      Common.Settings.Settings.instance().createSetting('message-level-filters', levels).set(levels);
+      await consoleView.getScheduledRefreshPromiseForTest();
+
+      const messages = await getConsoleMessages();
+      assert.deepEqual(messages, [
+        'sample warning',
+        'sample error',
+        'abc warn',
+        'def warn',
+        '"\'Should be always visible\'"',
+      ]);
+    });
+
+    it('filters messages by text', async () => {
+      const levels = Console.ConsoleFilter.ConsoleFilter.singleLevelMask(Protocol.Log.LogEntryLevel.Verbose);
+      Common.Settings.Settings.instance().createSetting('message-level-filters', levels).set(levels);
+      interface ConsoleViewFilter {
+        textFilterUI: {setValue: (arg: string) => void};
+        onFilterChanged: () => void;
+      }
+      const filter = (consoleView as unknown as {filter: ConsoleViewFilter}).filter;
+      filter.textFilterUI.setValue('abc');
+      filter.onFilterChanged();
+      await consoleView.getScheduledRefreshPromiseForTest();
+
+      const messages = await getConsoleMessages();
+      assert.deepEqual(messages, [
+        '"\'Should be always visible\'"',
+      ]);
+    });
+
+    it('filters messages by regex', async () => {
+      const levels = Console.ConsoleFilter.ConsoleFilter.singleLevelMask(Protocol.Log.LogEntryLevel.Verbose);
+      Common.Settings.Settings.instance().createSetting('message-level-filters', levels).set(levels);
+      interface ConsoleViewFilter {
+        textFilterUI: {setValue: (arg: string) => void};
+        onFilterChanged: () => void;
+      }
+      const filter = (consoleView as unknown as {filter: ConsoleViewFilter}).filter;
+      filter.textFilterUI.setValue('/ab[a-z]/');
+      filter.onFilterChanged();
+      await consoleView.getScheduledRefreshPromiseForTest();
+
+      const messages = await getConsoleMessages();
+      assert.deepEqual(messages, [
+        '"\'Should be always visible\'"',
+      ]);
+    });
+
+    it('filters messages by regex and warning level', async () => {
+      const levels = Console.ConsoleFilter.ConsoleFilter.singleLevelMask(Protocol.Log.LogEntryLevel.Warning);
+      Common.Settings.Settings.instance().createSetting('message-level-filters', levels).set(levels);
+      interface ConsoleViewFilter {
+        textFilterUI: {setValue: (arg: string) => void};
+        onFilterChanged: () => void;
+      }
+      const filter = (consoleView as unknown as {filter: ConsoleViewFilter}).filter;
+      filter.textFilterUI.setValue('/ab[a-z]/');
+      filter.onFilterChanged();
+      await consoleView.getScheduledRefreshPromiseForTest();
+
+      const messages = await getConsoleMessages();
+      assert.deepEqual(messages, [
+        'abc warn',
+        '"\'Should be always visible\'"',
+      ]);
+    });
+  });
+
   describe('scroll preservation', () => {
     it('preserves scroll position when hidden and shown again', async () => {
       const tabTarget = createTarget({type: SDK.Target.Type.TAB});
