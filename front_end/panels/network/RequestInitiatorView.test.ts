@@ -40,13 +40,13 @@ describe('RequestInitiatorView', () => {
 
     const initiatorGraph = {initiators: new Set<SDK.NetworkRequest.NetworkRequest>(), initiated: new Map()};
 
-    Network.RequestInitiatorView.DEFAULT_VIEW(
-        {
-          initiatorGraph,
-          stackTrace: null,
-          request,
-        },
-        undefined, component);
+    Network.RequestInitiatorView.DEFAULT_VIEW({
+      initiatorGraph,
+      stackTrace: null,
+      request,
+      isConsoleOriginated: false,
+    },
+                                              undefined, component);
 
     await assertScreenshot('network/request-initiator-view-empty.png');
   });
@@ -63,13 +63,13 @@ describe('RequestInitiatorView', () => {
 
     const initiatorGraph = {initiators: new Set<SDK.NetworkRequest.NetworkRequest>(), initiated: new Map()};
 
-    Network.RequestInitiatorView.DEFAULT_VIEW(
-        {
-          initiatorGraph,
-          stackTrace: StubStackTrace.create(['https://example.com/foo.js:foo:10:5']),
-          request,
-        },
-        undefined, component);
+    Network.RequestInitiatorView.DEFAULT_VIEW({
+      initiatorGraph,
+      stackTrace: StubStackTrace.create(['https://example.com/foo.js:foo:10:5']),
+      request,
+      isConsoleOriginated: false,
+    },
+                                              undefined, component);
 
     await Promise.resolve();  // Trigger MutationObserver (which requests widget updates).
     await UI.Widget.Widget.allUpdatesComplete;
@@ -91,13 +91,13 @@ describe('RequestInitiatorView', () => {
 
     const initiatorGraph = {initiators: new Set([initiator, request]), initiated: new Map()};
 
-    Network.RequestInitiatorView.DEFAULT_VIEW(
-        {
-          initiatorGraph,
-          stackTrace: null,
-          request,
-        },
-        undefined, component);
+    Network.RequestInitiatorView.DEFAULT_VIEW({
+      initiatorGraph,
+      stackTrace: null,
+      request,
+      isConsoleOriginated: false,
+    },
+                                              undefined, component);
 
     await assertScreenshot('network/request-initiator-view-chain.png');
   });
@@ -118,18 +118,78 @@ describe('RequestInitiatorView', () => {
 
     const initiatorGraph = {initiators: new Set([initiator, request]), initiated: new Map()};
 
-    Network.RequestInitiatorView.DEFAULT_VIEW(
-        {
-          initiatorGraph,
-          stackTrace: StubStackTrace.create(['https://example.com/foo.js:foo:10:5']),
-          request,
-        },
-        undefined, component);
+    Network.RequestInitiatorView.DEFAULT_VIEW({
+      initiatorGraph,
+      stackTrace: StubStackTrace.create(['https://example.com/foo.js:foo:10:5']),
+      request,
+      isConsoleOriginated: false,
+    },
+                                              undefined, component);
 
     await Promise.resolve();  // Trigger MutationObserver (which requests widget updates).
     await UI.Widget.Widget.allUpdatesComplete;
 
     await assertScreenshot('network/request-initiator-view-chain-and-stack.png');
+  });
+
+  it('renders Console as root of initiator chain when request is from console', async () => {
+    const component = document.createElement('div');
+    renderElementIntoDOM(component, {includeCommonStyles: true});
+
+    const request = SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                             urlString`https://example.com/api`,
+                                                             urlString`https://example.com`, null, null, {
+                                                               type: Protocol.Network.InitiatorType.Script,
+                                                             });
+
+    const initiatorGraph = {initiators: new Set([request]), initiated: new Map()};
+
+    Network.RequestInitiatorView.DEFAULT_VIEW({
+      initiatorGraph,
+      stackTrace: StubStackTrace.create(['https://example.com/api::0:0']),
+      request,
+      isConsoleOriginated: true,
+    },
+                                              undefined, component);
+
+    await Promise.resolve();
+    await UI.Widget.Widget.allUpdatesComplete;
+
+    const tree = component.querySelector('devtools-tree') as HTMLElement;
+    const shadowRoot = tree.shadowRoot!;
+    const treeItems = shadowRoot.querySelectorAll('[role="treeitem"]');
+    const consoleNode = Array.from(treeItems).find(el => el.textContent?.includes('Console'));
+    assert.exists(consoleNode);
+  });
+
+  it('does not render Console node in chain for non-console requests', async () => {
+    const component = document.createElement('div');
+    renderElementIntoDOM(component, {includeCommonStyles: true});
+
+    const request = SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                             urlString`https://example.com/foo.js`,
+                                                             urlString`https://example.com`, null, null, {
+                                                               type: Protocol.Network.InitiatorType.Script,
+                                                             });
+
+    const initiatorGraph = {initiators: new Set([request]), initiated: new Map()};
+
+    Network.RequestInitiatorView.DEFAULT_VIEW({
+      initiatorGraph,
+      stackTrace: StubStackTrace.create(['https://example.com/foo.js:foo:10:5']),
+      request,
+      isConsoleOriginated: false,
+    },
+                                              undefined, component);
+
+    await Promise.resolve();
+    await UI.Widget.Widget.allUpdatesComplete;
+
+    const tree = component.querySelector('devtools-tree') as HTMLElement;
+    const shadowRoot = tree.shadowRoot!;
+    const treeItems = shadowRoot.querySelectorAll('[role="treeitem"]');
+    const consoleNode = Array.from(treeItems).find(el => el.textContent?.includes('Console'));
+    assert.notExists(consoleNode);
   });
 
   it('truncates very long URLs in the initiator chain', async () => {
@@ -152,6 +212,7 @@ describe('RequestInitiatorView', () => {
       initiatorGraph,
       stackTrace: null,
       request,
+      isConsoleOriginated: false,
     },
                                               undefined, component);
 

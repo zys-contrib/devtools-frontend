@@ -12,6 +12,7 @@ import * as UI from '../../ui/legacy/legacy.js';
 import {Directives, html, type LitTemplate, nothing, render, type TemplateResult} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
+import {NetworkRequestNode} from './NetworkDataGridNode.js';
 import requestInitiatorViewStyles from './requestInitiatorView.css.js';
 import requestInitiatorViewTreeStyles from './requestInitiatorViewTree.css.js';
 
@@ -30,6 +31,10 @@ const UIStrings = {
    * @description Title of a section in Request Initiator view of the Network Panel
    */
   requestInitiatorChain: 'Request initiator chain',
+  /**
+   * @description Label shown in the initiator chain when a request was initiated from the Console.
+   */
+  console: 'Console',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/network/RequestInitiatorView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -51,6 +56,7 @@ export interface ViewInput {
   initiatorGraph: Logs.NetworkLog.InitiatorGraph;
   stackTrace: StackTrace.StackTrace.StackTrace|null;
   request: SDK.NetworkRequest.NetworkRequest;
+  isConsoleOriginated: boolean;
 }
 
 export const DEFAULT_VIEW = (input: ViewInput, _output: undefined, target: HTMLElement): void => {
@@ -83,6 +89,11 @@ export const DEFAULT_VIEW = (input: ViewInput, _output: undefined, target: HTMLE
               stackTrace: input.stackTrace,
             })}
           </li>
+          ${input.isConsoleOriginated ? html`
+            <li role="treeitem" class="console-origin-label">
+              ${i18nString(UIStrings.console)}
+            </li>
+          ` : nothing}
         </ul>
       </li>
     `;
@@ -167,13 +178,21 @@ export const DEFAULT_VIEW = (input: ViewInput, _output: undefined, target: HTMLE
         ${i18nString(UIStrings.requestInitiatorChain)}
         ${hasInitiatorChain ? html`
           <ul role="group">
-            ${renderInitiatorNodes(initiators, 0, initiatorGraph.initiated, visited)}
+            ${input.isConsoleOriginated ? html`
+              <li role="treeitem" aria-expanded="true" open>
+                <span>${i18nString(UIStrings.console)}</span>
+                <ul role="group">
+                  ${renderInitiatorNodes(initiators, 0, initiatorGraph.initiated, visited)}
+                </ul>
+              </li>` :
+              renderInitiatorNodes(initiators, 0, initiatorGraph.initiated, visited)}
           </ul>` : nothing}
       </li>`;
     // clang-format on
   };
 
-  const hasInitiatorChain = input.initiatorGraph.initiators.size > 1 || input.initiatorGraph.initiated.size > 1;
+  const hasInitiatorChain =
+      input.initiatorGraph.initiators.size > 1 || input.initiatorGraph.initiated.size > 1 || input.isConsoleOriginated;
 
   // clang-format off
   render(html`
@@ -242,10 +261,13 @@ export class RequestInitiatorView extends UI.Widget.VBox {
                        .createStackTraceFromProtocolRuntime(rawStack, target);
     }
 
+    const isConsoleOriginated = NetworkRequestNode.isConsoleOriginated(this.request);
+
     const viewInput: ViewInput = {
       initiatorGraph,
       stackTrace,
       request: this.request,
+      isConsoleOriginated,
     };
 
     this.#view(viewInput, undefined, this.contentElement);

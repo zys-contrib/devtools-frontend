@@ -912,4 +912,130 @@ describeWithEnvironment('NetworkLogView', () => {
       assert.isAbove(Network.NetworkDataGridNode.NetworkRequestNode.ExecutionContextComparator(nodeA, nodeNull), 0);
     });
   });
+
+  describe('isConsoleOriginated', () => {
+    function createRequestWithInitiator(
+        resourceType: Common.ResourceType.ResourceType,
+        initiator: Protocol.Network.Initiator|null,
+        ): SDK.NetworkRequest.NetworkRequest {
+      const request = SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                               urlString`https://www.example.com/api`, urlString``,
+                                                               null, null, null);
+      request.setResourceType(resourceType);
+      if (initiator) {
+        sinon.stub(request, 'initiator').returns(initiator);
+      } else {
+        sinon.stub(request, 'initiator').returns(null);
+      }
+      return request;
+    }
+
+    it('returns true for a console fetch with single frame', () => {
+      const request = createRequestWithInitiator(Common.ResourceType.resourceTypes.Fetch, {
+        type: Protocol.Network.InitiatorType.Script,
+        url: urlString``,
+        stack: {
+          callFrames:
+              [{url: '', scriptId: '55' as Protocol.Runtime.ScriptId, functionName: '', lineNumber: 0, columnNumber: 0}]
+        },
+      });
+      assert.isTrue(Network.NetworkDataGridNode.NetworkRequestNode.isConsoleOriginated(request));
+    });
+
+    it('returns true for a console XHR with single frame', () => {
+      const request = createRequestWithInitiator(Common.ResourceType.resourceTypes.XHR, {
+        type: Protocol.Network.InitiatorType.Script,
+        url: urlString``,
+        stack: {
+          callFrames:
+              [{url: '', scriptId: '55' as Protocol.Runtime.ScriptId, functionName: '', lineNumber: 0, columnNumber: 0}]
+        },
+      });
+      assert.isTrue(Network.NetworkDataGridNode.NetworkRequestNode.isConsoleOriginated(request));
+    });
+
+    it('returns false for a non-fetch/XHR resource type', () => {
+      const request = createRequestWithInitiator(Common.ResourceType.resourceTypes.Document, {
+        type: Protocol.Network.InitiatorType.Script,
+        url: urlString``,
+        stack: {
+          callFrames:
+              [{url: '', scriptId: '55' as Protocol.Runtime.ScriptId, functionName: '', lineNumber: 0, columnNumber: 0}]
+        },
+      });
+      assert.isFalse(Network.NetworkDataGridNode.NetworkRequestNode.isConsoleOriginated(request));
+    });
+
+    it('returns false for a non-script initiator', () => {
+      const request = createRequestWithInitiator(Common.ResourceType.resourceTypes.Fetch, {
+        type: Protocol.Network.InitiatorType.Parser,
+        url: urlString`https://example.com`,
+      });
+      assert.isFalse(Network.NetworkDataGridNode.NetworkRequestNode.isConsoleOriginated(request));
+    });
+
+    it('returns false when initiator is null', () => {
+      const request = createRequestWithInitiator(Common.ResourceType.resourceTypes.Fetch, null);
+      assert.isFalse(Network.NetworkDataGridNode.NetworkRequestNode.isConsoleOriginated(request));
+    });
+
+    it('returns false when initiator has a URL', () => {
+      const request = createRequestWithInitiator(Common.ResourceType.resourceTypes.Fetch, {
+        type: Protocol.Network.InitiatorType.Script,
+        url: urlString`https://example.com/script.js`,
+        stack: {
+          callFrames:
+              [{url: '', scriptId: '55' as Protocol.Runtime.ScriptId, functionName: '', lineNumber: 0, columnNumber: 0}]
+        },
+      });
+      assert.isFalse(Network.NetworkDataGridNode.NetworkRequestNode.isConsoleOriginated(request));
+    });
+
+    it('returns false when there is no stack', () => {
+      const request = createRequestWithInitiator(Common.ResourceType.resourceTypes.Fetch, {
+        type: Protocol.Network.InitiatorType.Script,
+        url: urlString``,
+      });
+      assert.isFalse(Network.NetworkDataGridNode.NetworkRequestNode.isConsoleOriginated(request));
+    });
+  });
+
+  describe('console originated icon', () => {
+    it('adds icon to console-originated fetch', () => {
+      const request = SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                               urlString`https://www.example.com/api`, urlString``,
+                                                               null, null, null);
+      request.setResourceType(Common.ResourceType.resourceTypes.Fetch);
+      sinon.stub(request, 'initiator').returns({
+        type: Protocol.Network.InitiatorType.Script,
+        url: urlString``,
+        stack: {
+          callFrames:
+              [{url: '', scriptId: '55' as Protocol.Runtime.ScriptId, functionName: '', lineNumber: 0, columnNumber: 0}]
+        },
+      });
+
+      const networkRequestNode = new Network.NetworkDataGridNode.NetworkRequestNode(
+          {} as Network.NetworkDataGridNode.NetworkLogViewInterface, request);
+      const el = document.createElement('div');
+      networkRequestNode.renderCell(el, 'name');
+      const icon = el.querySelector('.network-console-icon');
+      assert.instanceOf(icon, HTMLElement);
+    });
+
+    it('does not add icon to non-console request', () => {
+      const request =
+          SDK.NetworkRequest.NetworkRequest.create('requestId' as Protocol.Network.RequestId,
+                                                   urlString`https://www.example.com/`, urlString``, null, null, null);
+      request.setResourceType(Common.ResourceType.resourceTypes.Document);
+      request.mimeType = 'text/html';
+
+      const networkRequestNode = new Network.NetworkDataGridNode.NetworkRequestNode(
+          {} as Network.NetworkDataGridNode.NetworkLogViewInterface, request);
+      const el = document.createElement('div');
+      networkRequestNode.renderCell(el, 'name');
+      const icon = el.querySelector('.network-console-icon');
+      assert.isNull(icon);
+    });
+  });
 });

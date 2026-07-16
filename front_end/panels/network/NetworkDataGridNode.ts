@@ -47,6 +47,7 @@ import * as Bindings from '../../models/bindings/bindings.js';
 import type * as HAR from '../../models/har/har.js';
 import * as Logs from '../../models/logs/logs.js';
 import type * as NetworkTimeCalculator from '../../models/network_time_calculator/network_time_calculator.js';
+import * as StackTrace from '../../models/stack_trace/stack_trace.js';
 import * as NetworkForward from '../../panels/network/forward/forward.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
 import {createIcon} from '../../ui/kit/kit.js';
@@ -343,6 +344,16 @@ const UIStrings = {
    * @description Text in Network Data Grid Node of the Network panel. Noun. Refers to a potentially blocking resource.
    */
   potentiallyBlocking: 'Potentially blocking',
+  /**
+   * @description Text indicating a request originated from the DevTools console. Used as a subtitle in the
+   * Initiator column.
+   */
+  console: 'Console',
+  /**
+   * @description Tooltip for the console icon in the Network panel, indicating a request was initiated
+   * from the Console.
+   */
+  requestOriginatedFromConsole: 'Request originated from Console',
 
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/network/NetworkDataGridNode.ts', UIStrings);
@@ -1009,6 +1020,29 @@ export class NetworkRequestNode extends NetworkNode {
     return aValue.localeCompare(bValue) || aRequest.identityCompare(bRequest);
   }
 
+  static isConsoleOriginated(request: SDK.NetworkRequest.NetworkRequest): boolean {
+    const resourceType = request.resourceType();
+    if (resourceType !== Common.ResourceType.resourceTypes.Fetch &&
+        resourceType !== Common.ResourceType.resourceTypes.XHR) {
+      return false;
+    }
+    const initiator = request.initiator();
+    if (!initiator || initiator.type !== Protocol.Network.InitiatorType.Script) {
+      return false;
+    }
+    if (initiator.url) {
+      return false;
+    }
+    if (!initiator.stack) {
+      return false;
+    }
+    return StackTrace.StackTrace.isConsoleOriginated(initiator.stack);
+  }
+
+  private isConsoleOriginated(): boolean {
+    return NetworkRequestNode.isConsoleOriginated(this.requestInternal);
+  }
+
   override showingInitiatorChainChanged(): void {
     const showInitiatorChain = this.showingInitiatorChain();
 
@@ -1340,6 +1374,13 @@ export class NetworkRequestNode extends NetworkNode {
       // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
       render(iconElement, cell);
 
+      // render Console icon if this request originated from Console
+      if (this.isConsoleOriginated()) {
+        const consoleIcon = createIcon('terminal', 'network-console-icon');
+        UI.Tooltip.Tooltip.install(consoleIcon, i18nString(UIStrings.requestOriginatedFromConsole));
+        cell.appendChild(consoleIcon);
+      }
+
       // render Ask AI button
       const aiButtonContainer = this.createAiButtonIfAvailable();
       if (aiButtonContainer) {
@@ -1590,7 +1631,8 @@ export class NetworkRequestNode extends NetworkNode {
         }
         UI.Tooltip.Tooltip.install((this.linkifiedInitiatorAnchor), '');
         cell.appendChild(this.linkifiedInitiatorAnchor);
-        this.appendSubtitle(cell, i18nString(UIStrings.script));
+        this.appendSubtitle(cell,
+                            this.isConsoleOriginated() ? i18nString(UIStrings.console) : i18nString(UIStrings.script));
         cell.classList.add('network-script-initiated');
         break;
       }
