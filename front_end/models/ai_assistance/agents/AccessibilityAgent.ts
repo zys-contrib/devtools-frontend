@@ -97,7 +97,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
   constructor(opts: ExecuteJsAgentOptions) {
     super(opts);
     this.#lighthouseRecording = opts.lighthouseRecording;
-    this.#changes = opts.changeManager || new ChangeManager();
+    this.#changes = opts.changeManager || new ChangeManager(opts.targetManager);
     this.#execJs = opts.execJs ?? executeJsCode;
     this.#createExtensionScope = opts.createExtensionScope ?? ((changes: ChangeManager) => {
                                    return new ExtensionScope(changes, this.sessionId, this.#getDocumentBodyNode());

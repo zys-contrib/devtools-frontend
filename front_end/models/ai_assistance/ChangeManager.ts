@@ -36,8 +36,8 @@ export class ChangeManager {
   readonly #stylesheetChanges = new Map<Protocol.DOM.StyleSheetId, Change[]>();
   readonly #backupStylesheetChanges = new Map<Protocol.DOM.StyleSheetId, Change[]>();
 
-  constructor() {
-    SDK.TargetManager.TargetManager.instance().addModelListener(
+  constructor(targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance()) {
+    targetManager.addModelListener(
         SDK.ResourceTreeModel.ResourceTreeModel,
         SDK.ResourceTreeModel.Events.PrimaryPageChanged,
         this.clear,

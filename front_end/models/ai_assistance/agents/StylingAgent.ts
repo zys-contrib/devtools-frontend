@@ -133,7 +133,7 @@ export class StylingAgent extends AiAgent<SDK.DOMModel.DOMNode> {
   constructor(opts: ExecuteJsAgentOptions) {
     super(opts);
 
-    this.#changes = opts.changeManager || new ChangeManager();
+    this.#changes = opts.changeManager || new ChangeManager(opts.targetManager);
     this.#execJs = opts.execJs ?? executeJsCode;
     this.#createExtensionScope = opts.createExtensionScope ?? ((changes: ChangeManager) => {
                                    return new ExtensionScope(changes, this.sessionId, this.context?.getItem() ?? null);

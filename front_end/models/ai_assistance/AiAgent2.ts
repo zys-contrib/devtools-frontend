@@ -67,7 +67,7 @@ export class AiAgent2 extends AiAgent<unknown> {
   readonly clientFeature = Host.AidaClient.ClientFeature.CHROME_DEVTOOLS_V2_AGENT;
   readonly userTier = 'TESTERS';
 
-  #changes = new ChangeManager();
+  #changes: ChangeManager;
   #execJs: typeof executeJsCode;
   readonly #allowedOrigin?: () => AllowedOriginResult;
   readonly #lighthouseRecording?:
@@ -82,6 +82,7 @@ export class AiAgent2 extends AiAgent<unknown> {
 
   constructor(opts: AiAgent2Options) {
     super(opts);
+    this.#changes = new ChangeManager(opts.targetManager);
     this.#lighthouseRecording = opts.lighthouseRecording;
     this.#execJs = opts.execJs ?? executeJsCode;
     this.#allowedOrigin = opts.allowedOrigin;
