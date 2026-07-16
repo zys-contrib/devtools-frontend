@@ -825,4 +825,42 @@ describeWithEnvironment('ConsoleView', () => {
       assert.strictEqual(consoleView.itemCount(), 3);
     });
   });
+
+  describe('scroll preservation', () => {
+    it('preserves scroll position when hidden and shown again', async () => {
+      const tabTarget = createTarget({type: SDK.Target.Type.TAB});
+      const target = createTarget({parentTarget: tabTarget});
+      const consoleModel = target.model(SDK.ConsoleModel.ConsoleModel);
+      assert.exists(consoleModel);
+
+      // Render consoleView into DOM with fixed height container.
+      renderElementIntoDOM(consoleView, {height: 100});
+      consoleView.element.style.height = '100%';
+      const parentElement = consoleView.element.parentElement;
+      assert.exists(parentElement);
+
+      for (let i = 0; i < 100; i++) {
+        consoleModel.addMessage(createConsoleMessage(target, `message ${i}`));
+      }
+
+      await consoleView.getScheduledRefreshPromiseForTest();
+
+      const messagesElement = consoleView.element.querySelector('#console-messages') as HTMLElement;
+      assert.exists(messagesElement);
+
+      // Scroll to 10 and trigger wheel to update stickToBottom.
+      messagesElement.scrollTop = 10;
+      messagesElement.dispatchEvent(new Event('wheel'));
+
+      assert.isTrue(messagesElement.scrollHeight > messagesElement.clientHeight, 'Viewport is not scrollable');
+      assert.strictEqual(messagesElement.scrollTop, 10);
+
+      // Hide and show again.
+      consoleView.detach();
+      consoleView.markAsRoot();
+      consoleView.show(parentElement);
+
+      assert.strictEqual(messagesElement.scrollTop, 10);
+    });
+  });
 });
