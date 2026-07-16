@@ -733,6 +733,23 @@ describe('StringUtilities', () => {
       assert.throws(() => Platform.StringUtilities.sprintf('%2$s %s!', 'World', 'Hello'));
       assert.throws(() => Platform.StringUtilities.sprintf('%s %d', 'World'));
     });
+
+    it('processes % properly in case of missing formatters', () => {
+      assert.strictEqual(Platform.StringUtilities.sprintf('%T', 1), '%T');
+      assert.strictEqual(Platform.StringUtilities.sprintf('10% x 20%', 'of the original'), '10% x 20%');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%%', ''), '%');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%%%', ''), '%%');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%%', 1, 2, 3), '%');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%%d', 1), '%d');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%%d%', 1), '%d%');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%%%d%', 1), '%1%');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%%%d%%', 1), '%1%');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%', ''), '%');
+      assert.strictEqual(Platform.StringUtilities.sprintf('% %d', 1), '% 1');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%d % %s', 1, 'foo'), '1 % foo');
+      assert.strictEqual(Platform.StringUtilities.sprintf('%.2f', 0.12345), '0.12');
+      assert.strictEqual(Platform.StringUtilities.sprintf('foo%555 bar', ''), 'foo%555 bar');
+    });
   });
 
   describe('LowerCaseString', () => {
