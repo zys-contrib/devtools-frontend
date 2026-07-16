@@ -151,6 +151,79 @@ describeWithEnvironment('ComputedStyleModel', () => {
     assert.isNull(styles);
   });
 
+  describe('onDOMModelChanged', () => {
+    let cssModel: SDK.CSSModel.CSSModel;
+    let domModel: SDK.DOMModel.DOMModel;
+    let parentNode: sinon.SinonStubbedInstance<SDK.DOMModel.DOMNode>;
+    let fooNode: sinon.SinonStubbedInstance<SDK.DOMModel.DOMNode>;
+    let siblingNode: sinon.SinonStubbedInstance<SDK.DOMModel.DOMNode>;
+    let childNode: sinon.SinonStubbedInstance<SDK.DOMModel.DOMNode>;
+    let childOfSiblingNode: sinon.SinonStubbedInstance<SDK.DOMModel.DOMNode>;
+    let modelChangedListener: sinon.SinonSpy;
+
+    beforeEach(() => {
+      cssModel = domNode1.domModel().cssModel() as SDK.CSSModel.CSSModel;
+      assert.isOk(cssModel);
+      domModel = domNode1.domModel();
+
+      parentNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+      fooNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+      siblingNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+      childNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+      childOfSiblingNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+
+      fooNode.domModel.returns(domModel);
+
+      // Hierarchical structure:
+      // parent
+      //   foo
+      //     child
+      //   sibling
+      //     child-of-sibling
+      (fooNode as unknown as {parentNode: SDK.DOMModel.DOMNode | null}).parentNode =
+          parentNode as unknown as SDK.DOMModel.DOMNode;
+      (siblingNode as unknown as {parentNode: SDK.DOMModel.DOMNode | null}).parentNode =
+          parentNode as unknown as SDK.DOMModel.DOMNode;
+      (childNode as unknown as {parentNode: SDK.DOMModel.DOMNode | null}).parentNode =
+          fooNode as unknown as SDK.DOMModel.DOMNode;
+      (childOfSiblingNode as unknown as {parentNode: SDK.DOMModel.DOMNode | null}).parentNode =
+          siblingNode as unknown as SDK.DOMModel.DOMNode;
+
+      parentNode.isAncestor.withArgs(fooNode as unknown as SDK.DOMModel.DOMNode).returns(true);
+      fooNode.isAncestor.returns(false);
+      siblingNode.isAncestor.returns(false);
+      childNode.isAncestor.returns(false);
+      childOfSiblingNode.isAncestor.returns(false);
+
+      computedStyleModel.node = fooNode as unknown as SDK.DOMModel.DOMNode;
+
+      modelChangedListener = sinon.spy();
+      computedStyleModel.addEventListener(ComputedStyle.ComputedStyleModel.Events.CSS_MODEL_CHANGED,
+                                          modelChangedListener);
+    });
+
+    it('emits CSS_MODEL_CHANGED when a sibling node is mutated', () => {
+      domModel.dispatchEventToListeners(SDK.DOMModel.Events.DOMMutated, siblingNode as unknown as SDK.DOMModel.DOMNode);
+      sinon.assert.calledOnce(modelChangedListener);
+    });
+
+    it('does not emit CSS_MODEL_CHANGED when a sibling\'s child node is mutated', () => {
+      domModel.dispatchEventToListeners(SDK.DOMModel.Events.DOMMutated,
+                                        childOfSiblingNode as unknown as SDK.DOMModel.DOMNode);
+      sinon.assert.notCalled(modelChangedListener);
+    });
+
+    it('emits CSS_MODEL_CHANGED when a parent node is mutated', () => {
+      domModel.dispatchEventToListeners(SDK.DOMModel.Events.DOMMutated, parentNode as unknown as SDK.DOMModel.DOMNode);
+      sinon.assert.calledOnce(modelChangedListener);
+    });
+
+    it('does not emit CSS_MODEL_CHANGED when a child node is mutated', () => {
+      domModel.dispatchEventToListeners(SDK.DOMModel.Events.DOMMutated, childNode as unknown as SDK.DOMModel.DOMNode);
+      sinon.assert.notCalled(modelChangedListener);
+    });
+  });
+
   describe('computePropertyTraces', () => {
     it('should return a map of property traces from the matched styles', async () => {
       const mockMatchedStyles = await getMatchedStyles({
