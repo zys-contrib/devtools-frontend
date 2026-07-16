@@ -4,6 +4,7 @@
 
 import '../../../ui/legacy/components/data_grid/data_grid.js';
 
+import * as Common from '../../../core/common/common.js';
 import * as i18n from '../../../core/i18n/i18n.js';
 import * as SDK from '../../../core/sdk/sdk.js';
 import type * as Protocol from '../../../generated/protocol.js';
@@ -14,6 +15,7 @@ import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
 import adsViewStyles from './adsView.css.js';
 
 const {html} = Lit;
+const {bindToSetting} = UI.UIUtils;
 
 const UIStrings = {
   /**
@@ -74,6 +76,19 @@ const UIStrings = {
    * @description Accessible name for the ad iframes table.
    */
   adIframes: 'Ad iframes',
+  /**
+   * @description Title for the settings section.
+   */
+  settings: 'Settings',
+  /**
+   * @description The name of a checkbox setting. This setting highlights the
+   * rendering elements for ads that are found on the page.
+   */
+  highlightAds: 'Highlight ads',
+  /**
+   * @description Explanation text for the 'Highlight ads' setting.
+   */
+  highlightsElementsRedDetectedToBe: 'Highlights elements (red) detected to be ads.',
 } as const;
 
 const str_ = i18n.i18n.registerUIStrings('panels/application/components/AdsView.ts', UIStrings);
@@ -206,6 +221,14 @@ const DEFAULT_VIEW: View = (input, output, target) => {
           </table>
         </devtools-data-grid>
       </div>
+      <div class="settings-title">${i18nString(UIStrings.settings)}</div>
+      <devtools-checkbox class="setting-container"
+          ${bindToSetting(Common.Settings.Settings.instance().moduleSetting('show-ad-highlights'))}>
+        <div class="setting-text-container">
+          <div class="setting-label">${i18nString(UIStrings.highlightAds)}</div>
+          <div class="setting-explanation">${i18nString(UIStrings.highlightsElementsRedDetectedToBe)}</div>
+        </div>
+      </devtools-checkbox>
     </div>
   `, target);
   // clang-format on

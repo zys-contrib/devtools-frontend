@@ -5,6 +5,7 @@
 import {assert} from 'chai';
 import * as sinon from 'sinon';
 
+import * as Common from '../../../core/common/common.js';
 import * as SDK from '../../../core/sdk/sdk.js';
 import type * as Protocol from '../../../generated/protocol.js';
 import {raf, renderElementIntoDOM} from '../../../testing/DOMHelpers.js';
@@ -242,6 +243,32 @@ describeWithEnvironment('AdsView', () => {
     assert.include(panel.contentElement.textContent, 'Ad iframes (total 1)');
     assert.notInclude(panel.contentElement.textContent, 'https://example.com');
     assert.include(panel.contentElement.textContent, 'https://example2.com');
+
+    panel.detach();
+  });
+
+  it('toggles ad highlights when the checkbox is clicked', async () => {
+    const panel = new ApplicationComponents.AdsView.AdsView();
+    renderElementIntoDOM(panel);
+    await panel.updateComplete;
+    await RenderCoordinator.done();
+
+    const setting = Common.Settings.Settings.instance().moduleSetting('show-ad-highlights');
+    setting.set(false);
+    await panel.updateComplete;
+    await RenderCoordinator.done();
+
+    const devtoolsCheckbox = panel.contentElement.querySelector('devtools-checkbox');
+    assert.isNotNull(devtoolsCheckbox);
+    assert.isFalse(devtoolsCheckbox.checked, 'Checkbox should initially be unchecked');
+
+    // Click the checkbox
+    devtoolsCheckbox.click();
+    await panel.updateComplete;
+    await RenderCoordinator.done();
+
+    assert.isTrue(setting.get(), 'Setting should be true after checking the box');
+    assert.isTrue(devtoolsCheckbox.checked, 'Checkbox should be checked after click');
 
     panel.detach();
   });

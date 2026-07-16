@@ -216,9 +216,14 @@ export class RenderingOptionsView extends UI.Widget.VBox {
     this.#appendCheckbox(
         i18nString(UIStrings.scrollingPerformanceIssues), i18nString(UIStrings.highlightsElementsTealThatCan),
         Common.Settings.Settings.instance().moduleSetting('show-scroll-bottleneck-rects'));
-    this.#appendCheckbox(
-        i18nString(UIStrings.highlightAds), i18nString(UIStrings.highlightsElementsRedDetectedToBe),
-        Common.Settings.Settings.instance().moduleSetting('show-ad-highlights'));
+
+    // The 'Highlight ads' setting now lives in the Ads panel under Application.
+    // We display this legacy setting only when the Ads panel isn't enabled.
+    if (!Root.Runtime.hostConfig.devToolsAdsPanel?.enabled) {
+      this.#appendCheckbox(i18nString(UIStrings.highlightAds), i18nString(UIStrings.highlightsElementsRedDetectedToBe),
+                           Common.Settings.Settings.instance().moduleSetting('show-ad-highlights'));
+    }
+
     this.#appendCheckbox(
         i18nString(UIStrings.disableLocalFonts), i18nString(UIStrings.disablesLocalSourcesInFontface),
         Common.Settings.Settings.instance().moduleSetting('local-fonts-disabled'));
