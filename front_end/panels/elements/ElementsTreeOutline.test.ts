@@ -23,7 +23,8 @@ describeWithEnvironment('ElementsTreeOutline', () => {
   beforeEach(() => {
     target = createTarget();
 
-    treeOutline = new Elements.ElementsTreeOutline.ElementsTreeOutline(/* omitRootDOMNode */ true);
+    treeOutline =
+        new Elements.ElementsTreeOutline.ElementsTreeOutline(/* omitRootDOMNode */ true, /* selectEnabled */ true);
     treeOutline.wireToDOMModel(target.model(SDK.DOMModel.DOMModel) as SDK.DOMModel.DOMModel);
 
     const modelBeforeAssertion = target.model(SDK.DOMModel.DOMModel);
@@ -770,5 +771,103 @@ describeWithEnvironment('ElementsTreeOutline', () => {
 
     assert.isUndefined(aNode.getAttribute('xlink:href'));
     assert.isNull(getAttributeValue('xlink:href'));
+  });
+
+  it('properly populates and selects after immediate updates', async () => {
+    sinon.stub(model.target().domAgent(), 'invoke_requestChildNodes').callsFake(async payload => {
+      const nodeId = payload.nodeId;
+      if (nodeId === 3) {  // 3 is the BODY node ID
+        const child1 = {
+          nodeId: 4 as Protocol.DOM.NodeId,
+          parentId: 3 as Protocol.DOM.NodeId,
+          backendNodeId: 4 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'DIV',
+          localName: 'div',
+          nodeValue: '',
+          childNodeCount: 0,
+          attributes: [],
+        } as Protocol.DOM.Node;
+        const child2 = {
+          nodeId: 5 as Protocol.DOM.NodeId,
+          parentId: 3 as Protocol.DOM.NodeId,
+          backendNodeId: 5 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'DIV',
+          localName: 'div',
+          nodeValue: '',
+          childNodeCount: 0,
+          attributes: [],
+        } as Protocol.DOM.Node;
+
+        // Simulating the backend pushing the children to the model
+        model.setChildNodes(3 as Protocol.DOM.NodeId, [child1, child2]);
+      }
+      return {getError: () => undefined} as Protocol.ProtocolResponseWithError;
+    });
+
+    const bodyPayload = {
+      nodeId: 3 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'BODY',
+      localName: 'body',
+      nodeValue: '',
+      childNodeCount: 2,
+    } as Protocol.DOM.Node;
+
+    const htmlPayload = {
+      nodeId: 2 as Protocol.DOM.NodeId,
+      parentId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'HTML',
+      localName: 'html',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [bodyPayload],
+    } as Protocol.DOM.Node;
+
+    const rootNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+      nodeId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.DOCUMENT_NODE,
+      nodeName: '#document',
+      localName: '',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [htmlPayload],
+    });
+    assert.isNotNull(rootNode);
+    treeOutline.rootDOMNode = rootNode;
+
+    const htmlNode = rootNode.children()![0];
+    const node = htmlNode.children()![0];
+
+    treeOutline.selectDOMNode(node);
+
+    assert.isNull(node.children());
+    assert.strictEqual(node.childNodeCount(), 2);
+
+    // Any operation that modifies the node, followed by an immediate, synchronous update.
+    model.childNodeCountUpdated(node.id, 3);
+    treeOutline.updateModifiedNodes();
+
+    assert.isNull(node.children());
+    assert.strictEqual(node.childNodeCount(), 3);
+
+    const treeElement = treeOutline.findTreeElement(node) as Elements.ElementsTreeElement.ElementsTreeElement;
+    assert.isNotNull(treeElement);
+
+    treeElement.expand();
+    await new Promise(r => setTimeout(r, 0));
+
+    assert.strictEqual(treeElement.childCount(), 3);
+
+    treeOutline.selectDOMNode(node, true);
+
+    const selectedTreeElement = treeOutline.selectedTreeElement as Elements.ElementsTreeElement.ElementsTreeElement;
+    assert.strictEqual(selectedTreeElement?.node().nodeName(), 'BODY');
   });
 });
