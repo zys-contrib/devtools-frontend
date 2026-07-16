@@ -155,11 +155,101 @@ describeWithEnvironment('HeapProfileView', () => {
     // Change to TREE
     view.viewType.set(Profiler.HeapProfileView.ViewTypes.TREE);
     view.changeView();
-    assert.strictEqual(view.visibleView, view.dataGrid.asWidget());
+    assert.strictEqual(view.visibleView, view.dataGrid);
 
     // Change to FLAME
     view.viewType.set(Profiler.HeapProfileView.ViewTypes.FLAME);
     view.changeView();
     assert.strictEqual(view.visibleView, view.flameChart);
+  });
+
+  it('displays pageFunction and anonymous functions in the tree', async () => {
+    const mockHeader = {
+      profileType: () => ({
+        hasTemporaryView: () => false,
+        addEventListener: () => ({} as Common.EventTarget.EventDescriptor),
+        removeEventListener: () => {},
+      } as unknown as Profiler.HeapProfileView.SamplingHeapProfileTypeBase),
+      heapProfilerModel: () => null,
+      protocolProfile: () => ({
+        head: {
+          callFrame: {
+            functionName: 'root',
+            scriptId: '0' as Protocol.Runtime.ScriptId,
+            url: '',
+            lineNumber: 0,
+            columnNumber: 0
+          },
+          selfSize: 0,
+          id: 0,
+          children: [{
+            callFrame: {
+              functionName: 'pageFunction',
+              scriptId: '1' as Protocol.Runtime.ScriptId,
+              url: 'test.js',
+              lineNumber: 1,
+              columnNumber: 1
+            },
+            selfSize: 0,
+            id: 1,
+            children: [{
+              callFrame: {
+                functionName: '(anonymous)',
+                scriptId: '1' as Protocol.Runtime.ScriptId,
+                url: 'test.js',
+                lineNumber: 2,
+                columnNumber: 1
+              },
+              selfSize: 1000000,
+              id: 2,
+              children: []
+            }]
+          }]
+        },
+        samples: [],
+        startTime: 0,
+        endTime: 0,
+        nodes: [],
+      }),
+    } as unknown as Profiler.HeapProfileView.SamplingHeapProfileHeader;
+
+    const view = new Profiler.HeapProfileView.HeapProfileView(mockHeader);
+
+    // Test TREE view
+    view.viewType.set(Profiler.HeapProfileView.ViewTypes.TREE);
+    view.changeView();
+
+    let tree = view.profileDataGridTree;
+    assert.isNotNull(tree);
+
+    let children = tree!.children as Profiler.ProfileDataGrid.ProfileDataGridNode[];
+    assert.lengthOf(children, 1);
+    const pageFunctionNode = children[0];
+    assert.strictEqual(pageFunctionNode.functionName, 'pageFunction');
+    assert.strictEqual(pageFunctionNode.url, 'test.js');
+
+    pageFunctionNode.populate();
+    const pageFunctionChildren = pageFunctionNode.children as Profiler.ProfileDataGrid.ProfileDataGridNode[];
+    assert.lengthOf(pageFunctionChildren, 1);
+    const anonymousNode = pageFunctionChildren[0];
+    assert.strictEqual(anonymousNode.functionName, '(anonymous)');
+    assert.strictEqual(anonymousNode.url, 'test.js');
+
+    // Test HEAVY view
+    view.viewType.set(Profiler.HeapProfileView.ViewTypes.HEAVY);
+    view.changeView();
+
+    tree = view.profileDataGridTree;
+    assert.isNotNull(tree);
+
+    children = tree!.children as Profiler.ProfileDataGrid.ProfileDataGridNode[];
+    const anonymousNodeHeavy = children.find(node => node.functionName === '(anonymous)');
+    assert.isDefined(anonymousNodeHeavy);
+    assert.strictEqual(anonymousNodeHeavy!.url, 'test.js');
+
+    anonymousNodeHeavy!.populate();
+    const anonymousChildrenHeavy = anonymousNodeHeavy!.children as Profiler.ProfileDataGrid.ProfileDataGridNode[];
+    const pageFunctionNodeHeavy = anonymousChildrenHeavy.find(node => node.functionName === 'pageFunction');
+    assert.isDefined(pageFunctionNodeHeavy);
   });
 });

@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 /* eslint-disable @devtools/no-imperative-dom-api */
 
+import '../../ui/components/icon_button/icon_button.js';
+
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as i18n from '../../core/i18n/i18n.js';
@@ -12,12 +14,12 @@ import type * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as CPUProfile from '../../models/cpu_profile/cpu_profile.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
-import * as DataGrid from '../../ui/legacy/components/data_grid/data_grid.js';
+import type * as DataGrid from '../../ui/legacy/components/data_grid/data_grid.js';
 import * as PerfUI from '../../ui/legacy/components/perf_ui/perf_ui.js';
 import * as SettingsUI from '../../ui/legacy/components/settings_ui/settings_ui.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
 import * as UI from '../../ui/legacy/legacy.js';
-import {Directives, html, nothing, type TemplateResult} from '../../ui/lit/lit.js';
+import {Directives, html, nothing, render, type TemplateResult} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import {BottomUpProfileDataGridTree} from './BottomUpProfileDataGrid.js';
@@ -27,6 +29,8 @@ import {ProfileFlameChart, ProfileFlameChartDataProvider} from './ProfileFlameCh
 import {ProfileEvents, type ProfileHeader, ProfileType} from './ProfileHeader.js';
 import {TopDownProfileDataGridTree} from './TopDownProfileDataGrid.js';
 import {WritableProfileHeader} from './WritableProfileHeader.js';
+
+const {repeat, ref} = Directives;
 
 const UIStrings = {
   /**
@@ -160,11 +164,15 @@ const UIStrings = {
    * @description Text for selecting different profile views in the JS profiler tool. This option is a tree view.
    */
   treeTopDown: 'Tree (Top Down)',
+
+  /**
+   * @description Tooltip to alert developers that some parts of code in execution were not optimized.
+   * @example {Optimized too many times} PH1
+   */
+  notOptimizedS: 'Not optimized: {PH1}',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/profiler/HeapProfileView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
-const {ref} = Directives;
-
 function convertToSamplingHeapProfile(profileHeader: SamplingHeapProfileHeader):
     Protocol.HeapProfiler.SamplingHeapProfile {
   return (profileHeader.profile || profileHeader.protocolProfile()) as Protocol.HeapProfiler.SamplingHeapProfile;
@@ -192,11 +200,15 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   readonly timelineOverview: HeapTimelineOverview = new HeapTimelineOverview();
   profileInternal: CPUProfile.ProfileTreeModel.ProfileTreeModel|null = null;
   searchableViewInternal!: UI.SearchableView.SearchableView;
-  dataGrid: DataGrid.DataGrid.DataGridImpl<unknown>;
+  dataGrid: UI.Widget.Widget;
   viewSelectComboBox: HTMLSelectElement|undefined;
   focusButton: Buttons.Button.Button|undefined;
   excludeButton: Buttons.Button.Button|undefined;
   resetButton: Buttons.Button.Button|undefined;
+  #sortColumnId = 'self';
+  #sortAscending = false;
+  #selectedNode: ProfileDataGridNode|null = null;
+
   readonly linkifierInternal: Components.Linkifier.Linkifier = new Components.Linkifier.Linkifier(maxLinkLength);
   nodeFormatter!: Formatter;
   viewType!: Common.Settings.Setting<ViewTypes>;
@@ -205,7 +217,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   currentSearchResultIndex?: number;
   dataProvider?: ProfileFlameChartDataProvider;
   flameChart?: ProfileFlameChart;
-  visibleView?: ProfileFlameChart|DataGrid.DataGrid.DataGridWidget<unknown>;
+  visibleView?: UI.Widget.Widget;
   searchableElement?: ProfileDataGridTree|ProfileFlameChart;
   profileDataGridTree?: ProfileDataGridTree;
 
@@ -225,7 +237,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
 
     this.#setupSearchableView();
 
-    this.dataGrid = this.#createDataGrid();
+    this.dataGrid = new UI.Widget.VBox();
 
     this.profileHeader = profileHeader;
     this.profileType = profileHeader.profileType();
@@ -258,40 +270,110 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     this.searchableViewInternal.show(this.element);
   }
 
-  #createDataGrid(): DataGrid.DataGrid.DataGridImpl<unknown> {
-    const columns: DataGrid.DataGrid.ColumnDescriptor[] = [];
-    columns.push({
-      id: 'self',
-      title: this.columnHeader('self'),
-      width: '120px',
-      fixedWidth: true,
-      sortable: true,
-      sort: DataGrid.DataGrid.Order.Descending,
-    });
-    columns.push({
-      id: 'total',
-      title: this.columnHeader('total'),
-      width: '120px',
-      fixedWidth: true,
-      sortable: true,
-    });
-    columns.push({
-      id: 'function',
-      title: i18nString(UIStrings.function),
-      disclosure: true,
-      sortable: true,
-    });
+  #renderDataGrid(): void {
+    if (!this.profileDataGridTree) {
+      return;
+    }
+    const onSort = (e: CustomEvent<{columnId: string, ascending: boolean}>): void => {
+      this.#sortColumnId = e.detail.columnId;
+      this.#sortAscending = e.detail.ascending;
+      this.sortProfile();
+    };
 
-    const dataGrid = new DataGrid.DataGrid.DataGridImpl({
-      displayName: i18nString(UIStrings.profiler),
-      columns,
-    });
-    dataGrid.addEventListener(DataGrid.DataGrid.Events.SORTING_CHANGED, this.sortProfile, this);
-    dataGrid.addEventListener(DataGrid.DataGrid.Events.SELECTED_NODE, this.nodeSelected.bind(this, true));
-    dataGrid.addEventListener(DataGrid.DataGrid.Events.DESELECTED_NODE, this.nodeSelected.bind(this, false));
-    dataGrid.setRowContextMenuCallback(this.populateContextMenu.bind(this));
+    const onDeselect = (): void => {
+      this.#selectedNode = null;
+      this.nodeSelected(false);
+    };
 
-    return dataGrid;
+    // clang-format off
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`
+      <devtools-data-grid class="flex-auto" name=${i18nString(UIStrings.profiler)} striped autofocus resize="last"
+                          @sort=${onSort} @deselect=${onDeselect} .template=${html`
+        <table>
+          <tr>
+            <th id="self" width="120px" fixed weight="1" sortable
+                sort=${this.#sortColumnId === 'self' ? (this.#sortAscending ? 'ascending' : 'descending') : 'none'}>
+              ${this.columnHeader('self')}
+            </th>
+            <th id="total" width="120px" fixed weight="1" sortable
+                sort=${this.#sortColumnId === 'total' ? (this.#sortAscending ? 'ascending' : 'descending') : 'none'}>
+              ${this.columnHeader('total')}
+            </th>
+            <th id="function" weight="3" sortable disclosure
+                sort=${this.#sortColumnId === 'function' ? (this.#sortAscending ? 'ascending' : 'descending') : 'none'}>
+              ${i18nString(UIStrings.function)}
+            </th>
+          </tr>
+          ${repeat(this.profileDataGridTree.children,
+                   (node: ProfileDataGridNode) => node.callUID,
+                   (node: ProfileDataGridNode) => this.#renderNode(node))}
+        </table>`}>
+      </devtools-data-grid>
+    `, this.dataGrid.element);
+    // clang-format on
+  }
+
+  #renderNode(node: ProfileDataGridNode): TemplateResult {
+    const onSelect = (): void => {
+      this.#selectedNode = node;
+      this.nodeSelected(true);
+    };
+    const onContextMenu = (event: CustomEvent<UI.ContextMenu.ContextMenu>): void => {
+      this.populateContextMenu(event.detail, node);
+    };
+    const onExpand = (): void => {
+      node.expanded = true;
+      node.populate();
+      this.refresh();
+    };
+    const onCollapse = (): void => {
+      node.expanded = false;
+      this.refresh();
+    };
+
+    if (node.profileNode.scriptId !== '0' && !node.linkElement) {
+      node.linkElement = this.nodeFormatter.linkifyNode(node);
+      if (node.linkElement) {
+        (node.linkElement as HTMLElement).style.maxWidth = '75%';
+      }
+    }
+
+    // clang-format off
+    return html`
+      <tr data-uid=${node.callUID} ?selected=${this.#selectedNode === node} ?expanded=${node.expanded} @select=${onSelect}
+          @contextmenu=${onContextMenu} @expand=${onExpand} @collapse=${onCollapse}>
+        <td data-value=${node.self} class="numeric-column ${node.searchMatchedSelfColumn ? 'highlight' : ''}"
+            aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.self, node)}, ${this.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
+          <div class="profile-multiple-values">
+            <span>${this.nodeFormatter.formatValue(node.self, node)}</span>
+            <span class="percent-column">${this.nodeFormatter.formatPercent(node.selfPercent, node)}</span>
+          </div>
+        </td>
+        <td data-value=${node.total} class="numeric-column ${node.searchMatchedTotalColumn ? 'highlight' : ''}"
+            aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.total, node)}, ${this.nodeFormatter.formatPercent(node.totalPercent, node)}`}>
+          <div class="profile-multiple-values">
+            <span>${this.nodeFormatter.formatValue(node.total, node)}</span>
+            <span class="percent-column">${this.nodeFormatter.formatPercent(node.totalPercent, node)}</span>
+          </div>
+        </td>
+        <td data-value=${node.functionName} class="${node.searchMatchedFunctionColumn ? 'highlight' : ''} ${node.deoptReason ? 'not-optimized' : ''}">
+          ${node.deoptReason ? html`
+            <devtools-icon name="warning-filled" class="profile-warn-marker small"
+                           title=${i18nString(UIStrings.notOptimizedS, {PH1: node.deoptReason})}>
+            </devtools-icon>` : nothing}
+          ${node.functionName}
+          ${node.linkElement ? node.linkElement : nothing}
+        </td>
+        ${node.hasChildren() ? html`
+          <td><table>
+            ${node.expanded ? html`${repeat(
+                node.children as ProfileDataGridNode[],
+                child => child.callUID,
+                child => this.#renderNode(child))}` : nothing}
+          </table></td>` : nothing}
+      </tr>`;
+    // clang-format on
   }
 
   override async toolbarItems(): Promise<TemplateResult> {
@@ -504,22 +586,11 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     if (!this.profileDataGridTree) {
       return;
     }
-    this.dataGrid.rootNode().removeChildren();
-
-    const children = this.profileDataGridTree.children;
-    const count = children.length;
-
-    for (let index = 0; index < count; ++index) {
-      this.dataGrid.rootNode().appendChild(children[index]);
-    }
+    this.#renderDataGrid();
   }
 
   refreshVisibleData(): void {
-    let child: (DataGrid.DataGrid.DataGridNode<unknown>|null) = this.dataGrid.rootNode().children[0];
-    while (child) {
-      child.refresh();
-      child = child.traverseNextNode(false, null, true);
-    }
+    this.#renderDataGrid();
   }
 
   searchableView(): UI.SearchableView.SearchableView {
@@ -541,24 +612,44 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   onSearchCanceled(): void {
     if (this.searchableElement) {
       this.searchableElement.onSearchCanceled();
+      this.refresh();
     }
   }
 
   performSearch(searchConfig: UI.SearchableView.SearchConfig, shouldJump: boolean, jumpBackwards?: boolean): void {
     if (this.searchableElement) {
       this.searchableElement.performSearch(searchConfig, shouldJump, jumpBackwards);
+      this.refresh();
     }
   }
 
   jumpToNextSearchResult(): void {
     if (this.searchableElement) {
       this.searchableElement.jumpToNextSearchResult();
+      this.#syncSearchSelection();
     }
   }
 
   jumpToPreviousSearchResult(): void {
     if (this.searchableElement) {
       this.searchableElement.jumpToPreviousSearchResult();
+      this.#syncSearchSelection();
+    }
+  }
+
+  #syncSearchSelection(): void {
+    if (this.searchableElement === this.profileDataGridTree && this.profileDataGridTree) {
+      const searchResult = this.profileDataGridTree.searchResults[this.profileDataGridTree.searchResultIndex];
+      this.#selectedNode = searchResult?.profileNode || null;
+
+      let node = this.#selectedNode;
+      while (node?.parent) {
+        node.parent.expanded = true;
+        node = node.parent as ProfileDataGridNode;
+      }
+
+      this.nodeSelected(!!this.#selectedNode);
+      this.refresh();
     }
   }
 
@@ -597,14 +688,17 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     void Common.Revealer.reveal(uiLocation);
   }
 
-  changeView(): void {
+  changeView(e?: Event): void {
     if (!this.profileInternal) {
       return;
     }
 
-    if (this.viewSelectComboBox) {
-      this.viewType.set(this.viewSelectComboBox.value as ViewTypes);
+    if (e) {
+      const select = e.target as HTMLSelectElement;
+      this.viewType.set(select.value as ViewTypes);
     }
+    this.#selectedNode = null;
+    this.#isNodeSelected = false;
     this.performUpdate();
   }
 
@@ -614,7 +708,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   }
 
   focusClicked(): void {
-    if (!this.dataGrid.selectedNode) {
+    if (!this.#selectedNode) {
       return;
     }
 
@@ -622,7 +716,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     this.performUpdate();
     this.resetButton?.focus();
     if (this.profileDataGridTree) {
-      this.profileDataGridTree.focus((this.dataGrid.selectedNode as ProfileDataGridNode));
+      this.profileDataGridTree.focus(this.#selectedNode);
     }
     this.refresh();
     this.refreshVisibleData();
@@ -630,7 +724,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   }
 
   excludeClicked(): void {
-    const selectedNode = this.dataGrid.selectedNode;
+    const selectedNode = this.#selectedNode;
 
     if (!selectedNode) {
       return;
@@ -640,10 +734,11 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     this.performUpdate();
     this.resetButton?.focus();
 
-    selectedNode.deselect();
+    this.#selectedNode = null;
+    this.nodeSelected(false);
 
     if (this.profileDataGridTree) {
-      this.profileDataGridTree.exclude((selectedNode as ProfileDataGridNode));
+      this.profileDataGridTree.exclude(selectedNode);
     }
     this.refresh();
     this.refreshVisibleData();
@@ -653,6 +748,8 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   resetClicked(): void {
     this.viewSelectComboBox?.focus();
     this.#isResetEnabled = false;
+    this.#selectedNode = null;
+    this.#isNodeSelected = false;
     this.performUpdate();
     if (this.profileDataGridTree) {
       this.profileDataGridTree.restore();
@@ -666,8 +763,8 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     if (!this.profileDataGridTree) {
       return;
     }
-    const sortAscending = this.dataGrid.isSortOrderAscending();
-    const sortColumnId = this.dataGrid.sortColumnId();
+    const sortAscending = this.#sortAscending;
+    const sortColumnId = this.#sortColumnId;
     const sortProperty = sortColumnId === 'function' ? 'functionName' : sortColumnId || '';
     this.profileDataGridTree.sort(ProfileDataGridTree.propertyComparator(sortProperty, sortAscending), false);
 
@@ -692,13 +789,13 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
         case ViewTypes.TREE:
           this.profileDataGridTree = this.getTopDownProfileDataGridTree();
           this.sortProfile();
-          this.visibleView = this.dataGrid.asWidget();
+          this.visibleView = this.dataGrid;
           this.searchableElement = this.profileDataGridTree;
           break;
         case ViewTypes.HEAVY:
           this.profileDataGridTree = this.getBottomUpProfileDataGridTree();
           this.sortProfile();
-          this.visibleView = this.dataGrid.asWidget();
+          this.visibleView = this.dataGrid;
           this.searchableElement = this.profileDataGridTree;
           break;
       }

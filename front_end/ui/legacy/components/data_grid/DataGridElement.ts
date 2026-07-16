@@ -248,6 +248,7 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
       const sort = column.getAttribute('sort') === 'descending' ? Order.Descending :
           column.getAttribute('sort') === 'ascending'           ? Order.Ascending :
                                                                   undefined;
+      const disclosure = hasBooleanAttribute(column, 'disclosure');
       const columnDescriptor = {
         id,
         title: title as Platform.UIString.LocalizedString,
@@ -260,6 +261,7 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
         weight,
         editable,
         dataType,
+        disclosure,
       };
       this.#dataGrid.addColumn(columnDescriptor);
       this.#columns.push(columnDescriptor);
@@ -359,6 +361,9 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
       if (hasBooleanAttribute(element, 'highlighted')) {
         node.setHighlighted(true);
       }
+      if (hasBooleanAttribute(element, 'expanded')) {
+        node.expand();
+      }
     }
     for (const element of new Set(this.#getStyleElements(nodes))) {
       this.#shadowRoot.appendChild(element.cloneNode(true));
@@ -394,6 +399,12 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
         dataGridNode.setInactive(hasBooleanAttribute(dataRow, 'inactive'));
       } else if (attributeName === 'highlighted') {
         dataGridNode.setHighlighted(hasBooleanAttribute(dataRow, 'highlighted'));
+      } else if (attributeName === 'expanded') {
+        if (hasBooleanAttribute(dataRow, 'expanded')) {
+          dataGridNode.expand();
+        } else {
+          dataGridNode.collapse();
+        }
       } else {
         this.#updateHasChildren(dataGridNode, dataRow);
         dataGridNode.refresh();
