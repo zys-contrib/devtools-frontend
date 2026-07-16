@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as Common from '../../core/common/common.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../bindings/bindings.js';
@@ -190,7 +189,11 @@ const enum Punctuation {
 
 const resolveDebuggerScope = async(scope: SDK.DebuggerModel.ScopeChainEntry):
     Promise<{variableMapping: Map<string, string>, thisMapping: string | null}> => {
-      if (!Common.Settings.Settings.instance().moduleSetting('js-source-maps-enabled').get()) {
+      if (!scope.callFrame()
+               .debuggerModel.target()
+               .targetManager()
+               .settings.moduleSetting('js-source-maps-enabled')
+               .get()) {
         return {variableMapping: new Map(), thisMapping: null};
       }
       const script = scope.callFrame().script;
@@ -278,16 +281,17 @@ const resolveScope = async(script: SDK.Script.Script, scopeChain: Formatter.Form
 
       async function resolveSourceName(
           script: SDK.Script.Script, sourceMap: SDK.SourceMap.SourceMap, name: string,
-          position: {lineNumber: number, columnNumber: number}): Promise<string|null> {
+          position: {lineNumber: number, columnNumber: number},
+          debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+              Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()): Promise<string|null> {
         const ranges = sourceMap.findEntryRanges(position.lineNumber, position.columnNumber);
         if (!ranges) {
           return null;
         }
         // Extract the underlying text from the compiled code's range and make sure that
         // it starts with the identifier |name|.
-        const uiSourceCode =
-            Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance().uiSourceCodeForSourceMapSourceURL(
-                script.debuggerModel, ranges.sourceURL, script.isContentScript());
+        const uiSourceCode = debuggerWorkspaceBinding.uiSourceCodeForSourceMapSourceURL(
+            script.debuggerModel, ranges.sourceURL, script.isContentScript());
         if (!uiSourceCode) {
           return null;
         }
@@ -363,24 +367,27 @@ const resolveScope = async(script: SDK.Script.Script, scopeChain: Formatter.Form
     };
 
 export const resolveScopeChain =
-    async function(callFrame: SDK.DebuggerModel.CallFrame): Promise<SDK.DebuggerModel.ScopeChainEntry[]> {
-  const {pluginManager} = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
-  const scopeChain: SDK.DebuggerModel.ScopeChainEntry[]|null|undefined =
-      await pluginManager.resolveScopeChain(callFrame);
-  if (scopeChain) {
-    return scopeChain;
-  }
+    async function(callFrame: SDK.DebuggerModel.CallFrame,
+                   debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+                       Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()):
+        Promise<SDK.DebuggerModel.ScopeChainEntry[]> {
+          const {pluginManager} = debuggerWorkspaceBinding;
+          const scopeChain: SDK.DebuggerModel.ScopeChainEntry[]|null|undefined =
+              await pluginManager.resolveScopeChain(callFrame);
+          if (scopeChain) {
+            return scopeChain;
+          }
 
-  // TODO(crbug.com/465968290): Re-enable creating the scope chain from the source map once:
-  //    1) We have a flag indicating whether the source map contained variable/binding information.
-  //    2) We have a chrome feature flag.
+          // TODO(crbug.com/465968290): Re-enable creating the scope chain from the source map once:
+          //    1) We have a flag indicating whether the source map contained variable/binding information.
+          //    2) We have a chrome feature flag.
 
-  if (callFrame.script.isWasm()) {
-    return callFrame.scopeChain();
-  }
-  const thisObject = await resolveThisObject(callFrame);
-  return callFrame.scopeChain().map(scope => new ScopeWithSourceMappedVariables(scope, thisObject));
-};
+          if (callFrame.script.isWasm()) {
+            return callFrame.scopeChain();
+          }
+          const thisObject = await resolveThisObject(callFrame);
+          return callFrame.scopeChain().map(scope => new ScopeWithSourceMappedVariables(scope, thisObject));
+        };
 
 /**
  * @returns A mapping from original name -> compiled name. If the orignal name is unavailable (e.g. because the compiled name was
@@ -388,7 +395,7 @@ export const resolveScopeChain =
  */
 export const allVariablesInCallFrame =
     async(callFrame: SDK.DebuggerModel.CallFrame): Promise<Map<string, string|null>> => {
-  if (!Common.Settings.Settings.instance().moduleSetting('js-source-maps-enabled').get()) {
+  if (!callFrame.debuggerModel.target().targetManager().settings.moduleSetting('js-source-maps-enabled').get()) {
     return new Map<string, string|null>();
   }
   const cachedMap = cachedMapByCallFrame.get(callFrame);
@@ -424,11 +431,11 @@ export const allVariablesInCallFrame =
 export const allVariablesAtPosition =
     async(location: SDK.DebuggerModel.Location): Promise<Map<string, string|null>> => {
   const reverseMapping = new Map<string, string|null>();
-  if (!Common.Settings.Settings.instance().moduleSetting('js-source-maps-enabled').get()) {
-    return reverseMapping;
-  }
   const script = location.script();
   if (!script) {
+    return reverseMapping;
+  }
+  if (!script.debuggerModel.target().targetManager().settings.moduleSetting('js-source-maps-enabled').get()) {
     return reverseMapping;
   }
 
@@ -727,8 +734,9 @@ export async function resolveDebuggerFrameFunctionName(frame: SDK.DebuggerModel.
 }
 
 export async function resolveProfileFrameFunctionName(
-    {scriptId, lineNumber, columnNumber}: Partial<Protocol.Runtime.CallFrame>,
-    target: SDK.Target.Target|null): Promise<string|null> {
+    {scriptId, lineNumber, columnNumber}: Partial<Protocol.Runtime.CallFrame>, target: SDK.Target.Target|null,
+    debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+        Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()): Promise<string|null> {
   if (!target || lineNumber === undefined || columnNumber === undefined || scriptId === undefined) {
     return null;
   }
@@ -738,8 +746,6 @@ export async function resolveProfileFrameFunctionName(
   if (!debuggerModel || !script) {
     return null;
   }
-
-  const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
   const location = new SDK.DebuggerModel.Location(debuggerModel, scriptId, lineNumber, columnNumber);
   const functionInfoFromPlugin = await debuggerWorkspaceBinding.pluginManager.getFunctionInfo(script, location);
   if (functionInfoFromPlugin && 'frames' in functionInfoFromPlugin) {
