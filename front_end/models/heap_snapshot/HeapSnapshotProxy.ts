@@ -11,6 +11,7 @@ import type * as HeapSnapshotModel from './HeapSnapshotModel.js';
 
 export class HeapSnapshotWorkerProxy extends Common.ObjectWrapper.ObjectWrapper<HeapSnapshotWorkerProxy.EventTypes> {
   readonly eventHandler: (arg0: string, arg1: string) => void;
+  #console: Common.Console.Console;
   nextObjectId = 1;
   nextCallId = 1;
   callbacks = new Map<number, (...args: any[]) => void>();
@@ -19,14 +20,23 @@ export class HeapSnapshotWorkerProxy extends Common.ObjectWrapper.ObjectWrapper<
   interval?: number;
   readonly workerUrl?: string;
 
-  constructor(eventHandler: (arg0: string, arg1: string) => void, workerUrl?: string) {
+  constructor(
+      eventHandler: (arg0: string, arg1: string) => void,
+      console: Common.Console.Console,
+      workerUrl?: string,
+  ) {
     super();
     this.eventHandler = eventHandler;
+    this.#console = console;
     this.workerUrl = workerUrl;
     this.worker = Platform.HostRuntime.HOST_RUNTIME.createWorker(
         workerUrl ?? import.meta.resolve('../../entrypoints/heap_snapshot_worker/heap_snapshot_worker-entrypoint.js'),
     );
     this.worker.onmessage = this.messageReceived.bind(this);
+  }
+
+  get console(): Common.Console.Console {
+    return this.#console;
   }
 
   createLoader(profileUid: number, snapshotReceivedCallback: (arg0: HeapSnapshotProxy) => void):
@@ -159,9 +169,8 @@ export class HeapSnapshotWorkerProxy extends Common.ObjectWrapper.ObjectWrapper<
       return;
     }
     if (data.error) {
-      Common.Console.Console.instance().error(
-          `An error occurred when a call to method '${data.errorMethodName}' was requested`);
-      Common.Console.Console.instance().error(data['errorCallStack']);
+      this.#console.error(`An error occurred when a call to method '${data.errorMethodName}' was requested`);
+      this.#console.error(data['errorCallStack']);
       this.callbacks.delete(data.callId);
       return;
     }
@@ -238,7 +247,7 @@ export class HeapSnapshotLoaderProxy extends HeapSnapshotProxyObject implements 
 
   async close(): Promise<void> {
     await this.callMethodPromise('close');
-    const secondWorker = new HeapSnapshotWorkerProxy(() => {}, this.worker.workerUrl);
+    const secondWorker = new HeapSnapshotWorkerProxy(() => {}, this.worker.console, this.worker.workerUrl);
     const channel = new MessageChannel();
     await secondWorker.setupForSecondaryInit(channel.port2);
     const snapshotProxy = await this.callFactoryMethodPromise('buildSnapshot', HeapSnapshotProxy, [channel.port1]);

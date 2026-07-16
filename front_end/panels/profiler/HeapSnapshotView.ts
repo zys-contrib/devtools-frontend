@@ -1795,8 +1795,8 @@ export class HeapProfileHeader extends ProfileHeader {
 
   setupWorker(): void {
     console.assert(!this.workerProxy, 'HeapSnapshotWorkerProxy already exists');
-    this.workerProxy =
-        new HeapSnapshotModel.HeapSnapshotProxy.HeapSnapshotWorkerProxy(this.handleWorkerEvent.bind(this));
+    this.workerProxy = new HeapSnapshotModel.HeapSnapshotProxy.HeapSnapshotWorkerProxy(
+        this.handleWorkerEvent.bind(this), Common.Console.Console.instance());
     this.workerProxy.addEventListener(
         HeapSnapshotModel.HeapSnapshotProxy.HeapSnapshotWorkerProxy.Events.WAIT, event => {
           this.updateStatus(null, event.data);
