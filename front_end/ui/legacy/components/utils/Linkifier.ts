@@ -875,6 +875,10 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper<EventTypes> im
     LinkHandlerSettingUI.instance().update();
   }
 
+  static isRegisteredLinkHandlerScheme(scheme: string): boolean {
+    return linkHandlers.values().some(r => r.scheme === scheme);
+  }
+
   // The primary filter implementation for the openResourceHandlers. Returns false
   // if the handler is NOT supposed to handle the `url`. Usually, this happens if
   // a handler has registered for a particular `scheme` and the scheme for that url

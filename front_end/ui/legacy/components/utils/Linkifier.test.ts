@@ -649,6 +649,64 @@ describeWithEnvironment('ContentProviderContextMenuProvider', () => {
   });
 });
 
+describeWithEnvironment('isRegisteredLinkHandlerScheme', () => {
+  const registrations: Components.Linkifier.LinkHandlerRegistration[] = [];
+
+  afterEach(() => {
+    for (const registration of registrations) {
+      Components.Linkifier.Linkifier.unregisterLinkHandler(registration);
+    }
+    registrations.length = 0;
+  });
+
+  function registerHandler(registration: Components.Linkifier.LinkHandlerRegistration): void {
+    Components.Linkifier.Linkifier.registerLinkHandler(registration);
+    registrations.push(registration);
+  }
+
+  it('returns false when no handlers are registered', () => {
+    assert.isFalse(Components.Linkifier.Linkifier.isRegisteredLinkHandlerScheme('ext:'));
+  });
+
+  it('returns true for a registered scheme', () => {
+    registerHandler({
+      title: 'Ext A',
+      origin: urlString`ext-a:origin`,
+      scheme: 'ext-a:',
+      handler: () => {},
+      shouldHandleOpenResource: () => true,
+    });
+
+    assert.isTrue(Components.Linkifier.Linkifier.isRegisteredLinkHandlerScheme('ext-a:'));
+    assert.isFalse(Components.Linkifier.Linkifier.isRegisteredLinkHandlerScheme('ext-b:'));
+  });
+
+  it('returns false for handlers registered without a scheme', () => {
+    registerHandler({
+      title: 'Global Handler',
+      origin: urlString`global:origin`,
+      handler: () => {},
+      shouldHandleOpenResource: () => true,
+    });
+
+    assert.isFalse(Components.Linkifier.Linkifier.isRegisteredLinkHandlerScheme('global:'));
+  });
+
+  it('returns false after unregistration', () => {
+    const registration: Components.Linkifier.LinkHandlerRegistration = {
+      title: 'Ext',
+      origin: urlString`ext:origin`,
+      scheme: 'ext:',
+      handler: () => {},
+      shouldHandleOpenResource: () => true,
+    };
+    Components.Linkifier.Linkifier.registerLinkHandler(registration);
+    Components.Linkifier.Linkifier.unregisterLinkHandler(registration);
+
+    assert.isFalse(Components.Linkifier.Linkifier.isRegisteredLinkHandlerScheme('ext:'));
+  });
+});
+
 describeWithEnvironment('LinkHandlerSettingUI', () => {
   let registrations: Components.Linkifier.LinkHandlerRegistration[] = [];
 

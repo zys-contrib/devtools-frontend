@@ -477,6 +477,7 @@ const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
 /** Look for scheme:// plus text and exclude any punctuation at the end. **/
 export const URL_REGEX = /(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\/\/)[^\s"]{2,}[^\s"'\)\}\],:;.!?]/u;
+const ALWAYS_LINKIFIED_SCHEMES = new Set(['http', 'https']);
 
 let eventDispatchDesciptors: EventDispatchTypeDescriptor[];
 
@@ -859,7 +860,7 @@ export class TimelineUIUtils {
 
   static maybeCreateLinkElement(url: string): Element|null {
     const parsedURL = new Common.ParsedURL.ParsedURL(url);
-    if (!parsedURL.scheme) {
+    if (!TimelineUIUtils.isLinkifiableScheme(parsedURL.scheme)) {
       return null;
     }
 
@@ -877,6 +878,19 @@ export class TimelineUIUtils {
     };
 
     return LegacyComponents.Linkifier.Linkifier.linkifyURL(rawURL as Platform.DevToolsPath.UrlString, options);
+  }
+
+  /**
+   * Don't linkify URLs to privileged schemes. See https://crbug.com/530450502.
+   */
+  static isLinkifiableScheme(scheme: string): boolean {
+    if (ALWAYS_LINKIFIED_SCHEMES.has(scheme)) {
+      return true;
+    }
+    if (LegacyComponents.Linkifier.Linkifier.isRegisteredLinkHandlerScheme(scheme + ':')) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -1043,7 +1057,7 @@ export class TimelineUIUtils {
         const hasExclusiveLink = typeof userDetail === 'object' && typeof userDetail.url === 'string' &&
             typeof userDetail.description === 'string';
         if (hasExclusiveLink && Boolean(Root.Runtime.hostConfig.devToolsDeepLinksViaExtensibilityApi?.enabled)) {
-          const linkElement = this.maybeCreateLinkElement(String(userDetail.url));
+          const linkElement = TimelineUIUtils.maybeCreateLinkElement(String(userDetail.url));
           if (linkElement) {
             contentHelper.appendElementRow(String(userDetail.description), linkElement);
             // Now remove so we don't render them in renderObjectJson.
