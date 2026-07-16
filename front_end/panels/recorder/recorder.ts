@@ -6,7 +6,6 @@ import * as ControlButton from './ControlButton.js';
 import * as CreateRecordingView from './CreateRecordingView.js';
 import * as RecorderController from './RecorderController.js';
 import * as RecorderEvents from './RecorderEvents.js';
-import * as RecorderPanel from './RecorderPanel.js';
 import * as RecordingListView from './RecordingListView.js';
 import * as RecordingView from './RecordingView.js';
 import * as ReplaySection from './ReplaySection.js';
@@ -20,7 +19,6 @@ export {
   CreateRecordingView,
   RecorderController,
   RecorderEvents,
-  RecorderPanel,
   RecordingListView,
   RecordingView,
   ReplaySection,

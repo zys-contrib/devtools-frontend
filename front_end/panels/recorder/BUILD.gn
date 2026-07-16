@@ -30,7 +30,6 @@ devtools_ui_module("recorder") {
     "ExtensionView.ts",
     "RecorderController.ts",
     "RecorderEvents.ts",
-    "RecorderPanel.ts",
     "RecordingListView.ts",
     "RecordingView.ts",
     "ReplaySection.ts",

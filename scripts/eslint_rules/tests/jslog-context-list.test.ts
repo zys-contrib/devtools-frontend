@@ -48,7 +48,7 @@ new RuleTester().run('jslog-context-list', rule, {
           title: i18nLazyString(UIStrings.createRecording),
           async loadActionDelegate() {
             const Recorder = await loadRecorderModule();
-            return new Recorder.RecorderPanel.ActionDelegate();
+            return new Recorder.RecorderController.ActionDelegate();
           },
         });
             `,
@@ -168,7 +168,7 @@ new RuleTester().run('jslog-context-list', rule, {
 	  title: i18nLazyString(UIStrings.createRecording),
 	  async loadActionDelegate() {
 	    const Recorder = await loadRecorderModule();
-	    return new Recorder.RecorderPanel.ActionDelegate();
+	    return new Recorder.RecorderController.ActionDelegate();
 	  },
 	});
             `,

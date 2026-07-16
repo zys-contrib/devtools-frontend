@@ -1925,7 +1925,6 @@ grd_files_unbundled_sources = [
   "front_end/panels/recorder/ExtensionView.js",
   "front_end/panels/recorder/RecorderController.js",
   "front_end/panels/recorder/RecorderEvents.js",
-  "front_end/panels/recorder/RecorderPanel.js",
   "front_end/panels/recorder/RecordingListView.js",
   "front_end/panels/recorder/RecordingView.js",
   "front_end/panels/recorder/ReplaySection.js",

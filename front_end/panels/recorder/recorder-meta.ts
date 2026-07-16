@@ -61,7 +61,7 @@ function maybeRetrieveContextTypes<T = unknown>(
     return [];
   }
   if (actionId &&
-      loadedRecorderModule.RecorderPanel.RecorderPanel.instance().isActionPossible(
+      loadedRecorderModule.RecorderController.RecorderController.instance().isActionPossible(
           actionId as Actions.RecorderActions,
           )) {
     return getClassCallBack(loadedRecorderModule);
@@ -80,7 +80,7 @@ UI.ViewManager.registerViewExtension({
   persistence: UI.ViewManager.ViewPersistence.CLOSEABLE,
   async loadView() {
     const Recorder = await loadRecorderModule();
-    return Recorder.RecorderPanel.RecorderPanel.instance();
+    return Recorder.RecorderController.RecorderController.instance();
   },
 });
 
@@ -90,7 +90,7 @@ UI.ActionRegistration.registerActionExtension({
   title: i18nLazyString(UIStrings.createRecording),
   async loadActionDelegate() {
     const Recorder = await loadRecorderModule();
-    return new Recorder.RecorderPanel.ActionDelegate();
+    return new Recorder.RecorderController.ActionDelegate();
   },
 });
 
@@ -100,13 +100,13 @@ UI.ActionRegistration.registerActionExtension({
   title: i18nLazyString(UIStrings.startStopRecording),
   contextTypes() {
     return maybeRetrieveContextTypes(
-        Recorder => [Recorder.RecorderPanel.RecorderPanel],
+        Recorder => [Recorder.RecorderController.RecorderController],
         Actions.RecorderActions.START_RECORDING,
     );
   },
   async loadActionDelegate() {
     const Recorder = await loadRecorderModule();
-    return new Recorder.RecorderPanel.ActionDelegate();
+    return new Recorder.RecorderController.ActionDelegate();
   },
   bindings: [
     {
@@ -123,13 +123,13 @@ UI.ActionRegistration.registerActionExtension({
   title: i18nLazyString(UIStrings.replayRecording),
   contextTypes() {
     return maybeRetrieveContextTypes(
-        Recorder => [Recorder.RecorderPanel.RecorderPanel],
+        Recorder => [Recorder.RecorderController.RecorderController],
         Actions.RecorderActions.REPLAY_RECORDING,
     );
   },
   async loadActionDelegate() {
     const Recorder = await loadRecorderModule();
-    return new Recorder.RecorderPanel.ActionDelegate();
+    return new Recorder.RecorderController.ActionDelegate();
   },
   bindings: [
     {
@@ -146,13 +146,13 @@ UI.ActionRegistration.registerActionExtension({
   title: i18nLazyString(UIStrings.toggleCode),
   contextTypes() {
     return maybeRetrieveContextTypes(
-        Recorder => [Recorder.RecorderPanel.RecorderPanel],
+        Recorder => [Recorder.RecorderController.RecorderController],
         Actions.RecorderActions.TOGGLE_CODE_VIEW,
     );
   },
   async loadActionDelegate() {
     const Recorder = await loadRecorderModule();
-    return new Recorder.RecorderPanel.ActionDelegate();
+    return new Recorder.RecorderController.ActionDelegate();
   },
   bindings: [
     {

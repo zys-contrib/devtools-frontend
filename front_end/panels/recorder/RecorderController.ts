@@ -53,6 +53,8 @@ import {
 
 const {html, Directives: {ref}} = Lit;
 
+let recorderControllerInstance: RecorderController;
+
 const UIStrings = {
   /**
    * @description The title of the button that leads to a page for creating a new recording.
@@ -219,6 +221,18 @@ function verifyFlowSize(flow: Models.Schema.UserFlow): void {
 }
 
 export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
+  static panelName = 'chrome-recorder';
+
+  static instance(
+      opts: {forceNew?: boolean} = {},
+      ): RecorderController {
+    const {forceNew} = opts;
+    if (!recorderControllerInstance || forceNew) {
+      recorderControllerInstance = new RecorderController();
+    }
+
+    return recorderControllerInstance;
+  }
   #currentRecordingSession?: Models.RecordingSession.RecordingSession;
   get currentRecordingSession(): Models.RecordingSession.RecordingSession|undefined {
     return this.#currentRecordingSession;
@@ -435,9 +449,11 @@ export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
   #recordingView?: RecordingView;
   #createRecordingView?: CreateRecordingView;
 
-  constructor() {
-    const element = document.createElement('devtools-recorder-controller');
-    super(element, {useShadowDom: 'pure'});
+  constructor(element?: HTMLElement) {
+    const el = element || document.createElement('devtools-recorder-controller');
+    super(el, {useShadowDom: 'pure'});
+
+    this.setHideOnDetach();
 
     this.isRecording = false;
     this.isToggling = false;
@@ -462,10 +478,20 @@ export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
     extensionManager.addEventListener(Extensions.ExtensionManager.Events.EXTENSIONS_UPDATED, event => {
       this.#updateExtensions(event.data);
     });
+  }
 
-    // used in e2e tests only.
-    /* eslint-disable-next-line @devtools/no-imperative-dom-api */
-    this.element.addEventListener('setrecording', (event: Event) => this.#onSetRecording(event));
+  override wasShown(): void {
+    super.wasShown();
+    UI.Context.Context.instance().setFlavor(RecorderController, this);
+    this.requestUpdate();
+    void this.updateComplete.then(() => {
+      this.focus();
+    });
+  }
+
+  override willHide(): void {
+    super.willHide();
+    UI.Context.Context.instance().setFlavor(RecorderController, null);
   }
 
   override onDetach(): void {
@@ -1546,7 +1572,11 @@ export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
 
   override performUpdate(): void {
     // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
-    Lit.render(this.render(), this.contentElement);
+    Lit.render(this.render(), this.contentElement, {
+      container: {
+        listeners: {setrecording: this.#onSetRecording.bind(this)},
+      }
+    });
   }
 
   protected render(): Lit.TemplateResult {
@@ -1755,5 +1785,28 @@ export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
         </div>
       `;
     // clang-format on
+  }
+}
+
+export class ActionDelegate implements UI.ActionRegistration.ActionDelegate {
+  handleAction(
+      _context: UI.Context.Context,
+      actionId: Actions.RecorderActions,
+      ): boolean {
+    void (async () => {
+      await UI.ViewManager.ViewManager.instance().showView(
+          RecorderController.panelName,
+      );
+      const view = UI.ViewManager.ViewManager.instance().view(
+          RecorderController.panelName,
+      );
+
+      if (view) {
+        const widget = (await view.widget()) as RecorderController;
+
+        widget.handleActions(actionId);
+      }
+    })();
+    return true;
   }
 }
