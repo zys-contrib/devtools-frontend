@@ -237,7 +237,11 @@ export class ExtensionScope {
     return node.localName() || node.nodeName().toLowerCase();
   }
 
-  static getSourceLocation(styleRule: SDK.CSSRule.CSSStyleRule): string|undefined {
+  static getSourceLocation(
+      styleRule: SDK.CSSRule.CSSStyleRule,
+      cssWorkspaceBinding: Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding =
+          Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding.instance(),
+      ): string|undefined {
     const styleSheetHeader = styleRule.header;
     if (!styleSheetHeader) {
       return;
@@ -250,7 +254,7 @@ export class ExtensionScope {
     const lineNumber = styleSheetHeader.lineNumberInSource(range.startLine);
     const columnNumber = styleSheetHeader.columnNumberInSource(range.startLine, range.startColumn);
     const location = new SDK.CSSModel.CSSLocation(styleSheetHeader, lineNumber, columnNumber);
-    const uiLocation = Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding.instance().rawLocationToUILocation(location);
+    const uiLocation = cssWorkspaceBinding.rawLocationToUILocation(location);
     return uiLocation?.linkText(/* skipTrim= */ true, /* showColumnNumber= */ true);
   }
 

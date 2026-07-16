@@ -8,12 +8,11 @@ import sinon from 'sinon';
 import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
-import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {createResource, getMainFrame} from '../../testing/ResourceTreeHelpers.js';
 import {createCSSStyle, getMatchedStyles, ruleMatch} from '../../testing/StyleHelpers.js';
-import * as Bindings from '../bindings/bindings.js';
-import * as Workspace from '../workspace/workspace.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
+import type * as Workspace from '../workspace/workspace.js';
 
 import * as AiAssistance from './ai_assistance.js';
 
@@ -372,16 +371,16 @@ describe('ExtensionScope', () => {
     });
   });
 
-  describeWithEnvironment('getSourceLocation', () => {
+  describe('getSourceLocation', () => {
     async function setupMockedStyleRules() {
+      const universe = new TestUniverse();
       const connection = new MockCDPConnection();
-      const target = createTarget({connection});
+      const target = universe.createTarget({connection});
 
       const targetManager = target.targetManager();
       targetManager.setScopeTarget(target);
-      const workspace = Workspace.Workspace.WorkspaceImpl.instance();
-      const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(targetManager, workspace);
-      Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding.instance({forceNew: true, resourceMapping, targetManager});
+      const workspace = universe.workspace;
+      const cssWorkspaceBinding = universe.cssWorkspaceBinding;
       const sourceURL = urlString`http://localhost/something/style.css`;
       createResource(getMainFrame(target), sourceURL, 'text/html', '');
       const uiSourceCode = workspace.uiSourceCodeForURL(sourceURL) as Workspace.UISourceCode.UISourceCode;
@@ -442,12 +441,18 @@ describe('ExtensionScope', () => {
         connection,
       });
 
-      return AiAssistance.ExtensionScope.ExtensionScope.getStyleRuleFromMatchesStyles(matchedStyles)!;
+      return {
+        styleRule: AiAssistance.ExtensionScope.ExtensionScope.getStyleRuleFromMatchesStyles(matchedStyles)!,
+        cssWorkspaceBinding,
+      };
     }
 
     it('should compute a source location', async () => {
-      const styleRule = await setupMockedStyleRules();
-      assert.strictEqual(AiAssistance.ExtensionScope.ExtensionScope.getSourceLocation(styleRule), 'style.css:1:1');
+      const {styleRule, cssWorkspaceBinding} = await setupMockedStyleRules();
+      assert.strictEqual(
+          AiAssistance.ExtensionScope.ExtensionScope.getSourceLocation(styleRule, cssWorkspaceBinding),
+          'style.css:1:1',
+      );
     });
   });
 });
