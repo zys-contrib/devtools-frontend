@@ -12,9 +12,9 @@ import * as UI from '../../ui/legacy/legacy.js';
 
 import * as Models from './models/models.js';
 import {RecorderActions} from './recorder-actions/recorder-actions.js';
-import {RecorderController, StepView} from './recorder.js';
+import {RecorderPanel, StepView} from './recorder.js';
 
-describeWithEnvironment('RecorderController', () => {
+describeWithEnvironment('RecorderPanel', () => {
   setupActionRegistry();
 
   function makeRecording(): Models.RecordingStorage.StoredRecording {
@@ -29,43 +29,43 @@ describeWithEnvironment('RecorderController', () => {
     return recording;
   }
 
-  async function setupController(
+  async function setupPanel(
       recording: Models.RecordingStorage.StoredRecording,
-      ): Promise<RecorderController.RecorderController> {
-    const controller = new RecorderController.RecorderController();
-    controller.setCurrentPageForTesting(RecorderController.Pages.RECORDING_PAGE);
-    controller.setCurrentRecordingForTesting(recording);
+      ): Promise<RecorderPanel.RecorderPanel> {
+    const panel = new RecorderPanel.RecorderPanel();
+    panel.setCurrentPageForTesting(RecorderPanel.Pages.RECORDING_PAGE);
+    panel.setCurrentRecordingForTesting(recording);
     const div = document.createElement('div');
-    controller.markAsRoot();
-    controller.show(div);
-    await controller.updateComplete;
-    return controller;
+    panel.markAsRoot();
+    panel.show(div);
+    await panel.updateComplete;
+    return panel;
   }
 
   describe('Navigation', () => {
     it('should return back to the previous page if recording was cancelled', async () => {
-      const previousPage = RecorderController.Pages.ALL_RECORDINGS_PAGE;
-      const controller = new RecorderController.RecorderController();
-      controller.setCurrentPageForTesting(previousPage);
-      controller.setCurrentPageForTesting(
-          RecorderController.Pages.CREATE_RECORDING_PAGE,
+      const previousPage = RecorderPanel.Pages.ALL_RECORDINGS_PAGE;
+      const panel = new RecorderPanel.RecorderPanel();
+      panel.setCurrentPageForTesting(previousPage);
+      panel.setCurrentPageForTesting(
+          RecorderPanel.Pages.CREATE_RECORDING_PAGE,
       );
       const div = document.createElement('div');
-      controller.markAsRoot();
-      controller.show(div);
-      await controller.updateComplete;
+      panel.markAsRoot();
+      panel.show(div);
+      await panel.updateComplete;
 
-      await controller.onRecordingCancelled();
-      assert.strictEqual(controller.getCurrentPageForTesting(), previousPage);
+      await panel.onRecordingCancelled();
+      assert.strictEqual(panel.getCurrentPageForTesting(), previousPage);
     });
   });
 
   describe('StepView', () => {
     async function dispatchRecordingViewEvent(
-        controller: RecorderController.RecorderController,
+        panel: RecorderPanel.RecorderPanel,
         event: Event,
         ): Promise<void> {
-      const recordingViewWidgetElement = controller.contentElement?.querySelector<HTMLElement>(
+      const recordingViewWidgetElement = panel.contentElement?.querySelector<HTMLElement>(
           '.recording-view',
       );
       if (!recordingViewWidgetElement) {
@@ -76,7 +76,7 @@ describeWithEnvironment('RecorderController', () => {
       const recordingView = widget.contentElement?.querySelector('.recording-view');
       assert.isOk(recordingView);
       recordingView?.dispatchEvent(event);
-      await controller.updateComplete;
+      await panel.updateComplete;
     }
 
     beforeEach(() => {
@@ -89,17 +89,17 @@ describeWithEnvironment('RecorderController', () => {
 
     it('should add a new step after a step', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.AddStep(
               recording.flow.steps[0],
               StepView.AddStepPosition.AFTER,
               ),
       );
 
-      const flow = controller.getUserFlow();
+      const flow = panel.getUserFlow();
       assert.deepEqual(flow, {
         title: 'test',
         steps: [
@@ -117,22 +117,22 @@ describeWithEnvironment('RecorderController', () => {
 
     it('should add a new step after a section', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      const sections = controller.getSectionsForTesting();
+      const sections = panel.getSectionsForTesting();
       if (!sections) {
-        throw new Error('Controller is missing sections');
+        throw new Error('Panel is missing sections');
       }
       assert.lengthOf(sections, 1);
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.AddStep(
               sections[0],
               StepView.AddStepPosition.AFTER,
               ),
       );
 
-      const flow = controller.getUserFlow();
+      const flow = panel.getUserFlow();
       assert.deepEqual(flow, {
         title: 'test',
         steps: [
@@ -150,17 +150,17 @@ describeWithEnvironment('RecorderController', () => {
 
     it('should add a new step before a step', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.AddStep(
               recording.flow.steps[0],
               StepView.AddStepPosition.BEFORE,
               ),
       );
 
-      const flow = controller.getUserFlow();
+      const flow = panel.getUserFlow();
       assert.deepEqual(flow, {
         title: 'test',
         steps: [
@@ -178,31 +178,31 @@ describeWithEnvironment('RecorderController', () => {
 
     it('should delete a step', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.RemoveStep(recording.flow.steps[0]),
       );
 
-      const flow = controller.getUserFlow();
+      const flow = panel.getUserFlow();
       assert.deepEqual(flow, {title: 'test', steps: []});
     });
 
     it('should adding a new step before a step with a breakpoint update the breakpoint indexes correctly', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
       const stepIndex = 3;
 
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.AddBreakpointEvent(stepIndex),
       );
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), [
         stepIndex,
       ]);
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.AddStep(
               recording.flow.steps[0],
               StepView.AddStepPosition.BEFORE,
@@ -210,133 +210,133 @@ describeWithEnvironment('RecorderController', () => {
       );
 
       // Breakpoint index moves to the next index
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), [
         stepIndex + 1,
       ]);
     });
 
     it('should removing a step before a step with a breakpoint update the breakpoint indexes correctly', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
       const stepIndex = 3;
 
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.AddBreakpointEvent(stepIndex),
       );
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), [
         stepIndex,
       ]);
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.RemoveStep(recording.flow.steps[0]),
       );
 
       // Breakpoint index moves to the previous index
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), [
         stepIndex - 1,
       ]);
     });
 
     it('should removing a step with a breakpoint remove the breakpoint index as well', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
       const stepIndex = 0;
 
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.AddBreakpointEvent(stepIndex),
       );
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), [
         stepIndex,
       ]);
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.RemoveStep(recording.flow.steps[stepIndex]),
       );
 
       // Breakpoint index is removed
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), []);
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), []);
     });
 
     it('should "add breakpoint" event add a breakpoint', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
       const stepIndex = 1;
 
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), []);
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), []);
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.AddBreakpointEvent(stepIndex),
       );
 
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), [
         stepIndex,
       ]);
     });
 
     it('should "remove breakpoint" event remove a breakpoint', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
       const stepIndex = 1;
 
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.AddBreakpointEvent(stepIndex),
       );
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), [
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), [
         stepIndex,
       ]);
       await dispatchRecordingViewEvent(
-          controller,
+          panel,
           new StepView.RemoveBreakpointEvent(stepIndex),
       );
 
-      assert.deepEqual(controller.getStepBreakpointIndexesForTesting(), []);
+      assert.deepEqual(panel.getStepBreakpointIndexesForTesting(), []);
     });
   });
 
   describe('Create new recording action', () => {
     it('should execute action', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      await controller.handleActions(RecorderActions.CREATE_RECORDING);
+      await panel.handleActions(RecorderActions.CREATE_RECORDING);
 
       assert.strictEqual(
-          controller.getCurrentPageForTesting(),
-          RecorderController.Pages.CREATE_RECORDING_PAGE,
+          panel.getCurrentPageForTesting(),
+          RecorderPanel.Pages.CREATE_RECORDING_PAGE,
       );
     });
 
     it('should not execute action while recording', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      controller.setIsRecordingStateForTesting(true);
+      panel.setIsRecordingStateForTesting(true);
 
-      await controller.handleActions(RecorderActions.CREATE_RECORDING);
+      await panel.handleActions(RecorderActions.CREATE_RECORDING);
 
       assert.strictEqual(
-          controller.getCurrentPageForTesting(),
-          RecorderController.Pages.RECORDING_PAGE,
+          panel.getCurrentPageForTesting(),
+          RecorderPanel.Pages.RECORDING_PAGE,
       );
     });
 
     it('should not execute action while replaying', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      controller.setRecordingStateForTesting({
+      panel.setRecordingStateForTesting({
         isPlaying: true,
         isPausedOnBreakpoint: false,
       });
 
-      await controller.handleActions(RecorderActions.CREATE_RECORDING);
+      await panel.handleActions(RecorderActions.CREATE_RECORDING);
 
       assert.strictEqual(
-          controller.getCurrentPageForTesting(),
-          RecorderController.Pages.RECORDING_PAGE,
+          panel.getCurrentPageForTesting(),
+          RecorderPanel.Pages.RECORDING_PAGE,
       );
     });
   });
@@ -344,136 +344,136 @@ describeWithEnvironment('RecorderController', () => {
   describe('Action is possible', () => {
     it('should return true for create action when not replaying or recording', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
       assert.isTrue(
-          controller.isActionPossible(RecorderActions.CREATE_RECORDING),
+          panel.isActionPossible(RecorderActions.CREATE_RECORDING),
       );
     });
 
     it('should return false for create action when recording', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      controller.setRecordingStateForTesting({
+      panel.setRecordingStateForTesting({
         isPlaying: true,
         isPausedOnBreakpoint: false,
       });
 
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.CREATE_RECORDING),
+          panel.isActionPossible(RecorderActions.CREATE_RECORDING),
       );
     });
 
     it('should return false for create action when replaying', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      controller.setIsRecordingStateForTesting(true);
+      panel.setIsRecordingStateForTesting(true);
 
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.CREATE_RECORDING),
+          panel.isActionPossible(RecorderActions.CREATE_RECORDING),
       );
     });
 
     it('should return correct value for start/stop action', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
       assert.isTrue(
-          controller.isActionPossible(RecorderActions.START_RECORDING),
+          panel.isActionPossible(RecorderActions.START_RECORDING),
       );
 
-      controller.setRecordingStateForTesting({
+      panel.setRecordingStateForTesting({
         isPlaying: true,
         isPausedOnBreakpoint: false,
       });
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.START_RECORDING),
+          panel.isActionPossible(RecorderActions.START_RECORDING),
       );
     });
 
     it('should return true for replay action when on the recording page', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      controller.setCurrentPageForTesting(
-          RecorderController.Pages.RECORDING_PAGE,
+      panel.setCurrentPageForTesting(
+          RecorderPanel.Pages.RECORDING_PAGE,
       );
 
       assert.isTrue(
-          controller.isActionPossible(RecorderActions.REPLAY_RECORDING),
+          panel.isActionPossible(RecorderActions.REPLAY_RECORDING),
       );
     });
 
     it('should return false for replay action when not on the recording page', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      controller.setCurrentPageForTesting(
-          RecorderController.Pages.ALL_RECORDINGS_PAGE,
+      panel.setCurrentPageForTesting(
+          RecorderPanel.Pages.ALL_RECORDINGS_PAGE,
       );
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.REPLAY_RECORDING),
+          panel.isActionPossible(RecorderActions.REPLAY_RECORDING),
       );
 
-      controller.setCurrentPageForTesting(
-          RecorderController.Pages.CREATE_RECORDING_PAGE,
+      panel.setCurrentPageForTesting(
+          RecorderPanel.Pages.CREATE_RECORDING_PAGE,
       );
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.REPLAY_RECORDING),
+          panel.isActionPossible(RecorderActions.REPLAY_RECORDING),
       );
 
-      controller.setCurrentPageForTesting(RecorderController.Pages.START_PAGE);
+      panel.setCurrentPageForTesting(RecorderPanel.Pages.START_PAGE);
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.REPLAY_RECORDING),
+          panel.isActionPossible(RecorderActions.REPLAY_RECORDING),
       );
 
-      controller.setRecordingStateForTesting({
+      panel.setRecordingStateForTesting({
         isPlaying: true,
         isPausedOnBreakpoint: false,
       });
-      controller.setCurrentPageForTesting(
-          RecorderController.Pages.RECORDING_PAGE,
+      panel.setCurrentPageForTesting(
+          RecorderPanel.Pages.RECORDING_PAGE,
       );
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.REPLAY_RECORDING),
+          panel.isActionPossible(RecorderActions.REPLAY_RECORDING),
       );
     });
 
     it('should true for toggle when on the recording page', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      controller.setCurrentPageForTesting(
-          RecorderController.Pages.RECORDING_PAGE,
+      panel.setCurrentPageForTesting(
+          RecorderPanel.Pages.RECORDING_PAGE,
       );
       assert.isTrue(
-          controller.isActionPossible(RecorderActions.TOGGLE_CODE_VIEW),
+          panel.isActionPossible(RecorderActions.TOGGLE_CODE_VIEW),
       );
     });
 
     it('should false for toggle when on the recording page', async () => {
       const recording = makeRecording();
-      const controller = await setupController(recording);
+      const panel = await setupPanel(recording);
 
-      controller.setCurrentPageForTesting(
-          RecorderController.Pages.ALL_RECORDINGS_PAGE,
+      panel.setCurrentPageForTesting(
+          RecorderPanel.Pages.ALL_RECORDINGS_PAGE,
       );
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.TOGGLE_CODE_VIEW),
+          panel.isActionPossible(RecorderActions.TOGGLE_CODE_VIEW),
       );
 
-      controller.setCurrentPageForTesting(RecorderController.Pages.START_PAGE);
+      panel.setCurrentPageForTesting(RecorderPanel.Pages.START_PAGE);
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.TOGGLE_CODE_VIEW),
+          panel.isActionPossible(RecorderActions.TOGGLE_CODE_VIEW),
       );
 
-      controller.setCurrentPageForTesting(
-          RecorderController.Pages.ALL_RECORDINGS_PAGE,
+      panel.setCurrentPageForTesting(
+          RecorderPanel.Pages.ALL_RECORDINGS_PAGE,
       );
       assert.isFalse(
-          controller.isActionPossible(RecorderActions.TOGGLE_CODE_VIEW),
+          panel.isActionPossible(RecorderActions.TOGGLE_CODE_VIEW),
       );
     });
   });

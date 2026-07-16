@@ -27,8 +27,8 @@ import {CreateRecordingView} from './CreateRecordingView.js';
 import * as Extensions from './extensions/extensions.js';
 import * as Models from './models/models.js';
 import * as Actions from './recorder-actions/recorder-actions.js';
-import recorderControllerStyles from './recorderController.css.js';
 import * as Events from './RecorderEvents.js';
+import recorderPanelStyles from './recorderPanel.css.js';
 import {
   DeleteRecordingEvent,
   OpenRecordingEvent,
@@ -53,7 +53,7 @@ import {
 
 const {html, Directives: {ref}} = Lit;
 
-let recorderControllerInstance: RecorderController;
+let recorderPanelInstance: RecorderPanel;
 
 const UIStrings = {
   /**
@@ -169,7 +169,7 @@ const UIStrings = {
    */
   typeAllowImporting: 'Type “{PH1}”',
 } as const;
-const str_ = i18n.i18n.registerUIStrings('panels/recorder/RecorderController.ts', UIStrings);
+const str_ = i18n.i18n.registerUIStrings('panels/recorder/RecorderPanel.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 const {widget} = UI.Widget;
 
@@ -220,18 +220,18 @@ function verifyFlowSize(flow: Models.Schema.UserFlow): void {
   }
 }
 
-export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
+export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
   static panelName = 'chrome-recorder';
 
   static instance(
       opts: {forceNew?: boolean} = {},
-      ): RecorderController {
+      ): RecorderPanel {
     const {forceNew} = opts;
-    if (!recorderControllerInstance || forceNew) {
-      recorderControllerInstance = new RecorderController();
+    if (!recorderPanelInstance || forceNew) {
+      recorderPanelInstance = new RecorderPanel();
     }
 
-    return recorderControllerInstance;
+    return recorderPanelInstance;
   }
   #currentRecordingSession?: Models.RecordingSession.RecordingSession;
   get currentRecordingSession(): Models.RecordingSession.RecordingSession|undefined {
@@ -450,7 +450,7 @@ export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
   #createRecordingView?: CreateRecordingView;
 
   constructor(element?: HTMLElement) {
-    const el = element || document.createElement('devtools-recorder-controller');
+    const el = element || document.createElement('devtools-recorder-panel');
     super(el, {useShadowDom: 'pure'});
 
     this.setHideOnDetach();
@@ -482,7 +482,7 @@ export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
 
   override wasShown(): void {
     super.wasShown();
-    UI.Context.Context.instance().setFlavor(RecorderController, this);
+    UI.Context.Context.instance().setFlavor(RecorderPanel, this);
     this.requestUpdate();
     void this.updateComplete.then(() => {
       this.focus();
@@ -491,7 +491,7 @@ export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
 
   override willHide(): void {
     super.willHide();
-    UI.Context.Context.instance().setFlavor(RecorderController, null);
+    UI.Context.Context.instance().setFlavor(RecorderPanel, null);
   }
 
   override onDetach(): void {
@@ -1604,7 +1604,7 @@ export class RecorderController extends UI.Widget.VBox<DocumentFragment> {
 
     return html`
         <style>${UI.inspectorCommonStyles}</style>
-        <style>${recorderControllerStyles}</style>
+        <style>${recorderPanelStyles}</style>
         <div class="wrapper">
           <div class="header" jslog=${VisualLogging.toolbar()}>
             <devtools-button
@@ -1795,14 +1795,14 @@ export class ActionDelegate implements UI.ActionRegistration.ActionDelegate {
       ): boolean {
     void (async () => {
       await UI.ViewManager.ViewManager.instance().showView(
-          RecorderController.panelName,
+          RecorderPanel.panelName,
       );
       const view = UI.ViewManager.ViewManager.instance().view(
-          RecorderController.panelName,
+          RecorderPanel.panelName,
       );
 
       if (view) {
-        const widget = (await view.widget()) as RecorderController;
+        const widget = (await view.widget()) as RecorderPanel;
 
         widget.handleActions(actionId);
       }

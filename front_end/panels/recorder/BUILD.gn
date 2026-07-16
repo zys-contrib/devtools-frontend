@@ -12,7 +12,7 @@ generate_css("css_files") {
     "controlButton.css",
     "createRecordingView.css",
     "extensionView.css",
-    "recorderController.css",
+    "recorderPanel.css",
     "recordingListView.css",
     "recordingView.css",
     "replaySection.css",
@@ -28,8 +28,8 @@ devtools_ui_module("recorder") {
     "ControlButton.ts",
     "CreateRecordingView.ts",
     "ExtensionView.ts",
-    "RecorderController.ts",
     "RecorderEvents.ts",
+    "RecorderPanel.ts",
     "RecordingListView.ts",
     "RecordingView.ts",
     "ReplaySection.ts",
@@ -117,7 +117,7 @@ devtools_ui_module("unittests") {
 
   sources = [
     "CreateRecordingView.test.ts",
-    "RecorderController.test.ts",
+    "RecorderPanel.test.ts",
     "RecordingListView.test.ts",
     "RecordingView.test.ts",
     "ReplaySection.test.ts",

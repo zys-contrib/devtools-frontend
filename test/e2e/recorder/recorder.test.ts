@@ -10,7 +10,7 @@ import {
   changeNetworkConditions,
   fillCreateRecordingForm,
   getCurrentRecording,
-  getRecordingController,
+  getRecordingPanel,
   onRecorderAttachedToTarget,
   openRecorderPanel,
   processAndVerifyBaseRecording,
@@ -865,8 +865,8 @@ describe('Recorder', function() {
     await inspectedPage.page.keyboard.down('Enter');
 
     await devToolsPage.waitForFunction(async logger => {
-      const controller = await getRecordingController(devToolsPage);
-      const steps = await controller.evaluate(
+      const panel = await getRecordingPanel(devToolsPage);
+      const steps = await panel.evaluate(
           async c => {
             const path = './ui/legacy/legacy.js';
             const UI = await import(path);
@@ -1098,8 +1098,8 @@ describe('Recorder', function() {
     const recorderHandledPopup = onRecorderAttachedToTarget(devToolsPage);
     await openPopupButton?.click();
     await devToolsPage.waitForFunction(async () => {
-      const controller = await getRecordingController(devToolsPage);
-      return await controller.evaluate(async c => {
+      const panel = await getRecordingPanel(devToolsPage);
+      return await panel.evaluate(async c => {
         const path = './ui/legacy/legacy.js';
         const UI = await import(path);
         const widget = UI.Widget.Widget.get(c);
@@ -1125,8 +1125,8 @@ describe('Recorder', function() {
     await buttonInPopup!.click();
     await devToolsPage.bringToFront();
     await devToolsPage.waitForFunction(async () => {
-      const controller = await getRecordingController(devToolsPage);
-      return await controller.evaluate(
+      const panel = await getRecordingPanel(devToolsPage);
+      return await panel.evaluate(
           async c => {
             const path = './ui/legacy/legacy.js';
             const UI = await import(path);
@@ -1457,8 +1457,8 @@ describe('Recorder', function() {
   describe('Shortcuts', () => {
     it('should not open create a new recording while recording', async ({inspectedPage, devToolsPage}) => {
       await startRecordingViaShortcut('recorder/recorder.html', devToolsPage, inspectedPage);
-      const controller = await getRecordingController(devToolsPage);
-      await controller.evaluate(async element => {
+      const panel = await getRecordingPanel(devToolsPage);
+      await panel.evaluate(async element => {
         const path = './ui/legacy/legacy.js';
         const UI = await import(path);
         const widget = UI.Widget.Widget.get(element);
@@ -1467,7 +1467,7 @@ describe('Recorder', function() {
                 'chrome-recorder.create-recording',
             );
       });
-      const page = await controller.evaluate(async element => {
+      const page = await panel.evaluate(async element => {
         const path = './ui/legacy/legacy.js';
         const UI = await import(path);
         const widget = UI.Widget.Widget.get(element);
