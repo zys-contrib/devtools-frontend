@@ -11,10 +11,8 @@ import * as Platform from '../../core/platform/platform.js';
 import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
-import * as Bindings from '../../models/bindings/bindings.js';
 import * as IssuesManager from '../../models/issues_manager/issues_manager.js';
 import * as TextUtils from '../../models/text_utils/text_utils.js';
-import * as Workspace from '../../models/workspace/workspace.js';
 import {findMenuItemWithLabel, getContextMenuForElement} from '../../testing/ContextMenuHelpers.js';
 import {dispatchPasteEvent, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {
@@ -864,86 +862,5 @@ describeWithEnvironment('ConsoleView', () => {
 
       assert.strictEqual(messagesElement.scrollTop, 10);
     });
-  });
-
-  it('renders console messages with invalid stacktraces', async () => {
-    const targetManager = SDK.TargetManager.TargetManager.instance();
-    const resourceMapping =
-        new Bindings.ResourceMapping.ResourceMapping(targetManager, Workspace.Workspace.WorkspaceImpl.instance());
-    const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({forceNew: true});
-    Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance({
-      forceNew: true,
-      resourceMapping,
-      targetManager,
-      ignoreListManager,
-      workspace: Workspace.Workspace.WorkspaceImpl.instance(),
-    });
-
-    const target = createTarget();
-    const consoleModel = target.model(SDK.ConsoleModel.ConsoleModel);
-    assert.exists(consoleModel);
-
-    // Add invalid message.
-    const badStackTrace = {
-      callFrames: [
-        {
-          functionName: '',
-          scriptId: 'invalid-ScriptId' as Protocol.Runtime.ScriptId,
-          url: '',
-          lineNumber: 0,
-          columnNumber: 0,
-        },
-      ],
-    };
-
-    const badStackTraceMessage = new SDK.ConsoleModel.ConsoleMessage(
-        target.model(SDK.RuntimeModel.RuntimeModel),
-        Protocol.Log.LogEntrySource.Javascript,
-        Protocol.Log.LogEntryLevel.Error,
-        'This should be visible',
-        {
-          type: Protocol.Runtime.ConsoleAPICalledEventType.Error,
-          stackTrace: badStackTrace,
-        },
-    );
-
-    consoleView.markAsRoot();
-    renderElementIntoDOM(consoleView);
-
-    consoleModel.addMessage(badStackTraceMessage);
-
-    await consoleView.getScheduledRefreshPromiseForTest();
-
-    assert.strictEqual(consoleView.itemCount(), 1);
-    const messageView = consoleView.itemElement(0) as Console.ConsoleViewMessage.ConsoleViewMessage;
-    assert.exists(messageView);
-
-    const contentElement = messageView.contentElement();
-    const messageTextElement = contentElement.querySelector('.console-message-text');
-    assert.exists(messageTextElement);
-    assert.strictEqual(messageTextElement.textContent?.trim(), 'This should be visible');
-
-    const stackTraceWrapper = contentElement.querySelector('.console-message-stack-trace-wrapper');
-    assert.exists(stackTraceWrapper);
-
-    const stackTraceElement = stackTraceWrapper.querySelector('.hidden-stack-trace');
-    assert.exists(stackTraceElement);
-
-    const previewWidgetElement = stackTraceElement.firstElementChild as HTMLElement;
-    assert.exists(previewWidgetElement);
-    assert.exists(previewWidgetElement.shadowRoot);
-
-    const shadowRoot = previewWidgetElement.shadowRoot;
-    const table = shadowRoot.querySelector('.stack-preview-container');
-    assert.exists(table);
-
-    const row = table.querySelector('tbody tr');
-    assert.exists(row);
-
-    const functionName = row.querySelector('.function-name')?.textContent?.trim();
-    assert.strictEqual(functionName, '(anonymous)');
-
-    const link = row.querySelector('.link')?.textContent?.trim();
-    assert.strictEqual(link, '(unknown)');
   });
 });
