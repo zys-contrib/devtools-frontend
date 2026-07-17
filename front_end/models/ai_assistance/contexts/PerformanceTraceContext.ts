@@ -28,24 +28,52 @@ import {AgentFocus} from '../performance/AIContext.js';
  * the context data for the LLM prompt and user-facing accordion disclosures.
  */
 export class PerformanceTraceContext extends ConversationContext<AgentFocus> {
-  static fromParsedTrace(parsedTrace: Trace.TraceModel.ParsedTrace): PerformanceTraceContext {
-    return new PerformanceTraceContext(AgentFocus.fromParsedTrace(parsedTrace));
+  static fromParsedTrace(parsedTrace: Trace.TraceModel.ParsedTrace,
+                         targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
+                         freshRecordingTracker:
+                             Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance()):
+      PerformanceTraceContext {
+    return new PerformanceTraceContext(
+        AgentFocus.fromParsedTrace(parsedTrace),
+        targetManager,
+        freshRecordingTracker,
+    );
   }
 
-  static fromInsight(parsedTrace: Trace.TraceModel.ParsedTrace,
-                     insight: Trace.Insights.Types.InsightModel): PerformanceTraceContext {
-    return new PerformanceTraceContext(AgentFocus.fromInsight(parsedTrace, insight));
+  static fromInsight(parsedTrace: Trace.TraceModel.ParsedTrace, insight: Trace.Insights.Types.InsightModel,
+                     targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
+                     freshRecordingTracker: Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance()):
+      PerformanceTraceContext {
+    return new PerformanceTraceContext(
+        AgentFocus.fromInsight(parsedTrace, insight),
+        targetManager,
+        freshRecordingTracker,
+    );
   }
 
-  static fromCallTree(callTree: AICallTree): PerformanceTraceContext {
-    return new PerformanceTraceContext(AgentFocus.fromCallTree(callTree));
+  static fromCallTree(callTree: AICallTree,
+                      targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
+                      freshRecordingTracker:
+                          Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance()):
+      PerformanceTraceContext {
+    return new PerformanceTraceContext(
+        AgentFocus.fromCallTree(callTree),
+        targetManager,
+        freshRecordingTracker,
+    );
   }
 
   readonly #focus: AgentFocus;
+  readonly #targetManager: SDK.TargetManager.TargetManager;
+  readonly #freshRecordingTracker: Tracing.FreshRecording.Tracker;
 
-  constructor(focus: AgentFocus) {
+  constructor(focus: AgentFocus,
+              targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
+              freshRecordingTracker: Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance()) {
     super();
     this.#focus = focus;
+    this.#targetManager = targetManager;
+    this.#freshRecordingTracker = freshRecordingTracker;
   }
 
   /**
@@ -58,9 +86,9 @@ export class PerformanceTraceContext extends ConversationContext<AgentFocus> {
    */
   createFormatter(): PerformanceTraceFormatter {
     const focus = this.#focus;
-    const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+    const target = this.#targetManager.primaryPageTarget();
     const formatter = new PerformanceTraceFormatter(focus);
-    const isFresh = Tracing.FreshRecording.Tracker.instance().recordingIsFresh(focus.parsedTrace);
+    const isFresh = this.#freshRecordingTracker.recordingIsFresh(focus.parsedTrace);
 
     formatter.resolveFunctionCode = async (url: UrlString, line: number, column: number) => {
       if (!target || !isFresh) {
@@ -96,7 +124,7 @@ export class PerformanceTraceContext extends ConversationContext<AgentFocus> {
     const parsedTrace = this.#focus.parsedTrace;
     const url = this.getURL();
     const origin = extractContextOrigin(url);
-    const isFresh = Tracing.FreshRecording.Tracker.instance().recordingIsFresh(parsedTrace);
+    const isFresh = this.#freshRecordingTracker.recordingIsFresh(parsedTrace);
     if (!isFresh) {
       const parsed = Common.ParsedURL.ParsedURL.fromString(origin as Platform.DevToolsPath.UrlString);
       return `imported-trace://${parsed ? parsed.domain() : origin}`;

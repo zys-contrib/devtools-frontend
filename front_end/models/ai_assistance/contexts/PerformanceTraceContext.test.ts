@@ -5,11 +5,10 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
-import {describeWithEnvironment} from '../../../testing/EnvironmentHelpers.js';
 import type * as Trace from '../../trace/trace.js';
 import * as AiAssistance from '../ai_assistance.js';
 
-describeWithEnvironment('PerformanceTraceContext', () => {
+describe('PerformanceTraceContext', () => {
   it('should return prompt details correctly by combining trace formatter output', async () => {
     const mockTrace = {
       insights: new Map(),
