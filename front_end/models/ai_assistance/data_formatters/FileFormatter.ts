@@ -50,12 +50,15 @@ export class FileFormatter {
   }
 
   #file: Workspace.UISourceCode.UISourceCode;
-  constructor(file: Workspace.UISourceCode.UISourceCode) {
+  #debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding;
+  constructor(file: Workspace.UISourceCode.UISourceCode,
+              debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+                  Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()) {
     this.#file = file;
+    this.#debuggerWorkspaceBinding = debuggerWorkspaceBinding;
   }
   formatFile(): string {
-    const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
-    const sourceMapDetails = FileFormatter.formatSourceMapDetails(this.#file, debuggerWorkspaceBinding);
+    const sourceMapDetails = FileFormatter.formatSourceMapDetails(this.#file, this.#debuggerWorkspaceBinding);
     const lines = [
       `File name: ${this.#file.displayName()}`,
       `URL: ${this.#file.url()}`,
