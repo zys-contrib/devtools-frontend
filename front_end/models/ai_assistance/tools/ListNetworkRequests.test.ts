@@ -12,17 +12,16 @@ import {
   assertIsError,
   assertIsResult,
 } from '../../../testing/AiAssistanceHelpers.js';
-import {describeWithEnvironment} from '../../../testing/EnvironmentHelpers.js';
 import * as Logs from '../../logs/logs.js';
 import * as AiAssistance from '../ai_assistance.js';
 
 const {urlString} = Platform.DevToolsPath;
 
-describeWithEnvironment('ListNetworkRequestsTool', () => {
-  let networkLog: Logs.NetworkLog.NetworkLog;
+describe('ListNetworkRequestsTool', () => {
+  let networkLog: sinon.SinonStubbedInstance<Logs.NetworkLog.NetworkLog>;
 
   beforeEach(() => {
-    networkLog = Logs.NetworkLog.NetworkLog.instance();
+    networkLog = sinon.createStubInstance(Logs.NetworkLog.NetworkLog);
   });
 
   it('lists network requests successfully', async () => {
@@ -39,9 +38,9 @@ describeWithEnvironment('ListNetworkRequestsTool', () => {
     request.setTransferSize(3000);
     request.endTime = 2;
 
-    sinon.stub(networkLog, 'requests').returns([request]);
+    networkLog.requests.returns([request]);
 
-    const tool = new AiAssistance.ListNetworkRequests.ListNetworkRequestsTool();
+    const tool = new AiAssistance.ListNetworkRequests.ListNetworkRequestsTool(networkLog);
     const context = {
       conversationContext: null,
       getEstablishedOrigin: () => 'https://example.com',
@@ -85,9 +84,9 @@ describeWithEnvironment('ListNetworkRequestsTool', () => {
     );
     request2.statusCode = 200;
 
-    sinon.stub(networkLog, 'requests').returns([request1, request2]);
+    networkLog.requests.returns([request1, request2]);
 
-    const tool = new AiAssistance.ListNetworkRequests.ListNetworkRequestsTool();
+    const tool = new AiAssistance.ListNetworkRequests.ListNetworkRequestsTool(networkLog);
     const context = {
       conversationContext: null,
       getEstablishedOrigin: () => 'https://example.com',
@@ -109,7 +108,7 @@ describeWithEnvironment('ListNetworkRequestsTool', () => {
   });
 
   it('returns error for opaque origins', async () => {
-    const tool = new AiAssistance.ListNetworkRequests.ListNetworkRequestsTool();
+    const tool = new AiAssistance.ListNetworkRequests.ListNetworkRequestsTool(networkLog);
     const context = {
       conversationContext: null,
       getEstablishedOrigin: () => 'null',
