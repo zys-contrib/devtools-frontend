@@ -191,6 +191,30 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       assert.instanceOf(child, ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement);
       assert.isTrue(child.editable);
     });
+
+    it('formats console.dir(document.__proto__) without exception', () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      assert.exists(runtimeModel);
+      const remoteObject = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        subtype: Protocol.Runtime.RemoteObjectSubtype.Node,
+        className: 'HTMLDocument',
+        description: 'HTMLDocument',
+        objectId: '1' as Protocol.Runtime.RemoteObjectId,
+      });
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Info, '', {
+            type: Protocol.Runtime.ConsoleAPICalledEventType.Dir,
+            parameters: [remoteObject],
+          });
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      const propertiesSectionElement = messageElement.querySelector('.console-view-object-properties-section');
+      assert.exists(propertiesSectionElement);
+      assert.include(propertiesSectionElement.textContent, 'HTMLDocument');
+    });
   });
   describe('console insights', () => {
     const createMessage =
