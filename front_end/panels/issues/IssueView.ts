@@ -25,6 +25,7 @@ import {AffectedDirectivesView} from './AffectedDirectivesView.js';
 import {AffectedDocumentsInQuirksModeView} from './AffectedDocumentsInQuirksModeView.js';
 import {AffectedElementsView} from './AffectedElementsView.js';
 import {AffectedHeavyAdView} from './AffectedHeavyAdView.js';
+import {AffectedLazyLoadImagesView} from './AffectedLazyLoadImagesView.js';
 import {AffectedMetadataAllowedSitesView} from './AffectedMetadataAllowedSitesView.js';
 import {AffectedPartitioningBlobURLView} from './AffectedPartitioningBlobURLView.js';
 import {AffectedPermissionElementsView} from './AffectedPermissionElementsView.js';
@@ -259,6 +260,7 @@ export class IssueView extends UI.TreeOutline.TreeElement {
       new AffectedDescendantsWithinSelectElementView(this, this.#issue, 'disallowed-select-descendants-details'),
       new AffectedPartitioningBlobURLView(this, this.#issue, 'partitioning-blob-url-details'),
       new AffectedPermissionElementsView(this, this.#issue, 'permission-element-elements'),
+      new AffectedLazyLoadImagesView(this, this.#issue, 'lazy-load-image-details'),
       new AffectedSelectivePermissionsInterventionView(this, this.#issue, 'selective-permissions-intervention-details'),
     ];
     this.#hiddenIssuesMenu = new Components.HideIssuesMenu.HideIssuesMenu();

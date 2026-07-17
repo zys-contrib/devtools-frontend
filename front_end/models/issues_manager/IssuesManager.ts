@@ -23,6 +23,7 @@ import {GenericIssue} from './GenericIssue.js';
 import {HeavyAdIssue} from './HeavyAdIssue.js';
 import type {Issue, IssueKind} from './Issue.js';
 import {Events} from './IssuesManagerEvents.js';
+import {LazyLoadImageIssue} from './LazyLoadImageIssue.js';
 import {MixedContentIssue} from './MixedContentIssue.js';
 import {PartitioningBlobURLIssue} from './PartitioningBlobURLIssue.js';
 import {PermissionElementIssue} from './PermissionElementIssue.js';
@@ -153,6 +154,10 @@ const issueCodeHandlers =
           [
             Protocol.Audits.InspectorIssueCode.SelectivePermissionsInterventionIssue,
             SelectivePermissionsInterventionIssue.fromInspectorIssue,
+          ],
+          [
+            Protocol.Audits.InspectorIssueCode.LazyLoadImageIssue,
+            LazyLoadImageIssue.fromInspectorIssue,
           ],
         ]);
 

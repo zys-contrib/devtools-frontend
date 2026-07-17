@@ -2322,6 +2322,7 @@ export const knownContextValues = new Set([
   'layout',
   'layout-count',
   'layout-shifts',
+  'lazy-load-image-details',
   'lcp-breakdown',
   'lcp-breakdown-widget',
   'lcp-discovery-widget',

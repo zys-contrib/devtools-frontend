@@ -24,6 +24,7 @@ devtools_ui_module("issues") {
     "AffectedDocumentsInQuirksModeView.ts",
     "AffectedElementsView.ts",
     "AffectedHeavyAdView.ts",
+    "AffectedLazyLoadImagesView.ts",
     "AffectedMetadataAllowedSitesView.ts",
     "AffectedPartitioningBlobURLView.ts",
     "AffectedPermissionElementsView.ts",
@@ -102,6 +103,7 @@ devtools_ui_module("unittests") {
   testonly = true
 
   sources = [
+    "AffectedLazyLoadImagesView.test.ts",
     "AffectedSelectivePermissionsInterventionView.test.ts",
     "IssueView.test.ts",
     "IssuesPane.test.ts",
