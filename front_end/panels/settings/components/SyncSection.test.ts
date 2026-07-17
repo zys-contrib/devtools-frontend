@@ -64,7 +64,7 @@ describeWithEnvironment('SyncSection', () => {
   }
 
   describe('rendering', () => {
-    it('shows "not signed in" when no user is signed into Chrome', async () => {
+    it('shows "not signed in" when no user is signed in to Chrome', async () => {
       const {view, widget} = await createWidget();
       widget.syncInfo = MOCK_SYNC_INFO_NOT_SIGNED_IN;
       const input = await view.nextInput;

@@ -37,12 +37,12 @@ const UIStrings = {
    * @description Label for the account email address. Shown in DevTools Settings in
    * front of the email address currently used for Chrome Sync.
    */
-  signedIn: 'Signed into Chrome as:',
+  signedIn: 'Signed in to Chrome as:',
   /**
    * @description Label for the account settings. Shown in DevTools Settings when
    * the user is not logged in to Chrome.
    */
-  notSignedIn: 'You’re not signed into Chrome.',
+  notSignedIn: 'You’re not signed in to Chrome.',
   /**
    * @description Label for the Google Developer Program profile status that corresponds to
    * the standard plan (no subscription).

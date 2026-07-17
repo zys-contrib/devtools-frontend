@@ -743,7 +743,7 @@ describeWithEnvironment('Overlays', () => {
       assert.isOk(aiLabelButtonWrapper);
     });
 
-    it('Shows disabled `generate ai label` button if the user is not logged into their google account or is under 18',
+    it('Shows disabled `generate ai label` button if the user is not logged in to their Google account or is under 18',
        async function() {
          updateHostConfig({
            devToolsAiGeneratedTimelineLabels: {
