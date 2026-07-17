@@ -9,11 +9,11 @@ const UIStrings = {
   /**
    * @description Title of a setting under the Console category that can be invoked through the Command Menu
    */
-  preserveLogUponNavigation: 'Preserve log upon navigation',
+  preserveLogUponNavigation: 'Keep log on navigation',
   /**
    * @description Title of a setting under the Console category that can be invoked through the Command Menu
    */
-  doNotPreserveLogUponNavigation: 'Do not preserve log upon navigation',
+  doNotPreserveLogUponNavigation: 'Don’t keep log on navigation',
   /**
    * @description Text for pausing the debugger on exceptions
    */

@@ -335,8 +335,8 @@ describeWithEnvironment('ConsoleView', () => {
     Common.Settings.Settings.instance().moduleSetting('preserve-console-log').set(false);
   };
 
-  it('replaces messages when switching scope with preserve log off', handlesSwitchingScope(false));
-  it('appends messages when switching scope with preserve log on', handlesSwitchingScope(true));
+  it('replaces messages when switching scope with keep log off', handlesSwitchingScope(false));
+  it('appends messages when switching scope with keep log on', handlesSwitchingScope(true));
 
   describe('self-XSS warning', () => {
     let target: SDK.Target.Target;

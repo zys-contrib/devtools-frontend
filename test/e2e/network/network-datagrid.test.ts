@@ -10,7 +10,7 @@ import {
   selectRequestByName,
   setCacheDisabled,
   setInvert,
-  setPersistLog,
+  setKeepLog,
   setTextFilter,
   waitForSelectedRequestChange,
   waitForSomeRequestsToAppear,
@@ -50,7 +50,7 @@ describe('The Network Tab', function() {
     await setTextFilter('favicon.ico', devToolsPage);
     await setInvert(true, devToolsPage);
     await setCacheDisabled(true, devToolsPage);
-    await setPersistLog(false, devToolsPage);
+    await setKeepLog(false, devToolsPage);
   }
 
   it('can click on checkbox label to toggle checkbox', async ({devToolsPage, inspectedPage}) => {
@@ -268,7 +268,7 @@ describe('The Network Tab', function() {
     await devToolsPage.bringToFront();
     await waitForSomeRequestsToAppear(1, devToolsPage);
 
-    await setPersistLog(true, devToolsPage);
+    await setKeepLog(true, devToolsPage);
 
     await navigateToNetworkTab('fetch.html', devToolsPage, inspectedPage);
     await waitForSomeRequestsToAppear(1, devToolsPage);

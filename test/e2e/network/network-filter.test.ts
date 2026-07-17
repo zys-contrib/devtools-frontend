@@ -10,7 +10,7 @@ import {
   getAllRequestNames,
   navigateToNetworkTab,
   setCacheDisabled,
-  setPersistLog,
+  setKeepLog,
   waitForSomeRequestsToAppear,
 } from '../helpers/network-helpers.js';
 import type {DevToolsPage} from '../shared/frontend-helper.js';
@@ -115,7 +115,7 @@ describe('The Network Tab', function() {
     await navigateToNetworkTab('resources-from-cache.html', devToolsPage, inspectedPage);
     await setCacheDisabled(false, devToolsPage);
     await waitForSomeRequestsToAppear(3, devToolsPage);
-    await setPersistLog(true, devToolsPage);
+    await setKeepLog(true, devToolsPage);
     await navigateToNetworkTab('resources-from-cache.html', devToolsPage, inspectedPage);
     await waitForSomeRequestsToAppear(6, devToolsPage);
 
@@ -275,7 +275,7 @@ describe('The Network Tab', function() {
   it('can show only third-party requests', async ({devToolsPage, inspectedPage}) => {
     await navigateToNetworkTab('empty.html', devToolsPage, inspectedPage);
     await setCacheDisabled(true, devToolsPage);
-    await setPersistLog(false, devToolsPage);
+    await setKeepLog(false, devToolsPage);
 
     await navigateToNetworkTab('third-party-resources.html', devToolsPage, inspectedPage);
     await waitForSomeRequestsToAppear(4, devToolsPage);

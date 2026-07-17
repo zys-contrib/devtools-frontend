@@ -600,10 +600,10 @@ describeWithEnvironment('NetworkLogView', () => {
         preserveLog ? [request1, request2, request3] : [request3]);
   };
 
-  it('replaces requests when switching scope with preserve log off', handlesSwitchingScope(false));
-  it('appends requests when switching scope with preserve log on', handlesSwitchingScope(true));
+  it('replaces requests when switching scope with keep log off', handlesSwitchingScope(false));
+  it('appends requests when switching scope with keep log on', handlesSwitchingScope(true));
 
-  it('appends requests on prerender activation with preserve log on', async () => {
+  it('appends requests on prerender activation with keep log on', async () => {
     Common.Settings.Settings.instance().moduleSetting('network-log.preserve-log').set(true);
     SDK.TargetManager.TargetManager.instance().setScopeTarget(target);
     const anotherTarget = createTarget();

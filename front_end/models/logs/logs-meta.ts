@@ -9,7 +9,7 @@ const UIStrings = {
   /**
    * @description Text to preserve the log after refreshing
    */
-  preserveLog: 'Preserve log',
+  preserveLog: 'Keep log',
   /**
    * @description A term that can be used to search in the command menu, and will find the search
    * result 'Preserve log on page reload / navigation'. This is an additional search term to help
@@ -31,11 +31,11 @@ const UIStrings = {
   /**
    * @description Title of a setting under the Network category that can be invoked through the Command Menu
    */
-  preserveLogOnPageReload: 'Preserve log on page reload / navigation',
+  preserveLogOnPageReload: 'Keep log on page reload / navigation',
   /**
    * @description Title of a setting under the Network category that can be invoked through the Command Menu
    */
-  doNotPreserveLogOnPageReload: 'Do not preserve log on page reload / navigation',
+  doNotPreserveLogOnPageReload: 'Don’t keep log on page reload / navigation',
   /**
    * @description Title of an action in the network tool to toggle recording
    */

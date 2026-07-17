@@ -108,8 +108,8 @@ export async function waitForSelectedRequestChange(initialRequestName: string|nu
   });
 }
 
-export async function setPersistLog(persist: boolean, devToolsPage: DevToolsPage) {
-  await devToolsPage.setCheckBox('[title="Do not clear log on page reload / navigation"]', persist);
+export async function setKeepLog(persist: boolean, devToolsPage: DevToolsPage) {
+  await devToolsPage.setCheckBox('[title="Don’t clear log on page reload / navigation"]', persist);
 }
 
 export async function setCacheDisabled(disabled: boolean, devToolsPage: DevToolsPage): Promise<void> {
