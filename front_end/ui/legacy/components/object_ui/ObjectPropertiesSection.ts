@@ -39,7 +39,14 @@ import * as TextUtils from '../../../../models/text_utils/text_utils.js';
 import * as uiI18n from '../../../../ui/i18n/i18n.js';
 import * as Highlighting from '../../../components/highlighting/highlighting.js';
 import * as TextEditor from '../../../components/text_editor/text_editor.js';
-import {Directives, html, type LitTemplate, nothing, render} from '../../../lit/lit.js';
+import {
+  type DirectiveResult,
+  Directives,
+  html,
+  type LitTemplate,
+  nothing,
+  render,
+} from '../../../lit/lit.js';
 import * as VisualLogging from '../../../visual_logging/visual_logging.js';
 import * as UI from '../../legacy.js';
 import type * as Components from '../utils/utils.js';
@@ -51,6 +58,7 @@ import objectValueStyles from './objectValue.css.js';
 import {RemoteObjectPreviewFormatter, renderNodeTitle, renderTrustedType} from './RemoteObjectPreviewFormatter.js';
 
 export {objectPropertiesSectionStyles, objectValueStyles};
+
 export interface ObjectPropertySearchResult extends UI.TreeOutline.TreeSearchResult<ObjectTreeNodeBase> {
   matchType: 'name'|'value';
   range: TextUtils.TextRange.SourceRange;
@@ -1391,15 +1399,16 @@ export function populateObjectTreeContextMenu(
       {checked: object.includeNullOrUndefinedValues, jslogContext: 'show-all'});
 }
 
-export function renderObjectTree(
+function renderObjectTreeInternal(
     objectTree: ObjectTree,
     linkifier?: Components.Linkifier.Linkifier,
     emptyPlaceholder?: string|null,
-    ): unknown {
+    classes: Record<string, boolean> = {},
+    ): LitTemplate|DirectiveResult {
   const entry = topLevelNodesCache.get(objectTree);
   if (entry && entry.linkifier === linkifier) {
     return html`
-      <ul class="source-code object-properties-section" role="group">
+      <ul class=${classMap(classes)} role="group">
         ${entry.nodes.map(node => html`<devtools-tree-wrapper .treeElement=${node}></devtools-tree-wrapper>`)}
       </ul>
     `;
@@ -1417,13 +1426,43 @@ export function renderObjectTree(
     objectTree.addEventListener(ObjectTreeNodeBase.Events.CHILDREN_CHANGED, listener);
 
     return html`
-      <ul class="source-code object-properties-section" role="group">
+      <ul class=${classMap(classes)} role="group">
         ${nodes.map(node => html`<devtools-tree-wrapper .treeElement=${node}></devtools-tree-wrapper>`)}
       </ul>
     `;
   })();
 
-  return until(promise, html`<ul class="source-code object-properties-section" role="group"></ul>`);
+  return until(promise, html`<ul class=${classMap(classes)} role="group"></ul>`);
+}
+
+export function renderObjectTree(
+    objectTree: ObjectTree,
+    linkifier?: Components.Linkifier.Linkifier,
+    emptyPlaceholder?: string|null,
+    ): LitTemplate|DirectiveResult {
+  return renderObjectTreeInternal(objectTree, linkifier, emptyPlaceholder, {
+    'source-code': true,
+    'object-properties-section': true,
+  });
+}
+
+export function renderObjectPropertiesSection(
+    objectTree: ObjectTree,
+    title: LitTemplate,
+    linkifier?: Components.Linkifier.Linkifier,
+    ): LitTemplate {
+  const treeContent = renderObjectTreeInternal(objectTree, linkifier, undefined, {});
+
+  return html`<devtools-tree class="object-properties-section" show-selection-on-keyboard-focus .template=${html`
+    <ul role="tree" class="source-code object-properties-section">
+      <style>${objectValueStyles}</style>
+      <style>${objectPropertiesSectionStyles}</style>
+      <li role="treeitem" class="object-properties-section-root-element" ?open=${objectTree.expanded}>
+        ${title}
+        ${treeContent}
+      </li>
+    </ul>
+  `}></devtools-tree>`;
 }
 class RootElement extends UI.TreeOutline.TreeElement {
   private readonly object: ObjectTree;
@@ -2444,7 +2483,7 @@ export const EXPANDABLE_TEXT_DEFAULT_VIEW: ExpandableTextView = (input, output, 
                  data-text=${i18nString(UIStrings.copy)}
                  jslog=${VisualLogging.action('copy').track({click: true})}
                  ></button>
-             </span>`,
+              </span>`,
       // clang-format on
       target);
 };

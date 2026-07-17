@@ -12,19 +12,27 @@ import * as ObjectUI from '../object_ui/object_ui.js';
 import * as SourceFrame from './source_frame.js';
 
 describeWithEnvironment('JSONView', () => {
+  const cleanHighlights = () => {
+    CSS.highlights.get('highlighted-search-result')?.clear();
+    CSS.highlights.get('current-search-result')?.clear();
+  };
+  beforeEach(cleanHighlights);
+  afterEach(cleanHighlights);
+
   it('instantiates a read-only ObjectPropertiesSection', async () => {
     const parsedJSON = new SourceFrame.JSONView.ParsedJSON({foo: 'bar'}, '', '');
     const jsonView = new SourceFrame.JSONView.JSONView(parsedJSON);
-    jsonView.markAsRoot();
     renderElementIntoDOM(jsonView);
+    await raf();
 
-    const treeOutlineElement = jsonView.element.lastElementChild;
-    assert.exists(treeOutlineElement);
-    const section = ObjectUI.ObjectPropertiesSection.getObjectPropertiesSectionFrom(treeOutlineElement);
-    assert.exists(section);
+    const treeView = jsonView.contentElement.querySelector<UI.TreeOutline.TreeViewElement>('devtools-tree');
+    assert.exists(treeView);
+    const treeOutline = treeView.getInternalTreeOutlineForTest();
+    assert.exists(treeOutline);
 
-    const rootElement = section.objectTreeElement();
-    await rootElement.onpopulate();
+    const rootElement = treeOutline.rootElement().childAt(0);
+    assert.exists(rootElement);
+    await raf();
     const child = rootElement.childAt(0);
     assert.instanceOf(child, ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement);
     assert.isFalse(child.editable);
@@ -37,45 +45,69 @@ describeWithEnvironment('JSONView', () => {
     const searchableView = new UI.SearchableView.SearchableView(jsonView, null);
     jsonView.setSearchableView(searchableView);
     renderElementIntoDOM(jsonView);
+    await raf();
 
-    const treeOutlineElement = jsonView.element.lastElementChild;
-    assert.exists(treeOutlineElement);
-    const section = ObjectUI.ObjectPropertiesSection.getObjectPropertiesSectionFrom(treeOutlineElement);
-    assert.exists(section);
+    const treeView = jsonView.contentElement.querySelector<UI.TreeOutline.TreeViewElement>('devtools-tree');
+    assert.exists(treeView);
+    const treeOutline = treeView.getInternalTreeOutlineForTest();
+    assert.exists(treeOutline);
 
-    const rootElement = section.objectTreeElement();
+    const rootElement = treeOutline.rootElement().childAt(0);
     assert.exists(rootElement);
-    await rootElement.onpopulate();
-
     await raf();
 
     const searchConfig = new UI.SearchableView.SearchConfig('ba', false, false, false);
     jsonView.performSearch(searchConfig, true);
+    await raf();
 
-    const shadowRoot = treeOutlineElement.shadowRoot;
+    const shadowRoot = treeView.shadowRoot;
     assert.exists(shadowRoot);
 
-    let highlightedElements = shadowRoot.querySelectorAll('.highlighted-search-result');
-    assert.lengthOf(highlightedElements, 2);
-
-    // The first match should be current
-    let currentMatch = shadowRoot.querySelectorAll('.current-search-result');
-    assert.lengthOf(currentMatch, 1);
-    assert.strictEqual(currentMatch[0].textContent, 'ba');
+    let highlightedMatches = CSS.highlights.get('highlighted-search-result');
+    let currentMatches = CSS.highlights.get('current-search-result');
+    assert.strictEqual((highlightedMatches?.size ?? 0) + (currentMatches?.size ?? 0), 2);
+    assert.strictEqual(currentMatches?.size, 1);
+    assert.exists(currentMatches);
+    const currentRange = Array.from(currentMatches.values())[0];
+    assert.strictEqual(currentRange?.toString(), 'ba');
 
     // Jump to next match
     jsonView.jumpToNextSearchResult();
-    highlightedElements = shadowRoot.querySelectorAll('.highlighted-search-result');
-    assert.lengthOf(highlightedElements, 2);
-    currentMatch = shadowRoot.querySelectorAll('.current-search-result');
-    assert.lengthOf(currentMatch, 1);
+    await raf();
+    highlightedMatches = CSS.highlights.get('highlighted-search-result');
+    currentMatches = CSS.highlights.get('current-search-result');
+    assert.strictEqual((highlightedMatches?.size ?? 0) + (currentMatches?.size ?? 0), 2);
+    assert.strictEqual(currentMatches?.size, 1);
 
     // Cancel search
     jsonView.onSearchCanceled();
-    highlightedElements = shadowRoot.querySelectorAll('.highlighted-search-result');
-    assert.lengthOf(highlightedElements, 0);
-    currentMatch = shadowRoot.querySelectorAll('.current-search-result');
-    assert.lengthOf(currentMatch, 0);
+    await raf();
+    highlightedMatches = CSS.highlights.get('highlighted-search-result');
+    assert.strictEqual(highlightedMatches?.size ?? 0, 0);
+    currentMatches = CSS.highlights.get('current-search-result');
+    assert.strictEqual(currentMatches?.size ?? 0, 0);
+  });
+
+  it('cancels search when new parsedJSON is set', async () => {
+    const parsedJSON = new SourceFrame.JSONView.ParsedJSON({foo: 'bar', baz: 'qux'}, '', '');
+    const jsonView = new SourceFrame.JSONView.JSONView(parsedJSON, true);
+    const searchableView = new UI.SearchableView.SearchableView(jsonView, null);
+    jsonView.setSearchableView(searchableView);
+    renderElementIntoDOM(jsonView);
+    await raf();
+
+    const searchConfig = new UI.SearchableView.SearchConfig('ba', false, false, false);
+    jsonView.performSearch(searchConfig, true);
+    await raf();
+
+    let currentMatches = CSS.highlights.get('current-search-result');
+    assert.strictEqual(currentMatches?.size, 1);
+
+    jsonView.parsedJSON = new SourceFrame.JSONView.ParsedJSON({other: 'data'}, '', '');
+    await raf();
+
+    currentMatches = CSS.highlights.get('current-search-result');
+    assert.strictEqual(currentMatches?.size ?? 0, 0);
   });
 
   it('renders visual baseline of JSONView', async () => {
@@ -90,14 +122,15 @@ describeWithEnvironment('JSONView', () => {
                                                            'prefix_pre_', '_suffix_post');
     const jsonView = new SourceFrame.JSONView.JSONView(parsedJSON, true);
     renderElementIntoDOM(jsonView);
+    await raf();
 
-    const treeOutlineElement = jsonView.element.lastElementChild;
-    assert.exists(treeOutlineElement);
-    const section = ObjectUI.ObjectPropertiesSection.getObjectPropertiesSectionFrom(treeOutlineElement);
-    assert.exists(section);
-    const rootElement = section.objectTreeElement();
+    const treeView = jsonView.contentElement.querySelector<UI.TreeOutline.TreeViewElement>('devtools-tree');
+    assert.exists(treeView);
+    const treeOutline = treeView.getInternalTreeOutlineForTest();
+    assert.exists(treeOutline);
+    const rootElement = treeOutline.rootElement().childAt(0);
     assert.exists(rootElement);
-    await rootElement.onpopulate();
+    await raf();
     rootElement.expand();
     await raf();
 
@@ -115,15 +148,16 @@ describeWithEnvironment('JSONView', () => {
     const searchableView = new UI.SearchableView.SearchableView(jsonView, null);
     jsonView.setSearchableView(searchableView);
     renderElementIntoDOM(jsonView);
+    await raf();
 
-    const treeOutlineElement = jsonView.element.lastElementChild;
-    assert.exists(treeOutlineElement);
-    const section = ObjectUI.ObjectPropertiesSection.getObjectPropertiesSectionFrom(treeOutlineElement);
-    assert.exists(section);
+    const treeView = jsonView.contentElement.querySelector<UI.TreeOutline.TreeViewElement>('devtools-tree');
+    assert.exists(treeView);
+    const treeOutline = treeView.getInternalTreeOutlineForTest();
+    assert.exists(treeOutline);
 
-    const rootElement = section.objectTreeElement();
+    const rootElement = treeOutline.rootElement().childAt(0);
     assert.exists(rootElement);
-    await rootElement.onpopulate();
+    await raf();
     rootElement.expand();
 
     await raf();

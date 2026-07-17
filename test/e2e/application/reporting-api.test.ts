@@ -34,7 +34,7 @@ describe('The Reporting API Page', () => {
     await rows[rows.length - 1][0].click();
 
     const jsonView = await devToolsPage.waitFor('.json-view');
-    const jsonViewText = await jsonView.evaluate(el => (el as HTMLElement).innerText);
+    const jsonViewText = await jsonView.evaluate(el => el.deepInnerText().split('\n')[0]);
     assert.strictEqual(jsonViewText, '{columnNumber: 20, id: "NavigatorVibrate", lineNumber: 9,…}');
   });
 

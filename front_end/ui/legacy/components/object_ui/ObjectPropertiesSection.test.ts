@@ -695,6 +695,12 @@ describeWithEnvironment('ObjectTreeNode', () => {
 describe('ObjectTree with TreeSearch', () => {
   setupLocaleHooks();
   setupSettingsHooks();
+  const cleanHighlights = () => {
+    CSS.highlights.get('highlighted-search-result')?.clear();
+    CSS.highlights.get('current-search-result')?.clear();
+  };
+  beforeEach(cleanHighlights);
+  afterEach(cleanHighlights);
 
   it('highlights search results in rendered section cleanly within cropped string when unexpanded', async () => {
     const hugeString = 'findme' +

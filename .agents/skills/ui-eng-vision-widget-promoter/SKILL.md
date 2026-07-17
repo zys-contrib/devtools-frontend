@@ -21,6 +21,7 @@ clean `UI.Widget` classes that use native update rendering delegates.
     *   Clean up and remove older constructors that perform custom container
         initializations or access `.element` directly for manual append
         operations.
+    *   Note that `VBox` and `HBox` inherit directly from `Widget`. They fully support view injection (`view = DEFAULT_VIEW`), `performUpdate()`, and `requestUpdate()` without modification.
 
 2.  **Upgrade View Delegates & Inject View**:
 

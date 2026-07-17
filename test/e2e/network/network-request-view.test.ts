@@ -695,7 +695,7 @@ describe('The Network Request view', () => {
     it('can be searched for JSON content with special mime type', async ({devToolsPage, inspectedPage}) => {
       const url = 'data:application/vnd.document+json,%7B%22foo0foo%22%3A%20123%7D';
       await setupPreviewTest(devToolsPage, inspectedPage, url);
-      await searchInPreview(devToolsPage, 'foo', 1);
+      await searchInPreview(devToolsPage, 'foo', 2);
     });
 
     it('can be searched for XML content', async ({devToolsPage, inspectedPage}) => {

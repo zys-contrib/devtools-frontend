@@ -34,6 +34,8 @@ This approach has two main benefits:
 1.  **Testability**: In unit tests, we can pass a simple stub as the view function, which allows us to test the presenter's logic without any DOM manipulation.
 2.  **Clarity**: It cleanly separates the presenter's logic from its rendering logic.
 
+Note that `VBox` and `HBox` inherit directly from `Widget`. They fully support view injection (`view = DEFAULT_VIEW`), `performUpdate()`, and `requestUpdate()` without modification.
+
 To test the `DEFAULT_VIEW` function itself, we should use screenshot and e2e tests.
 
 ## Declarative and orchestrated DOM updates

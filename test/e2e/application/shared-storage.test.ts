@@ -53,7 +53,7 @@ describe.skip('[crbug.com/462465887]: The Application Tab', () => {
     await devToolsPage.clickElement(rows[rows.length - 1][0]);
 
     const jsonView = await devToolsPage.waitFor('.json-view');
-    const jsonViewText = await jsonView.evaluate(el => (el as HTMLElement).innerText);
+    const jsonViewText = await jsonView.evaluate(el => el.deepInnerText().split('\n')[0]);
     const accessTimeString = jsonViewText.substring('{accessTime: '.length, jsonViewText.indexOf(', scope:'));
     assert.strictEqual(jsonViewText, `{accessTime: ${accessTimeString}, scope: "window", method: "append",…}`);
   });
@@ -91,7 +91,7 @@ describe.skip('[crbug.com/462465887]: The Application Tab', () => {
     await devToolsPage.clickElement(rows[1][0]);
 
     const jsonView = await devToolsPage.waitFor('.json-view');
-    const jsonViewText = await jsonView.evaluate(el => (el as HTMLElement).innerText);
+    const jsonViewText = await jsonView.evaluate(el => el.deepInnerText().split('\n')[0]);
     assert.strictEqual(jsonViewText, '{key: "secondKey", value: "{"field":"complexValue","primitive":2}"}');
     expectError('Request CacheStorage.requestCacheNames failed. {"code":-32602,"message":"Invalid security origin"}');
   });
