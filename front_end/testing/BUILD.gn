@@ -63,6 +63,7 @@ ts_library("testing") {
   data_deps = [ "../core/i18n/locales" ]
 
   deps = [
+    ":mocha_helpers",
     ":test_id_generation",
     "../../extension-api",
     "../core/common:bundle",
@@ -117,6 +118,10 @@ ts_library("testing") {
 
 devtools_foundation_module("test_id_generation") {
   sources = [ "TestIdGeneration.ts" ]
+}
+
+devtools_foundation_module("mocha_helpers") {
+  sources = [ "MochaHelpers.ts" ]
 }
 
 devtools_foundation_module("foundation_unittests") {

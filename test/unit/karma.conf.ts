@@ -351,6 +351,7 @@ module.exports = function(config: any) {
       checkoutRoot: path.resolve(CHECKOUT_ROOT),
       pathSeparator: path.sep,
       testIds: TestConfig.tests.filter(t => TEST_ID_REGEX.test(t)),
+      repetitions: TestConfig.repetitions,
     },
 
     plugins: [

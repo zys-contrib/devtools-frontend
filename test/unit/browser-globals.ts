@@ -16,6 +16,7 @@ export interface KarmaConfig {
   checkoutRoot?: string;
   pathSeparator?: string;
   testIds: string[];
+  repetitions: number;
 }
 
 export interface Karma {

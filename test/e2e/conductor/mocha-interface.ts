@@ -8,7 +8,6 @@ import type {CommonFunctions, CreateOptions, SuiteFunctions, TestFunctions} from
 import * as commonInterface from 'mocha/lib/interfaces/common.js';
 
 import {platform, type Platform} from '../../conductor/platform.js';
-import {TestConfig} from '../../conductor/test_config.js';
 
 import {InstrumentedTestFunction} from './mocha-interface-helpers.js';
 import {StateProvider} from './state-provider.js';
@@ -110,18 +109,14 @@ function customIt(testImplementation: TestFunctions, suite: Mocha.Suite, file: s
   // Regular mocha it returns the test instance.
   // It is not possible with TestConfig.repetitions.
   const localIt = function(title: string, fn?: Mocha.AsyncFunc) {
-    for (let i = 0; i < TestConfig.repetitions; i++) {
-      createTest(title, fn);
-    }
+    createTest(title, fn);
   };
   localIt.skip = function(title: string, _fn: Mocha.AsyncFunc) {
     // no fn to skip.
     return createTest(title);
   };
   localIt.only = function(title: string, fn: Mocha.AsyncFunc) {
-    for (let i = 0; i < TestConfig.repetitions; i++) {
-      testImplementation.only(mocha, createTest(title, fn));
-    }
+    testImplementation.only(mocha, createTest(title, fn));
   };
   localIt.skipOnPlatforms = function(platforms: Platform[], title: string, fn: Mocha.AsyncFunc) {
     const shouldSkip = platforms.includes(platform);

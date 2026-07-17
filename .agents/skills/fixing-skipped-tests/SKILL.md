@@ -21,7 +21,7 @@ This skill outlines the workflow for fixing skipped tests in the DevTools codeba
 
 4. **Iterative Fix Process**
    - **Step 1:** Remove `it.skip` or `describe.skip` for *one* of the tests associated with the bug.
-   - **Step 2:** Re-run the specific test using its exact test ID (e.g., `npm run test <exact_test_id>`) using the guidelines from the `devtools-verification` skill. If you are dealing with flaky tests, you can use the `--repeat=x` flag (e.g. `npm run test -- --repeat=20 <exact_test_id>`) to run the test multiple times to reproduce the flakiness.
+   - **Step 2:** Re-run the specific test using its exact test ID (e.g., `npm run test path/to/foo.test.ts:test_name`) using the guidelines from the `devtools-verification` skill. If you are dealing with flaky tests, you can use the `--repeat=x` flag (e.g. `npm run test -- --repeat=20 path/to/foo.test.ts:test_name`) to run the test multiple times to reproduce the flakiness. This flag works for both E2E and unit tests.
    - **Step 3:** Analyze the test failure and make the necessary fixes to the code or the test itself.
    - **Step 4:** Re-run the test to ensure the fix is correct.
    - **Step 5:** Remove the `[crbug.com/<bugid>]` prefix from the test name string if it is present.

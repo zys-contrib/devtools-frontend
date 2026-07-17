@@ -19,7 +19,7 @@ This skill outlines the workflow for reproducing and fixing a flaky test in the 
 
 - Run the test enough times for a full test run to take one minute. For example, if a test takes a second to run, set it to repeat 60 times. If a test takes 5 seconds to run, run it 12 times.
 - Start with one minute and, if the failure does not repeat, try again and increase the time by a minute (up to a maximum of 5 minutes per run).
-- Use `npm run test -- path/to/foo.test.ts --grep "<test name>" --repeat <count>` to run the tests repeatedly.
+- Use `npm run test -- path/to/foo.test.ts:test_name --repeat <count>` to run the tests repeatedly. Both E2E and unit tests support this flag.
 - Be sure to keep track of the cumulative count of how often you run the test and how often they fail, so that you can calculate a 'flaky percentage' before and after making a fix.
 
 After every round, display the *cumulative* results in a table:

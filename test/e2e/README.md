@@ -135,15 +135,15 @@ it.skipOnPlatforms(['mac', 'win32'], '[crbug.com/xxx] ...', () => {...});
 it.skipOnPlatforms(['linux'], '[crbug.com/xxx] ...', () => {...});
 ```
 
-### De-flaking E2E tests
+### De-flaking E2E and Unit tests
 
-To reproduce a flaky test locally, use the exact test ID printed in the test runner output and the `--repeat=X` command line flag:
+To reproduce a flaky test locally, use the exact test ID printed in the test runner output and the `--repeat=X` command line flag (this flag is supported for both E2E and unit tests):
 
 ```sh
 npm run test -- --repeat=20 test/e2e/sources/navigator-view.test.ts:can_show_newly_created_snippets_show_up_in_command_menu
 ```
 
-To see if certain tests are flaky you can use the E2E stressor bots. Open a CL with your test changes and run the following command specifying your test file:
+To see if certain tests are flaky you can use the E2E stressor bots (despite the name, these bots also support unit tests). Open a CL with your test changes and run the following command specifying your test file:
 
 ```sh
 git cl try -B devtools-frontend/try -b e2e_stressor_linux -b e2e_stressor_win64 -b e2e_stressor_mac -p runner_args='test/e2e/sources/navigator-view.test.ts --repeat=80'

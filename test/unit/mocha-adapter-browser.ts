@@ -4,6 +4,7 @@
 
 import type * as Mocha from 'mocha';
 
+import {duplicateTests, pruneSuite} from '../../front_end/testing/MochaHelpers.js';
 import {computeBuildTestId} from '../../front_end/testing/TestIdGeneration.js';
 
 import {installDevtoolsBdd} from './mocha-interface.js';
@@ -137,12 +138,9 @@ karma.start = () => {
     return testIds.has(testId);
   }
 
-  function pruneSuite(suite: Mocha.Suite) {
-    suite.tests = suite.tests.filter(shouldIncludeTest);
-    suite.suites.forEach(pruneSuite);
-  }
+  pruneSuite(mocha.suite, shouldIncludeTest);
 
-  pruneSuite(mocha.suite);
+  duplicateTests(mocha.suite, karma.config.repetitions);
 
   const runner = mocha.run(() => {
     // Find all tests that were never reported (e.g. because Mocha aborted on a hook failure)

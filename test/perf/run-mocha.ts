@@ -6,8 +6,7 @@ import * as path from 'node:path';
 
 import {loadTests, TestConfig} from '../conductor/test_config.js';
 import {run} from '../shared/run-mocha.js';
-
-TestConfig.allowDuplicateTestIds = true;
+TestConfig.isPerfTest = true;
 
 const spec = loadTests(__dirname);
 spec.unshift(path.join(__dirname, 'setup', 'test_setup.js'));

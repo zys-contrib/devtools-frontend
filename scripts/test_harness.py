@@ -223,6 +223,30 @@ class DevToolsTestHarness(unittest.TestCase):
         )
         self.assertEqual(results[1].get('status'), 'PASS')
 
+    def test_unit_repeat(self):
+        abs_test_file = self._resolve_test_file(
+            "test/harness/unit/unit.test.ts")
+        results, exit_code = self.run_test_with_rdb([
+            "node_modules/karma/bin/karma", "start",
+            "out/Default/gen/test/unit/karma.conf.js", "--", abs_test_file,
+            "--repeat=2"
+        ])
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(
+            len(results), 2,
+            f"Expected exactly 2 test results, got {len(results)}")
+
+        self.assertEqual(
+            results[0].get('testId'),
+            'test/harness/unit/unit.test.ts:unit:should_run_a_basic_unit_test_successfully'
+        )
+        self.assertEqual(results[0].get('status'), 'PASS')
+        self.assertEqual(
+            results[1].get('testId'),
+            'test/harness/unit/unit.test.ts:unit:should_run_a_basic_unit_test_successfully'
+        )
+        self.assertEqual(results[1].get('status'), 'PASS')
+
 if __name__ == '__main__':
     if '--debug' in sys.argv:
         DevToolsTestHarness.debug_mode = True
