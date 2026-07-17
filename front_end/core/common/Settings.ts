@@ -102,6 +102,8 @@ export interface SettingsCreationOptions {
   console: Console;
 }
 
+type NoFunction<T> = T extends(...args: never[]) => unknown ? never : T;
+
 export class Settings {
   readonly syncedStorage: SettingsStorage;
   readonly globalStorage: SettingsStorage;
@@ -322,6 +324,43 @@ export class Settings {
 
   getRegistry(): Map<string, Setting<unknown>> {
     return this.#registry;
+  }
+
+  /**
+   * Resolves a setting descriptor to a concrete {@link Setting} instance.
+   *
+   * If a setting with the same name already exists (either pre-registered or
+   * previously resolved), that instance is returned. Otherwise, a new setting
+   * is created and registered.
+   *
+   * @param descriptor The descriptor defining the setting. Must not be conditional.
+   * @throws If the descriptor is conditional (contains `isAvailable`). Use `maybeResolve` instead.
+   */
+  resolve<T>(descriptor: SettingDescriptor<NoFunction<T>>&{isAvailable?: never}): Setting<T> {
+    if ('isAvailable' in descriptor) {
+      // TS can only do so much if developers downcast explicitly.
+      throw new Error('Use Settings#maybeResolve for conditional descriptors.');
+    }
+
+    let setting = this.moduleSettings.get(descriptor.name);
+    if (setting) {
+      return setting as Setting<T>;
+    }
+
+    const {name, type, defaultValue, storageType} = descriptor;
+    const isRegex = type === SettingType.REGEX;
+
+    const isGetter =
+        (value: T|((config: Root.Runtime.HostConfig) => T)): value is((config: Root.Runtime.HostConfig) => T) =>
+            typeof value === 'function';
+
+    const evaluatedDefaultValue = isGetter(defaultValue) ? defaultValue(Root.Runtime.hostConfig) : defaultValue;
+    setting = isRegex && typeof evaluatedDefaultValue === 'string' ?
+        this.createRegExpSetting(name, evaluatedDefaultValue, undefined, storageType) :
+        this.createSetting(name, evaluatedDefaultValue, storageType);
+
+    this.registerModuleSetting(setting);
+    return setting as Setting<T>;
   }
 }
 
