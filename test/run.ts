@@ -166,7 +166,7 @@ class Tests {
       ...args,
       ...(options['auto-watch'] ? ['--auto-watch', '--no-single-run'] : []),
       '--',
-      ...tests.map(t => t.pathPair.buildPath),
+      ...tests.map(t => t.toBuildTestId()),
       ...(options['verbose'] ? [`--verbose=${options['verbose']}`] : []),
       ...forwardOptions(),
     ];
@@ -264,30 +264,8 @@ class ScriptsMochaTests extends Tests {
 }
 
 class KarmaTests extends Tests {
-  protected runInternal(tests: TestId[], args: string[]) {
-    const argumentsForNode = [
-      ...args,
-      ...(options['auto-watch'] ? ['--auto-watch', '--no-single-run'] : []),
-      '--',
-      ...tests.map(t => t.toBuildTestId()),
-      ...(options['verbose'] ? [`--verbose=${options['verbose']}`] : []),
-      ...forwardOptions(),
-    ];
-    if (options['debug-driver']) {
-      argumentsForNode.unshift('--inspect-brk');
-    } else if (options['debug'] && !argumentsForNode.includes('--inspect-brk')) {
-      argumentsForNode.unshift('--inspect');
-    }
-    const result = runProcess(process.argv[0], argumentsForNode, {
-      encoding: 'utf-8',
-      stdio: 'inherit',
-      cwd: this.cwd,
-    });
-    return !result.error && (result.status ?? 1) === 0;
-  }
-
   override run(tests: TestId[]) {
-    return this.runInternal(tests, [
+    return super.run(tests, [
       path.join(SOURCE_ROOT, 'node_modules', 'karma', 'bin', 'karma'),
       'start',
       path.join(GEN_DIR, 'test', 'unit', 'karma.conf.js'),

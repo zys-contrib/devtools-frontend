@@ -6,6 +6,10 @@ import Mocha from 'mocha';
 import {isAbsolute} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
+import {computeBuildTestId} from '../../front_end/testing/TestIdGeneration.js';
+import {TEST_ID_REGEX} from '../conductor/paths';
+import {TestConfig} from '../conductor/test_config.js';
+
 export async function run(options: Mocha.MochaOptions&{spec?: string[], suiteName?: string}) {
   const mocha = new Mocha(options);
 
@@ -53,6 +57,31 @@ export async function run(options: Mocha.MochaOptions&{spec?: string[], suiteNam
   }
 
   await mocha.loadFilesAsync();
+
+  const testIds = new Set(TestConfig.tests.filter(testId => TEST_ID_REGEX.test(testId)));
+  const seenTestIds = new Set<string>();
+
+  function shouldIncludeTest(test: Mocha.Test) {
+    if (!test.file) {
+      throw new Error(`Test ${test.titlePath()} does not have a file.`);
+    }
+    const testId = computeBuildTestId(test.file, test.titlePath());
+    if (seenTestIds.has(testId) && !TestConfig.allowDuplicateTestIds) {
+      throw new Error(`Duplicate test ${testId}`);
+    }
+    seenTestIds.add(testId);
+    if (testIds.size === 0) {
+      return true;
+    }
+    return testIds.has(testId);
+  }
+
+  function pruneSuite(suite: Mocha.Suite) {
+    suite.tests = suite.tests.filter(shouldIncludeTest);
+    suite.suites.forEach(pruneSuite);
+  }
+
+  pruneSuite(mocha.suite);
 
   mocha.enableGlobalSetup(true);
   mocha.enableGlobalTeardown(true);

@@ -6,7 +6,6 @@ import * as Mocha from 'mocha';
 import type {CommonFunctions, CreateOptions, SuiteFunctions, TestFunctions} from 'mocha/lib/interfaces/common';
 // @ts-expect-error
 import * as commonInterface from 'mocha/lib/interfaces/common.js';
-import * as Path from 'node:path';
 
 import {platform, type Platform} from '../../conductor/platform.js';
 import {TestConfig} from '../../conductor/test_config.js';
@@ -40,19 +39,19 @@ function devtoolsTestInterface(rootSuite: Mocha.Suite) {
     function withAugmentedTitle(suiteFn: (opts: CreateOptions) => Mocha.Suite) {
       return function(title: string, describeBodyFn: SuiteFunction) {
         const suite = suiteFn({
-          title: describeTitle(file, title),
+          title,
           file,
           fn: function(this: Mocha.Suite) {
             const thisSuite = this;
             const parentDefinitions = {describe: mochaGlobals.describe, setup: mochaGlobals.setup, it: mochaGlobals.it};
             // @ts-expect-error Custom interface.
-            mochaGlobals.describe = customDescribe(defaultImplementation.suite, '', thisSuite);
+            mochaGlobals.describe = customDescribe(defaultImplementation.suite, file, thisSuite);
             // @ts-expect-error Custom interface.
             mochaGlobals.setup = function(suiteSettings: SuiteSettings) {
               StateProvider.instance.registerSuiteSettings(thisSuite, suiteSettings);
             };
             // @ts-expect-error Custom interface.
-            mochaGlobals.it = customIt(defaultImplementation.test, thisSuite, thisSuite.file || '', mochaRoot);
+            mochaGlobals.it = customIt(defaultImplementation.test, thisSuite, file, mochaRoot);
             if (describeBodyFn) {
               describeBodyFn.call(thisSuite);
             }
@@ -83,20 +82,6 @@ function devtoolsTestInterface(rootSuite: Mocha.Suite) {
     describe.skip = withAugmentedTitle(suiteImplementation.skip.bind(suiteImplementation));
     return describe;
   }
-}
-
-function describeTitle(file: string, title: string) {
-  const parsedPath = Path.parse(file);
-  const directories = parsedPath.dir.split(Path.sep);
-  const index = directories.lastIndexOf('e2e');
-  let prefix = parsedPath.name;
-  if (index >= 0) {
-    prefix = [...directories.slice(index + 1), `${parsedPath.name}.ts`].join('/');
-  }
-  if (title.includes(prefix)) {
-    return title;
-  }
-  return `${prefix}: ${title}`;
 }
 
 function customIt(testImplementation: TestFunctions, suite: Mocha.Suite, file: string, mocha: Mocha) {

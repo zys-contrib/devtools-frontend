@@ -6,7 +6,9 @@ import * as Mocha from 'mocha';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import {generateExactTestId} from '../../front_end/testing/TestIdGeneration.js';
 import * as DiffUtils from '../conductor/diff-utils.js';
+import {GEN_DIR} from '../conductor/paths.js';
 import * as ResultsDb from '../conductor/resultsdb.js';
 import {
   ScreenshotError,
@@ -47,13 +49,8 @@ interface HookWithParent {
 
 class ResultsDbReporter extends Mocha.reporters.Base {
   private suitePrefix?: string;
-  private indents = 0;
   private n = 0;
   htmlResult: fs.WriteStream|undefined;
-
-  private indent() {
-    return Array(this.indents).join('  ');
-  }
 
   localResultsPath() {
     return !ResultsDb.available() && this.suitePrefix ? path.join(__dirname, '..', this.suitePrefix, 'results.html') :
@@ -72,24 +69,6 @@ class ResultsDbReporter extends Mocha.reporters.Base {
       this.htmlResult = fs.createWriteStream(localResults, {});
     }
 
-    if (!TestConfig.isAiAgent) {
-      runner.on(Mocha.Runner.constants.EVENT_RUN_BEGIN, () => {
-        Mocha.reporters.Base.consoleLog();
-      });
-
-      runner.on(Mocha.Runner.constants.EVENT_SUITE_BEGIN, (suite: Mocha.Suite) => {
-        this.indents++;
-        Mocha.reporters.Base.consoleLog(Mocha.reporters.Base.color('suite', '%s%s'), this.indent(), suite.title);
-      });
-
-      runner.on(Mocha.Runner.constants.EVENT_SUITE_END, () => {
-        this.indents--;
-        if (this.indents === 1) {
-          Mocha.reporters.Base.consoleLog();
-        }
-      });
-    }
-
     runner.on(EVENT_TEST_PASS, this.onTestPass.bind(this));
     runner.on(EVENT_TEST_FAIL, this.onTestFail.bind(this));
     runner.on(EVENT_TEST_RETRY, this.onTestFail.bind(this));
@@ -100,12 +79,8 @@ class ResultsDbReporter extends Mocha.reporters.Base {
 
   private onTestPass(test: Mocha.Test) {
     if (!TestConfig.isAiAgent) {
-      const fmt = test.speed === 'fast' ?
-          this.indent() + Mocha.reporters.Base.color('checkmark', '  ' + Mocha.reporters.Base.symbols.ok) +
-              Mocha.reporters.Base.color('pass', ' %s') :
-          this.indent() + Mocha.reporters.Base.color('checkmark', '  ' + Mocha.reporters.Base.symbols.ok) +
-              Mocha.reporters.Base.color('pass', ' %s') + Mocha.reporters.Base.color(test.speed as string, ' (%dms)');
-      Mocha.reporters.Base.consoleLog(fmt, test.title, test.duration);
+      process.stdout.write(
+          `[PASS] ${generateExactTestId(GEN_DIR, test.file!, test.titlePath()).exactTestId} ${test.duration}ms\n`);
     }
     const testResult = this.buildDefaultTestResultFrom(test);
     testResult.status = 'PASS';
@@ -132,8 +107,8 @@ class ResultsDbReporter extends Mocha.reporters.Base {
 
     if (!TestConfig.isAiAgent) {
       this.n++;
-      Mocha.reporters.Base.consoleLog(this.indent() + Mocha.reporters.Base.color('fail', '  %d) %s'), this.n,
-                                      targetTest.title);
+      process.stdout.write(`[FAIL] ${generateExactTestId(GEN_DIR, targetTest.file!, targetTest.titlePath())} ${
+          targetTest.duration}ms\n`);
     }
 
     const testResult = this.buildDefaultTestResultFrom(targetTest);
@@ -177,8 +152,7 @@ class ResultsDbReporter extends Mocha.reporters.Base {
 
   private onTestSkip(test: Mocha.Test) {
     if (!TestConfig.isAiAgent) {
-      const fmt = this.indent() + Mocha.reporters.Base.color('pending', '  - %s');
-      Mocha.reporters.Base.consoleLog(fmt, test.title);
+      process.stdout.write(`[SKIP] ${generateExactTestId(GEN_DIR, test.file!, test.titlePath()).exactTestId}\n`);
     }
     const testResult = this.buildDefaultTestResultFrom(test);
     testResult.status = 'SKIP';
@@ -187,13 +161,12 @@ class ResultsDbReporter extends Mocha.reporters.Base {
   }
 
   private buildDefaultTestResultFrom(test: Mocha.Test): ResultsDb.TestResult {
-    let testId = this.suitePrefix ? this.suitePrefix + '/' : '';
-    testId += test.titlePath().join('/');  // Chrome groups test by a path logic.
     const testRetry = ((test as unknown) as TestRetry);
+    const {exactTestId, coarseName, fineName, caseName} = generateExactTestId(GEN_DIR, test.file!, test.titlePath());
     const result = {
-      testId: ResultsDb.sanitizedTestId(testId),
       duration: `${((test.duration || 1) * .001).toFixed(3)}s`,
       tags: [{key: 'run', value: String(testRetry.currentRetry() + 1)}],
+      ...ResultsDb.buildTestProperties(exactTestId, coarseName, fineName, caseName)
     };
     const hookName = this.maybeHook(test);
     if (hookName) {

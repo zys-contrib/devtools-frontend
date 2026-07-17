@@ -22,7 +22,7 @@ describe('Performance panel trace load performance', () => {
     this.timeout(60_000);
 
     for (let run = 1; run <= RUNS; run++) {
-      it('run large cpu profile benchmark', async ({devToolsPage, inspectedPage}) => {
+      it('run large cpu profile benchmark ' + run, async ({devToolsPage, inspectedPage}) => {
         await devToolsPage.reload();
         const duration = await timeFixture('large-profile.cpuprofile', devToolsPage, inspectedPage);
         // Ensure only 2 decimal places.
@@ -37,7 +37,7 @@ describe('Performance panel trace load performance', () => {
     this.timeout(8_000);
 
     for (let run = 1; run <= RUNS; run++) {
-      it('run large dom trace load benchmark', async ({devToolsPage, inspectedPage}) => {
+      it('run large dom trace load benchmark ' + run, async ({devToolsPage, inspectedPage}) => {
         await devToolsPage.reload();
         const duration = await timeFixture('dom-size-long.json', devToolsPage, inspectedPage);
         // Ensure only 2 decimal places.

@@ -120,9 +120,17 @@ class DevToolsTestHarness(unittest.TestCase):
             f"Expected exactly one test result, got {len(results)}")
         self.assertEqual(
             results[0].get('testId'),
-            'e2e/e2e.test.ts: Test Harness E2E Fixture/should run a basic e2e test successfully'
+            'test/harness/e2e/e2e.test.ts:test_harness_e2e_fixture:should_run_a_basic_e2e_test_successfully'
         )
         self.assertEqual(results[0].get('status'), 'PASS')
+
+    def test_e2e_duplicate(self):
+        results, exit_code = self.run_e2e_test(
+            "test/harness/e2e/duplicate.test.ts")
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            len(results), 0,
+            f"Expected exactly 0 test result, got {len(results)}")
 
     def test_unit_duplicate(self):
         results, exit_code = self.run_unit_test(
@@ -159,6 +167,61 @@ class DevToolsTestHarness(unittest.TestCase):
         self.assertEqual(results[0].get('testId'),
                          'test/harness/unit/hooks.test.ts:block_2:run_3')
         self.assertEqual(results[0].get('status'), 'PASS')
+
+    def test_e2e_ids(self):
+        results, exit_code = self.run_e2e_test(
+            "test/harness/e2e/multiple.test.ts:multiple:run2")
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(
+            len(results), 1,
+            f"Expected exactly one test result, got {len(results)}")
+        self.assertEqual(results[0].get('testId'),
+                         'test/harness/e2e/multiple.test.ts:multiple:run2')
+        self.assertEqual(results[0].get('status'), 'PASS')
+
+    def test_e2e_errors(self):
+        results, exit_code = self.run_e2e_test(
+            "test/harness/e2e/errors.test.ts")
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            len(results), 4,
+            f"Expected exactly 4 test results, got {len(results)}")
+        self.assertEqual(results[0].get('testId'),
+                         'test/harness/e2e/errors.test.ts:block_1:run_1')
+        self.assertEqual(results[0].get('status'), 'PASS')
+        self.assertEqual(results[1].get('testId'),
+                         'test/harness/e2e/errors.test.ts:block_1:run_2')
+        self.assertEqual(results[1].get('status'), 'PASS')
+        self.assertEqual(results[2].get('testId'),
+                         'test/harness/e2e/errors.test.ts:block_2:run_3')
+        self.assertEqual(results[2].get('status'), 'FAIL')
+        self.assertEqual(results[3].get('testId'),
+                         'test/harness/e2e/errors.test.ts:block_2:run_4')
+        self.assertEqual(results[3].get('status'), 'PASS')
+
+    def test_e2e_repeat(self):
+        abs_test_file = self._resolve_test_file("test/harness/e2e/e2e.test.ts")
+        results, exit_code = self.run_test_with_rdb([
+            "out/Default/gen/test/harness/run-mocha.js", abs_test_file, "--",
+            "--repeat=2"
+        ])
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(
+            len(results), 2,
+            f"Expected exactly 2 test results, got {len(results)}")
+
+        # Initial test
+        self.assertEqual(
+            results[0].get('testId'),
+            'test/harness/e2e/e2e.test.ts:test_harness_e2e_fixture:should_run_a_basic_e2e_test_successfully'
+        )
+        self.assertEqual(results[0].get('status'), 'PASS')
+        # Repeated run
+        self.assertEqual(
+            results[1].get('testId'),
+            'test/harness/e2e/e2e.test.ts:test_harness_e2e_fixture:should_run_a_basic_e2e_test_successfully'
+        )
+        self.assertEqual(results[1].get('status'), 'PASS')
 
 if __name__ == '__main__':
     if '--debug' in sys.argv:
