@@ -13,6 +13,7 @@ import {mockAidaClient} from '../../../testing/AiAssistanceHelpers.js';
 import {deinitializeGlobalVars, updateHostConfig} from '../../../testing/EnvironmentHelpers.js';
 import {setupSettingsHooks} from '../../../testing/SettingsHelpers.js';
 import {SnapshotTester} from '../../../testing/SnapshotTester.js';
+import {TestUniverse} from '../../../testing/TestUniverse.js';
 import * as RenderCoordinator from '../../../ui/components/render_coordinator/render_coordinator.js';
 import * as Logs from '../../logs/logs.js';
 import * as NetworkTimeCalculator from '../../network_time_calculator/network_time_calculator.js';
@@ -24,6 +25,8 @@ const {urlString} = Platform.DevToolsPath;
 describe('NetworkAgent', function() {
   setupSettingsHooks();
   const snapshotTester = new SnapshotTester(this, import.meta);
+  let universe: TestUniverse;
+
   function mockHostConfig(modelId?: string, temperature?: number) {
     updateHostConfig({
       devToolsAiAssistanceNetworkAgent: {
@@ -32,6 +35,11 @@ describe('NetworkAgent', function() {
       },
     });
   }
+
+  beforeEach(() => {
+    universe = new TestUniverse();
+    sinon.stub(Logs.NetworkLog.NetworkLog, 'instance').returns(universe.networkLog);
+  });
 
   afterEach(async () => {
     await RenderCoordinator.done();
@@ -107,7 +115,7 @@ describe('NetworkAgent', function() {
           'requestId' as Protocol.Network.RequestId, urlString`https://www.example.com/2`, urlString``, null, null,
           null);
 
-      sinon.stub(Logs.NetworkLog.NetworkLog.instance(), 'initiatorGraphForRequest')
+      sinon.stub(universe.networkLog, 'initiatorGraphForRequest')
           .withArgs(selectedNetworkRequest)
           .returns({
             initiators: new Set([selectedNetworkRequest, initiatorNetworkRequest]),
