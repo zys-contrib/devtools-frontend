@@ -137,10 +137,10 @@ it.skipOnPlatforms(['linux'], '[crbug.com/xxx] ...', () => {...});
 
 ### De-flaking E2E tests
 
-To reproduce a flaky test locally, mark the test with `it.only` and use the `--repeat=X` command line flag:
+To reproduce a flaky test locally, use the exact test ID printed in the test runner output and the `--repeat=X` command line flag:
 
 ```sh
-npm run test -- --repeat=20 test/e2e/sources/navigator-view.test.ts
+npm run test -- --repeat=20 test/e2e/sources/navigator-view.test.ts:can_show_newly_created_snippets_show_up_in_command_menu
 ```
 
 To see if certain tests are flaky you can use the E2E stressor bots. Open a CL with your test changes and run the following command specifying your test file:

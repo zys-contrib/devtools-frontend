@@ -20,10 +20,10 @@ This skill outlines the workflow for fixing skipped tests in the DevTools codeba
    - You should look for occurrences like `it.skip('[crbug.com/<bugid>] ...', ...)` or skipped describes that mention the bug ID.
 
 4. **Iterative Fix Process**
-   - **Step 1:** Change `it.skip` or `describe.skip` to `it.only` or `describe.only` for *one* of the tests associated with the bug, so that only that specific test runs.
-   - **Step 2:** Re-run the tests (e.g., `npm run test -- <path_to_test_file>`) using the guidelines from the `devtools-verification` skill. If you are dealing with flaky tests, you can use the `--repeat=x` flag (e.g. `npm run test -- <path_to_test_file> --repeat=20`) to run the test multiple times to reproduce the flakiness.
+   - **Step 1:** Remove `it.skip` or `describe.skip` for *one* of the tests associated with the bug.
+   - **Step 2:** Re-run the specific test using its exact test ID (e.g., `npm run test <exact_test_id>`) using the guidelines from the `devtools-verification` skill. If you are dealing with flaky tests, you can use the `--repeat=x` flag (e.g. `npm run test -- --repeat=20 <exact_test_id>`) to run the test multiple times to reproduce the flakiness.
    - **Step 3:** Analyze the test failure and make the necessary fixes to the code or the test itself.
-   - **Step 4:** Re-run the test to ensure the fix is correct. Remove `.only`.
+   - **Step 4:** Re-run the test to ensure the fix is correct.
    - **Step 5:** Remove the `[crbug.com/<bugid>]` prefix from the test name string if it is present.
    - **Step 6:** Remove any comments directly above the test that explain the reason why the test was skipped (e.g., `// TODO(crbug...): Flaky`).
    - **Step 7:** Apply the fix to the remaining tests, un-skipping them one by one or in batches, and verifying until all are passing.
