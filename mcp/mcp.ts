@@ -21,6 +21,7 @@ export * as I18n from '../front_end/core/i18n/i18n.js';
 export type * as CDPConnection from '../front_end/core/protocol_client/CDPConnection.js';
 export {ConnectionTransport} from '../front_end/core/protocol_client/ConnectionTransport.js';
 export * as ProtocolClient from '../front_end/core/protocol_client/protocol_client.js';
+export {PuppeteerDevToolsConnection} from '../front_end/core/protocol_client/PuppeteerDevToolsConnection.js';
 export {DebuggerModel} from '../front_end/core/sdk/DebuggerModel.js';
 export * as NetworkManager from '../front_end/core/sdk/NetworkManager.js';
 export {RuntimeModel} from '../front_end/core/sdk/RuntimeModel.js';

@@ -14,6 +14,7 @@ devtools_module("mcp") {
   deps = [
     "../front_end/core/common:bundle",
     "../front_end/core/host:bundle",
+    "../front_end/core/protocol_client:puppeteer_devtools_connection",
     "../front_end/core/sdk:meta",
     "../front_end/foundation:bundle",
     "../front_end/generated",
