@@ -43,7 +43,7 @@ import { CustomPreviewComponent } from './CustomPreviewComponent.js';
 import { JavaScriptREPL } from './JavaScriptREPL.js';
 import objectPropertiesSectionStyles from './objectPropertiesSection.css.js';
 import objectValueStyles from './objectValue.css.js';
-import { RemoteObjectPreviewFormatter, renderNodeTitle } from './RemoteObjectPreviewFormatter.js';
+import { RemoteObjectPreviewFormatter, renderNodeTitle, renderTrustedType } from './RemoteObjectPreviewFormatter.js';
 export { objectPropertiesSectionStyles, objectValueStyles };
 const { widget } = UI.Widget;
 const { ref, repeat, ifDefined, classMap, until } = Directives;
@@ -214,7 +214,8 @@ export class ObjectTreeExpansionTracker {
         if (!(node instanceof ObjectTreeNode)) {
             return undefined;
         }
-        return node.parent?.children?.internalProperties?.find(p => p.name === '[[Prototype]]' && p.children?.properties?.includes(node));
+        return node.parent?.children?.internalProperties?.find(p => p.name === '[[Prototype]]' &&
+            p.children?.properties?.includes(node));
     }
     static #keyType(node) {
         if (node instanceof ObjectTreeNode) {
@@ -747,7 +748,7 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
         this.appendChild(this.#objectTreeElement);
         if (typeof title === 'string' || !title) {
             this.titleElement = this.element.createChild('span');
-            this.titleElement.textContent = title || '';
+            this.titleElement.textContent = title ? Platform.StringUtilities.escapeUnicodeAsText(title) : '';
         }
         else {
             this.titleElement = title;
@@ -836,19 +837,20 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
         if (name === null) {
             return element;
         }
-        if (/^\s|\s$|^$|\n/.test(name)) {
-            element.textContent = `"${name.replace(/\n/g, '\u21B5')}"`;
+        const escapedName = Platform.StringUtilities.escapeUnicodeAsText(name);
+        if (/^\s|\s$|^$|\n/.test(escapedName)) {
+            element.textContent = `"${escapedName.replace(/\n/g, '\u21B5')}"`;
             return element;
         }
         if (isPrivate) {
             const privatePropertyHash = document.createElement('span');
             privatePropertyHash.classList.add('private-property-hash');
-            privatePropertyHash.textContent = name[0];
+            privatePropertyHash.textContent = escapedName[0];
             element.appendChild(privatePropertyHash);
-            element.appendChild(document.createTextNode(name.substring(1)));
+            element.appendChild(document.createTextNode(escapedName.substring(1)));
             return element;
         }
-        element.textContent = name;
+        element.textContent = escapedName;
         return element;
     }
     static valueElementForFunctionDescription(description, includePreview, defaultName, className) {
@@ -963,18 +965,18 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
                 if (rawLocation && linkifier) {
                     return html `${linkifier.linkifyRawLocation(rawLocation, Platform.DevToolsPath.EmptyUrlString, 'value')}`;
                 }
-                return html `<span class=value title=${description}>${'<' + i18nString(UIStrings.unknown) + '>'}</span>`;
+                const title = description || undefined;
+                return html `<span class=value title=${ifDefined(title)}>${'<' + i18nString(UIStrings.unknown) + '>'}</span>`;
             }
             if (type === 'string' && typeof description === 'string') {
-                const text = Platform.StringUtilities.escapeUnicode(JSON.stringify(description));
+                const text = Platform.StringUtilities.escapeUnicodeAsText(JSON.stringify(description));
                 const tooLong = description.length > maxRenderableStringLength;
                 return html `<span class="value object-value-string" title=${ifDefined(tooLong ? undefined : description)}>${tooLong ? widget(ExpandableTextPropertyValue, { text }) : text}</span>`;
             }
             if (type === 'object' && subtype === 'trustedtype') {
-                const text = `${className} '${description}'`;
+                const text = `${className} "${description}"`;
                 const tooLong = text.length > maxRenderableStringLength;
-                return html `<span class="value object-value-trustedtype" title=${ifDefined(tooLong ? undefined : text)}>${tooLong ? widget(ExpandableTextPropertyValue, { text }) :
-                    html `${className} <span class=object-value-string title=${description}>${Platform.StringUtilities.escapeUnicode(JSON.stringify(description))}</span>`}</span>`;
+                return html `<span class="value object-value-trustedtype" title=${ifDefined(tooLong ? undefined : text)}>${tooLong ? widget(ExpandableTextPropertyValue, { text }) : renderTrustedType(description, className)}</span>`;
             }
             if (type === 'function') {
                 return ObjectPropertiesSection.valueElementForFunctionDescription(description, undefined, undefined, 'value');
@@ -1085,7 +1087,9 @@ export function populateObjectTreeContextMenu(contextMenu, object, expandRecursi
     contextMenu.appendApplicableItems(object.object);
     if (object.object instanceof SDK.RemoteObject.LocalJSONObject) {
         const { value } = object.object;
-        const propertyValue = typeof value === 'object' ? Platform.StringUtilities.escapeUnicode(JSON.stringify(value, null, 2)) : value;
+        const propertyValue = typeof value === 'object' ?
+            Platform.StringUtilities.escapeUnicodeAsText(JSON.stringify(value, null, 2)) :
+            value;
         const copyValueHandler = () => {
             Host.userMetrics.actionTaken(Host.UserMetrics.Action.NetworkPanelCopyValue);
             Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(propertyValue);
@@ -1622,7 +1626,9 @@ export class ObjectPropertyTreeElement extends UI.TreeOutline.TreeElement {
             contextMenu.appendApplicableItems(this.property.object);
             if (this.property.parent?.object instanceof SDK.RemoteObject.LocalJSONObject) {
                 const { object: { value } } = this.property;
-                const propertyValue = typeof value === 'object' ? Platform.StringUtilities.escapeUnicode(JSON.stringify(value, null, 2)) : value;
+                const propertyValue = typeof value === 'object' ?
+                    Platform.StringUtilities.escapeUnicodeAsText(JSON.stringify(value, null, 2)) :
+                    value;
                 const copyValueHandler = () => {
                     Host.userMetrics.actionTaken(Host.UserMetrics.Action.NetworkPanelCopyValue);
                     Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(propertyValue);
@@ -1934,7 +1940,7 @@ export const EXPANDABLE_TEXT_DEFAULT_VIEW = (input, output, target) => {
                  data-text=${i18nString(UIStrings.copy)}
                  jslog=${VisualLogging.action('copy').track({ click: true })}
                  ></button>
-             </span>`, 
+              </span>`, 
     // clang-format on
     target);
 };

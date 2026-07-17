@@ -560,7 +560,7 @@ var objectValue_css_default = `/*
 .object-value-regexp,
 .object-value-symbol {
   white-space: pre;
-  unicode-bidi: -webkit-isolate;
+  unicode-bidi: isolate;
   color: var(--sys-color-token-property-special);
 }
 
@@ -609,6 +609,7 @@ var objectValue_css_default = `/*
 .name {
   color: var(--sys-color-token-tag);
   flex-shrink: 0;
+  unicode-bidi: isolate;
 }
 
 .object-properties-preview .name {
@@ -1342,7 +1343,7 @@ var ObjectPropertiesSection = class _ObjectPropertiesSection extends UI2.TreeOut
     this.appendChild(this.#objectTreeElement);
     if (typeof title === "string" || !title) {
       this.titleElement = this.element.createChild("span");
-      this.titleElement.textContent = title || "";
+      this.titleElement.textContent = title ? Platform2.StringUtilities.escapeUnicodeAsText(title) : "";
     } else {
       this.titleElement = title;
       this.element.appendChild(title);
@@ -1436,19 +1437,20 @@ var ObjectPropertiesSection = class _ObjectPropertiesSection extends UI2.TreeOut
     if (name === null) {
       return element;
     }
-    if (/^\s|\s$|^$|\n/.test(name)) {
-      element.textContent = `"${name.replace(/\n/g, "\u21B5")}"`;
+    const escapedName = Platform2.StringUtilities.escapeUnicodeAsText(name);
+    if (/^\s|\s$|^$|\n/.test(escapedName)) {
+      element.textContent = `"${escapedName.replace(/\n/g, "\u21B5")}"`;
       return element;
     }
     if (isPrivate) {
       const privatePropertyHash = document.createElement("span");
       privatePropertyHash.classList.add("private-property-hash");
-      privatePropertyHash.textContent = name[0];
+      privatePropertyHash.textContent = escapedName[0];
       element.appendChild(privatePropertyHash);
-      element.appendChild(document.createTextNode(name.substring(1)));
+      element.appendChild(document.createTextNode(escapedName.substring(1)));
       return element;
     }
-    element.textContent = name;
+    element.textContent = escapedName;
     return element;
   }
   static valueElementForFunctionDescription(description, includePreview, defaultName, className) {
@@ -1551,17 +1553,18 @@ var ObjectPropertiesSection = class _ObjectPropertiesSection extends UI2.TreeOut
         if (rawLocation && linkifier) {
           return html2`${linkifier.linkifyRawLocation(rawLocation, Platform2.DevToolsPath.EmptyUrlString, "value")}`;
         }
-        return html2`<span class=value title=${description}>${"<" + i18nString2(UIStrings2.unknown) + ">"}</span>`;
+        const title = description || void 0;
+        return html2`<span class=value title=${ifDefined2(title)}>${"<" + i18nString2(UIStrings2.unknown) + ">"}</span>`;
       }
       if (type === "string" && typeof description === "string") {
-        const text = Platform2.StringUtilities.escapeUnicode(JSON.stringify(description));
+        const text = Platform2.StringUtilities.escapeUnicodeAsText(JSON.stringify(description));
         const tooLong = description.length > maxRenderableStringLength;
         return html2`<span class="value object-value-string" title=${ifDefined2(tooLong ? void 0 : description)}>${tooLong ? widget(ExpandableTextPropertyValue, { text }) : text}</span>`;
       }
       if (type === "object" && subtype === "trustedtype") {
-        const text = `${className} '${description}'`;
+        const text = `${className} "${description}"`;
         const tooLong = text.length > maxRenderableStringLength;
-        return html2`<span class="value object-value-trustedtype" title=${ifDefined2(tooLong ? void 0 : text)}>${tooLong ? widget(ExpandableTextPropertyValue, { text }) : html2`${className} <span class=object-value-string title=${description}>${Platform2.StringUtilities.escapeUnicode(JSON.stringify(description))}</span>`}</span>`;
+        return html2`<span class="value object-value-trustedtype" title=${ifDefined2(tooLong ? void 0 : text)}>${tooLong ? widget(ExpandableTextPropertyValue, { text }) : renderTrustedType(description, className)}</span>`;
       }
       if (type === "function") {
         return _ObjectPropertiesSection.valueElementForFunctionDescription(description, void 0, void 0, "value");
@@ -1663,7 +1666,7 @@ function populateObjectTreeContextMenu(contextMenu, object, expandRecursively, c
   contextMenu.appendApplicableItems(object.object);
   if (object.object instanceof SDK3.RemoteObject.LocalJSONObject) {
     const { value } = object.object;
-    const propertyValue = typeof value === "object" ? Platform2.StringUtilities.escapeUnicode(JSON.stringify(value, null, 2)) : value;
+    const propertyValue = typeof value === "object" ? Platform2.StringUtilities.escapeUnicodeAsText(JSON.stringify(value, null, 2)) : value;
     const copyValueHandler = () => {
       Host.userMetrics.actionTaken(Host.UserMetrics.Action.NetworkPanelCopyValue);
       Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(propertyValue);
@@ -2189,7 +2192,7 @@ var ObjectPropertyTreeElement = class _ObjectPropertyTreeElement extends UI2.Tre
       contextMenu.appendApplicableItems(this.property.object);
       if (this.property.parent?.object instanceof SDK3.RemoteObject.LocalJSONObject) {
         const { object: { value } } = this.property;
-        const propertyValue = typeof value === "object" ? Platform2.StringUtilities.escapeUnicode(JSON.stringify(value, null, 2)) : value;
+        const propertyValue = typeof value === "object" ? Platform2.StringUtilities.escapeUnicodeAsText(JSON.stringify(value, null, 2)) : value;
         const copyValueHandler = () => {
           Host.userMetrics.actionTaken(Host.UserMetrics.Action.NetworkPanelCopyValue);
           Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(propertyValue);
@@ -2479,7 +2482,7 @@ var EXPANDABLE_TEXT_DEFAULT_VIEW = (input, output, target) => {
                  data-text=${i18nString2(UIStrings2.copy)}
                  jslog=${VisualLogging.action("copy").track({ click: true })}
                  ></button>
-             </span>`,
+              </span>`,
     // clang-format on
     target
   );

@@ -285,8 +285,8 @@ export declare class TreeViewElement extends HTMLElementWithLightDOMTemplate {
     getInternalTreeOutlineForTest(): TreeOutlineInShadow;
     focus(): void;
     protected updateNode(node: Node, attributeName: string | null): void;
-    protected addNodes(nodes: NodeList | Node[], nextSibling?: Node | null): void;
-    protected removeNodes(nodes: NodeList): void;
+    protected addNodes(nodes: NodeList | Node[]): void;
+    protected removeNodes(nodes: NodeList | Node[]): void;
     set hideOverflow(hide: boolean);
     get hideOverflow(): boolean;
     set navgiationVariant(navigationVariant: boolean);

@@ -1338,15 +1338,18 @@ __export(RecorderPluginManager_exports, {
   RecorderPluginManager: () => RecorderPluginManager
 });
 import * as Common from "./../../core/common/common.js";
-var instance = null;
+import * as Root from "./../../core/root/root.js";
 var RecorderPluginManager = class _RecorderPluginManager extends Common.ObjectWrapper.ObjectWrapper {
   #plugins = /* @__PURE__ */ new Set();
   #views = /* @__PURE__ */ new Map();
-  static instance() {
-    if (!instance) {
-      instance = new _RecorderPluginManager();
+  static instance(opts) {
+    if (!Root.DevToolsContext.globalInstance().has(_RecorderPluginManager) || opts?.forceNew) {
+      Root.DevToolsContext.globalInstance().set(_RecorderPluginManager, new _RecorderPluginManager());
     }
-    return instance;
+    return Root.DevToolsContext.globalInstance().get(_RecorderPluginManager);
+  }
+  static removeInstance() {
+    Root.DevToolsContext.globalInstance().delete(_RecorderPluginManager);
   }
   addPlugin(plugin) {
     this.#plugins.add(plugin);

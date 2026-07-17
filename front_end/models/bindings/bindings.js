@@ -916,8 +916,8 @@ import * as Common4 from "./../../core/common/common.js";
 import * as Root from "./../../core/root/root.js";
 import * as SDK2 from "./../../core/sdk/sdk.js";
 var uiSourceCodeToAttributionMap = /* @__PURE__ */ new WeakMap();
-var projectToTargetMap = /* @__PURE__ */ new WeakMap();
 var NetworkProjectManager = class _NetworkProjectManager extends Common4.ObjectWrapper.ObjectWrapper {
+  #projectToTargetMap = /* @__PURE__ */ new WeakMap();
   static instance({ forceNew } = { forceNew: false }) {
     if (!Root.DevToolsContext.globalInstance().has(_NetworkProjectManager) || forceNew) {
       Root.DevToolsContext.globalInstance().set(_NetworkProjectManager, new _NetworkProjectManager());
@@ -926,6 +926,15 @@ var NetworkProjectManager = class _NetworkProjectManager extends Common4.ObjectW
   }
   static removeInstance() {
     Root.DevToolsContext.globalInstance().delete(_NetworkProjectManager);
+  }
+  setTargetForProject(project, target) {
+    this.#projectToTargetMap.set(project, target);
+  }
+  getTargetForProject(project) {
+    return this.#projectToTargetMap.get(project) ?? null;
+  }
+  getTargetForUISourceCode(uiSourceCode) {
+    return this.#projectToTargetMap.get(uiSourceCode.project()) ?? null;
   }
 };
 var NetworkProject = class _NetworkProject {
@@ -997,13 +1006,13 @@ var NetworkProject = class _NetworkProject {
     NetworkProjectManager.instance().dispatchEventToListeners("FrameAttributionRemoved", data);
   }
   static targetForUISourceCode(uiSourceCode) {
-    return projectToTargetMap.get(uiSourceCode.project()) || null;
+    return NetworkProjectManager.instance().getTargetForUISourceCode(uiSourceCode);
   }
   static setTargetForProject(project, target) {
-    projectToTargetMap.set(project, target);
+    NetworkProjectManager.instance().setTargetForProject(project, target);
   }
   static getTargetForProject(project) {
-    return projectToTargetMap.get(project) || null;
+    return NetworkProjectManager.instance().getTargetForProject(project);
   }
   static framesForUISourceCode(uiSourceCode) {
     const target = _NetworkProject.targetForUISourceCode(uiSourceCode);

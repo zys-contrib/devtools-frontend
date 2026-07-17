@@ -1607,7 +1607,7 @@ export class TreeViewElement extends HTMLElementWithLightDOMTemplate {
             treeElement.updateExpansionFromAttribute();
         }
     }
-    addNodes(nodes, nextSibling) {
+    addNodes(nodes) {
         for (const node of getTreeNodes(nodes)) {
             if (TreeViewTreeElement.get(node)) {
                 continue; // Not sure this can happen
@@ -1619,10 +1619,18 @@ export class TreeViewElement extends HTMLElementWithLightDOMTemplate {
             if (parent.treeElement.childCount() === 0) {
                 parent.treeElement.childrenListElement.classList.add(...parent.classes.values());
             }
-            while (nextSibling && nextSibling.nodeType !== Node.ELEMENT_NODE) {
-                nextSibling = nextSibling.nextSibling;
+            let nextElement = null;
+            for (let e = node.nextElementSibling; e; e = e.nextElementSibling) {
+                const nextTreeEl = TreeViewTreeElement.get(e);
+                if (nextTreeEl) {
+                    nextElement = nextTreeEl;
+                    break;
+                }
+                if (e instanceof TreeElementWrapper && e.treeElement && e.treeElement.parent === parent.treeElement) {
+                    nextElement = e.treeElement;
+                    break;
+                }
             }
-            const nextElement = nextSibling ? TreeViewTreeElement.get(nextSibling) : null;
             const index = nextElement ? parent.treeElement.indexOfChild(nextElement) : parent.treeElement.children().length;
             let treeElement;
             if (node instanceof HTMLLIElement) {
@@ -1650,7 +1658,7 @@ export class TreeViewElement extends HTMLElementWithLightDOMTemplate {
                 }
             }
         }
-        for (const element of getStyleElements(nodes)) {
+        for (const element of new Set(getStyleElements(nodes))) {
             this.#treeOutline.shadowRoot.appendChild(element.cloneNode(true));
         }
     }
