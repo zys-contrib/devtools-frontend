@@ -1232,6 +1232,13 @@ describeWithEnvironment('ElementsTreeElement highlighting', () => {
     sinon.assert.calledOnce(setNodeValueSpy);
     sinon.assert.calledWith(setNodeValueSpy, 'New Text');
   });
+
+  it('highlights search results in ordered text ranges', () => {
+    attrTestTreeElement.highlightSearchResults('foo');
+    const highlight = CSS.highlights.get('highlighted-search-result');
+    assert.exists(highlight);
+    assert.deepEqual(Array.from(highlight).map(range => range.toString()), ['Foo', 'foo']);
+  });
 });
 
 describeWithEnvironment('ElementsTreeElement in Snapshot Mode', () => {
