@@ -49,7 +49,6 @@ describeWithEnvironment('DeviceModeView', () => {
       showRulersSetting.set(true);
       renderElementIntoDOM(view, {includeCommonStyles: true, width: 800, height: 600});
       deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.Responsive, null, null);
-      await new Promise(resolve => setTimeout(resolve, 100));
       await UI.Widget.Widget.allUpdatesComplete;
       await assertScreenshot('device_mode_view/rulers.png');
     });
