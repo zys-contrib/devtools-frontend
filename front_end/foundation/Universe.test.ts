@@ -174,6 +174,11 @@ describe('Universe', () => {
 
       // TargetDetachedDialog,
       'Inspector.enable',
+
+      // ChildTargetManager
+      'Target.setAutoAttach',
+      'Target.setDiscoverTargets',
+      'Target.setRemoteLocations',
     ];
 
     for (const call of sendSpy.getCalls()) {
