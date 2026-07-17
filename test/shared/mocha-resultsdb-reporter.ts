@@ -181,7 +181,6 @@ class ResultsDbReporter extends Mocha.reporters.Base {
     if (this.failures.length > 0 && localResults) {
       console.error(`Results have been written to file://${localResults}`);
     }
-    void ResultsDb.flushTestResults();
   }
 }
 

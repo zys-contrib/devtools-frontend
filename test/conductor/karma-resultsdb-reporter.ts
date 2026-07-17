@@ -119,7 +119,7 @@ export const ResultsDBReporter = function(
         }
       }
     }
-    ResultsDb.sendTestResult(testResult);
+    ResultsDb.sendTestResult(testResult, /* sendImmediately=*/ true);
   };
   this.specSuccess = specComplete;
   this.specSkipped = specComplete;
@@ -140,7 +140,6 @@ export const ResultsDBReporter = function(
         this.write('FAILED: %d failed, %d passed (%d skipped)\n', results.failed, results.success, results.skipped);
       }
     }
-    void ResultsDb.flushTestResults();
   };
 };
 ResultsDBReporter.$inject = ['baseReporterDecorator', 'formatError', 'config'];

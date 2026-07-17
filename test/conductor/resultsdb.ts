@@ -126,14 +126,14 @@ function stringifyTestResults(results: TestResult[]): string {
   return JSON.stringify({testResults});
 }
 
-function takeAndSendResults(): Promise<void> {
-  if (timer) {
-    clearTimeout(timer);
-    timer = undefined;
-  }
+function takeAndSendResults() {
   const sinkData = getSinkData();
-  if (sinkData.url === undefined || pendingResults.length === 0) {
-    return Promise.resolve();
+  if (sinkData.url === undefined) {
+    return;
+  }
+
+  if (pendingResults.length === 0) {
+    return;
   }
 
   const testResults = pendingResults;
@@ -148,43 +148,33 @@ function takeAndSendResults(): Promise<void> {
     },
   };
 
-  return new Promise<void>(resolve => {
-    const request = http.request(sinkData.url!, postOptions, res => {
-      res.resume();
-      res.on('end', () => resolve());
-    });
-    request.setTimeout(5000, function() {
-      request.destroy();
-      console.error('sending to rdb timed out');
-      resolve();
-    });
-    request.on('error', err => {
-      console.error('error sending to rdb:', err);
-      resolve();
-    });
-    request.write(stringifyTestResults(testResults));
-    request.end();
+  // As per ResultSink documentation, this will always be a localhost connection
+  // and can be treated as reliable as a local file write.
+  const request = http.request(sinkData.url, postOptions);
+  request.setTimeout(5000, function() {
+    request.destroy();
+    console.error('sending to rdb timed out');
   });
-}
-
-export function flushTestResults(): Promise<void> {
-  return takeAndSendResults();
+  request.write(stringifyTestResults(testResults));
+  request.end();
 }
 
 /**
- * Call when a test completes to record its `TestResult`.
- * Results will be buffered and sent periodically or when `flushTestResults()` is called.
+ * Call at the end of a test suite. Will send all `TestResult`s collected via
+ * `recordTestResult` to the ResultSink endpoint (only if available).
  **/
-export function sendTestResult(results: TestResult): void {
+export function sendTestResult(results: TestResult, sendImmediately = false): void {
   const sinkData = getSinkData();
   if (sinkData.url === undefined) {
     return;
   }
   pendingResults.push(results);
+  if (sendImmediately) {
+    takeAndSendResults();
+    return;
+  }
   if (timer) {
     clearTimeout(timer);
   }
-  timer = setTimeout(() => {
-    void takeAndSendResults();
-  }, 1000);
+  timer = setTimeout(takeAndSendResults, 1000);
 }
