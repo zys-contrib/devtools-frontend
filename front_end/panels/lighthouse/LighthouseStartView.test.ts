@@ -14,6 +14,7 @@ describeWithEnvironment('LighthouseStartView', () => {
 
   beforeEach(async () => {
     lighthouse = await import('./lighthouse.js');
+    lighthouse.LighthouseController.clearSettingsCacheForTest();
   });
 
   function createStartView(): LighthouseModule.LighthouseStartView.StartView {

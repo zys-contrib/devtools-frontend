@@ -900,3 +900,8 @@ export interface EventTypes {
   [Events.PageWarningsChanged]: PageWarningsChangedEvent;
   [Events.AuditProgressChanged]: AuditProgressChangedEvent;
 }
+
+export function clearSettingsCacheForTest(): void {
+  runtimeSettings = null;
+  presets = null;
+}
