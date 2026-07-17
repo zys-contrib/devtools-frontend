@@ -125,7 +125,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
   }
 
   protected override async preRun(): Promise<void> {
-    const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+    const target = this.targetManager.primaryPageTarget();
     const domModel = target?.model(SDK.DOMModel.DOMModel);
     // We need to ensure the document is requested so that #getDocumentBodyNode()
     // can return a valid node for the JavaScript execution context.
@@ -144,10 +144,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
    * so that the AI has a valid $0 to start with.
    */
   #getDocumentBodyNode(): SDK.DOMModel.DOMNode|null {
-    const document = SDK.TargetManager.TargetManager.instance()
-                         .primaryPageTarget()
-                         ?.model(SDK.DOMModel.DOMModel)
-                         ?.existingDocument();
+    const document = this.targetManager.primaryPageTarget()?.model(SDK.DOMModel.DOMModel)?.existingDocument();
     return document?.body ?? document ?? null;
   }
 
@@ -168,7 +165,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
   }
 
   async #resolvePathToNode(path: string): Promise<SDK.DOMModel.DOMNode|null> {
-    const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+    const target = this.targetManager.primaryPageTarget();
     if (!target) {
       return null;
     }

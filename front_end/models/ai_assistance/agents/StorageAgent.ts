@@ -61,8 +61,9 @@ const preamble =
  -   **CRITICAL**: You are a storage debugging assistant. NEVER answer unrelated topics (legal, financial, race, sexuality, medical, religion, politics). If asked, respond: "Sorry, I can't answer that. I'm best at questions about debugging web pages."
  `;
 
-function isSamePrimaryPageOrigin(context?: ConversationContext<StorageItem>): boolean {
-  const primaryPageTarget = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+function isSamePrimaryPageOrigin(targetManager: SDK.TargetManager.TargetManager,
+                                 context?: ConversationContext<StorageItem>): boolean {
+  const primaryPageTarget = targetManager.primaryPageTarget();
   return isSamePageOrigin(primaryPageTarget, context);
 }
 
@@ -200,13 +201,12 @@ export class StorageAgent extends AiAgent<StorageItem> {
         };
       },
       handler: async () => {
-        if (!isSamePrimaryPageOrigin(this.context)) {
+        if (!isSamePrimaryPageOrigin(this.targetManager, this.context)) {
           return {error: 'No origin available or not allowed.'};
         }
 
         const origins = new Set<string>();
-        for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames(
-                 SDK.TargetManager.TargetManager.instance())) {
+        for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames(this.targetManager)) {
           if (!isSamePageOrigin(frame.resourceTreeModel().target().outermostTarget(), this.context)) {
             continue;
           }
@@ -266,11 +266,11 @@ export class StorageAgent extends AiAgent<StorageItem> {
 
       handler: async args => {
         this.disableServerSideLogging();
-        if (!isSamePrimaryPageOrigin(this.context)) {
+        if (!isSamePrimaryPageOrigin(this.targetManager, this.context)) {
           return {error: 'No origin available or not allowed.'};
         }
 
-        const storages = resolveDOMStorages(this.context, args.type, args.origin, args.storageKey);
+        const storages = resolveDOMStorages(this.context, args.type, args.origin, args.storageKey, this.targetManager);
 
         const keyAndItems = await Promise.all(storages.map(async storage => {
           const items = await storage.getItems();
@@ -344,11 +344,11 @@ export class StorageAgent extends AiAgent<StorageItem> {
 
       handler: async (args, options) => {
         this.disableServerSideLogging();
-        if (!isSamePrimaryPageOrigin(this.context)) {
+        if (!isSamePrimaryPageOrigin(this.targetManager, this.context)) {
           return {error: 'No origin available or not allowed.'};
         }
 
-        const storages = resolveDOMStorages(this.context, args.type, args.origin, args.storageKey);
+        const storages = resolveDOMStorages(this.context, args.type, args.origin, args.storageKey, this.targetManager);
         if (storages.length === 0) {
           return {error: 'No matching storage partitions found.'};
         }
@@ -427,11 +427,11 @@ export class StorageAgent extends AiAgent<StorageItem> {
       },
       handler: async args => {
         this.disableServerSideLogging();
-        if (!isSamePrimaryPageOrigin(this.context)) {
+        if (!isSamePrimaryPageOrigin(this.targetManager, this.context)) {
           return {error: 'No origin available or not allowed.'};
         }
 
-        const frame = findFrameForOrigin(this.context, args.origin);
+        const frame = findFrameForOrigin(this.context, args.origin, this.targetManager);
         if (!frame) {
           return {result: {cookies: []}};
         }
@@ -479,11 +479,11 @@ export class StorageAgent extends AiAgent<StorageItem> {
       },
       handler: async (args, options) => {
         this.disableServerSideLogging();
-        if (!isSamePrimaryPageOrigin(this.context)) {
+        if (!isSamePrimaryPageOrigin(this.targetManager, this.context)) {
           return {error: 'No origin available or not allowed.'};
         }
 
-        const frame = findFrameForOrigin(this.context, args.origin);
+        const frame = findFrameForOrigin(this.context, args.origin, this.targetManager);
         if (!frame) {
           return {result: {cookies: []}};
         }
@@ -552,7 +552,7 @@ export class StorageAgent extends AiAgent<StorageItem> {
         };
       },
       handler: async () => {
-        const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+        const target = this.targetManager.primaryPageTarget();
         if (!target || !this.context || !isSamePageOrigin(target, this.context)) {
           return {error: 'No origin available or not allowed.'};
         }
@@ -658,8 +658,10 @@ export async function getCookiesForDomain(
 }
 
 export function findFrameForOrigin(
-    context: ConversationContext<StorageItem>|undefined, origin: string): SDK.ResourceTreeModel.ResourceTreeFrame|null {
-  for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames(SDK.TargetManager.TargetManager.instance())) {
+    context: ConversationContext<StorageItem>|undefined, origin: string,
+    targetManager: SDK.TargetManager.TargetManager =
+        SDK.TargetManager.TargetManager.instance()): SDK.ResourceTreeModel.ResourceTreeFrame|null {
+  for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames(targetManager)) {
     if (frame.securityOrigin === origin) {
       const target = frame.resourceTreeModel().target();
       if (isSamePageOrigin(target.outermostTarget(), context)) {
@@ -669,13 +671,14 @@ export function findFrameForOrigin(
   }
   return null;
 }
-export function resolveDOMStorages(
-    context: ConversationContext<StorageItem>|undefined, type: 'localStorage'|'sessionStorage', origin: string,
-    storageKey?: string): SDK.DOMStorageModel.DOMStorage[] {
+export function resolveDOMStorages(context: ConversationContext<StorageItem>|undefined,
+                                   type: 'localStorage'|'sessionStorage', origin: string, storageKey?: string,
+                                   targetManager: SDK.TargetManager.TargetManager =
+                                       SDK.TargetManager.TargetManager.instance()): SDK.DOMStorageModel.DOMStorage[] {
   const resolvedStorages: SDK.DOMStorageModel.DOMStorage[] = [];
   const isLocalStorage = type === 'localStorage';
 
-  const domStorageModels = SDK.TargetManager.TargetManager.instance().models(SDK.DOMStorageModel.DOMStorageModel);
+  const domStorageModels = targetManager.models(SDK.DOMStorageModel.DOMStorageModel);
   for (const domStorageModel of domStorageModels) {
     if (!isSamePageOrigin(domStorageModel.target().outermostTarget(), context)) {
       // Skip DOMStorageModels that don't point to the same outermost target.

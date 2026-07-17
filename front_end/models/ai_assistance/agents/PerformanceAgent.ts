@@ -25,6 +25,7 @@ import {AICallTree} from '../performance/AICallTree.js';
 import type {AgentFocus} from '../performance/AIContext.js';
 
 import {
+  type AgentOptions,
   AiAgent,
   type AiWidget,
   type ContextResponse,
@@ -230,12 +231,25 @@ export function getLabelName(label: MainThreadSectionLabel, focus: AgentFocus): 
   return label;
 }
 
+export interface PerformanceAgentOptions extends AgentOptions {
+  tracker?: Tracing.FreshRecording.Tracker;
+  networkLog?: Logs.NetworkLog.NetworkLog;
+}
+
 /**
  * One agent instance handles one conversation. Create a new agent
  * instance for a new conversation.
  */
 export class PerformanceAgent extends AiAgent<AgentFocus> {
   readonly preamble = preamble;
+  readonly #tracker: Tracing.FreshRecording.Tracker;
+  readonly #networkLog: Logs.NetworkLog.NetworkLog;
+
+  constructor(opts: PerformanceAgentOptions) {
+    super(opts);
+    this.#tracker = opts.tracker ?? Tracing.FreshRecording.Tracker.instance();
+    this.#networkLog = opts.networkLog ?? Logs.NetworkLog.NetworkLog.instance();
+  }
   #formatter: PerformanceTraceFormatter|null = null;
   #lastEventForEnhancedQuery: Trace.Types.Events.Event|undefined;
   #lastInsightForEnhancedQuery: Trace.Insights.Types.InsightModel|undefined;
@@ -666,7 +680,7 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
 
     this.addFact(this.#notExternalExtraPreambleFact);
 
-    const isFresh = Tracing.FreshRecording.Tracker.instance().recordingIsFresh(focus.parsedTrace);
+    const isFresh = this.#tracker.recordingIsFresh(focus.parsedTrace);
     if (isFresh) {
       this.addFact(this.#freshTraceExtraPreambleFact);
     }
@@ -675,7 +689,7 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
     this.addFact(this.#networkDataDescriptionFact);
 
     if (!this.#traceFacts.length) {
-      const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+      const target = this.targetManager.primaryPageTarget();
       if (!target) {
         throw new Error('missing target');
       }
@@ -756,7 +770,7 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
   #declareFunctions(context: PerformanceTraceContext): void {
     const focus = context.getItem();
     const {parsedTrace} = focus;
-    const isFresh = Tracing.FreshRecording.Tracker.instance().recordingIsFresh(parsedTrace);
+    const isFresh = this.#tracker.recordingIsFresh(parsedTrace);
 
     this.declareFunction<{insightSetId: string, insightName: string}, {details: string}>('getInsightDetails', {
       description:
@@ -814,7 +828,7 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
           if (lcpEvent && Trace.Types.Events.isAnyLargestContentfulPaintCandidate(lcpEvent)) {
             const nodeId = lcpEvent.args.data?.nodeId;
             if (nodeId) {
-              const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+              const target = this.targetManager.primaryPageTarget();
               const domModel = target?.model(SDK.DOMModel.DOMModel);
               if (domModel) {
                 const nodeMap = await domModel.pushNodesByBackendIdsToFrontend(new Set([nodeId]));
@@ -1151,7 +1165,7 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
           throw new Error('missing formatter');
         }
 
-        const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+        const target = this.targetManager.primaryPageTarget();
         if (!target) {
           throw new Error('missing target');
         }
@@ -1225,8 +1239,7 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
         if (script?.content !== undefined) {
           content = script.content;
         } else if (isFresh || isTraceApp) {
-          const resource =
-              SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(SDK.TargetManager.TargetManager.instance(), url);
+          const resource = SDK.ResourceTreeModel.ResourceTreeModel.resourceForURL(this.targetManager, url);
           if (!resource) {
             return {error: 'Resource not found'};
           }
@@ -1365,13 +1378,13 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
 
   async #getNetworkRequestImageData(lcpRequest: Trace.Types.Events.SyntheticNetworkRequest):
       Promise<TextUtils.ContentData.ContentData|undefined> {
-    const target = SDK.TargetManager.TargetManager.instance().primaryPageTarget();
+    const target = this.targetManager.primaryPageTarget();
     const networkManager = target?.model(SDK.NetworkManager.NetworkManager);
     if (!target || !networkManager) {
       return undefined;
     }
 
-    const networkLog = Logs.NetworkLog.NetworkLog.instance();
+    const networkLog = this.#networkLog;
     const requestId = lcpRequest.args.data.requestId;
     const sdkRequest = networkLog.requestByManagerAndId(networkManager, requestId);
 
