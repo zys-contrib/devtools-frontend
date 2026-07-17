@@ -229,6 +229,22 @@ export class PerformanceTraceFormatter {
       }
     }
 
+    const extensionTrackData = parsedTrace.data.ExtensionTraceData?.extensionTrackData;
+    if (extensionTrackData && extensionTrackData.length > 0) {
+      parts.push('\n# Custom tracks\n');
+      parts.push('The following is a list of custom tracks or track groups from the extensibility API.');
+      for (const trackData of extensionTrackData) {
+        if (trackData.isTrackGroup) {
+          parts.push(`\n## Group: ${trackData.name}\n`);
+          for (const trackName of Object.keys(trackData.entriesByTrack)) {
+            parts.push(`  - Track: ${trackName}`);
+          }
+        } else {
+          parts.push(`\n## Track: ${trackData.name}\n`);
+        }
+      }
+    }
+
     return parts.join('\n');
   }
 
@@ -502,6 +518,56 @@ export class PerformanceTraceFormatter {
       results.push('# Related insights');
       results.push('Here are all the insights that contain some related request from the given range.');
       results.push(relatedInsightsText);
+    }
+
+    return results.join('\n\n');
+  }
+
+  formatExtensionTrackSummary(bounds: Trace.Types.Timing.TraceWindowMicro): string {
+    const extensionTrackData = this.#parsedTrace.data.ExtensionTraceData?.extensionTrackData;
+    if (!extensionTrackData || extensionTrackData.length === 0) {
+      return 'No custom track activity found';
+    }
+
+    const results: string[] = [];
+
+    for (const trackData of extensionTrackData) {
+      const trackLines: string[] = [];
+      const header = trackData.isTrackGroup ? `# Track Group: ${trackData.name}` : `# Track: ${trackData.name}`;
+      trackLines.push(header);
+
+      let hasEntriesInBounds = false;
+      for (const trackName of Object.keys(trackData.entriesByTrack)) {
+        const entries = trackData.entriesByTrack[trackName];
+        const filteredEntries = entries.filter(entry => Trace.Helpers.Timing.eventIsInBounds(entry, bounds));
+        if (filteredEntries.length === 0) {
+          continue;
+        }
+        hasEntriesInBounds = true;
+        if (trackData.isTrackGroup) {
+          trackLines.push(`## Track: ${trackName}`);
+        }
+        for (const entry of filteredEntries) {
+          const entryKey = this.serializeEvent(entry);
+          const parts = [
+            `Name: ${entry.name}`,
+            `eventKey: ${entryKey}`,
+            `duration: ${micros(entry.dur ?? Trace.Types.Timing.Micro(0))}`,
+          ];
+          if (entry.devtoolsObj.properties) {
+            const props = entry.devtoolsObj.properties.map(prop => `${prop[0]}: ${JSON.stringify(prop[1])}`).join(', ');
+            parts.push(`properties: {${props}}`);
+          }
+          trackLines.push(`- ${parts.join(', ')}`);
+        }
+      }
+      if (hasEntriesInBounds) {
+        results.push(trackLines.join('\n'));
+      }
+    }
+
+    if (results.length === 0) {
+      return 'No custom track activity found in the given bounds';
     }
 
     return results.join('\n\n');

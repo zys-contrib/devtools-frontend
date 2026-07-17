@@ -12,6 +12,11 @@ import {setupLocaleHooks} from '../../../testing/LocaleHelpers.js';
 import {setupRuntimeHooks} from '../../../testing/RuntimeHelpers.js';
 import {setupSettingsHooks} from '../../../testing/SettingsHelpers.js';
 import {SnapshotTester} from '../../../testing/SnapshotTester.js';
+import {
+  createTraceExtensionDataFromPerformanceAPITestInput,
+  getBaseTraceHandlerData,
+  type PerformanceAPIExtensionTestData,
+} from '../../../testing/TraceHelpersCore.js';
 import {TraceLoader} from '../../../testing/TraceLoader.js';
 import * as TextUtils from '../../text_utils/text_utils.js';
 import type * as Workspace from '../../workspace/workspace.js';
@@ -268,6 +273,102 @@ describe('PerformanceTraceFormatter', function() {
       assert.isOk(request);
       const output = formatter.formatNetworkRequests(request);
       snapshotTester.assert(this, output);
+    });
+  });
+
+  describe('custom tracks', () => {
+    async function createFormatterWithExtensionData(extensionData: PerformanceAPIExtensionTestData[]):
+        Promise<PerformanceTraceFormatter.PerformanceTraceFormatter> {
+      const extensionTraceData = await createTraceExtensionDataFromPerformanceAPITestInput(extensionData);
+      const parsedTrace = getBaseTraceHandlerData();
+      parsedTrace.insights = new Map();
+      (parsedTrace.data as {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        ExtensionTraceData: Trace.Handlers.ModelHandlers.ExtensionTraceData.ExtensionTraceData,
+      }).ExtensionTraceData = extensionTraceData;
+
+      const focus = AIContext.AgentFocus.fromParsedTrace(parsedTrace);
+      const formatter = new PerformanceTraceFormatter.PerformanceTraceFormatter(focus);
+      formatter.resolveFunctionCode = async () => null;
+      stubResolveFunctionCode(formatter);
+      return formatter;
+    }
+
+    it('formats trace summary with custom tracks', async () => {
+      const extensionData: PerformanceAPIExtensionTestData[] = [
+        {
+          detail: {
+            devtools: {
+              dataType: 'track-entry',
+              track: 'An extension track',
+              properties: [['Description', 'Something']],
+            },
+          },
+          name: 'An extension measurement',
+          ts: 100,
+          dur: 100,
+        },
+        {
+          detail: {
+            devtools: {
+              dataType: 'track-entry',
+              trackGroup: 'Group 1',
+              track: 'Track 1',
+            },
+          },
+          name: 'Grouped measurement',
+          ts: 200,
+          dur: 50,
+        },
+      ];
+      const formatter = await createFormatterWithExtensionData(extensionData);
+      const output = formatter.formatTraceSummary();
+      assert.include(output, '# Custom tracks');
+      assert.include(output, 'Track: An extension track');
+      assert.include(output, 'Group: Group 1');
+      assert.include(output, 'Track: Track 1');
+    });
+
+    it('formats custom track summary', async () => {
+      const extensionData: PerformanceAPIExtensionTestData[] = [
+        {
+          detail: {
+            devtools: {
+              dataType: 'track-entry',
+              track: 'An extension track',
+              properties: [['Description', 'Something']],
+            },
+          },
+          name: 'An extension measurement',
+          ts: 100,
+          dur: 100,
+        },
+        {
+          detail: {
+            devtools: {
+              dataType: 'track-entry',
+              trackGroup: 'Group 1',
+              track: 'Track 1',
+            },
+          },
+          name: 'Grouped measurement',
+          ts: 200,
+          dur: 50,
+        },
+      ];
+      const formatter = await createFormatterWithExtensionData(extensionData);
+      const bounds = Trace.Helpers.Timing.traceWindowFromMicroSeconds(
+          Trace.Types.Timing.Micro(0),
+          Trace.Types.Timing.Micro(500),
+      );
+      const output = formatter.formatExtensionTrackSummary(bounds);
+      assert.include(output, '# Track: An extension track');
+      assert.include(output, 'Name: An extension measurement');
+      assert.include(output, 'duration: 0.1\u00a0ms');
+      assert.include(output, 'properties: {Description: "Something"}');
+      assert.include(output, '# Track Group: Group 1');
+      assert.include(output, '## Track: Track 1');
+      assert.include(output, 'Name: Grouped measurement');
     });
   });
 });
