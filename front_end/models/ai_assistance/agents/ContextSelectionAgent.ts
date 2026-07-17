@@ -74,6 +74,14 @@ Your role is to understand the user's query, identify the appropriate specialize
 * The only available types are \`#req\` for network request and \`#file\` for source files. Only use ID inside the link, never ask about user selecting by ID.
 `;
 
+export interface ContextSelectionAgentOptions extends AgentOptions {
+  performanceRecordAndReload?: () => Promise<Trace.TraceModel.ParsedTrace>;
+  onInspectElement?: () => Promise<SDK.DOMModel.DOMNode|null>;
+  networkTimeCalculator?: NetworkTimeCalculator.NetworkTransferTimeCalculator;
+  networkLog?: Logs.NetworkLog.NetworkLog;
+  workspace?: Workspace.Workspace.WorkspaceImpl;
+}
+
 /**
  * One agent instance handles one conversation. Create a new agent
  * instance for a new conversation.
@@ -101,13 +109,13 @@ export class ContextSelectionAgent extends AiAgent<never> {
   readonly #lighthouseRecording?:
       (overrides?: LHModel.RunTypes.RunOverrides) => Promise<LHModel.ReporterTypes.ReportJSON|null>;
   #allowedOrigin: () => AllowedOriginResult;
+  readonly #networkLog: Logs.NetworkLog.NetworkLog;
+  readonly #workspace: Workspace.Workspace.WorkspaceImpl;
 
-  constructor(opts: AgentOptions&{
-    performanceRecordAndReload?: () => Promise<Trace.TraceModel.ParsedTrace>,
-    onInspectElement?: () => Promise<SDK.DOMModel.DOMNode|null>,
-    networkTimeCalculator?: NetworkTimeCalculator.NetworkTransferTimeCalculator,
-  }) {
+  constructor(opts: ContextSelectionAgentOptions) {
     super(opts);
+    this.#networkLog = opts.networkLog ?? Logs.NetworkLog.NetworkLog.instance();
+    this.#workspace = opts.workspace ?? Workspace.Workspace.WorkspaceImpl.instance();
     this.#performanceRecordAndReload = opts.performanceRecordAndReload;
     this.#lighthouseRecording = opts.lighthouseRecording;
     this.#onInspectElement = opts.onInspectElement;
@@ -146,7 +154,7 @@ export class ContextSelectionAgent extends AiAgent<never> {
 
         let hasCrossOriginRequest = false;
         const requestsToShow: NetworkRequest[] = [];
-        for (const request of Logs.NetworkLog.NetworkLog.instance().requests()) {
+        for (const request of this.#networkLog.requests()) {
           const requestOrigin = getRequestContextOrigin(request);
           /**
            * NOTE: this origin check does not ensure that all the requests are
@@ -226,7 +234,7 @@ export class ContextSelectionAgent extends AiAgent<never> {
             error: 'No request found',
           };
         }
-        const request = Logs.NetworkLog.NetworkLog.instance().requests().find(req => {
+        const request = this.#networkLog.requests().find(req => {
           if (req.requestId() !== id) {
             return false;
           }
@@ -281,7 +289,7 @@ export class ContextSelectionAgent extends AiAgent<never> {
 
         const files: Array<{file: string, id: number | undefined}> = [];
         const uiSourceCodes: Workspace.UISourceCode.UISourceCode[] = [];
-        for (const file of ContextSelectionAgent.getUISourceCodes()) {
+        for (const file of ContextSelectionAgent.getUISourceCodes(this.#workspace)) {
           const fileUrl = file.url();
           const fileOrigin = Common.ParsedURL.ParsedURL.extractOrigin(fileUrl);
 
@@ -339,7 +347,7 @@ export class ContextSelectionAgent extends AiAgent<never> {
         }
         const origin = allowedOriginResult.origin;
 
-        const file = ContextSelectionAgent.getUISourceCodes().find(file => {
+        const file = ContextSelectionAgent.getUISourceCodes(this.#workspace).find(file => {
           if (ContextSelectionAgent.uiSourceCodeId.get(file) !== params.id) {
             return false;
           }
@@ -554,8 +562,8 @@ export class ContextSelectionAgent extends AiAgent<never> {
    * coming from SourceMaps (usually only one) as that has simple code and
    * usually is what the user authored.
    */
-  static getUISourceCodes(): Workspace.UISourceCode.UISourceCode[] {
-    const workspace = Workspace.Workspace.WorkspaceImpl.instance();
+  static getUISourceCodes(workspace: Workspace.Workspace.WorkspaceImpl = Workspace.Workspace.WorkspaceImpl.instance()):
+      Workspace.UISourceCode.UISourceCode[] {
     const projects =
         workspace.projects().filter(project => project.type() === Workspace.Workspace.projectTypes.Network);
     const uiSourceCodes = new Map<string, Workspace.UISourceCode.UISourceCode>();

@@ -54,9 +54,17 @@ describe('ContextSelectionAgent', function() {
     });
   }
 
+  let universe: TestUniverse;
+
   beforeEach(() => {
-    const universe = new TestUniverse();
-    sinon.stub(Workspace.IgnoreListManager.IgnoreListManager, 'instance').returns(universe.ignoreListManager);
+    universe = new TestUniverse();
+    const {targetManager, workspace, settings, networkLog, ignoreListManager} = universe;
+
+    sinon.stub(Workspace.Workspace.WorkspaceImpl, 'instance').returns(workspace);
+    sinon.stub(SDK.TargetManager.TargetManager, 'instance').returns(targetManager);
+    sinon.stub(Common.Settings.Settings, 'instance').returns(settings);
+    sinon.stub(Logs.NetworkLog.NetworkLog, 'instance').returns(networkLog);
+    sinon.stub(Workspace.IgnoreListManager.IgnoreListManager, 'instance').returns(ignoreListManager);
   });
 
   afterEach(async () => {
@@ -169,7 +177,7 @@ describe('ContextSelectionAgent', function() {
       request.setTransferSize(3000);
       request.endTime = 2;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -305,7 +313,7 @@ describe('ContextSelectionAgent', function() {
       request2.setIssueTime(0, 0);
       request2.endTime = 1;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request1, request2]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -377,7 +385,7 @@ describe('ContextSelectionAgent', function() {
       );
       request1.statusCode = 200;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request1]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -442,7 +450,7 @@ describe('ContextSelectionAgent', function() {
       request.setIssueTime(0, 0);
       request.endTime = 1;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -482,7 +490,7 @@ describe('ContextSelectionAgent', function() {
       request.setIssueTime(0, 0);
       request.endTime = 1;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -519,7 +527,7 @@ describe('ContextSelectionAgent', function() {
     });
 
     it('returns error when there are no network requests', async () => {
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -583,7 +591,7 @@ describe('ContextSelectionAgent', function() {
       );
       request.statusCode = 200;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -641,7 +649,7 @@ describe('ContextSelectionAgent', function() {
       request2.setIssueTime(0, 0);
       request2.endTime = 1;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request1, request2]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -733,7 +741,7 @@ describe('ContextSelectionAgent', function() {
       );
       request.statusCode = 200;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -775,7 +783,7 @@ describe('ContextSelectionAgent', function() {
       );
       request.statusCode = 200;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -823,7 +831,7 @@ describe('ContextSelectionAgent', function() {
       );
       request.statusCode = 200;
 
-      const networkLog = Logs.NetworkLog.NetworkLog.instance();
+      const networkLog = universe.networkLog;
       sinon.stub(networkLog, 'requests').returns([request]);
 
       const agent = new ContextSelectionAgent.ContextSelectionAgent({
@@ -862,7 +870,7 @@ describe('ContextSelectionAgent', function() {
 
   describe('selectSourceFile', () => {
     it('selects a source file', async () => {
-      const workspace = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+      const workspace = universe.workspace;
       const project = {
         id: () => 'test-project',
         type: () => Workspace.Workspace.projectTypes.Network,
@@ -902,7 +910,7 @@ describe('ContextSelectionAgent', function() {
     });
 
     it('returns an error when selecting cross-origin source file', async () => {
-      const workspace = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+      const workspace = universe.workspace;
       const project = {
         id: () => 'test-project',
         type: () => Workspace.Workspace.projectTypes.Network,
@@ -950,7 +958,7 @@ describe('ContextSelectionAgent', function() {
 
   describe('listSourceFiles', () => {
     it('lists source files', async () => {
-      const workspace = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+      const workspace = universe.workspace;
       const project = {
         id: () => 'test-project',
         type: () => Workspace.Workspace.projectTypes.Network,
@@ -1012,7 +1020,7 @@ describe('ContextSelectionAgent', function() {
     });
 
     it('filters source files by origin', async () => {
-      const workspace = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
+      const workspace = universe.workspace;
       const project = {
         id: () => 'test-project',
         type: () => Workspace.Workspace.projectTypes.Network,
