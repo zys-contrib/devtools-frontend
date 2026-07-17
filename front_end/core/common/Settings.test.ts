@@ -397,4 +397,107 @@ describe('Settings instance', () => {
       settings.resolve(descriptor);
     });
   });
+
+  describe('maybeResolve', () => {
+    let dummyStorage: Common.Settings.SettingsStorage;
+    let settings: Common.Settings.Settings;
+
+    beforeEach(() => {
+      dummyStorage = new SettingsStorage({});
+      settings = new Common.Settings.Settings({
+        syncedStorage: dummyStorage,
+        globalStorage: dummyStorage,
+        localStorage: dummyStorage,
+        settingRegistrations: [],
+        console: new Common.Console.Console(),
+      });
+    });
+
+    it('returns the setting if it is available', () => {
+      const descriptor: Common.Settings.ConditionalSettingDescriptor<boolean, string> = {
+        name: 'test-conditional-available',
+        type: Common.Settings.SettingType.BOOLEAN,
+        defaultValue: false,
+        isAvailable: () => ({status: Common.Settings.SettingAvailability.AVAILABLE}),
+      };
+      const result = settings.maybeResolve(descriptor);
+      assert.property(result, 'setting');
+      assert.propertyVal((result as {setting: Common.Settings.Setting<boolean>}).setting, 'name',
+                         'test-conditional-available');
+    });
+
+    it('returns unavailable status and reason if it is unavailable', () => {
+      const descriptor: Common.Settings.ConditionalSettingDescriptor<boolean, string> = {
+        name: 'test-conditional-unavailable',
+        type: Common.Settings.SettingType.BOOLEAN,
+        defaultValue: false,
+        isAvailable: () => ({
+          status: Common.Settings.SettingAvailability.UNAVAILABLE,
+          reason: 'Not supported on this platform',
+        }),
+      };
+      const result = settings.maybeResolve(descriptor);
+      assert.notProperty(result, 'setting');
+      assert.deepEqual(result, {
+        status: Common.Settings.SettingAvailability.UNAVAILABLE,
+        reason: 'Not supported on this platform',
+      });
+    });
+
+    it('returns disabled status and reason if it is disabled', () => {
+      const descriptor: Common.Settings.ConditionalSettingDescriptor<boolean, string> = {
+        name: 'test-conditional-disabled',
+        type: Common.Settings.SettingType.BOOLEAN,
+        defaultValue: false,
+        isAvailable: () => ({
+          status: Common.Settings.SettingAvailability.DISABLED,
+          reason: 'Requires feature flag X',
+        }),
+      };
+      const result = settings.maybeResolve(descriptor);
+      assert.notProperty(result, 'setting');
+      assert.deepEqual(result, {
+        status: Common.Settings.SettingAvailability.DISABLED,
+        reason: 'Requires feature flag X',
+      });
+    });
+
+    it('fails TS compilation when passing a SettingDescriptor', () => {
+      const regularDescriptor: Common.Settings.SettingDescriptor<boolean> = {
+        name: 'regular-setting',
+        type: Common.Settings.SettingType.BOOLEAN,
+        defaultValue: false,
+      };
+      assert.throws(() => {
+        // @ts-expect-error: This is the test assertion. Passing SettingDescriptor to maybeResolve() should fail compilation.
+        settings.maybeResolve(regularDescriptor);
+      });
+    });
+
+    it('passes hostConfig to isAvailable function', () => {
+      let passedConfig: Root.Runtime.HostConfig|null = null;
+      const descriptor: Common.Settings.ConditionalSettingDescriptor<boolean, string> = {
+        name: 'test-conditional-config-check',
+        type: Common.Settings.SettingType.BOOLEAN,
+        defaultValue: false,
+        isAvailable: config => {
+          passedConfig = config;
+          return {status: Common.Settings.SettingAvailability.AVAILABLE};
+        },
+      };
+      settings.maybeResolve(descriptor);
+      assert.strictEqual(passedConfig, Root.Runtime.hostConfig);
+    });
+
+    it('fails TS compilation if the setting type is a function', () => {
+      const descriptor: Common.Settings.ConditionalSettingDescriptor<() => void, string> = {
+        name: 'function-setting',
+        type: Common.Settings.SettingType.BOOLEAN,
+        defaultValue: () => {},
+        isAvailable: () => ({status: Common.Settings.SettingAvailability.AVAILABLE}),
+      };
+      // @ts-expect-error: This is the test assertion. Setting type cannot be a function.
+      settings.maybeResolve(descriptor);
+    });
+  });
 });

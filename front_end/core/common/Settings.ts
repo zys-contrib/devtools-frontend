@@ -342,6 +342,10 @@ export class Settings {
       throw new Error('Use Settings#maybeResolve for conditional descriptors.');
     }
 
+    return this.#resolve(descriptor);
+  }
+
+  #resolve<T>(descriptor: SettingDescriptor<T>): Setting<T> {
     let setting = this.moduleSettings.get(descriptor.name);
     if (setting) {
       return setting as Setting<T>;
@@ -361,6 +365,29 @@ export class Settings {
 
     this.registerModuleSetting(setting);
     return setting as Setting<T>;
+  }
+
+  /**
+   * Resolves a conditional setting descriptor to a concrete {@link Setting} instance if it is available.
+   *
+   * This method checks the availability of the setting using the descriptor's `isAvailable` function
+   * and the current `hostConfig`. If available, it resolves and returns the setting (caching it if
+   * necessary). If not available (either unavailable or disabled), it returns the availability status
+   * and the reason.
+   *
+   * @param descriptor The conditional descriptor defining the setting.
+   * @returns An object with either the resolved `setting` or the availability `status` and `reason`.
+   */
+  maybeResolve<T, R>(descriptor: ConditionalSettingDescriptor<NoFunction<T>, R>): {setting: Setting<T>}|{
+    status: SettingAvailability.UNAVAILABLE|SettingAvailability.DISABLED, reason: R,
+  }
+  {
+    const available = descriptor.isAvailable(Root.Runtime.hostConfig);
+    if (available.status === SettingAvailability.AVAILABLE) {
+      return {setting: this.#resolve(descriptor)};
+    }
+
+    return available;
   }
 }
 
