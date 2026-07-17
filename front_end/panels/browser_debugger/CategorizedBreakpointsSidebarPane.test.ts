@@ -154,144 +154,73 @@ describeWithEnvironment('CategorizedBreakpointsSidebarPane', () => {
       ],
     ]);
 
-    it('renders the breakpoints view', async () => {
+    function renderView(
+        inputOverrides:
+            Partial<Parameters<typeof BrowserDebugger.CategorizedBreakpointsSidebarPane.DEFAULT_VIEW>[0]> = {}):
+        HTMLElement {
+      const input = {
+        onFilterChanged: (): void => {},
+        onBreakpointChange: (): void => {},
+        onItemSelected: (): void => {},
+        onSpaceKeyDown: (): void => {},
+        filterText: null,
+        highlightedItem: null,
+        categories,
+        sortedCategoryNames: categories.keys().toArray().toSorted(),
+        onExpandCollapse: (): void => {},
+        ...inputOverrides,
+      };
+
       const target = document.createElement('div');
+      BrowserDebugger.CategorizedBreakpointsSidebarPane.DEFAULT_VIEW(input, undefined, target);
+      const tree = target.querySelector('devtools-tree');
+      if (tree) {
+        tree.removeAttribute('autofocus');
+      }
       renderElementIntoDOM(target, {includeCommonStyles: true});
-      BrowserDebugger.CategorizedBreakpointsSidebarPane.DEFAULT_VIEW(
-          {
-            onFilterChanged: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onBreakpointChange: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onItemSelected: function(): void {},
-            onSpaceKeyDown: function(): void {},
-            filterText: null,
-            highlightedItem: null,
-            categories,
-            sortedCategoryNames: categories.keys().toArray().toSorted(),
-            onExpandCollapse: function(): void {
-              throw new Error('Function not implemented.');
-            },
-          },
-          undefined, target);
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      document.body.focus();
+      return target;
+    }
+
+    it('renders the breakpoints view', async () => {
+      renderView();
       await assertScreenshot('browser_debugger/categorized_breakpoint_sidebar_pane.png');
     });
 
     it('highlights and expands the current breakpoint', async () => {
-      const target = document.createElement('div');
-      renderElementIntoDOM(target, {includeCommonStyles: true});
-      BrowserDebugger.CategorizedBreakpointsSidebarPane.DEFAULT_VIEW(
-          {
-            onFilterChanged: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onBreakpointChange: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onItemSelected: function(): void {},
-            onSpaceKeyDown: function(): void {},
-            filterText: null,
-            highlightedItem: categories.get(SDK.CategorizedBreakpoint.Category.CANVAS)![0],
-            categories,
-            sortedCategoryNames: categories.keys().toArray().toSorted(),
-            onExpandCollapse: function(): void {},
-          },
-          undefined, target);
+      renderView({
+        highlightedItem: categories.get(SDK.CategorizedBreakpoint.Category.CANVAS)![0],
+      });
       await assertScreenshot('browser_debugger/categorized_breakpoint_sidebar_pane_highlight.png');
     });
 
     it('expands selected breakpoints', async () => {
-      const target = document.createElement('div');
-      renderElementIntoDOM(target, {includeCommonStyles: true});
       categories.get(SDK.CategorizedBreakpoint.Category.CANVAS)?.[0].setEnabled(true);
-      BrowserDebugger.CategorizedBreakpointsSidebarPane.DEFAULT_VIEW(
-          {
-            onFilterChanged: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onBreakpointChange: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onItemSelected: function(): void {},
-            onSpaceKeyDown: function(): void {},
-            filterText: null,
-            categories,
-            sortedCategoryNames: categories.keys().toArray().toSorted(),
-            highlightedItem: null,
-            onExpandCollapse: function(): void {},
-          },
-          undefined, target);
+      renderView();
       await assertScreenshot('browser_debugger/categorized_breakpoint_sidebar_pane_expand.png');
     });
 
     it('filters breakpoints case-insensitively on both category and breakpoint names', async () => {
-      const target = document.createElement('div');
-      renderElementIntoDOM(target, {includeCommonStyles: true});
-      BrowserDebugger.CategorizedBreakpointsSidebarPane.DEFAULT_VIEW(
-          {
-            onFilterChanged: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onBreakpointChange: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onItemSelected: function(): void {},
-            onSpaceKeyDown: function(): void {},
-            filterText: 'AnImAtIoN',
-            highlightedItem: null,
-            categories,
-            sortedCategoryNames: categories.keys().toArray().toSorted(),
-            onExpandCollapse: function(): void {},
-          },
-          undefined, target);
+      renderView({
+        filterText: 'AnImAtIoN',
+      });
       await assertScreenshot('browser_debugger/categorized_breakpoint_sidebar_pane_filter_animation.png');
     });
 
     it('filters on category name case-insensitively and shows all breakpoints in it', async () => {
-      const target = document.createElement('div');
-      renderElementIntoDOM(target, {includeCommonStyles: true});
-      BrowserDebugger.CategorizedBreakpointsSidebarPane.DEFAULT_VIEW(
-          {
-            onFilterChanged: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onBreakpointChange: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onItemSelected: function(): void {},
-            onSpaceKeyDown: function(): void {},
-            filterText: 'cAnVaS',
-            highlightedItem: null,
-            categories,
-            sortedCategoryNames: categories.keys().toArray().toSorted(),
-            onExpandCollapse: function(): void {},
-          },
-          undefined, target);
+      renderView({
+        filterText: 'cAnVaS',
+      });
       await assertScreenshot('browser_debugger/categorized_breakpoint_sidebar_pane_filter_category.png');
     });
 
     it('filters breakpoints by name when category name does not match', async () => {
-      const target = document.createElement('div');
-      renderElementIntoDOM(target, {includeCommonStyles: true});
-      BrowserDebugger.CategorizedBreakpointsSidebarPane.DEFAULT_VIEW(
-          {
-            onFilterChanged: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onBreakpointChange: function(): void {
-              throw new Error('Function not implemented.');
-            },
-            onItemSelected: function(): void {},
-            onSpaceKeyDown: function(): void {},
-            filterText: 'bnim',
-            highlightedItem: null,
-            categories,
-            sortedCategoryNames: categories.keys().toArray().toSorted(),
-            onExpandCollapse: function(): void {},
-          },
-          undefined, target);
+      renderView({
+        filterText: 'bnim',
+      });
       await assertScreenshot('browser_debugger/categorized_breakpoint_sidebar_pane_filter_breakpoint_only.png');
     });
   });
