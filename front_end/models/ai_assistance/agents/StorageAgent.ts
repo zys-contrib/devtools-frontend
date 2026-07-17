@@ -270,7 +270,7 @@ export class StorageAgent extends AiAgent<StorageItem> {
           return {error: 'No origin available or not allowed.'};
         }
 
-        const storages = resolveDOMStorages(this.context, args.type, args.origin, args.storageKey, this.targetManager);
+        const storages = resolveDOMStorages(this.context, args.type, args.origin, this.targetManager, args.storageKey);
 
         const keyAndItems = await Promise.all(storages.map(async storage => {
           const items = await storage.getItems();
@@ -348,7 +348,7 @@ export class StorageAgent extends AiAgent<StorageItem> {
           return {error: 'No origin available or not allowed.'};
         }
 
-        const storages = resolveDOMStorages(this.context, args.type, args.origin, args.storageKey, this.targetManager);
+        const storages = resolveDOMStorages(this.context, args.type, args.origin, this.targetManager, args.storageKey);
         if (storages.length === 0) {
           return {error: 'No matching storage partitions found.'};
         }
@@ -659,8 +659,7 @@ export async function getCookiesForDomain(
 
 export function findFrameForOrigin(
     context: ConversationContext<StorageItem>|undefined, origin: string,
-    targetManager: SDK.TargetManager.TargetManager =
-        SDK.TargetManager.TargetManager.instance()): SDK.ResourceTreeModel.ResourceTreeFrame|null {
+    targetManager: SDK.TargetManager.TargetManager): SDK.ResourceTreeModel.ResourceTreeFrame|null {
   for (const frame of SDK.ResourceTreeModel.ResourceTreeModel.frames(targetManager)) {
     if (frame.securityOrigin === origin) {
       const target = frame.resourceTreeModel().target();
@@ -671,10 +670,9 @@ export function findFrameForOrigin(
   }
   return null;
 }
-export function resolveDOMStorages(context: ConversationContext<StorageItem>|undefined,
-                                   type: 'localStorage'|'sessionStorage', origin: string, storageKey?: string,
-                                   targetManager: SDK.TargetManager.TargetManager =
-                                       SDK.TargetManager.TargetManager.instance()): SDK.DOMStorageModel.DOMStorage[] {
+export function resolveDOMStorages(
+    context: ConversationContext<StorageItem>|undefined, type: 'localStorage'|'sessionStorage', origin: string,
+    targetManager: SDK.TargetManager.TargetManager, storageKey?: string): SDK.DOMStorageModel.DOMStorage[] {
   const resolvedStorages: SDK.DOMStorageModel.DOMStorage[] = [];
   const isLocalStorage = type === 'localStorage';
 
