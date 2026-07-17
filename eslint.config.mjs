@@ -624,6 +624,7 @@ export default defineConfig([
       '@devtools/l10n-no-locked-or-placeholder-only-phrase': 'error',
       '@devtools/l10n-no-uistrings-export': 'error',
       '@devtools/l10n-no-unused-message': 'error',
+      '@devtools/l10n-use-curly-apostrophes': 'error',
     },
   },
   {

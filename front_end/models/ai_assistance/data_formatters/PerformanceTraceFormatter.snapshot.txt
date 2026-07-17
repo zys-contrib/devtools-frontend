@@ -480,7 +480,7 @@ Available insights:
     example question: How do I decrease the initial loading time of my page?
     example question: Did anything slow down the request for this document?
   - insight name: ThirdParties
-    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page's content.
+    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page’s content.
     relevant trace bounds: {min: 1020034871372µs, max: 1020035171789µs}
     example question: Which third parties are having the largest impact on my page performance?
   - insight name: CharacterSet
@@ -542,7 +542,7 @@ Available insights:
     estimated metric savings: FCP 20 ms
     example question: How can I update my CSS to avoid layout shifts caused by incorrect `font-display` properties?
   - insight name: ThirdParties
-    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page's content.
+    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page’s content.
     relevant trace bounds: {min: 157423742399µs, max: 157427273902µs}
     example question: Which third parties are having the largest impact on my page performance?
   - insight name: Cache
@@ -552,7 +552,7 @@ Available insights:
     estimated wasted bytes: 847.4 kB
     example question: What caching strategies can I apply to improve my page performance?
   - insight name: LegacyJavaScript
-    description: Polyfills and transforms enable older browsers to use new JavaScript features. However, many aren't necessary for modern browsers. Consider modifying your JavaScript build process to not transpile [Baseline](https://web.dev/articles/baseline-and-polyfills) features, unless you know you must support older browsers. [Learn why most sites can deploy ES6+ code without transpiling](https://developer.chrome.com/docs/performance/insights/legacy-javascript)
+    description: Polyfills and transforms enable older browsers to use new JavaScript features. However, many aren’t necessary for modern browsers. Consider modifying your JavaScript build process to not transpile [Baseline](https://web.dev/articles/baseline-and-polyfills) features, unless you know you must support older browsers. [Learn why most sites can deploy ES6+ code without transpiling](https://developer.chrome.com/docs/performance/insights/legacy-javascript)
     relevant trace bounds: {min: 157423489126µs, max: 157426132225µs}
     estimated metric savings: FCP 0 ms, LCP 0 ms
     estimated wasted bytes: 126.9 kB
@@ -590,7 +590,7 @@ Available insights:
     example question: Which LCP subpart was most problematic?
     example question: What can I do to reduce the LCP time for this page load?
   - insight name: RenderBlocking
-    description: Requests are blocking the page's initial render, which may delay LCP. [Deferring or inlining](https://developer.chrome.com/docs/performance/insights/render-blocking) can move these network requests out of the critical path.
+    description: Requests are blocking the page’s initial render, which may delay LCP. [Deferring or inlining](https://developer.chrome.com/docs/performance/insights/render-blocking) can move these network requests out of the critical path.
     relevant trace bounds: {min: 171608170438µs, max: 171608877165µs}
     example question: Show me the most impactful render-blocking requests that I should focus on
     example question: How can I reduce the number of render-blocking requests?
@@ -618,7 +618,7 @@ Available insights:
     example question: Which LCP subpart was most problematic?
     example question: What can I do to reduce the LCP time for this page load?
   - insight name: RenderBlocking
-    description: Requests are blocking the page's initial render, which may delay LCP. [Deferring or inlining](https://developer.chrome.com/docs/performance/insights/render-blocking) can move these network requests out of the critical path.
+    description: Requests are blocking the page’s initial render, which may delay LCP. [Deferring or inlining](https://developer.chrome.com/docs/performance/insights/render-blocking) can move these network requests out of the critical path.
     relevant trace bounds: {min: 171614330544µs, max: 171615043224µs}
     example question: Show me the most impactful render-blocking requests that I should focus on
     example question: How can I reduce the number of render-blocking requests?
@@ -696,7 +696,7 @@ Available insights:
     estimated metric savings: INP 0 ms
     example question: How do I make sure my page is optimized for mobile viewing?
   - insight name: ThirdParties
-    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page's content.
+    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page’s content.
     relevant trace bounds: {min: 59728701403µs, max: 59729465969µs}
     example question: Which third parties are having the largest impact on my page performance?
   - insight name: CharacterSet
@@ -780,7 +780,7 @@ Available insights:
     estimated metric savings: INP 0 ms
     example question: How do I make sure my page is optimized for mobile viewing?
   - insight name: ThirdParties
-    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page's content.
+    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page’s content.
     relevant trace bounds: {min: 59728701403µs, max: 59729465969µs}
     example question: Which third parties are having the largest impact on my page performance?
   - insight name: CharacterSet
@@ -816,7 +816,7 @@ Available insights:
     example question: Why is a large INP score problematic?
     example question: What's the biggest contributor to my longest interaction?
   - insight name: ThirdParties
-    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page's content.
+    description: 3rd party code can significantly impact load performance. [Reduce and defer loading of 3rd party code](https://developer.chrome.com/docs/performance/insights/third-parties) to prioritize your page’s content.
     relevant trace bounds: {min: 337944792445µs, max: 337944809570µs}
     example question: Which third parties are having the largest impact on my page performance?
 === end content

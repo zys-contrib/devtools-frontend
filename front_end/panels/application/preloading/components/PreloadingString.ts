@@ -22,7 +22,7 @@ const UIStrings = {
   /**
    * @description  Description text for Prefetch status PrefetchFailedMIMENotSupported.
    */
-  PrefetchFailedMIMENotSupported: 'The prefetch failed because the response\'s Content-Type header was not supported.',
+  PrefetchFailedMIMENotSupported: 'The prefetch failed because the response’s Content-Type header was not supported.',
   /**
    * @description  Description text for Prefetch status PrefetchFailedNetError.
    */
@@ -293,7 +293,7 @@ const UIStrings = {
    *  Description text for PrerenderFinalStatus::kActivatedDuringMainFrameNavigation.
    */
   prerenderFinalStatusActivatedDuringMainFrameNavigation:
-      'Prerendered page activated during initiating page\'s main frame navigation.',
+      'Prerendered page activated during initiating page’s main frame navigation.',
   /**
    *  Description text for PrerenderFinalStatus::kCrossSiteRedirectInMainFrameNavigation.
    */

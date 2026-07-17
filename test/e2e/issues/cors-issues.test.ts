@@ -147,7 +147,7 @@ describe('CORS issues', () => {
            'invalid-response-code.rawresponse',
            'blocked',
            'invalid-response-code.rawresponse',
-           'HTTP status of preflight request didn\'t indicate success',
+           'HTTP status of preflight request didn’t indicate success',
          ],
          [
            'redirect.rawresponse',

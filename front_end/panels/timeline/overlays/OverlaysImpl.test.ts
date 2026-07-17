@@ -659,7 +659,7 @@ describeWithEnvironment('Overlays', () => {
       assert.isOk(tooltip);
       assert.strictEqual(
           cleanTextContent(tooltip.innerText),
-          'The selected call stack is sent to Google. This data may be seen by human reviewers to improve this feature. This is an experimental AI feature and won\'t always get it right. Learn more in settings',
+          'The selected call stack is sent to Google. This data may be seen by human reviewers to improve this feature. This is an experimental AI feature and won’t always get it right. Learn more in settings',
       );
     });
 
@@ -694,7 +694,7 @@ describeWithEnvironment('Overlays', () => {
       assert.isOk(tooltip);
       assert.strictEqual(
           cleanTextContent(tooltip.innerText),
-          'The selected call stack is sent to Google. This data will not be used to improve Google\'s AI models. Your organization may change these settings at any time. This is an experimental AI feature and won\'t always get it right. Learn more in settings',
+          'The selected call stack is sent to Google. This data will not be used to improve Google’s AI models. Your organization may change these settings at any time. This is an experimental AI feature and won’t always get it right. Learn more in settings',
       );
     });
 

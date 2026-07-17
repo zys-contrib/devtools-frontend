@@ -277,7 +277,7 @@ const UIStrings = {
    * @description Text of a DOM element in Heap Snapshot View of a profiler tool
    */
   stackWasNotRecordedForThisObject:
-      'Stack wasn\'t recorded for this object because it had been allocated before this profile recording started.',
+      'Stack wasn’t recorded for this object because it had been allocated before this profile recording started.',
   /**
    * @description Text in Heap Snapshot View of a profiler tool.
    * This text is on a button to undo all previous "Ignore this retainer" actions.

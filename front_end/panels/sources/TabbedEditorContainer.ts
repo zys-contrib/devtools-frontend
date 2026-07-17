@@ -39,7 +39,7 @@ const UIStrings = {
    * @example {FolderName} PH1
    */
   changesWereNotSavedToFileSystemToSaveAddFolderToWorkspace:
-      'Changes weren\'t saved to file system. To save, add {PH1} to your Workspace.',
+      'Changes weren’t saved to file system. To save, add {PH1} to your Workspace.',
   /**
    * @description Tooltip shown for the warning icon on an editor tab in the Sources panel
    *              when the developer saved changes via Ctrl+S/Cmd+S, but didn't have a Workspace
@@ -48,7 +48,7 @@ const UIStrings = {
    * @example {Workspace} PH1
    */
   changesWereNotSavedToFileSystemToSaveSetUpYourWorkspace:
-      'Changes weren\'t saved to file system. To save, set up your {PH1}.',
+      'Changes weren’t saved to file system. To save, set up your {PH1}.',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/sources/TabbedEditorContainer.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);

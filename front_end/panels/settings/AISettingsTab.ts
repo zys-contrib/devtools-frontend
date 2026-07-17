@@ -86,7 +86,7 @@ const UIStrings = {
    */
   showLessOfSetting: 'Show less of {PH1}',
   /**
-   * @description Header for a list of feature attributes. 'When on, you’ll be able to …'.
+   * @description Header for a list of feature attributes. 'When on, you'll be able to …'.
    */
   whenOn: 'When on',
   /**
@@ -257,11 +257,11 @@ const UIStrings = {
    */
   enableAiCodeSuggestions: 'Enable AI code suggestions',
   /**
-   * @description Message shown to the user if the age check isn’t successful.
+   * @description Message shown to the user if the age check isn't successful.
    */
   ageRestricted: 'This feature is only available to users 18 years or older.',
   /**
-   * @description The error message when the user isn’t logged in to Chrome.
+   * @description The error message when the user isn't logged in to Chrome.
    */
   notLoggedIn: 'This feature is only available when you sign in to Chrome with your Google account.',
   /**
@@ -269,7 +269,7 @@ const UIStrings = {
    */
   offline: 'This feature is only available with an active internet connection.',
   /**
-   * @description Text informing the user that AI assistance isn’t available in Incognito mode or Guest mode.
+   * @description Text informing the user that AI assistance isn't available in Incognito mode or Guest mode.
    */
   notAvailableInIncognitoMode: 'AI assistance isn’t available in Incognito mode or Guest mode.',
 } as const;

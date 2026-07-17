@@ -24,13 +24,13 @@ import syncSectionStyles from './syncSection.css.js';
 
 const UIStrings = {
   /**
-   * @description Text shown to the user in Settings. ‘This setting’ refers
+   * @description Text shown to the user in Settings. ‘This setting' refers
    * to a checkbox that is disabled.
    */
   syncDisabled: 'To turn this setting on, you must enable Chrome sync.',
   /**
    * @description Text shown to the user in Settings. Explains why the checkbox
-   * for saving DevTools settings to the user’s Google account is inactive.
+   * for saving DevTools settings to the user's Google account is inactive.
    */
   preferencesSyncDisabled: 'You need to first enable saving `Chrome` settings in your `Google` account.',
   /**

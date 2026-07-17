@@ -31,7 +31,7 @@ const UIStrings = {
   /**
    * @description Tooltip for button linking to the Elements panel
    */
-  clickToRevealTheFramesDomNodeIn: 'Click to reveal the frame\'s DOM node in the Elements panel',
+  clickToRevealTheFramesDomNodeIn: 'Click to reveal the frame’s DOM node in the Elements panel',
   /**
    * @description Replacement text for a link to an HTML element which is not available (anymore).
    */

@@ -84,7 +84,7 @@ const UIStrings = {
    */
   screenshotForSection: 'Screenshot for this section',
   /**
-   * @description The title of the button that edits the current recording’s title.
+   * @description The title of the button that edits the current recording's title.
    */
   editTitle: 'Edit title',
   /**

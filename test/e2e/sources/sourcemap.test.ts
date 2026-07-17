@@ -428,8 +428,8 @@ describe('The Sources Tab', function() {
     await devToolsPage.waitFor('.infobar-warning');
     await devToolsPage.waitFor('.infobar-info');
     const infobarTexts = await devToolsPage.getVisibleTextContents(INFOBAR_TEXT);
-    assert.deepEqual(
-        infobarTexts, ['This script is on the debugger\'s ignore list', 'Source map skipped for this file']);
+    assert.deepEqual(infobarTexts,
+                     ['This script is on the debugger’s ignore list', 'Source map skipped for this file']);
   });
 
   it('shows Source map error infobar after failing to attach', async ({devToolsPage, inspectedPage}) => {

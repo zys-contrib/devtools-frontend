@@ -239,7 +239,7 @@ const UIStrings = {
    */
   deleteRow: 'Delete row',
   /**
-   * @description The title of a button that adds a new input field for the entry of the frame index. Frame index is the number of the frame within the page’s frame tree.
+   * @description The title of a button that adds a new input field for the entry of the frame index. Frame index is the number of the frame within the page's frame tree.
    */
   addFrameIndex: 'Add frame index within the frame tree',
   /**

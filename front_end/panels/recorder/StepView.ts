@@ -58,7 +58,7 @@ const UIStrings = {
    */
   scrollStepTitle: 'Scroll',
   /**
-   * @description Title for the key up step type. `up` refers to the state of the keyboard key: it’s released, i.e., up. It does not refer to the down arrow key specifically.
+   * @description Title for the key up step type. `up` refers to the state of the keyboard key: it's released, i.e., up. It does not refer to the down arrow key specifically.
    */
   keyUpStepTitle: 'Key up',
   /**
@@ -66,7 +66,7 @@ const UIStrings = {
    */
   navigateStepTitle: 'Navigate',
   /**
-   * @description Title for the key down step type. `down` refers to the state of the keyboard key: it’s pressed, i.e., down. It does not refer to the down arrow key specifically.
+   * @description Title for the key down step type. `down` refers to the state of the keyboard key: it's pressed, i.e., down. It does not refer to the down arrow key specifically.
    */
   keyDownStepTitle: 'Key down',
   /**
@@ -90,27 +90,27 @@ const UIStrings = {
    */
   elementRoleFallback: 'Element',
   /**
-   * @description The title of the button in the step’s context menu that adds a new step before the current one.
+   * @description The title of the button in the step's context menu that adds a new step before the current one.
    */
   addStepBefore: 'Add step before',
   /**
-   * @description The title of the button in the step’s context menu that adds a new step after the current one.
+   * @description The title of the button in the step's context menu that adds a new step after the current one.
    */
   addStepAfter: 'Add step after',
   /**
-   * @description The title of the button in the step’s context menu that removes the step.
+   * @description The title of the button in the step's context menu that removes the step.
    */
   removeStep: 'Remove step',
   /**
-   * @description The title of the button that opens the step’s context menu.
+   * @description The title of the button that opens the step's context menu.
    */
   openStepActions: 'Open step actions',
   /**
-   * @description The title of the button in the step’s context menu that adds a breakpoint.
+   * @description The title of the button in the step's context menu that adds a breakpoint.
    */
   addBreakpoint: 'Add breakpoint',
   /**
-   * @description The title of the button in the step’s context menu that removes a breakpoint.
+   * @description The title of the button in the step's context menu that removes a breakpoint.
    */
   removeBreakpoint: 'Remove breakpoint',
   /**
