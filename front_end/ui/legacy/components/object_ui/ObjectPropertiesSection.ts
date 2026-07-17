@@ -51,7 +51,10 @@ import objectValueStyles from './objectValue.css.js';
 import {RemoteObjectPreviewFormatter, renderNodeTitle, renderTrustedType} from './RemoteObjectPreviewFormatter.js';
 
 export {objectPropertiesSectionStyles, objectValueStyles};
-
+export interface ObjectPropertySearchResult extends UI.TreeOutline.TreeSearchResult<ObjectTreeNodeBase> {
+  matchType: 'name'|'value';
+  range: TextUtils.TextRange.SourceRange;
+}
 const {widget} = UI.Widget;
 const {ref, repeat, ifDefined, classMap, until} = Directives;
 const UIStrings = {
@@ -169,15 +172,7 @@ export interface ObjectTreeOptions {
   readonly propertiesMode: ObjectPropertiesMode;
   readonly readOnly: boolean;
   readonly expansionTracker?: ObjectTreeExpansionTracker;
-}
-
-let cachedSortAlphabeticallySetting: Common.Settings.Setting<boolean>|undefined;
-export function sortPropertiesAlphabeticallySetting(): Common.Settings.Setting<boolean> {
-  if (!cachedSortAlphabeticallySetting) {
-    cachedSortAlphabeticallySetting =
-        Common.Settings.Settings.instance().createSetting('object-properties-sort-alphabetically', true);
-  }
-  return cachedSortAlphabeticallySetting;
+  readonly search?: UI.TreeOutline.TreeSearch<ObjectTreeNodeBase>;
 }
 
 // WASM properties are index-based (e.g. locals[0], globals[1]); alphabetical
@@ -398,11 +393,15 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
   protected filter: {includeNullOrUndefinedValues: boolean, regex: RegExp|null}|null = null;
   protected extraProperties: ObjectTreeNode[] = [];
   #expanded = false;
+  #sortPropertiesAlphabeticallySetting: Common.Settings.Setting<boolean>;
 
   constructor(readonly parent: ObjectTreeNodeBase|undefined, options: ObjectTreeOptions) {
     super();
     this.filter = parent?.filter ?? null;
     this.options = {...options};
+    this.#sortPropertiesAlphabeticallySetting = parent ?
+        parent.#sortPropertiesAlphabeticallySetting :
+        Common.Settings.Settings.instance().createSetting('object-properties-sort-alphabetically', true);
   }
 
   get isWasm(): boolean {
@@ -432,6 +431,9 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
     return this.options.propertiesMode;
   }
 
+  get search(): UI.TreeOutline.TreeSearch<ObjectTreeNodeBase>|undefined {
+    return this.options.search;
+  }
   get includeNullOrUndefinedValues(): boolean {
     return this.filter?.includeNullOrUndefinedValues ?? true;
   }
@@ -448,16 +450,22 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
     if (this.isWasm) {
       return false;
     }
-    return sortPropertiesAlphabeticallySetting().get();
+    return this.#sortPropertiesAlphabeticallySetting.get();
   }
 
   set sortPropertiesAlphabetically(value: boolean) {
-    const setting = sortPropertiesAlphabeticallySetting();
-    if (this.isWasm || setting.get() === value) {
+    if (this.isWasm || this.#sortPropertiesAlphabeticallySetting.get() === value) {
       return;
     }
-    setting.set(value);
+    this.#sortPropertiesAlphabeticallySetting.set(value);
     this.removeChildren();
+  }
+  * treeNodeChildren(): Generator<ObjectTreeNodeBase> {
+    if (this.#children) {
+      yield* this.#children.properties ?? [];
+      yield* this.#children.arrayRanges ?? [];
+      yield* this.#children.internalProperties ?? [];
+    }
   }
   // Performs a pre-order tree traversal over the populated children. If any children need to be populated, callers must
   // do that while walking (pre-order visitation enables that).
@@ -465,20 +473,13 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
     if (filter && !filter(this)) {
       return;
     }
-    function* walkChildren(children: ObjectTreeNodeBase[]|undefined): Generator<ObjectTreeNodeBase> {
-      if (children) {
-        for (const child of children) {
-          yield* child.#walk(Math.max(-1, maxDepth - 1), filter);
-        }
-      }
-    }
     yield this;
     if (maxDepth !== 0) {
-      yield* walkChildren(this.#children?.properties);
-      yield* walkChildren(this.#children?.arrayRanges);
-      yield* walkChildren(this.#children?.internalProperties);
+      for (const child of this.treeNodeChildren()) {
+        yield* child.#walk(Math.max(-1, maxDepth - 1), filter);
+      }
     }
-  }
+    }
 
   async expandRecursively(maxDepth: number): Promise<void> {
     for (const node of this.#walk(maxDepth, n => n.canExpandRecursively)) {
@@ -509,6 +510,9 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
     this.dispatchEventToListeners(ObjectTreeNodeBase.Events.CHILDREN_CHANGED);
   }
 
+  match(_regex: RegExp): ObjectPropertySearchResult[] {
+    return [];
+  }
   removeChild(child: ObjectTreeNodeBase): void {
     remove(this.#children?.arrayRanges, child);
     remove(this.#children?.internalProperties, child);
@@ -564,9 +568,7 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
       const ranges = await arrayRangeGroups(object, 0, this.arrayLength - 1);
       const arrayRanges = ranges?.ranges.map(([fromIndex, toIndex, count]) => new ArrayGroupTreeNode(
                                                  object, {fromIndex, toIndex, count}, effectiveParent, {
-                                                   readOnly: this.readOnly,
-                                                   propertiesMode: this.propertiesMode,
-                                                   expansionTracker: this.options.expansionTracker,
+                                                   ...this.options,
                                                  }));
       if (!arrayRanges) {
         return {};
@@ -577,16 +579,14 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
                                                                      true /* nonIndexedPropertiesOnly */);
 
       const properties = objectProperties?.map(p => new ObjectTreeNode(p, effectiveParent, {
-                                                 readOnly: this.readOnly,
+                                                 ...this.options,
                                                  propertiesMode: ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
-                                                 expansionTracker: this.options.expansionTracker,
                                                }));
 
       const internalProperties =
           objectInternalProperties?.map(p => new ObjectTreeNode(p, effectiveParent, {
-                                          readOnly: this.readOnly,
+                                          ...this.options,
                                           propertiesMode: ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
-                                          expansionTracker: this.options.expansionTracker,
                                         }));
       return {arrayRanges, properties, internalProperties};
     }
@@ -605,9 +605,8 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
     }
 
     const properties = objectProperties?.map(p => new ObjectTreeNode(p, effectiveParent, {
-                                               readOnly: this.readOnly,
+                                               ...this.options,
                                                propertiesMode: ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
-                                               expansionTracker: this.options.expansionTracker,
                                              }));
     properties?.push(...this.extraProperties);
     properties?.sort((a, b) => ObjectPropertiesSection.compareProperties(a, b, this.sortPropertiesAlphabetically));
@@ -615,9 +614,8 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
 
     const internalProperties =
         objectInternalProperties?.map(p => new ObjectTreeNode(p, effectiveParent, {
-                                        readOnly: this.readOnly,
+                                        ...this.options,
                                         propertiesMode: ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
-                                        expansionTracker: this.options.expansionTracker,
                                       }));
     return {properties, internalProperties, accessors};
   }
@@ -637,9 +635,8 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
 
   addExtraProperties(...properties: SDK.RemoteObject.RemoteObjectProperty[]): void {
     this.extraProperties.push(...properties.map(p => new ObjectTreeNode(p, this, {
-                                                  readOnly: this.readOnly,
+                                                  ...this.options,
                                                   propertiesMode: ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
-                                                  expansionTracker: this.options.expansionTracker,
                                                 })));
   }
 
@@ -651,18 +648,18 @@ export abstract class ObjectTreeNodeBase extends Common.ObjectWrapper.ObjectWrap
           const getterProperty = new SDK.RemoteObject.RemoteObjectProperty('get ' + property.property.name,
                                                                            property.property.getter, false);
           gettersAndSetters.push(new ObjectTreeNode(getterProperty, property.parent, {
+            ...options,
             propertiesMode: property.propertiesMode,
             readOnly: property.readOnly,
-            expansionTracker: options.expansionTracker,
           }));
         }
         if (property.property.setter) {
           const setterProperty = new SDK.RemoteObject.RemoteObjectProperty('set ' + property.property.name,
                                                                            property.property.setter, false);
           gettersAndSetters.push(new ObjectTreeNode(setterProperty, property.parent, {
+            ...options,
             propertiesMode: property.propertiesMode,
             readOnly: property.readOnly,
-            expansionTracker: options.expansionTracker,
           }));
         }
       }
@@ -739,9 +736,7 @@ export class ArrayGroupTreeNode extends ObjectTreeNodeBase {
         await arrayFragment.getAllProperties(false /* accessorPropertiesOnly */, true /* generatePreview */);
     arrayFragment.release();
     const properties = allProperties.properties?.map(p => new ObjectTreeNode(p, this, {
-                                                       propertiesMode: this.propertiesMode,
-                                                       readOnly: this.readOnly,
-                                                       expansionTracker: this.options.expansionTracker,
+                                                       ...this.options,
                                                      }));
     properties?.push(...this.extraProperties);
     properties?.sort((a, b) => ObjectPropertiesSection.compareProperties(a, b, this.sortPropertiesAlphabetically));
@@ -867,6 +862,59 @@ export class ObjectTreeNode extends ObjectTreeNodeBase {
     this.property.wasThrown = result.wasThrown || false;
     this.dispatchEventToListeners(ObjectTreeNodeBase.Events.VALUE_CHANGED);
   }
+  #getSearchableNameText(): string {
+    return /^\s|\s$|^$|\n/.test(this.property.name) ? `"${this.property.name.replace(/\n/g, '\u21B5')}"` :
+                                                      this.property.name;
+  }
+
+  #getSearchableValueText(): string {
+    const value = this.property.value;
+    if (!value || (value.type !== 'string' && value.type !== 'number') || value.description === undefined) {
+      return '';
+    }
+    if (value.type === 'string' && typeof value.description === 'string') {
+      const text = Platform.StringUtilities.safeEscapeUnicode(JSON.stringify(value.description));
+      if (value.description.length > maxRenderableStringLength) {
+        return text.slice(0, ExpandableTextPropertyValue.EXPANDABLE_MAX_LENGTH);
+      }
+      return text;
+    }
+    return value.description;
+  }
+
+  override match(regex: RegExp): ObjectPropertySearchResult[] {
+    const results: ObjectPropertySearchResult[] = [];
+
+    // 1. Match name against search text model
+    const nameText = this.#getSearchableNameText();
+    const nameGlobalRegex = regex.global ? regex : new RegExp(regex.source, regex.flags + 'g');
+    for (const m of nameText.matchAll(nameGlobalRegex)) {
+      results.push({
+        node: this,
+        isPostOrderMatch: false,
+        matchIndexInNode: results.length,
+        matchType: 'name',
+        range: new TextUtils.TextRange.SourceRange(m.index ?? 0, m[0].length),
+      });
+    }
+
+    // 2. Match value against search text model
+    const valueText = this.#getSearchableValueText();
+    if (valueText) {
+      const valueGlobalRegex = regex.global ? regex : new RegExp(regex.source, regex.flags + 'g');
+      for (const m of valueText.matchAll(valueGlobalRegex)) {
+        results.push({
+          node: this,
+          isPostOrderMatch: false,
+          matchIndexInNode: results.length,
+          matchType: 'value',
+          range: new TextUtils.TextRange.SourceRange(m.index ?? 0, m[0].length),
+        });
+      }
+    }
+
+    return results;
+  }
 }
 
 export const getObjectPropertiesSectionFrom = (element: Element): ObjectPropertiesSection|undefined => {
@@ -880,11 +928,13 @@ export class ObjectPropertiesSection extends UI.TreeOutline.TreeOutlineInShadow 
   skipProtoInternal?: boolean;
 
   constructor(object: SDK.RemoteObject.RemoteObject, title?: string|Element|null,
-              linkifier?: Components.Linkifier.Linkifier, showOverflow?: boolean, editable = true) {
+              linkifier?: Components.Linkifier.Linkifier, showOverflow?: boolean, editable = true,
+              search?: UI.TreeOutline.TreeSearch<ObjectTreeNodeBase>) {
     super();
     this.root = new ObjectTree(object, {
       readOnly: !editable,
       propertiesMode: ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
+      search,
     });
     if (!showOverflow) {
       this.setHideOverflow(true);
@@ -1461,6 +1511,7 @@ export interface ObjectPropertyViewInput {
   editingEnded(): unknown;
   editingCommitted(detail: string): unknown;
   node: ObjectTreeNode;
+  search?: UI.TreeOutline.TreeSearch<ObjectTreeNodeBase>;
 }
 interface ObjectPropertyViewOutput {
   valueElement: Element|undefined;
@@ -1490,6 +1541,17 @@ export const OBJECT_PROPERTY_DEFAULT_VIEW: ObjectPropertyView = (input, output, 
       !property.value.customPreview() && property.value.subtype !== 'node' && property.value.type !== 'function' &&
       (property.value.type !== 'object' || property.value.preview);
 
+  const search = input.search;
+  const entries = search?.getResults(input.node) as ObjectPropertySearchResult[] | undefined;
+  const currentMatch = search?.currentMatch() as ObjectPropertySearchResult | undefined;
+  const isCurrentNode = currentMatch?.node === input.node;
+  const nameCurrent = (isCurrentNode && currentMatch?.matchType === 'name') ? currentMatch.range.cssValue() : '';
+  const valueCurrent = (isCurrentNode && currentMatch?.matchType === 'value') ? currentMatch.range.cssValue() : '';
+
+  const nameRanges =
+      (entries ?? []).filter(e => e !== currentMatch && e.matchType === 'name').map(e => e.range.cssValue()).join(' ');
+  const valueRanges =
+      (entries ?? []).filter(e => e !== currentMatch && e.matchType === 'value').map(e => e.range.cssValue()).join(' ');
   const value = (): LitTemplate|HTMLElement => {
     const valueRef = ref(e => {
       output.valueElement = e;
@@ -1538,9 +1600,9 @@ export const OBJECT_PROPERTY_DEFAULT_VIEW: ObjectPropertyView = (input, output, 
         html`<span class=name-and-value><span
           ${ref(e => { output.nameElement = e; })}
           class=${nameClasses}
-          title=${input.node.path}>${property.private ?
+          title=${input.node.path}><devtools-highlight ranges=${nameRanges} current-range=${nameCurrent}>${property.private ?
             html`<span class="private-property-hash">${property.name[0]}</span>${
-            property.name.substring(1)}</span>` : quotedName}</span>${
+            property.name.substring(1)}` : quotedName}</devtools-highlight></span>${
               isInternalEntries ? nothing :
               html`<span class='separator'>: </span><devtools-prompt
                 @commit=${(e: UI.TextPrompt.TextPromptElement.CommitEvent) => input.editingCommitted(e.detail)}
@@ -1551,7 +1613,8 @@ export const OBJECT_PROPERTY_DEFAULT_VIEW: ObjectPropertyView = (input, output, 
                 completions=${completionsId}
                 placeholder=${i18nString(UIStrings.stringIsTooLargeToEdit)}
                 ?editing=${input.editing}>
-                  ${input.expanded && isExpandable && property.value ?
+                  <devtools-highlight ranges=${valueRanges} current-range=${valueCurrent}>${
+                    input.expanded && isExpandable && property.value ?
                     html`<span
                       class="value object-value-${property.value.subtype || property.value.type}"
                       title=${ifDefined(property.value.description)}>${
@@ -1561,7 +1624,7 @@ export const OBJECT_PROPERTY_DEFAULT_VIEW: ObjectPropertyView = (input, output, 
                       property.synthetic ? nothing :
                         ObjectPropertiesSection.getMemoryIcon(property.value)}</span>` :
                     value()
-                  }
+                  }</devtools-highlight>
                   <datalist id=${completionsId}>${repeat(input.completions, c => html`<option>${c}</option>`)}</datalist>
                 </devtools-prompt></span>`}</span>`,
           target);
@@ -1579,6 +1642,7 @@ export class ObjectPropertyWidget extends UI.Widget.Widget {
   #expanded = false;
   #linkifier: Components.Linkifier.Linkifier|undefined;
   #editable = false;
+  #search?: UI.TreeOutline.TreeSearch<ObjectTreeNodeBase>;
 
   constructor(target?: HTMLElement, view = OBJECT_PROPERTY_DEFAULT_VIEW) {
     super(target);
@@ -1594,10 +1658,13 @@ export class ObjectPropertyWidget extends UI.Widget.Widget {
       this.#property.removeEventListener(ObjectTreeNodeBase.Events.CHILDREN_CHANGED, this.requestUpdate, this);
       this.#property.removeEventListener(ObjectTreeNodeBase.Events.FILTER_CHANGED, this.requestUpdate, this);
     }
+    this.#search?.removeEventListener(UI.TreeOutline.TreeSearch.Events.SEARCH_CHANGED, this.requestUpdate, this);
     this.#property = property;
     this.#property.addEventListener(ObjectTreeNodeBase.Events.VALUE_CHANGED, this.requestUpdate, this);
     this.#property.addEventListener(ObjectTreeNodeBase.Events.CHILDREN_CHANGED, this.requestUpdate, this);
     this.#property.addEventListener(ObjectTreeNodeBase.Events.FILTER_CHANGED, this.requestUpdate, this);
+    this.#search = property.search;
+    this.#search?.addEventListener(UI.TreeOutline.TreeSearch.Events.SEARCH_CHANGED, this.requestUpdate, this);
     this.requestUpdate();
   }
 
@@ -1641,6 +1708,7 @@ export class ObjectPropertyWidget extends UI.Widget.Widget {
       onAutoComplete: this.#updateCompletions.bind(this),
       invokeGetter: this.#invokeGetter.bind(this),
       startEditing: this.startEditing.bind(this),
+      search: this.#search,
     };
     const that = this;
     const output: ObjectPropertyViewOutput = {
@@ -2376,7 +2444,7 @@ export const EXPANDABLE_TEXT_DEFAULT_VIEW: ExpandableTextView = (input, output, 
                  data-text=${i18nString(UIStrings.copy)}
                  jslog=${VisualLogging.action('copy').track({click: true})}
                  ></button>
-              </span>`,
+             </span>`,
       // clang-format on
       target);
 };

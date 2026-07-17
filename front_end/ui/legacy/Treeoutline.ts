@@ -1427,8 +1427,8 @@ function hasBooleanAttribute(element: Element, name: string): boolean {
   return element.hasAttribute(name) && element.getAttribute(name) !== 'false';
 }
 
-interface TreeNode<NodeT> {
-  children(): NodeT[];
+export interface TreeNode<NodeT> {
+  treeNodeChildren(): Iterable<NodeT>;
 }
 
 export interface TreeSearchResult<NodeT> {
@@ -1438,15 +1438,21 @@ export interface TreeSearchResult<NodeT> {
 }
 
 export class TreeSearch < NodeT extends TreeNode<NodeT>,
-                                        SearchResultT extends TreeSearchResult<NodeT >= TreeSearchResult<NodeT>> {
+                                        SearchResultT extends TreeSearchResult<NodeT >= TreeSearchResult<NodeT>> extends
+    Common.ObjectWrapper.ObjectWrapper<TreeSearch.EventTypes> {
   #matches: SearchResultT[] = [];
   #currentMatchIndex = 0;
   #nodeMatchMap: WeakMap<NodeT, SearchResultT[]>|undefined;
 
-  reset(): void {
+  #reset(): void {
     this.#matches = [];
     this.#nodeMatchMap = undefined;
     this.#currentMatchIndex = 0;
+  }
+
+  reset(): void {
+    this.#reset();
+    this.dispatchEventToListeners(TreeSearch.Events.SEARCH_CHANGED);
   }
 
   currentMatch(): SearchResultT|undefined {
@@ -1497,11 +1503,13 @@ export class TreeSearch < NodeT extends TreeNode<NodeT>,
 
   next(): SearchResultT|undefined {
     this.#currentMatchIndex = Platform.NumberUtilities.mod(this.#currentMatchIndex + 1, this.#matches.length);
+    this.dispatchEventToListeners(TreeSearch.Events.SEARCH_CHANGED);
     return this.currentMatch();
   }
 
   prev(): SearchResultT|undefined {
     this.#currentMatchIndex = Platform.NumberUtilities.mod(this.#currentMatchIndex - 1, this.#matches.length);
+    this.dispatchEventToListeners(TreeSearch.Events.SEARCH_CHANGED);
     return this.currentMatch();
   }
 
@@ -1529,7 +1537,7 @@ export class TreeSearch < NodeT extends TreeNode<NodeT>,
     this.#matches.push(...preOrderMatches);
     updateCurrentMatchIndex(/* isPostOrder=*/ false);
     yield* preOrderMatches.values();
-    for (const child of node.children()) {
+    for (const child of node.treeNodeChildren()) {
       yield* this.#innerSearch(child, currentMatch, jumpBackwards, match);
     }
     const postOrderMatches = match(node, /* isPostOrder=*/ true);
@@ -1540,13 +1548,24 @@ export class TreeSearch < NodeT extends TreeNode<NodeT>,
 
   search(node: NodeT, jumpBackwards: boolean, match: (node: NodeT, isPostOrder: boolean) => SearchResultT[]): number {
     const currentMatch = this.currentMatch();
-    this.reset();
+    this.#reset();
     // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
     for (const _ of this.#innerSearch(node, currentMatch, jumpBackwards, match)) {
       // run the generator
     }
     this.#currentMatchIndex = Platform.NumberUtilities.mod(this.#currentMatchIndex, this.#matches.length);
+    this.dispatchEventToListeners(TreeSearch.Events.SEARCH_CHANGED);
     return this.#matches.length;
+  }
+}
+
+export namespace TreeSearch {
+  export const enum Events {
+    SEARCH_CHANGED = 'SearchChanged',
+  }
+
+  export interface EventTypes {
+    [Events.SEARCH_CHANGED]: void;
   }
 }
 

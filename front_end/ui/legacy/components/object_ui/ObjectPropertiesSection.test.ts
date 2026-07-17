@@ -9,9 +9,11 @@ import * as Common from '../../../../core/common/common.js';
 import * as Host from '../../../../core/host/host.js';
 import * as SDK from '../../../../core/sdk/sdk.js';
 import * as Protocol from '../../../../generated/protocol.js';
-import {assertScreenshot, dispatchClickEvent, renderElementIntoDOM} from '../../../../testing/DOMHelpers.js';
+import {assertScreenshot, dispatchClickEvent, raf, renderElementIntoDOM} from '../../../../testing/DOMHelpers.js';
 import {createTarget, describeWithEnvironment} from '../../../../testing/EnvironmentHelpers.js';
 import {expectCall} from '../../../../testing/ExpectStubCall.js';
+import {setupLocaleHooks} from '../../../../testing/LocaleHelpers.js';
+import {setupSettingsHooks} from '../../../../testing/SettingsHelpers.js';
 import {render} from '../../../lit/lit.js';
 import * as UI from '../../legacy.js';
 
@@ -111,13 +113,14 @@ describe('ObjectPropertiesSection', () => {
   describeWithEnvironment('ObjectPropertiesSection', () => {
     const expandedPropertyNames =
         async(value: unknown, options?: {sortPropertiesAlphabetically?: boolean}): Promise<string[]> => {
-      ObjectUI.ObjectPropertiesSection.sortPropertiesAlphabeticallySetting().set(
-          options?.sortPropertiesAlphabetically ?? false);
       const object = SDK.RemoteObject.RemoteObject.fromLocalObject(value);
       const tree = new ObjectUI.ObjectPropertiesSection.ObjectTree(object, {
         readOnly: true,
         propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
       });
+      if (options?.sortPropertiesAlphabetically !== undefined) {
+        tree.sortPropertiesAlphabetically = options.sortPropertiesAlphabetically;
+      }
       const children = await tree.populateChildrenIfNeeded();
       return (children.properties ?? []).map(p => p.name);
     };
@@ -236,8 +239,7 @@ describe('ObjectPropertiesSection', () => {
       sinon.assert.called(appendCheckboxItemSpy);
       const sortPropertiesItem = appendCheckboxItemSpy.args.find(args => args[0] === 'Sort properties alphabetically');
       assert.exists(sortPropertiesItem);
-      assert.strictEqual(sortPropertiesItem[2]?.checked,
-                         ObjectUI.ObjectPropertiesSection.sortPropertiesAlphabeticallySetting().get());
+      assert.strictEqual(sortPropertiesItem[2]?.checked, section.root.sortPropertiesAlphabetically);
 
       const showAllItem = appendCheckboxItemSpy.args.find(args => args[0] === 'Show all');
       assert.exists(showAllItem);
@@ -661,6 +663,65 @@ describeWithEnvironment('ObjectTreeNode', () => {
     });
 
     assert.isTrue(node.canExpandRecursively);
+  });
+
+  it('only matches string and number property values, cutting off long strings to 50 chars', () => {
+    const hugeString = 'findme' +
+        'a'.repeat(10000) + 'findme_end';
+    const stringProperty = new SDK.RemoteObject.RemoteObjectProperty(
+        'str', SDK.RemoteObject.RemoteObject.fromLocalObject(hugeString), true, true);
+    const stringNode = new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(stringProperty, undefined, {
+      readOnly: true,
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
+    });
+
+    const startMatches = stringNode.match(/findme/);
+    assert.lengthOf(startMatches, 1);
+    assert.strictEqual(startMatches[0].range.offset, 1);
+
+    const endMatches = stringNode.match(/findme_end/);
+    assert.lengthOf(endMatches, 0);
+
+    const funcProperty = new SDK.RemoteObject.RemoteObjectProperty(
+        'fn', SDK.RemoteObject.RemoteObject.fromLocalObject(function myFunc() {}), true, true);
+    const funcNode = new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(funcProperty, undefined, {
+      readOnly: true,
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
+    });
+    assert.lengthOf(funcNode.match(/myFunc/), 0);
+  });
+});
+
+describe('ObjectTree with TreeSearch', () => {
+  setupLocaleHooks();
+  setupSettingsHooks();
+
+  it('highlights search results in rendered section cleanly within cropped string when unexpanded', async () => {
+    const hugeString = 'findme' +
+        'a'.repeat(10000);
+    const object = SDK.RemoteObject.RemoteObject.fromLocalObject({
+      str: hugeString,
+    });
+    const search = new UI.TreeOutline.TreeSearch<ObjectUI.ObjectPropertiesSection.ObjectTreeNodeBase>();
+    const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection(
+        object, /* title */ null, /* linkifier */ undefined, /* showOverflow */ true, /* editable */ false, search);
+    await section.root.populateChildrenIfNeeded();
+
+    const div = document.createElement('div');
+    renderElementIntoDOM(div);
+    div.appendChild(section.element);
+    await section.objectTreeElement().onpopulate();
+    await raf();
+
+    const regex = /findme/;
+    search.search(section.root, false,
+                  (node, isPostOrder) => isPostOrder ?
+                      [] :
+                      (node.match(regex) as ObjectUI.ObjectPropertiesSection.ObjectPropertySearchResult[]));
+    await raf();
+
+    const highlights = (section.element.shadowRoot || section.element).querySelectorAll('devtools-highlight');
+    assert.isAbove(highlights.length, 0);
   });
 });
 

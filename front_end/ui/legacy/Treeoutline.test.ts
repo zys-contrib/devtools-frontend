@@ -619,6 +619,10 @@ class TestTreeNode {
     return this.#children;
   }
 
+  treeNodeChildren(): Iterable<TestTreeNode> {
+    return this.children();
+  }
+
   match(regex: RegExp) {
     const matches = this.contents.matchAll(regex);
     return matches

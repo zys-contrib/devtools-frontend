@@ -249,6 +249,10 @@ export class XMLTreeViewNode {
     return this.#children;
   }
 
+  treeNodeChildren(): Iterable<XMLTreeViewNode> {
+    return this.children();
+  }
+
   match(regex: RegExp, closeTag: boolean): RegExpStringIterator<RegExpExecArray> {
     return textView(this, closeTag).matchAll(regex);
   }

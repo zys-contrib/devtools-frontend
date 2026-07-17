@@ -263,4 +263,8 @@ export class TextRange {
 export class SourceRange {
   constructor(public offset: number, public length: number) {
   }
+
+  cssValue(): string {
+    return `${this.offset},${this.length}`;
+  }
 }
