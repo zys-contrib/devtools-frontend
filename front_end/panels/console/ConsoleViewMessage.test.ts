@@ -820,4 +820,82 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       sinon.assert.calledOnceWithExactly(copyTextStub, expectedCSV);
     });
   });
+
+  describe('linkifyWithCustomLinkifier', () => {
+    it('linkifies links correctly', () => {
+      const cases = [
+        {text: 'www.chromium.org', expectedUrl: 'http://www.chromium.org'},
+        {text: 'http://www.chromium.org/', expectedUrl: 'http://www.chromium.org/'},
+        {text: 'follow http://www.chromium.org/', expectedUrl: 'http://www.chromium.org/'},
+        {text: 'string http://www.chromium.org/', expectedUrl: 'http://www.chromium.org/'},
+        {text: '123 \'http://www.chromium.org/\'', expectedUrl: 'http://www.chromium.org/'},
+        {
+          text: 'http://www.chromium.org/some?v=114:56:57',
+          expectedUrl: 'http://www.chromium.org/some?v=114',
+          lineNumber: 55,
+          columnNumber: 56,
+        },
+        {
+          text: 'http://www.example.com/düsseldorf?neighbourhood=Lörick',
+          expectedUrl: 'http://www.example.com/düsseldorf?neighbourhood=Lörick',
+        },
+        {text: 'http://👓.ws', expectedUrl: 'http://👓.ws'},
+        {text: 'http:/www.example.com/молодец', expectedUrl: 'http://www.example.com/молодец'},
+        {text: 'http://ar.wikipedia.org/wiki/نجيب_محفوظ/', expectedUrl: 'http://ar.wikipedia.org/wiki/نجيب_محفوظ/'},
+        {text: 'http://example.com/スター・ウォーズ/', expectedUrl: 'http://example.com/スター・ウォーズ/'},
+        {text: 'data:text/plain;a', expectedUrl: 'data:text/plain;a'},
+        {text: '\'www.chromium.org\'', expectedUrl: 'http://www.chromium.org'},
+        {text: '(www.chromium.org)', expectedUrl: 'http://www.chromium.org'},
+        {text: '"www.chromium.org"', expectedUrl: 'http://www.chromium.org'},
+        {text: '{www.chromium.org}', expectedUrl: 'http://www.chromium.org'},
+        {text: '[www.chromium.org]', expectedUrl: 'http://www.chromium.org'},
+        {text: 'www.chromium.org\u00a0', expectedUrl: 'http://www.chromium.org'},
+        {text: 'www.chromium.org~', expectedUrl: 'http://www.chromium.org~'},
+        {text: 'www.chromium.org,', expectedUrl: 'http://www.chromium.org'},
+        {text: 'www.chromium.org:', expectedUrl: 'http://www.chromium.org'},
+        {text: 'www.chromium.org;', expectedUrl: 'http://www.chromium.org'},
+        {text: 'www.chromium.org.', expectedUrl: 'http://www.chromium.org'},
+        {text: 'www.chromium.org...', expectedUrl: 'http://www.chromium.org'},
+        {text: 'www.chromium.org!', expectedUrl: 'http://www.chromium.org'},
+        {text: 'www.chromium.org?', expectedUrl: 'http://www.chromium.org'},
+        {
+          text: 'at triggerError (http://localhost/show/:22:11)',
+          expectedUrl: 'http://localhost/show/',
+          lineNumber: 21,
+          columnNumber: 10,
+        },
+      ];
+
+      for (const {text, expectedUrl, lineNumber, columnNumber} of cases) {
+        let firstExtractedUrl: string|undefined;
+        let firstExtractedLineNumber: number|undefined;
+        let firstExtractedColumnNumber: number|undefined;
+
+        Console.ConsoleViewMessage.ConsoleViewMessage.linkifyWithCustomLinkifier(text, (text, url, line, column) => {
+          if (firstExtractedUrl === undefined) {
+            firstExtractedUrl = url;
+            firstExtractedLineNumber = line;
+            firstExtractedColumnNumber = column;
+          }
+          const element = document.createElement('span');
+          element.textContent = text;
+          return element;
+        });
+
+        assert.strictEqual(firstExtractedUrl, expectedUrl, `Failed for text: ${text}`);
+        assert.strictEqual(firstExtractedLineNumber, lineNumber, `Failed for line number in text: ${text}`);
+        assert.strictEqual(firstExtractedColumnNumber, columnNumber, `Failed for column number in text: ${text}`);
+      }
+    });
+
+    it('does not bog down the regex with multiple slashes', () => {
+      const linkifier = (text: string) => {
+        const span = document.createElement('span');
+        span.textContent = text;
+        return span;
+      };
+      Console.ConsoleViewMessage.ConsoleViewMessage.linkifyWithCustomLinkifier('/'.repeat(1000), linkifier);
+      Console.ConsoleViewMessage.ConsoleViewMessage.linkifyWithCustomLinkifier('/a/'.repeat(1000), linkifier);
+    });
+  });
 });
