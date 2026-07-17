@@ -596,6 +596,100 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       assert.deepEqual(getStructuredCallFrames(element), COLLAPSED_STRUCTURED);
       assert.deepEqual(getCallFrames(element), COLLAPSED_UNSTRUCTURED_WITH_BUILTIN);
     });
+
+    it('updates message anchor location when ignore listing pattern changes', async () => {
+      const connection = new MockCDPConnection([]);
+      mockResourceTree(connection);
+      const target = createTarget({connection});
+      const debuggerModel = target.model(SDK.DebuggerModel.DebuggerModel);
+      assert.exists(debuggerModel);
+
+      const linkifier = new Components.Linkifier.Linkifier();
+      linkifier.targetAdded(target);
+
+      // Dispatch scriptParsed events for foo.js, boo.js, and main.js.
+      dispatchEvent(target, 'Debugger.scriptParsed', {
+        scriptId: '1' as Protocol.Runtime.ScriptId,
+        url: 'http://example.com/foo.js',
+        startLine: 0,
+        startColumn: 0,
+        endLine: 100,
+        endColumn: 0,
+        executionContextId: 1 as Protocol.Runtime.ExecutionContextId,
+        hash: '',
+        buildId: '',
+        executionContextAuxData: {isDefault: true},
+      });
+      dispatchEvent(target, 'Debugger.scriptParsed', {
+        scriptId: '2' as Protocol.Runtime.ScriptId,
+        url: 'http://example.com/boo.js',
+        startLine: 0,
+        startColumn: 0,
+        endLine: 100,
+        endColumn: 0,
+        executionContextId: 1 as Protocol.Runtime.ExecutionContextId,
+        hash: '',
+        buildId: '',
+        executionContextAuxData: {isDefault: true},
+      });
+      dispatchEvent(target, 'Debugger.scriptParsed', {
+        scriptId: '3' as Protocol.Runtime.ScriptId,
+        url: 'http://example.com/main.js',
+        startLine: 0,
+        startColumn: 0,
+        endLine: 100,
+        endColumn: 0,
+        executionContextId: 1 as Protocol.Runtime.ExecutionContextId,
+        hash: '',
+        buildId: '',
+        executionContextAuxData: {isDefault: true},
+      });
+
+      const stackTrace = createStackTrace([
+        '1::foo::http://example.com/foo.js::19::0',
+        '2::boo::http://example.com/boo.js::26::0',
+        '3::main::http://example.com/main.js::31::0',
+      ]);
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Info, 'trace', {
+            type: Protocol.Runtime.ConsoleAPICalledEventType.Trace,
+            stackTrace,
+          });
+
+      const requestResolver = sinon.createStubInstance(Logs.RequestResolver.RequestResolver);
+      const issuesResolver = sinon.createStubInstance(IssuesManager.IssueResolver.IssueResolver);
+      const message = new Console.ConsoleViewMessage.ConsoleViewMessage(rawMessage, linkifier, requestResolver,
+                                                                        issuesResolver, /* onResize */ () => {});
+
+      const element = message.toMessageElement();
+      const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
+      await debuggerWorkspaceBinding.pendingLiveLocationChangesPromise();
+
+      const anchor = element.querySelector('.console-message-anchor');
+      assert.exists(anchor);
+      assert.strictEqual(anchor.textContent?.trim(), 'foo.js:20');
+
+      const setting = Common.Settings.Settings.instance().moduleSetting('skip-stack-frames-pattern') as
+          Common.Settings.RegExpSetting;
+
+      // Ignore-list foo.js: anchor should now point to boo.js:27.
+      setting.setAsArray([{pattern: 'foo\\.js', disabled: false}]);
+      await debuggerWorkspaceBinding.pendingLiveLocationChangesPromise();
+      assert.strictEqual(anchor.textContent?.trim(), 'boo.js:27');
+
+      // Ignore-list foo.js and boo.js: anchor should now point to main.js:32.
+      setting.setAsArray([{pattern: 'foo\\.js|boo\\.js', disabled: false}]);
+      await debuggerWorkspaceBinding.pendingLiveLocationChangesPromise();
+      assert.strictEqual(anchor.textContent?.trim(), 'main.js:32');
+
+      // Reset ignore list: anchor should point back to foo.js:20.
+      setting.setAsArray([]);
+      await debuggerWorkspaceBinding.pendingLiveLocationChangesPromise();
+      assert.strictEqual(anchor.textContent?.trim(), 'foo.js:20');
+
+      linkifier.dispose();
+    });
   });
 
   describe('ConsoleTableMessageView Context Menu', () => {
