@@ -7,6 +7,7 @@ import sinon from 'sinon';
 
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
+import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as AiAssistanceModel from '../../models/ai_assistance/ai_assistance.js';
@@ -21,6 +22,7 @@ import {
 import {raf, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
+import {dispatchEvent} from '../../testing/MockConnection.js';
 import {mockResourceTree} from '../../testing/ResourceTreeHelpers.js';
 import * as ObjectUI from '../../ui/legacy/components/object_ui/object_ui.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
@@ -102,6 +104,67 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       const expectedCallFrame = stackTrace.callFrames[3];  // userFunction.
       sinon.assert.calledOnceWithExactly(linkifier.maybeLinkifyConsoleCallFrame, target, expectedCallFrame,
                                          {revealBreakpoint: true, userMetric: undefined});
+    });
+
+    it('reveals script location on click for message added before script was parsed', async () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      assert.exists(runtimeModel);
+
+      const targetManager = SDK.TargetManager.TargetManager.instance();
+      const workspace = Workspace.Workspace.WorkspaceImpl.instance();
+      const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(targetManager, workspace);
+      const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({forceNew: true});
+      const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance({
+        forceNew: true,
+        resourceMapping,
+        targetManager,
+        ignoreListManager,
+        workspace,
+      });
+
+      const linkifier = new Components.Linkifier.Linkifier(100, false);
+      linkifier.targetAdded(target);
+      const requestResolver = sinon.createStubInstance(Logs.RequestResolver.RequestResolver);
+      const issuesResolver = sinon.createStubInstance(IssuesManager.IssueResolver.IssueResolver);
+
+      const url = Platform.DevToolsPath.urlString`http://example.com/source2.js`;
+      const rawMessage =
+          new SDK.ConsoleModel.ConsoleMessage(runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI,
+                                              Protocol.Log.LogEntryLevel.Info, 'hello?', {url});
+      const message = new Console.ConsoleViewMessage.ConsoleViewMessage(rawMessage, linkifier, requestResolver,
+                                                                        issuesResolver, /* onResize */ () => {});
+
+      const messageElement = message.toMessageElement();
+      const anchorElement = messageElement.querySelector('.devtools-link') as HTMLElement;
+      assert.exists(anchorElement);
+
+      const revealStub = sinon.stub(Common.Revealer.RevealerRegistry.instance(), 'reveal').resolves();
+
+      const scriptParsedEvent: Protocol.Debugger.ScriptParsedEvent = {
+        scriptId: '1' as Protocol.Runtime.ScriptId,
+        url,
+        startLine: 0,
+        startColumn: 0,
+        endLine: 10,
+        endColumn: 10,
+        executionContextId: 1 as Protocol.Runtime.ExecutionContextId,
+        hash: '',
+        buildId: '',
+        isLiveEdit: false,
+        sourceMapURL: undefined,
+        hasSourceURL: false,
+        length: 10,
+      };
+      dispatchEvent(target, 'Debugger.scriptParsed', scriptParsedEvent);
+
+      await debuggerWorkspaceBinding.pendingLiveLocationChangesPromise();
+
+      anchorElement.click();
+
+      sinon.assert.calledOnce(revealStub);
+      const revealedLocation = revealStub.firstCall.args[0] as Workspace.UISourceCode.UILocation;
+      assert.strictEqual(revealedLocation.uiSourceCode.url(), url);
     });
   });
 
