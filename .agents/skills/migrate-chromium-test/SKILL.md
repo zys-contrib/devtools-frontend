@@ -1,5 +1,5 @@
 ---
-name: devtools-migrate-chromium-test
+name: migrate-chromium-test
 description: Use when migrating Chromium layout tests to DevTools unit tests
 ---
 

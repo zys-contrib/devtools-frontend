@@ -1,5 +1,5 @@
 ---
-name: repro-flaky-test
+name: repro-flaky-tests
 description: Reproduce and investigate flakiness in a test.
 ---
 
