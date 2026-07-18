@@ -1912,7 +1912,7 @@ var UIStrings3 = {
   /**
    * @description Text on a button to close the infobar and never show the infobar in the future
    */
-  dontShowAgain: "Don't show again",
+  dontShowAgain: "Don\u2019t show again",
   /**
    * @description Text to close something
    */
@@ -8031,7 +8031,7 @@ var UIStrings9 = {
    * is configured with a different locale than Chrome. This option means DevTools will
    * always try and display the DevTools UI in the same language as Chrome.
    */
-  setToBrowserLanguage: "Always match Chrome's language",
+  setToBrowserLanguage: "Always match Chrome\u2019s language",
   /**
    * @description An option the user can select when DevTools notices that DevTools
    * is configured with a different locale than Chrome. This option means DevTools UI
@@ -23126,14 +23126,21 @@ var TreeElement = class {
 function hasBooleanAttribute(element, name) {
   return element.hasAttribute(name) && element.getAttribute(name) !== "false";
 }
-var TreeSearch = class {
+var TreeSearch = class extends Common19.ObjectWrapper.ObjectWrapper {
   #matches = [];
   #currentMatchIndex = 0;
   #nodeMatchMap;
-  reset() {
+  #reset() {
     this.#matches = [];
     this.#nodeMatchMap = void 0;
     this.#currentMatchIndex = 0;
+  }
+  reset() {
+    this.#reset();
+    this.dispatchEventToListeners(
+      "SearchChanged"
+      /* TreeSearch.Events.SEARCH_CHANGED */
+    );
   }
   currentMatch() {
     return this.#matches.at(this.#currentMatchIndex);
@@ -23176,10 +23183,18 @@ var TreeSearch = class {
   }
   next() {
     this.#currentMatchIndex = Platform23.NumberUtilities.mod(this.#currentMatchIndex + 1, this.#matches.length);
+    this.dispatchEventToListeners(
+      "SearchChanged"
+      /* TreeSearch.Events.SEARCH_CHANGED */
+    );
     return this.currentMatch();
   }
   prev() {
     this.#currentMatchIndex = Platform23.NumberUtilities.mod(this.#currentMatchIndex - 1, this.#matches.length);
+    this.dispatchEventToListeners(
+      "SearchChanged"
+      /* TreeSearch.Events.SEARCH_CHANGED */
+    );
     return this.currentMatch();
   }
   // This is a generator to sidestep stack overflow risks
@@ -23204,7 +23219,7 @@ var TreeSearch = class {
       false
     );
     yield* preOrderMatches.values();
-    for (const child of node.children()) {
+    for (const child of node.treeNodeChildren()) {
       yield* this.#innerSearch(child, currentMatch, jumpBackwards, match);
     }
     const postOrderMatches = match(
@@ -23221,10 +23236,14 @@ var TreeSearch = class {
   }
   search(node, jumpBackwards, match) {
     const currentMatch = this.currentMatch();
-    this.reset();
+    this.#reset();
     for (const _ of this.#innerSearch(node, currentMatch, jumpBackwards, match)) {
     }
     this.#currentMatchIndex = Platform23.NumberUtilities.mod(this.#currentMatchIndex, this.#matches.length);
+    this.dispatchEventToListeners(
+      "SearchChanged"
+      /* TreeSearch.Events.SEARCH_CHANGED */
+    );
     return this.#matches.length;
   }
 };

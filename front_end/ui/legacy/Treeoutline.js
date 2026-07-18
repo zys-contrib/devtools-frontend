@@ -1220,14 +1220,18 @@ export class TreeElement {
 function hasBooleanAttribute(element, name) {
     return element.hasAttribute(name) && element.getAttribute(name) !== 'false';
 }
-export class TreeSearch {
+export class TreeSearch extends Common.ObjectWrapper.ObjectWrapper {
     #matches = [];
     #currentMatchIndex = 0;
     #nodeMatchMap;
-    reset() {
+    #reset() {
         this.#matches = [];
         this.#nodeMatchMap = undefined;
         this.#currentMatchIndex = 0;
+    }
+    reset() {
+        this.#reset();
+        this.dispatchEventToListeners("SearchChanged" /* TreeSearch.Events.SEARCH_CHANGED */);
     }
     currentMatch() {
         return this.#matches.at(this.#currentMatchIndex);
@@ -1270,10 +1274,12 @@ export class TreeSearch {
     }
     next() {
         this.#currentMatchIndex = Platform.NumberUtilities.mod(this.#currentMatchIndex + 1, this.#matches.length);
+        this.dispatchEventToListeners("SearchChanged" /* TreeSearch.Events.SEARCH_CHANGED */);
         return this.currentMatch();
     }
     prev() {
         this.#currentMatchIndex = Platform.NumberUtilities.mod(this.#currentMatchIndex - 1, this.#matches.length);
+        this.dispatchEventToListeners("SearchChanged" /* TreeSearch.Events.SEARCH_CHANGED */);
         return this.currentMatch();
     }
     // This is a generator to sidestep stack overflow risks
@@ -1297,7 +1303,7 @@ export class TreeSearch {
         this.#matches.push(...preOrderMatches);
         updateCurrentMatchIndex(/* isPostOrder=*/ false);
         yield* preOrderMatches.values();
-        for (const child of node.children()) {
+        for (const child of node.treeNodeChildren()) {
             yield* this.#innerSearch(child, currentMatch, jumpBackwards, match);
         }
         const postOrderMatches = match(node, /* isPostOrder=*/ true);
@@ -1307,12 +1313,13 @@ export class TreeSearch {
     }
     search(node, jumpBackwards, match) {
         const currentMatch = this.currentMatch();
-        this.reset();
+        this.#reset();
         // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
         for (const _ of this.#innerSearch(node, currentMatch, jumpBackwards, match)) {
             // run the generator
         }
         this.#currentMatchIndex = Platform.NumberUtilities.mod(this.#currentMatchIndex, this.#matches.length);
+        this.dispatchEventToListeners("SearchChanged" /* TreeSearch.Events.SEARCH_CHANGED */);
         return this.#matches.length;
     }
 }
