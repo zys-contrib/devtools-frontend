@@ -1243,5 +1243,55 @@ describe('CSSMatchedStyles', () => {
         assert.isFalse(matchedStyles.isPropertyOverriddenByAnimation(property));
       });
     });
+
+    describe('availableCSSVariables', () => {
+      it('verifies that CSS variables are defined correctly wrt DOM inheritance', async () => {
+        const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        node.id = 1 as Protocol.DOM.NodeId;
+        node.nodeType.returns(Node.ELEMENT_NODE);
+        const parent1 = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        parent1.id = 2 as Protocol.DOM.NodeId;
+        parent1.nodeType.returns(Node.ELEMENT_NODE);
+        node.parentNode = parent1;
+        const parent2 = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        parent2.id = 3 as Protocol.DOM.NodeId;
+        parent2.nodeType.returns(Node.ELEMENT_NODE);
+        parent1.parentNode = parent2;
+
+        const matchedStyles = await getMatchedStyles({
+          connection,
+          node,
+          inlinePayload: {
+            cssProperties: [],
+            shorthandEntries: [],
+          } as Protocol.CSS.CSSStyle,
+          matchedPayload:
+              [ruleMatch('span', [{name: '--span-variable', value: 'green'}, {name: '--camelCased', value: 'blue'}])],
+          inheritedPayload: [
+            {
+              matchedCSSRules: [
+                ruleMatch('.myelement', [{name: '--another-div-variable', value: 'grey'}]),
+                ruleMatch('div', [{name: '--div-variable', value: 'blue'}])
+              ],
+            },
+            {
+              matchedCSSRules: [ruleMatch('body', [{name: '--body-variable', value: 'red'}])],
+            }
+          ]
+        });
+
+        const styles = matchedStyles.nodeStyles();
+        assert.sameMembers(
+            matchedStyles.availableCSSVariables(styles[0]),
+            ['--body-variable', '--div-variable', '--another-div-variable', '--span-variable', '--camelCased']);
+        assert.sameMembers(
+            matchedStyles.availableCSSVariables(styles[1]),
+            ['--body-variable', '--div-variable', '--another-div-variable', '--span-variable', '--camelCased']);
+        assert.sameMembers(matchedStyles.availableCSSVariables(styles[2]),
+                           ['--body-variable', '--div-variable', '--another-div-variable']);
+        assert.sameMembers(matchedStyles.availableCSSVariables(styles[3]),
+                           ['--body-variable', '--div-variable', '--another-div-variable']);
+      });
+    });
   });
 });
