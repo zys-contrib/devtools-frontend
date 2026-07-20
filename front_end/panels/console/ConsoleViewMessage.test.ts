@@ -20,7 +20,11 @@ import {
   createStackTrace,
 } from '../../testing/ConsoleHelpers.js';
 import {raf, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
-import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
+import {
+  createTarget,
+  describeWithEnvironment,
+} from '../../testing/EnvironmentHelpers.js';
+import {expectCall} from '../../testing/ExpectStubCall.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {dispatchEvent} from '../../testing/MockConnection.js';
 import {mockResourceTree} from '../../testing/ResourceTreeHelpers.js';
@@ -48,12 +52,21 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         stackTrace,
       };
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, /* level */ null, 'got here', messageDetails);
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          /* level */ null,
+          'got here',
+          messageDetails,
+      );
       const {message, linkifier} = createConsoleViewMessageWithStubDeps(rawMessage);
 
       message.toMessageElement();  // Trigger rendering.
 
-      sinon.assert.calledOnceWithExactly(linkifier.linkifyStackTraceTopFrame, target, stackTrace);
+      sinon.assert.calledOnceWithExactly(
+          linkifier.linkifyStackTraceTopFrame,
+          target,
+          stackTrace,
+      );
     });
 
     it('links to the frame with the logpoint/breakpoint if the stack trace contains the "marker sourceURL"', () => {
@@ -69,15 +82,23 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         stackTrace,
       };
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, /* level */ null, 'value of x is 42',
-          messageDetails);
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          /* level */ null,
+          'value of x is 42',
+          messageDetails,
+      );
       const {message, linkifier} = createConsoleViewMessageWithStubDeps(rawMessage);
 
       message.toMessageElement();  // Trigger rendering.
 
       const expectedCallFrame = stackTrace.callFrames[1];  // userFunction.
-      sinon.assert.calledOnceWithExactly(linkifier.maybeLinkifyConsoleCallFrame, target, expectedCallFrame,
-                                         {revealBreakpoint: true, userMetric: undefined});
+      sinon.assert.calledOnceWithExactly(
+          linkifier.maybeLinkifyConsoleCallFrame,
+          target,
+          expectedCallFrame,
+          {revealBreakpoint: true, userMetric: undefined},
+      );
     });
 
     it('uses the last "marker sourceURL" frame when searching for the breakpoint/logpoint frame', () => {
@@ -95,15 +116,23 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         stackTrace,
       };
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, /* level */ null, 'value of x is 42',
-          messageDetails);
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          /* level */ null,
+          'value of x is 42',
+          messageDetails,
+      );
       const {message, linkifier} = createConsoleViewMessageWithStubDeps(rawMessage);
 
       message.toMessageElement();  // Trigger rendering.
 
       const expectedCallFrame = stackTrace.callFrames[3];  // userFunction.
-      sinon.assert.calledOnceWithExactly(linkifier.maybeLinkifyConsoleCallFrame, target, expectedCallFrame,
-                                         {revealBreakpoint: true, userMetric: undefined});
+      sinon.assert.calledOnceWithExactly(
+          linkifier.maybeLinkifyConsoleCallFrame,
+          target,
+          expectedCallFrame,
+          {revealBreakpoint: true, userMetric: undefined},
+      );
     });
 
     it('reveals script location on click for message added before script was parsed', async () => {
@@ -113,8 +142,13 @@ describeWithEnvironment('ConsoleViewMessage', () => {
 
       const targetManager = SDK.TargetManager.TargetManager.instance();
       const workspace = Workspace.Workspace.WorkspaceImpl.instance();
-      const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(targetManager, workspace);
-      const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({forceNew: true});
+      const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(
+          targetManager,
+          workspace,
+      );
+      const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({
+        forceNew: true,
+      });
       const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance({
         forceNew: true,
         resourceMapping,
@@ -125,18 +159,33 @@ describeWithEnvironment('ConsoleViewMessage', () => {
 
       const linkifier = new Components.Linkifier.Linkifier(100, false);
       linkifier.targetAdded(target);
-      const requestResolver = sinon.createStubInstance(Logs.RequestResolver.RequestResolver);
-      const issuesResolver = sinon.createStubInstance(IssuesManager.IssueResolver.IssueResolver);
+      const requestResolver = sinon.createStubInstance(
+          Logs.RequestResolver.RequestResolver,
+      );
+      const issuesResolver = sinon.createStubInstance(
+          IssuesManager.IssueResolver.IssueResolver,
+      );
 
       const url = Platform.DevToolsPath.urlString`http://example.com/source2.js`;
-      const rawMessage =
-          new SDK.ConsoleModel.ConsoleMessage(runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI,
-                                              Protocol.Log.LogEntryLevel.Info, 'hello?', {url});
-      const message = new Console.ConsoleViewMessage.ConsoleViewMessage(rawMessage, linkifier, requestResolver,
-                                                                        issuesResolver, /* onResize */ () => {});
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          'hello?',
+          {url},
+      );
+      const message = new Console.ConsoleViewMessage.ConsoleViewMessage(
+          rawMessage,
+          linkifier,
+          requestResolver,
+          issuesResolver,
+          /* onResize */ () => {},
+      );
 
       const messageElement = message.toMessageElement();
-      const anchorElement = messageElement.querySelector('.devtools-link') as HTMLElement;
+      const anchorElement = messageElement.querySelector(
+                                '.devtools-link',
+                                ) as HTMLElement;
       assert.exists(anchorElement);
 
       const revealStub = sinon.stub(Common.Revealer.RevealerRegistry.instance(), 'reveal').resolves();
@@ -172,23 +221,36 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     it('creates an editable object properties section for objects', async () => {
       const target = createTarget();
       const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
-      const remoteObject = SDK.RemoteObject.RemoteObject.fromLocalObject({foo: 'bar'});
+      const remoteObject = SDK.RemoteObject.RemoteObject.fromLocalObject({
+        foo: 'bar',
+      });
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Info, '',
-          {parameters: [remoteObject]});
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          '',
+          {parameters: [remoteObject]},
+      );
       const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
       const messageElement = message.toMessageElement();
 
-      const propertiesSectionElement = messageElement.querySelector('.console-view-object-properties-section');
+      const propertiesSectionElement = messageElement.querySelector(
+          '.console-view-object-properties-section',
+      );
       assert.exists(propertiesSectionElement);
 
-      const section = ObjectUI.ObjectPropertiesSection.getObjectPropertiesSectionFrom(propertiesSectionElement);
+      const section = ObjectUI.ObjectPropertiesSection.getObjectPropertiesSectionFrom(
+          propertiesSectionElement,
+      );
       assert.exists(section);
 
       const rootElement = section.objectTreeElement();
       await rootElement.onpopulate();
       const child = rootElement.childAt(0);
-      assert.instanceOf(child, ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement);
+      assert.instanceOf(
+          child,
+          ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement,
+      );
       assert.isTrue(child.editable);
     });
 
@@ -204,14 +266,21 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         objectId: '1' as Protocol.Runtime.RemoteObjectId,
       });
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Info, '', {
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          '',
+          {
             type: Protocol.Runtime.ConsoleAPICalledEventType.Dir,
             parameters: [remoteObject],
-          });
+          },
+      );
       const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
       const messageElement = message.toMessageElement();
 
-      const propertiesSectionElement = messageElement.querySelector('.console-view-object-properties-section');
+      const propertiesSectionElement = messageElement.querySelector(
+          '.console-view-object-properties-section',
+      );
       assert.exists(propertiesSectionElement);
       assert.include(propertiesSectionElement.textContent, 'HTMLDocument');
     });
@@ -239,47 +308,143 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         },
       });
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Info, '', {
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          '',
+          {
             type: Protocol.Runtime.ConsoleAPICalledEventType.Log,
             parameters: [remoteObject],
-          });
+          },
+      );
       const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
       const messageElement = message.toMessageElement();
 
-      const propertiesSectionElement = messageElement.querySelector('.console-view-object-properties-section');
+      const propertiesSectionElement = messageElement.querySelector(
+          '.console-view-object-properties-section',
+      );
       assert.exists(propertiesSectionElement);
       assert.include(propertiesSectionElement.textContent, 'toString');
     });
+
+    it('formats native functions without exception', async () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      assert.exists(runtimeModel);
+
+      const mathRandomFunction = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Function,
+        description: 'function random() { [native code] }',
+        objectId: '1' as Protocol.Runtime.RemoteObjectId,
+      });
+      const appendChildFunction = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Function,
+        description: 'function appendChild() { [native code] }',
+        objectId: '2' as Protocol.Runtime.RemoteObjectId,
+      });
+
+      const rawMessage1 = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          '',
+          {
+            type: SDK.ConsoleModel.FrontendMessageType.Result,
+            parameters: [mathRandomFunction],
+          },
+      );
+      const {message: message1} = createConsoleViewMessageWithStubDeps(rawMessage1);
+
+      const formattedPromise1 = expectCall(
+          sinon.stub(
+              message1,
+              'formattedParameterAsFunctionForTest' as keyof typeof message1,
+              ),
+      );
+      const messageElement1 = message1.toMessageElement();
+      await formattedPromise1;
+      assert.strictEqual(
+          messageElement1.deepTextContent(),
+          'ƒ random() { [native code] }',
+      );
+
+      const rawMessage2 = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          '',
+          {
+            type: SDK.ConsoleModel.FrontendMessageType.Result,
+            parameters: [appendChildFunction],
+          },
+      );
+      const {message: message2} = createConsoleViewMessageWithStubDeps(rawMessage2);
+
+      const formattedPromise2 = expectCall(
+          sinon.stub(
+              message2,
+              'formattedParameterAsFunctionForTest' as keyof typeof message2,
+              ),
+      );
+      const messageElement2 = message2.toMessageElement();
+      await formattedPromise2;
+      assert.strictEqual(
+          messageElement2.deepTextContent(),
+          'ƒ appendChild() { [native code] }',
+      );
+    });
   });
   describe('console insights', () => {
-    const createMessage =
-        (source: SDK.ConsoleModel.MessageSource, level: Protocol.Log.LogEntryLevel, messageText: string):
-            HTMLElement => {
-              sinon.stub(UI.ActionRegistry.ActionRegistry.instance(), 'hasAction')
-                  .withArgs('explain.console-message.hover')
-                  .returns(true);
-              const target = createTarget();
-              const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
-              const rawMessage = new SDK.ConsoleModel.ConsoleMessage(runtimeModel, source, level, messageText);
-              const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
-              const messageElement = message.toMessageElement();  // Trigger rendering.
-              return messageElement;
-            };
+    const createMessage = (
+        source: SDK.ConsoleModel.MessageSource,
+        level: Protocol.Log.LogEntryLevel,
+        messageText: string,
+        ): HTMLElement => {
+      sinon.stub(UI.ActionRegistry.ActionRegistry.instance(), 'hasAction')
+          .withArgs('explain.console-message.hover')
+          .returns(true);
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel,
+          source,
+          level,
+          messageText,
+      );
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();  // Trigger rendering.
+      return messageElement;
+    };
 
     it('shows a hover button', () => {
-      const messageElement =
-          createMessage(Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Error, 'got here');
-      const button = messageElement.querySelector('[aria-label=\'Understand this error\']');
+      const messageElement = createMessage(
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Error,
+          'got here',
+      );
+      const button = messageElement.querySelector(
+          '[aria-label=\'Understand this error\']',
+      );
       assert.strictEqual(
-          button?.querySelector('.button-label div')?.getAttribute('data-text'), 'Understand this error');
+          button?.querySelector('.button-label div')?.getAttribute('data-text'),
+          'Understand this error',
+      );
     });
 
     it('creates teaser on hover', () => {
-      const messageElement =
-          createMessage(Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Error, 'got here');
-      const showTeaserStub = sinon.stub(Console.ConsoleInsightTeaser.ConsoleInsightTeaser.prototype, 'show');
-      const generateTeaserStub =
-          sinon.stub(Console.ConsoleInsightTeaser.ConsoleInsightTeaser.prototype, 'maybeGenerateTeaser');
+      const messageElement = createMessage(
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Error,
+          'got here',
+      );
+      const showTeaserStub = sinon.stub(
+          Console.ConsoleInsightTeaser.ConsoleInsightTeaser.prototype,
+          'show',
+      );
+      const generateTeaserStub = sinon.stub(
+          Console.ConsoleInsightTeaser.ConsoleInsightTeaser.prototype,
+          'maybeGenerateTeaser',
+      );
       const builtInAi = AiAssistanceModel.BuiltInAi.BuiltInAi.instance();
       sinon.stub(builtInAi, 'isEventuallyAvailable').returns(true);
       messageElement.dispatchEvent(new MouseEvent('mouseenter'));
@@ -288,16 +453,26 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     });
 
     it('does not show a hover button if the console message text is empty', () => {
-      const messageElement =
-          createMessage(Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Error, '');
-      const button = messageElement.querySelector('[aria-label=\'Understand this error\']');
+      const messageElement = createMessage(
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Error,
+          '',
+      );
+      const button = messageElement.querySelector(
+          '[aria-label=\'Understand this error\']',
+      );
       assert.isNull(button);
     });
 
     it('does not show a hover button for the self-XSS warning message', () => {
       const messageElement = createMessage(
-          Common.Console.FrontendMessageSource.SELF_XSS, Protocol.Log.LogEntryLevel.Warning, 'Don’t paste code...');
-      const button = messageElement.querySelector('[aria-label=\'Understand this warning\']');
+          Common.Console.FrontendMessageSource.SELF_XSS,
+          Protocol.Log.LogEntryLevel.Warning,
+          'Don’t paste code...',
+      );
+      const button = messageElement.querySelector(
+          '[aria-label=\'Understand this warning\']',
+      );
       assert.isNull(button);
     });
   });
@@ -340,23 +515,28 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       assert.isTrue(showLess.checkVisibility());
     }
 
-    function errorMessageForStack(stack: Protocol.Runtime.StackTrace, withBuiltinFrames?: boolean) {
+    function errorMessageForStack(
+        stack: Protocol.Runtime.StackTrace,
+        withBuiltinFrames?: boolean,
+    ) {
       const lines = [
         'Error:',
-        ...(stack.callFrames.flatMap(frame => {
+        ...stack.callFrames.flatMap(frame => {
           const line = `    at ${frame.functionName} (${frame.url}:${frame.lineNumber}:${frame.columnNumber})`;
           if (withBuiltinFrames) {
             return [line, '    at JSON.parse (<anonymous>)'];
           }
           return [line];
-        })),
+        }),
       ];
       return lines.join('\n');
     }
 
     function getCallFrames(element: HTMLElement): string[] {
       const results = [];
-      for (const line of element.querySelectorAll('.formatted-stack-frame,.formatted-builtin-stack-frame')) {
+      for (const line of element.querySelectorAll(
+               '.formatted-stack-frame,.formatted-builtin-stack-frame',
+               )) {
         if (line.checkVisibility()) {
           results.push(line.textContent);
         }
@@ -366,7 +546,9 @@ describeWithEnvironment('ConsoleViewMessage', () => {
 
     function getStructuredCallFrames(element: HTMLElement): string[] {
       const results = [];
-      for (const line of findStackPreviewContainer(element).querySelectorAll('tbody tr')) {
+      for (const line of findStackPreviewContainer(element).querySelectorAll(
+               'tbody tr',
+               )) {
         if (line.checkVisibility()) {
           results.push(line.textContent);
         }
@@ -375,7 +557,10 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     }
 
     async function expandStructuredTrace(element: HTMLElement) {
-      (element.querySelector('.console-message-stack-trace-wrapper > div') as HTMLElement).click();
+      (element.querySelector(
+           '.console-message-stack-trace-wrapper > div',
+           ) as HTMLElement)
+          .click();
       await UI.Widget.Widget.allUpdatesComplete;
     }
 
@@ -392,7 +577,9 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     }
 
     async function createConsoleMessageWithIgnoreListing(
-        ignoreListFn: (url: string) => boolean, withBuiltinFrames?: boolean): Promise<HTMLElement> {
+        ignoreListFn: (url: string) => boolean,
+        withBuiltinFrames?: boolean,
+        ): Promise<HTMLElement> {
       const connection = new MockCDPConnection([]);
       mockResourceTree(connection);
       const target = createTarget({connection});
@@ -402,29 +589,43 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         'USER_ID::userFunction::http://example.com/script.js::10::2',
         'APP_ID::entry::http://example.com/app.js::25::10',
       ]);
-      const stackTraceMessage = errorMessageForStack(stackTrace, withBuiltinFrames);
+      const stackTraceMessage = errorMessageForStack(
+          stackTrace,
+          withBuiltinFrames,
+      );
       const messageDetails = {
         type: Protocol.Runtime.ConsoleAPICalledEventType.Error,
         stackTrace,
-        parameters: [{
-          type: 'object',
-          subtype: 'error',
-          className: 'Error',
-          description: stackTraceMessage,
-        } as Protocol.Runtime.RemoteObject],
+        parameters: [
+          {
+            type: 'object',
+            subtype: 'error',
+            className: 'Error',
+            description: stackTraceMessage,
+          } as Protocol.Runtime.RemoteObject,
+        ],
       };
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Error,
-          stackTraceMessage, messageDetails);
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Error,
+          stackTraceMessage,
+          messageDetails,
+      );
       const {message, linkifier} = createConsoleViewMessageWithStubDeps(rawMessage);
 
-      linkifier.linkifyScriptLocation.callsFake((_target, _scriptId, sourceURL, lineNumber, options) => {
-        const link = Components.Linkifier.Linkifier.linkifyURL(sourceURL, {lineNumber, ...options});
-        if (ignoreListFn(sourceURL)) {
-          link.classList.add(IGNORE_LIST_LINK);
-        }
-        return link;
-      });
+      linkifier.linkifyScriptLocation.callsFake(
+          (_target, _scriptId, sourceURL, lineNumber, options) => {
+            const link = Components.Linkifier.Linkifier.linkifyURL(sourceURL, {
+              lineNumber,
+              ...options,
+            });
+            if (ignoreListFn(sourceURL)) {
+              link.classList.add(IGNORE_LIST_LINK);
+            }
+            return link;
+          },
+      );
       const originalLinkifyStackTraceFrame = Components.Linkifier.Linkifier.linkifyStackTraceFrame;
       sinon.stub(Components.Linkifier.Linkifier, 'linkifyStackTraceFrame').callsFake((frame, options) => {
         const link = originalLinkifyStackTraceFrame(frame, options);
@@ -436,7 +637,10 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       const element = message.toMessageElement();  // Trigger rendering.
 
       const wrapperElement = document.createElement('div');
-      const shadowElement = UI.UIUtils.createShadowRootWithCoreStyles(wrapperElement, {cssFile: consoleViewStyles});
+      const shadowElement = UI.UIUtils.createShadowRootWithCoreStyles(
+          wrapperElement,
+          {cssFile: consoleViewStyles},
+      );
       shadowElement.appendChild(element);
       renderElementIntoDOM(wrapperElement);
       await raf();
@@ -479,9 +683,13 @@ describeWithEnvironment('ConsoleViewMessage', () => {
 
     beforeEach(() => {
       const targetManager = SDK.TargetManager.TargetManager.instance();
-      const resourceMapping =
-          new Bindings.ResourceMapping.ResourceMapping(targetManager, Workspace.Workspace.WorkspaceImpl.instance());
-      const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({forceNew: true});
+      const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(
+          targetManager,
+          Workspace.Workspace.WorkspaceImpl.instance(),
+      );
+      const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({
+        forceNew: true,
+      });
       Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance({
         forceNew: true,
         resourceMapping,
@@ -533,16 +741,22 @@ describeWithEnvironment('ConsoleViewMessage', () => {
          const messageDetails: SDK.ConsoleModel.ConsoleMessageDetails = {
            type: Protocol.Runtime.ConsoleAPICalledEventType.Error,
            stackTrace: consoleStackTrace,
-           parameters: [{
-             type: Protocol.Runtime.RemoteObjectType.Object,
-             subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
-             className: 'Error',
-             description: stackTraceMessage,
-           }],
+           parameters: [
+             {
+               type: Protocol.Runtime.RemoteObjectType.Object,
+               subtype: Protocol.Runtime.RemoteObjectSubtype.Error,
+               className: 'Error',
+               description: stackTraceMessage,
+             },
+           ],
          };
          const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-             runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Error,
-             stackTraceMessage, messageDetails);
+             runtimeModel,
+             Common.Console.FrontendMessageSource.ConsoleAPI,
+             Protocol.Log.LogEntryLevel.Error,
+             stackTraceMessage,
+             messageDetails,
+         );
          const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
 
          // Inline Error frames: ALL ignore-listed (they are all script.js)
@@ -559,7 +773,10 @@ describeWithEnvironment('ConsoleViewMessage', () => {
          await message.formatErrorStackPromiseForTest();
 
          const wrapperElement = document.createElement('div');
-         const shadowElement = UI.UIUtils.createShadowRootWithCoreStyles(wrapperElement, {cssFile: consoleViewStyles});
+         const shadowElement = UI.UIUtils.createShadowRootWithCoreStyles(
+             wrapperElement,
+             {cssFile: consoleViewStyles},
+         );
          shadowElement.appendChild(element);
          renderElementIntoDOM(wrapperElement);
          await raf();
@@ -585,7 +802,9 @@ describeWithEnvironment('ConsoleViewMessage', () => {
        });
 
     it('shows expandable list when something is ignore listed', async () => {
-      const element = await createConsoleMessageWithIgnoreListing(url => url.includes('/app.js'));
+      const element = await createConsoleMessageWithIgnoreListing(
+          url => url.includes('/app.js'),
+      );
       assertShowAllLink(element);
       assert.deepEqual(getStructuredCallFrames(element), []);
       assert.deepEqual(getCallFrames(element), COLLAPSED_UNSTRUCTURED);
@@ -611,9 +830,15 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     });
 
     it('shows everything with no links when nothing is ignore listed, including builtin frames', async () => {
-      const element = await createConsoleMessageWithIgnoreListing(_ => false, true);
+      const element = await createConsoleMessageWithIgnoreListing(
+          _ => false,
+          true,
+      );
       assertNoLinks(element);
-      assert.deepEqual(getCallFrames(element), EXPANDED_UNSTRUCTURED_WITH_BUILTIN);
+      assert.deepEqual(
+          getCallFrames(element),
+          EXPANDED_UNSTRUCTURED_WITH_BUILTIN,
+      );
       assert.deepEqual(getStructuredCallFrames(element), []);
       await expandStructuredTrace(element);
       assertNoLinks(element);
@@ -621,9 +846,15 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     });
 
     it('shows everything with no links when everything is ignore listed, including builtin frames', async () => {
-      const element = await createConsoleMessageWithIgnoreListing(_ => true, true);
+      const element = await createConsoleMessageWithIgnoreListing(
+          _ => true,
+          true,
+      );
       assertNoLinks(element);
-      assert.deepEqual(getCallFrames(element), EXPANDED_UNSTRUCTURED_WITH_BUILTIN);
+      assert.deepEqual(
+          getCallFrames(element),
+          EXPANDED_UNSTRUCTURED_WITH_BUILTIN,
+      );
       assert.deepEqual(getStructuredCallFrames(element), []);
       await expandStructuredTrace(element);
       assertNoLinks(element);
@@ -631,13 +862,22 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     });
 
     it('shows expandable list when something is ignore listed, collapsing builtin frames', async () => {
-      const element = await createConsoleMessageWithIgnoreListing(url => url.includes('/app.js'), true);
+      const element = await createConsoleMessageWithIgnoreListing(
+          url => url.includes('/app.js'),
+          true,
+      );
       assertShowAllLink(element);
       assert.deepEqual(getStructuredCallFrames(element), []);
-      assert.deepEqual(getCallFrames(element), COLLAPSED_UNSTRUCTURED_WITH_BUILTIN);
+      assert.deepEqual(
+          getCallFrames(element),
+          COLLAPSED_UNSTRUCTURED_WITH_BUILTIN,
+      );
       await expandIgnored(element);
       assertShowLessLink(element);
-      assert.deepEqual(getCallFrames(element), EXPANDED_UNSTRUCTURED_WITH_BUILTIN);
+      assert.deepEqual(
+          getCallFrames(element),
+          EXPANDED_UNSTRUCTURED_WITH_BUILTIN,
+      );
       await collapseIgnored(element);
       assertShowAllLink(element);
 
@@ -645,15 +885,24 @@ describeWithEnvironment('ConsoleViewMessage', () => {
 
       assertShowAllLink(element);
       assert.deepEqual(getStructuredCallFrames(element), COLLAPSED_STRUCTURED);
-      assert.deepEqual(getCallFrames(element), COLLAPSED_UNSTRUCTURED_WITH_BUILTIN);
+      assert.deepEqual(
+          getCallFrames(element),
+          COLLAPSED_UNSTRUCTURED_WITH_BUILTIN,
+      );
       await expandIgnored(element);
       assertShowLessLink(element);
-      assert.deepEqual(getCallFrames(element), EXPANDED_UNSTRUCTURED_WITH_BUILTIN);
+      assert.deepEqual(
+          getCallFrames(element),
+          EXPANDED_UNSTRUCTURED_WITH_BUILTIN,
+      );
       assert.deepEqual(getStructuredCallFrames(element), EXPANDED_STRUCTURED);
       await collapseIgnored(element);
       assertShowAllLink(element);
       assert.deepEqual(getStructuredCallFrames(element), COLLAPSED_STRUCTURED);
-      assert.deepEqual(getCallFrames(element), COLLAPSED_UNSTRUCTURED_WITH_BUILTIN);
+      assert.deepEqual(
+          getCallFrames(element),
+          COLLAPSED_UNSTRUCTURED_WITH_BUILTIN,
+      );
     });
 
     it('updates message anchor location when ignore listing pattern changes', async () => {
@@ -711,15 +960,29 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       ]);
       const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Info, 'trace', {
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          'trace',
+          {
             type: Protocol.Runtime.ConsoleAPICalledEventType.Trace,
             stackTrace,
-          });
+          },
+      );
 
-      const requestResolver = sinon.createStubInstance(Logs.RequestResolver.RequestResolver);
-      const issuesResolver = sinon.createStubInstance(IssuesManager.IssueResolver.IssueResolver);
-      const message = new Console.ConsoleViewMessage.ConsoleViewMessage(rawMessage, linkifier, requestResolver,
-                                                                        issuesResolver, /* onResize */ () => {});
+      const requestResolver = sinon.createStubInstance(
+          Logs.RequestResolver.RequestResolver,
+      );
+      const issuesResolver = sinon.createStubInstance(
+          IssuesManager.IssueResolver.IssueResolver,
+      );
+      const message = new Console.ConsoleViewMessage.ConsoleViewMessage(
+          rawMessage,
+          linkifier,
+          requestResolver,
+          issuesResolver,
+          /* onResize */ () => {},
+      );
 
       const element = message.toMessageElement();
       const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
@@ -729,8 +992,9 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       assert.exists(anchor);
       assert.strictEqual(anchor.textContent?.trim(), 'foo.js:20');
 
-      const setting = Common.Settings.Settings.instance().moduleSetting('skip-stack-frames-pattern') as
-          Common.Settings.RegExpSetting;
+      const setting = Common.Settings.Settings.instance().moduleSetting(
+                          'skip-stack-frames-pattern',
+                          ) as Common.Settings.RegExpSetting;
 
       // Ignore-list foo.js: anchor should now point to boo.js:27.
       setting.setAsArray([{pattern: 'foo\\.js', disabled: false}]);
@@ -755,19 +1019,35 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     let copyTextStub: sinon.SinonStub;
 
     beforeEach(() => {
-      copyTextStub = sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'copyText');
+      copyTextStub = sinon.stub(
+          Host.InspectorFrontendHost.InspectorFrontendHostInstance,
+          'copyText',
+      );
     });
 
     afterEach(() => {
       copyTextStub.restore();
     });
 
-    function createConsoleTableMessageView(rawMessage: SDK.ConsoleModel.ConsoleMessage) {
-      const linkifier = sinon.createStubInstance(Components.Linkifier.Linkifier);
-      const requestResolver = sinon.createStubInstance(Logs.RequestResolver.RequestResolver);
-      const issuesResolver = sinon.createStubInstance(IssuesManager.IssueResolver.IssueResolver);
-      const message = new Console.ConsoleViewMessage.ConsoleTableMessageView(rawMessage, linkifier, requestResolver,
-                                                                             issuesResolver, /* onResize */ () => {});
+    function createConsoleTableMessageView(
+        rawMessage: SDK.ConsoleModel.ConsoleMessage,
+    ) {
+      const linkifier = sinon.createStubInstance(
+          Components.Linkifier.Linkifier,
+      );
+      const requestResolver = sinon.createStubInstance(
+          Logs.RequestResolver.RequestResolver,
+      );
+      const issuesResolver = sinon.createStubInstance(
+          IssuesManager.IssueResolver.IssueResolver,
+      );
+      const message = new Console.ConsoleViewMessage.ConsoleTableMessageView(
+          rawMessage,
+          linkifier,
+          requestResolver,
+          issuesResolver,
+          /* onResize */ () => {},
+      );
       return {message, linkifier};
     }
 
@@ -777,23 +1057,48 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       const preview: Protocol.Runtime.ObjectPreview = {
         type: Protocol.Runtime.ObjectPreviewType.Object,
         overflow: false,
-        properties: [{
-          name: '0',
-          type: Protocol.Runtime.PropertyPreviewType.Object,
-          valuePreview: {
-            type: Protocol.Runtime.ObjectPreviewType.Object,
-            overflow: false,
-            properties: [{name: 'a', type: Protocol.Runtime.PropertyPreviewType.Number, value: '1'}]
-          }
-        }],
+        properties: [
+          {
+            name: '0',
+            type: Protocol.Runtime.PropertyPreviewType.Object,
+            valuePreview: {
+              type: Protocol.Runtime.ObjectPreviewType.Object,
+              overflow: false,
+              properties: [
+                {
+                  name: 'a',
+                  type: Protocol.Runtime.PropertyPreviewType.Number,
+                  value: '1',
+                },
+              ],
+            },
+          },
+        ],
       };
 
-      const mockRemoteObject = sinon.createStubInstance(SDK.RemoteObject.RemoteObject);
-      Object.defineProperty(mockRemoteObject, 'preview', {get: () => preview, configurable: true});
-      Object.defineProperty(mockRemoteObject, 'type', {get: () => 'object', configurable: true});
-      Object.defineProperty(mockRemoteObject, 'subtype', {get: () => undefined, configurable: true});
-      Object.defineProperty(mockRemoteObject, 'description', {get: () => 'Object', configurable: true});
-      Object.defineProperty(mockRemoteObject, 'hasChildren', {get: () => false, configurable: true});
+      const mockRemoteObject = sinon.createStubInstance(
+          SDK.RemoteObject.RemoteObject,
+      );
+      Object.defineProperty(mockRemoteObject, 'preview', {
+        get: () => preview,
+        configurable: true,
+      });
+      Object.defineProperty(mockRemoteObject, 'type', {
+        get: () => 'object',
+        configurable: true,
+      });
+      Object.defineProperty(mockRemoteObject, 'subtype', {
+        get: () => undefined,
+        configurable: true,
+      });
+      Object.defineProperty(mockRemoteObject, 'description', {
+        get: () => 'Object',
+        configurable: true,
+      });
+      Object.defineProperty(mockRemoteObject, 'hasChildren', {
+        get: () => false,
+        configurable: true,
+      });
       mockRemoteObject.customPreview.returns(null);
 
       const messageDetails = {
@@ -801,7 +1106,12 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         parameters: [mockRemoteObject],
       };
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
-          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, null, '', messageDetails);
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          null,
+          '',
+          messageDetails,
+      );
       const {message} = createConsoleTableMessageView(rawMessage);
       return message;
     }
@@ -813,15 +1123,21 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       const dataGrid = message.getDataGridForTest();
       assert.exists(dataGrid);
 
-      const contextMenu = new UI.ContextMenu.ContextMenu(new MouseEvent('contextmenu'));
+      const contextMenu = new UI.ContextMenu.ContextMenu(
+          new MouseEvent('contextmenu'),
+      );
       message.populateTableContextMenuForTest(contextMenu);
 
       const clipboardSection = contextMenu.clipboardSection();
-      const copySubMenu = clipboardSection.items.find(item => item.buildDescriptor().label === 'Copy table as');
+      const copySubMenu = clipboardSection.items.find(
+          item => item.buildDescriptor().label === 'Copy table as',
+      );
       assert.exists(copySubMenu);
 
       const subItems = (copySubMenu as UI.ContextMenu.SubMenu).defaultSection().items;
-      const markdownItem = subItems.find(item => item.buildDescriptor().label === 'Copy as Markdown');
+      const markdownItem = subItems.find(
+          item => item.buildDescriptor().label === 'Copy as Markdown',
+      );
       assert.exists(markdownItem);
 
       contextMenu.invokeHandler(markdownItem.id());
@@ -838,15 +1154,21 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       const dataGrid = message.getDataGridForTest();
       assert.exists(dataGrid);
 
-      const contextMenu = new UI.ContextMenu.ContextMenu(new MouseEvent('contextmenu'));
+      const contextMenu = new UI.ContextMenu.ContextMenu(
+          new MouseEvent('contextmenu'),
+      );
       message.populateTableContextMenuForTest(contextMenu);
 
       const clipboardSection = contextMenu.clipboardSection();
-      const copySubMenu = clipboardSection.items.find(item => item.buildDescriptor().label === 'Copy table as');
+      const copySubMenu = clipboardSection.items.find(
+          item => item.buildDescriptor().label === 'Copy table as',
+      );
       assert.exists(copySubMenu);
 
       const subItems = (copySubMenu as UI.ContextMenu.SubMenu).defaultSection().items;
-      const csvItem = subItems.find(item => item.buildDescriptor().label === 'Copy as CSV');
+      const csvItem = subItems.find(
+          item => item.buildDescriptor().label === 'Copy as CSV',
+      );
       assert.exists(csvItem);
 
       contextMenu.invokeHandler(csvItem.id());
@@ -860,10 +1182,22 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     it('linkifies links correctly', () => {
       const cases = [
         {text: 'www.chromium.org', expectedUrl: 'http://www.chromium.org'},
-        {text: 'http://www.chromium.org/', expectedUrl: 'http://www.chromium.org/'},
-        {text: 'follow http://www.chromium.org/', expectedUrl: 'http://www.chromium.org/'},
-        {text: 'string http://www.chromium.org/', expectedUrl: 'http://www.chromium.org/'},
-        {text: '123 \'http://www.chromium.org/\'', expectedUrl: 'http://www.chromium.org/'},
+        {
+          text: 'http://www.chromium.org/',
+          expectedUrl: 'http://www.chromium.org/',
+        },
+        {
+          text: 'follow http://www.chromium.org/',
+          expectedUrl: 'http://www.chromium.org/',
+        },
+        {
+          text: 'string http://www.chromium.org/',
+          expectedUrl: 'http://www.chromium.org/',
+        },
+        {
+          text: '123 \'http://www.chromium.org/\'',
+          expectedUrl: 'http://www.chromium.org/',
+        },
         {
           text: 'http://www.chromium.org/some?v=114:56:57',
           expectedUrl: 'http://www.chromium.org/some?v=114',
@@ -875,16 +1209,28 @@ describeWithEnvironment('ConsoleViewMessage', () => {
           expectedUrl: 'http://www.example.com/düsseldorf?neighbourhood=Lörick',
         },
         {text: 'http://👓.ws', expectedUrl: 'http://👓.ws'},
-        {text: 'http:/www.example.com/молодец', expectedUrl: 'http://www.example.com/молодец'},
-        {text: 'http://ar.wikipedia.org/wiki/نجيب_محفوظ/', expectedUrl: 'http://ar.wikipedia.org/wiki/نجيب_محفوظ/'},
-        {text: 'http://example.com/スター・ウォーズ/', expectedUrl: 'http://example.com/スター・ウォーズ/'},
+        {
+          text: 'http:/www.example.com/молодец',
+          expectedUrl: 'http://www.example.com/молодец',
+        },
+        {
+          text: 'http://ar.wikipedia.org/wiki/نجيب_محفوظ/',
+          expectedUrl: 'http://ar.wikipedia.org/wiki/نجيب_محفوظ/',
+        },
+        {
+          text: 'http://example.com/スター・ウォーズ/',
+          expectedUrl: 'http://example.com/スター・ウォーズ/',
+        },
         {text: 'data:text/plain;a', expectedUrl: 'data:text/plain;a'},
         {text: '\'www.chromium.org\'', expectedUrl: 'http://www.chromium.org'},
         {text: '(www.chromium.org)', expectedUrl: 'http://www.chromium.org'},
         {text: '"www.chromium.org"', expectedUrl: 'http://www.chromium.org'},
         {text: '{www.chromium.org}', expectedUrl: 'http://www.chromium.org'},
         {text: '[www.chromium.org]', expectedUrl: 'http://www.chromium.org'},
-        {text: 'www.chromium.org\u00a0', expectedUrl: 'http://www.chromium.org'},
+        {
+          text: 'www.chromium.org\u00a0',
+          expectedUrl: 'http://www.chromium.org',
+        },
         {text: 'www.chromium.org~', expectedUrl: 'http://www.chromium.org~'},
         {text: 'www.chromium.org,', expectedUrl: 'http://www.chromium.org'},
         {text: 'www.chromium.org:', expectedUrl: 'http://www.chromium.org'},
@@ -906,20 +1252,35 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         let firstExtractedLineNumber: number|undefined;
         let firstExtractedColumnNumber: number|undefined;
 
-        Console.ConsoleViewMessage.ConsoleViewMessage.linkifyWithCustomLinkifier(text, (text, url, line, column) => {
-          if (firstExtractedUrl === undefined) {
-            firstExtractedUrl = url;
-            firstExtractedLineNumber = line;
-            firstExtractedColumnNumber = column;
-          }
-          const element = document.createElement('span');
-          element.textContent = text;
-          return element;
-        });
+        Console.ConsoleViewMessage.ConsoleViewMessage.linkifyWithCustomLinkifier(
+            text,
+            (text, url, line, column) => {
+              if (firstExtractedUrl === undefined) {
+                firstExtractedUrl = url;
+                firstExtractedLineNumber = line;
+                firstExtractedColumnNumber = column;
+              }
+              const element = document.createElement('span');
+              element.textContent = text;
+              return element;
+            },
+        );
 
-        assert.strictEqual(firstExtractedUrl, expectedUrl, `Failed for text: ${text}`);
-        assert.strictEqual(firstExtractedLineNumber, lineNumber, `Failed for line number in text: ${text}`);
-        assert.strictEqual(firstExtractedColumnNumber, columnNumber, `Failed for column number in text: ${text}`);
+        assert.strictEqual(
+            firstExtractedUrl,
+            expectedUrl,
+            `Failed for text: ${text}`,
+        );
+        assert.strictEqual(
+            firstExtractedLineNumber,
+            lineNumber,
+            `Failed for line number in text: ${text}`,
+        );
+        assert.strictEqual(
+            firstExtractedColumnNumber,
+            columnNumber,
+            `Failed for column number in text: ${text}`,
+        );
       }
     });
 
@@ -929,8 +1290,14 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         span.textContent = text;
         return span;
       };
-      Console.ConsoleViewMessage.ConsoleViewMessage.linkifyWithCustomLinkifier('/'.repeat(1000), linkifier);
-      Console.ConsoleViewMessage.ConsoleViewMessage.linkifyWithCustomLinkifier('/a/'.repeat(1000), linkifier);
+      Console.ConsoleViewMessage.ConsoleViewMessage.linkifyWithCustomLinkifier(
+          '/'.repeat(1000),
+          linkifier,
+      );
+      Console.ConsoleViewMessage.ConsoleViewMessage.linkifyWithCustomLinkifier(
+          '/a/'.repeat(1000),
+          linkifier,
+      );
     });
   });
 });
