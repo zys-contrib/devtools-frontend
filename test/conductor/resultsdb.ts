@@ -4,6 +4,9 @@
 
 import * as fs from 'node:fs';
 import * as http from 'node:http';
+// Sinon fake timers will override globalThis.setTimeout when unit tests run in Node.js.
+// Import setTimeout directly from node:timers to guarantee access to the native timer.
+import {setTimeout as nativeSetTimeout} from 'node:timers';
 
 import type {ArtifactGroup} from './screenshot-error.js';
 
@@ -93,8 +96,13 @@ function getSinkData(): SinkData {
   if (!sink) {
     return resolvedSinkData;
   }
+  // Force IPv4 127.0.0.1 instead of localhost. On macOS, Node.js attempts IPv6 (::1)
+  // first for localhost. Because rdb-stream binds only to IPv4, IPv6 SYN packets
+  // hang until socket timeout on macOS, causing process hangs.
+  const address =
+      sink.address.startsWith('localhost:') ? sink.address.replace('localhost:', '127.0.0.1:') : sink.address;
   resolvedSinkData = {
-    url: `http://${sink.address}/prpc/luci.resultsink.v1.Sink/ReportTestResults`,
+    url: `http://${address}/prpc/luci.resultsink.v1.Sink/ReportTestResults`,
     authToken: sink.auth_token,
   };
   return resolvedSinkData;
@@ -106,7 +114,7 @@ export function available(): boolean {
 }
 
 let pendingResults: TestResult[] = [];
-let timer: ReturnType<typeof setTimeout>|undefined;
+let currentBatchPromise: Promise<void>|null = null;
 
 function stringifyTestResults(results: TestResult[]): string {
   const testResults = results.map(result => {
@@ -126,55 +134,105 @@ function stringifyTestResults(results: TestResult[]): string {
   return JSON.stringify({testResults});
 }
 
-function takeAndSendResults() {
+function takeAndSendResults(): void {
+  if (currentBatchPromise !== null || pendingResults.length === 0) {
+    return;
+  }
+
   const sinkData = getSinkData();
   if (sinkData.url === undefined) {
+    pendingResults = [];
     return;
   }
 
-  if (pendingResults.length === 0) {
-    return;
-  }
+  currentBatchPromise = new Promise<void>(resolve => {
+                          // nativeSetTimeout(..., 0) defers HTTP request dispatch to the next event-loop tick.
+                          // This ensures that when sendTestResult is called inside a Mocha test, the HTTP
+                          // request runs AFTER the test's afterEach hook has completed and unhooked any
+                          // active Sinon fake timers.
+                          nativeSetTimeout(() => {
+                            // Limit batch size to 50 to prevent huge payloads that cause rdb-stream to timeout
+                            const testResults = pendingResults.splice(0, 50);
 
-  const testResults = pendingResults;
-  pendingResults = [];
+                            if (testResults.length === 0) {
+                              resolve();
+                              return;
+                            }
 
-  const postOptions = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Authorization: `ResultSink ${sinkData.authToken}`,
-    },
-  };
+                            const payload = stringifyTestResults(testResults);
+                            const postOptions = {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                Accept: 'application/json',
+                                Authorization: `ResultSink ${sinkData.authToken}`,
+                                'Content-Length': Buffer.byteLength(payload),
+                                Connection: 'close',
+                              },
+                            };
 
-  // As per ResultSink documentation, this will always be a localhost connection
-  // and can be treated as reliable as a local file write.
-  const request = http.request(sinkData.url, postOptions);
-  request.setTimeout(5000, function() {
-    request.destroy();
-    console.error('sending to rdb timed out');
+                            // As per ResultSink documentation, this will always be a localhost connection
+                            // and can be treated as reliable as a local file write.
+                            const request = http.request(sinkData.url!, postOptions, res => {
+                              res.on('end', () => {
+                                request.setTimeout(0);
+                                resolve();
+                              });
+                              res.on('close', () => {
+                                request.setTimeout(0);
+                                resolve();
+                              });
+                              res.on('error', () => {
+                                request.setTimeout(0);
+                                resolve();
+                              });
+                              res.resume();
+                            });
+
+                            request.setTimeout(5000, () => {
+                              request.destroy();
+                              console.error('sending to rdb timed out');
+                              resolve();
+                            });
+
+                            request.on('error', err => {
+                              console.error('error sending to rdb:', err);
+                              resolve();
+                            });
+
+                            request.write(payload);
+                            request.end();
+                          }, 0);
+                        }).finally(() => {
+    currentBatchPromise = null;
+    if (pendingResults.length > 0) {
+      takeAndSendResults();
+    }
   });
-  request.write(stringifyTestResults(testResults));
-  request.end();
 }
 
 /**
  * Call at the end of a test suite. Will send all `TestResult`s collected via
  * `recordTestResult` to the ResultSink endpoint (only if available).
  **/
-export function sendTestResult(results: TestResult, sendImmediately = false): void {
+export function sendTestResult(results: TestResult): void {
   const sinkData = getSinkData();
   if (sinkData.url === undefined) {
     return;
   }
   pendingResults.push(results);
-  if (sendImmediately) {
-    takeAndSendResults();
-    return;
-  }
-  if (timer) {
-    clearTimeout(timer);
-  }
-  timer = setTimeout(takeAndSendResults, 1000);
+  takeAndSendResults();
+}
+
+// When Node's event loop empties, flush all remaining queued batches sequentially before exiting.
+if (typeof process !== 'undefined' && process.on) {
+  process.on('beforeExit', async () => {
+    while (pendingResults.length > 0 || currentBatchPromise !== null) {
+      if (currentBatchPromise) {
+        await currentBatchPromise;
+      } else {
+        takeAndSendResults();
+      }
+    }
+  });
 }

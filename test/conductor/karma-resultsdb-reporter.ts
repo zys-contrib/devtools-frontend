@@ -123,7 +123,7 @@ export const ResultsDBReporter = function(
         }
       }
     }
-    ResultsDb.sendTestResult(testResult, /* sendImmediately=*/ true);
+    ResultsDb.sendTestResult(testResult);
   };
   this.specSuccess = specComplete;
   this.specSkipped = specComplete;
