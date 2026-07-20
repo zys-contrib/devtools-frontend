@@ -12,7 +12,7 @@ import * as Lit from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import * as Models from './models/models.js';
-import {RequestSelectorAttributeEvent, SelectorPicker} from './SelectorPicker.js';
+import {SelectorPicker} from './SelectorPicker.js';
 import stepEditorStyles from './stepEditor.css.js';
 import {
   ArrayAssignments,
@@ -269,16 +269,6 @@ const UIStrings = {
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/recorder/StepEditor.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
-
-export class StepEditedEvent extends Event {
-  static readonly eventName = 'stepedited';
-  data: Models.Schema.Step;
-
-  constructor(step: Models.Schema.Step) {
-    super(StepEditedEvent.eventName, {bubbles: true, composed: true});
-    this.data = step;
-  }
-}
 
 export interface EditorState {
   type: Models.Schema.StepType;
@@ -1005,6 +995,8 @@ export class StepEditor extends UI.Widget.Widget {
   #isTypeEditable = true;
   #disabled = false;
   #view: View;
+  onStepEdited?: (step: Models.Schema.Step) => void;
+  onAttributeRequested?: (send: (attribute?: string) => void) => void;
 
   constructor(element?: HTMLElement, view = DEFAULT_VIEW) {
     super(element, {useShadowDom: true});
@@ -1048,7 +1040,7 @@ export class StepEditor extends UI.Widget.Widget {
 
   #commit(updatedState: DeepImmutable<EditorState>): void {
     try {
-      this.element.dispatchEvent(new StepEditedEvent(EditorState.toStep(updatedState)));
+      this.onStepEdited?.(EditorState.toStep(updatedState));
       // Note we don't need to update this variable since it will come from up
       // the tree, but processing up the tree is asynchronous implying we cannot
       // reliably know when the state will come back down. Since we need to
@@ -1073,7 +1065,7 @@ export class StepEditor extends UI.Widget.Widget {
       };
 
   #handleAttributeRequested = (send: (attribute?: string) => void): void => {
-    this.element.dispatchEvent(new RequestSelectorAttributeEvent(send));
+    this.onAttributeRequested?.(send);
   };
 
   #handleAddOrRemoveClick = (assignments: DeepImmutable<DeepPartial<Assignments<EditorState>>>,

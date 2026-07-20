@@ -48,39 +48,6 @@ declare global {
   interface HTMLElementTagNameMap {
     'devtools-recording-list-view': RecordingListView;
   }
-
-  interface HTMLElementEventMap {
-    openrecording: OpenRecordingEvent;
-    deleterecording: DeleteRecordingEvent;
-  }
-}
-
-export class CreateRecordingEvent extends Event {
-  static readonly eventName = 'createrecording';
-  constructor() {
-    super(CreateRecordingEvent.eventName, {composed: true, bubbles: true});
-  }
-}
-
-export class DeleteRecordingEvent extends Event {
-  static readonly eventName = 'deleterecording';
-  constructor(public storageName: string) {
-    super(DeleteRecordingEvent.eventName, {composed: true, bubbles: true});
-  }
-}
-
-export class OpenRecordingEvent extends Event {
-  static readonly eventName = 'openrecording';
-  constructor(public storageName: string) {
-    super(OpenRecordingEvent.eventName, {composed: true, bubbles: true});
-  }
-}
-
-export class PlayRecordingEvent extends Event {
-  static readonly eventName = 'playrecording';
-  constructor(public storageName: string) {
-    super(PlayRecordingEvent.eventName, {composed: true, bubbles: true});
-  }
 }
 
 interface Recording {
@@ -195,6 +162,10 @@ export class RecordingListView extends UI.Widget.Widget {
   #recordings: readonly Recording[] = [];
   #replayAllowed = true;
   #view: typeof DEFAULT_VIEW;
+  onCreateRecording?: () => void;
+  onDeleteRecording?: (storageName: string) => void;
+  onOpenRecording?: (storageName: string) => void;
+  onPlayRecording?: (storageName: string) => void;
 
   constructor(element?: HTMLElement, view?: typeof DEFAULT_VIEW) {
     super(element, {useShadowDom: true});
@@ -212,22 +183,22 @@ export class RecordingListView extends UI.Widget.Widget {
   }
 
   #onCreateClick(): void {
-    this.contentElement.dispatchEvent(new CreateRecordingEvent());
+    this.onCreateRecording?.();
   }
 
   #onDeleteClick(storageName: string, event: Event): void {
     event.stopPropagation();
-    this.contentElement.dispatchEvent(new DeleteRecordingEvent(storageName));
+    this.onDeleteRecording?.(storageName);
   }
 
   #onOpenClick(storageName: string, event: Event): void {
     event.stopPropagation();
-    this.contentElement.dispatchEvent(new OpenRecordingEvent(storageName));
+    this.onOpenRecording?.(storageName);
   }
 
   #onPlayRecordingClick(storageName: string, event: Event): void {
     event.stopPropagation();
-    this.contentElement.dispatchEvent(new PlayRecordingEvent(storageName));
+    this.onPlayRecording?.(storageName);
   }
 
   #onKeyDown(storageName: string, event: Event): void {

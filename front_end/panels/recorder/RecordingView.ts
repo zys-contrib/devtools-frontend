@@ -31,7 +31,7 @@ import * as Actions from './recorder-actions/recorder-actions.js';
 import recordingViewStyles from './recordingView.css.js';
 import {ReplaySection} from './ReplaySection.js';
 import {
-  type CopyStepEvent,
+  type AddStepPosition,
   State,
   StepView,
 } from './StepView.js';
@@ -591,12 +591,18 @@ function renderSections(input: ViewInput): Lit.LitTemplate {
                     removable: input.recording.steps.length > 1 && Boolean(section.causingStep),
                     onStepClick: input.onStepClick,
                     onStepHover: input.onStepHover,
+                    onStepChanged: input.onStepChanged,
+                    onAddStep: input.onAddStep,
+                    onRemoveStep: input.onRemoveStep,
+                    onAddBreakpoint: input.onAddBreakpoint,
+                    onRemoveBreakpoint: input.onRemoveBreakpoint,
+                    onAttributeRequested: input.onAttributeRequested,
+                    onCopyStep: input.onCopyStep,
                   })}
                   ${section.steps.map(step => {
                     const stepIndex = input.recording.steps.indexOf(step);
                     return html`
                       <devtools-widget
-                      @copystep=${input.onCopyStep}
                       ${widget(StepView, {
                         step,
                         state: input.getStepState(step),
@@ -618,6 +624,13 @@ function renderSections(input: ViewInput): Lit.LitTemplate {
                         recorderSettings: input.recorderSettings ?? undefined,
                         onStepClick: input.onStepClick,
                         onStepHover: input.onStepHover,
+                        onCopyStep: input.onCopyStep,
+                        onStepChanged: input.onStepChanged,
+                        onAddStep: input.onAddStep,
+                        onRemoveStep: input.onRemoveStep,
+                        onAddBreakpoint: input.onAddBreakpoint,
+                        onRemoveBreakpoint: input.onRemoveBreakpoint,
+                        onAttributeRequested: input.onAttributeRequested,
                       })}
                       jslog=${VisualLogging.section('step').track({click: true})}
                       ></devtools-widget>
@@ -648,7 +661,7 @@ function renderSections(input: ViewInput): Lit.LitTemplate {
       )}
       </div>
     `;
-  // clang-format on
+    // clang-format on
 }
 
 function renderHeader(input: ViewInput): Lit.LitTemplate {
@@ -758,7 +771,7 @@ interface ViewInput {
   onMeasurePerformanceClick: (event: Event) => void;
   onTogglePlaying: (speed: PlayRecordingSpeed, extension?: Extensions.ExtensionManager.Extension) => void;
   onCodeFormatChange: (event: Menus.SelectMenu.SelectMenuItemSelectedEvent) => void;
-  onCopyStep: (event: CopyStepEvent) => void;
+  onCopyStep: (step: Models.Schema.Step) => void;
   onEditTitleButtonClick: (event: Event) => void;
   onNetworkConditionsChange: (event: Event) => void;
   onReplaySettingsKeydown: (event: Event) => void;
@@ -768,6 +781,12 @@ interface ViewInput {
   onTimeoutInput: (event: Event) => void;
   onTitleBlur: (event: Event) => void;
   onTitleInputKeyDown: (event: KeyboardEvent) => void;
+  onStepChanged?: (currentStep: Models.Schema.Step, newStep: Models.Schema.Step) => void;
+  onAddStep?: (stepOrSection: Models.Schema.Step|Models.Section.Section, position: AddStepPosition) => void;
+  onRemoveStep?: (step: Models.Schema.Step) => void;
+  onAddBreakpoint?: (index: number) => void;
+  onRemoveBreakpoint?: (index: number) => void;
+  onAttributeRequested?: (send: (attribute?: string) => void) => void;
   onToggleReplaySettings: (event: Event) => void;
   onWrapperClick: () => void;
   showCodeToggle: () => void;
@@ -857,15 +876,19 @@ export class RecordingView extends UI.Widget.Widget {
   extensionConverters: readonly Converters.Converter.Converter[] = [];
   replayExtensions?: Extensions.ExtensionManager.Extension[];
   extensionDescriptor?: PublicExtensions.RecorderPluginManager.ViewDescriptor;
-
-  addAssertion?: () => void;
-  abortReplay?: () => void;
-  recordingFinished?: () => void;
-  playRecording?: (event: PlayRecordingEvent) => void;
-  networkConditionsChanged?: (data?: SDK.NetworkManager.Conditions) => void;
-  timeoutChanged?: (timeout?: number) => void;
-  titleChanged?: (title: string) => void;
-
+  onPlayRecording?: (detail: PlayRecordingEvent) => void;
+  onNetworkConditionsChanged?: (conditions: SDK.NetworkManager.Conditions|undefined) => void;
+  onTimeoutChanged?: (timeout: number) => void;
+  onTitleChanged?: (title: string) => void;
+  onAddAssertion?: () => void;
+  onRecordingFinished?: () => void;
+  onAbortReplay?: () => void;
+  onStepChanged?: (currentStep: Models.Schema.Step, newStep: Models.Schema.Step) => void;
+  onAddStep?: (stepOrSection: Models.Schema.Step|Models.Section.Section, position: AddStepPosition) => void;
+  onRemoveStep?: (step: Models.Schema.Step) => void;
+  onAddBreakpoint?: (index: number) => void;
+  onRemoveBreakpoint?: (index: number) => void;
+  onAttributeRequested?: (send: (attribute?: string) => void) => void;
   #recorderSettings?: Models.RecorderSettings.RecorderSettings;
   get recorderSettings(): Models.RecorderSettings.RecorderSettings|undefined {
     return this.#recorderSettings;
@@ -938,24 +961,30 @@ export class RecordingView extends UI.Widget.Widget {
       showCodeView: this.#showCodeView,
 
       onAddAssertion: () => {
-        this.addAssertion?.();
+        this.onAddAssertion?.();
       },
       onRecordingFinished: () => {
-        this.recordingFinished?.();
+        this.onRecordingFinished?.();
       },
       getSectionState: this.#getSectionState.bind(this),
       getStepState: this.#getStepState.bind(this),
       onAbortReplay: () => {
-        this.abortReplay?.();
+        this.onAbortReplay?.();
       },
       onMeasurePerformanceClick: this.#handleMeasurePerformanceClickEvent.bind(this),
       onTogglePlaying: (speed: PlayRecordingSpeed, extension?: Extensions.ExtensionManager.Extension) => {
-        this.playRecording?.({
+        this.onPlayRecording?.({
           targetPanel: TargetPanel.DEFAULT,
           speed,
           extension,
         });
       },
+      onStepChanged: (currentStep, newStep) => this.onStepChanged?.(currentStep, newStep),
+      onAddStep: (stepOrSection, position) => this.onAddStep?.(stepOrSection, position),
+      onRemoveStep: step => this.onRemoveStep?.(step),
+      onAddBreakpoint: index => this.onAddBreakpoint?.(index),
+      onRemoveBreakpoint: index => this.onRemoveBreakpoint?.(index),
+      onAttributeRequested: send => this.onAttributeRequested?.(send),
       onCodeFormatChange: this.#onCodeFormatChange.bind(this),
       onCopyStep: this.#onCopyStepEvent.bind(this),
       onEditTitleButtonClick: this.#onEditTitleButtonClick.bind(this),
@@ -1093,9 +1122,8 @@ export class RecordingView extends UI.Widget.Widget {
       const preset = networkConditionPresets.find(
           preset => preset.i18nTitleKey === throttlingMenu.value,
       );
-      this.networkConditionsChanged?.(
-          preset?.i18nTitleKey === SDK.NetworkManager.NoThrottlingConditions.i18nTitleKey ? undefined : preset,
-      );
+      this.onNetworkConditionsChanged?.(
+          preset?.i18nTitleKey === SDK.NetworkManager.NoThrottlingConditions.i18nTitleKey ? undefined : preset);
     }
   }
 
@@ -1105,7 +1133,7 @@ export class RecordingView extends UI.Widget.Widget {
       target.reportValidity();
       return;
     }
-    this.timeoutChanged?.(Number(target.value));
+    this.onTimeoutChanged?.(Number(target.value));
   }
 
   #onTitleBlur = (event: Event): void => {
@@ -1116,7 +1144,7 @@ export class RecordingView extends UI.Widget.Widget {
       this.performUpdate();
       return;
     }
-    this.titleChanged?.(title);
+    this.onTitleChanged?.(title);
   };
 
   #onTitleInputKeyDown = (event: KeyboardEvent): void => {
@@ -1170,9 +1198,8 @@ export class RecordingView extends UI.Widget.Widget {
     Host.InspectorFrontendHost.InspectorFrontendHostInstance.copyText(text);
   }
 
-  #onCopyStepEvent(event: CopyStepEvent): void {
-    event.stopPropagation();
-    void this.#copyCurrentSelection(event.step);
+  #onCopyStepEvent(step: Models.Schema.Step): void {
+    void this.#copyCurrentSelection(step);
   }
 
   async #onCopy(event: ClipboardEvent): Promise<void> {
@@ -1188,7 +1215,7 @@ export class RecordingView extends UI.Widget.Widget {
   #handleMeasurePerformanceClickEvent(event: Event): void {
     event.stopPropagation();
 
-    this.playRecording?.({
+    this.onPlayRecording?.({
       targetPanel: TargetPanel.PERFORMANCE_PANEL,
       speed: PlayRecordingSpeed.NORMAL,
     });

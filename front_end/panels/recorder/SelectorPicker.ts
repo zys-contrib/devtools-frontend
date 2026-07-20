@@ -20,19 +20,6 @@ const {html} = Lit;
 
 const BINDING_NAME = 'captureSelectors';
 
-export class RequestSelectorAttributeEvent extends Event {
-  static readonly eventName = 'requestselectorattribute';
-  send: (attribute?: string) => void;
-
-  constructor(send: (attribute?: string) => void) {
-    super(RequestSelectorAttributeEvent.eventName, {
-      bubbles: true,
-      composed: true,
-    });
-    this.send = send;
-  }
-}
-
 const UIStrings = {
   /**
    * @description The title of a button that allows you to select an element on the page and update CSS/ARIA selectors.

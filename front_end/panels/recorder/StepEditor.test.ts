@@ -7,7 +7,6 @@ import {assert} from 'chai';
 import {
   assertScreenshot,
   dispatchKeyDownEvent,
-  getEventPromise,
   renderElementIntoDOM,
 } from '../../testing/DOMHelpers.js';
 import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
@@ -18,11 +17,9 @@ import {StepEditor} from './recorder.js';
 import {installMocksForRecordingPlayer} from './testing/RecorderHelpers.js';
 
 function getStepEditedPromise(editor: StepEditor.StepEditor) {
-  return getEventPromise<StepEditor.StepEditedEvent>(
-             editor.element,
-             'stepedited',
-             )
-      .then(({data}) => data);
+  return new Promise<Models.Schema.Step>(resolve => {
+    editor.onStepEdited = resolve;
+  });
 }
 
 const triggerMicroTaskQueue = async (n = 1) => {

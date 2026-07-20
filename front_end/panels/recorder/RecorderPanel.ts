@@ -19,7 +19,7 @@ import * as Buttons from '../../ui/components/buttons/buttons.js';
 import type * as Dialogs from '../../ui/components/dialogs/dialogs.js';
 import type * as Menus from '../../ui/components/menus/menus.js';
 import * as UI from '../../ui/legacy/legacy.js';
-import * as Lit from '../../ui/lit/lit.js';
+import {Directives, html, type LitTemplate, render} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import * as Converters from './converters/converters.js';
@@ -29,29 +29,18 @@ import * as Models from './models/models.js';
 import * as Actions from './recorder-actions/recorder-actions.js';
 import * as Events from './RecorderEvents.js';
 import recorderPanelStyles from './recorderPanel.css.js';
-import {
-  DeleteRecordingEvent,
-  OpenRecordingEvent,
-  PlayRecordingEvent as ListViewPlayRecordingEvent,
-  RecordingListView
-} from './RecordingListView.js';
+import {RecordingListView} from './RecordingListView.js';
 import {
   type PlayRecordingEvent as ViewPlayRecordingEvent,
   RecordingView,
   type ReplayState,
   TargetPanel
 } from './RecordingView.js';
-import type {RequestSelectorAttributeEvent} from './SelectorPicker.js';
 import {
-  type AddBreakpointEvent,
-  type AddStep,
   AddStepPosition,
-  type RemoveBreakpointEvent,
-  type RemoveStep,
-  type StepChanged
 } from './StepView.js';
 
-const {html, Directives: {ref}} = Lit;
+const {ref, repeat} = Directives;
 
 let recorderPanelInstance: RecorderPanel;
 
@@ -901,7 +890,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
     return this.currentRecording?.flow;
   }
 
-  async #handleRecordingChanged(event: StepChanged): Promise<void> {
+  async #handleRecordingChanged(currentStep: Models.Schema.Step, newStep: Models.Schema.Step): Promise<void> {
     if (!this.currentRecording) {
       throw new Error('Current recording expected to be defined.');
     }
@@ -909,7 +898,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
       ...this.currentRecording,
       flow: {
         ...this.currentRecording.flow,
-        steps: this.currentRecording.flow.steps.map(step => step === event.currentStep ? event.newStep : step),
+        steps: this.currentRecording.flow.steps.map(step => step === currentStep ? newStep : step),
       },
     };
     this.#setCurrentRecording(await this.#storage.upsertRecording(
@@ -919,26 +908,26 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
                               {keepBreakpoints: true, updateSession: true});
   }
 
-  async #handleStepAdded(event: AddStep): Promise<void> {
+  async #handleStepAdded(stepOrSection: Models.Schema.Step|Models.Section.Section,
+                         position: AddStepPosition): Promise<void> {
     if (!this.currentRecording) {
       throw new Error('Current recording expected to be defined.');
     }
-    const stepOrSection = event.stepOrSection;
     let step;
-    let position = event.position;
+    let actualPosition = position;
     if ('steps' in stepOrSection) {
       // section
       const sectionIdx = this.sections?.indexOf(stepOrSection);
       if (sectionIdx === undefined || sectionIdx === -1) {
         throw new Error('There is no section to add a step to');
       }
-      if (event.position === AddStepPosition.AFTER) {
+      if (position === AddStepPosition.AFTER) {
         if (this.sections?.[sectionIdx].steps.length) {
           step = this.sections?.[sectionIdx].steps[0];
-          position = AddStepPosition.BEFORE;
+          actualPosition = AddStepPosition.BEFORE;
         } else {
           step = this.sections?.[sectionIdx].causingStep;
-          position = AddStepPosition.AFTER;
+          actualPosition = AddStepPosition.AFTER;
         }
       } else {
         if (sectionIdx <= 0) {
@@ -946,7 +935,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
         }
         const prevSection = this.sections?.[sectionIdx - 1];
         step = prevSection?.steps[prevSection.steps.length - 1];
-        position = AddStepPosition.AFTER;
+        actualPosition = AddStepPosition.AFTER;
       }
     } else {
       // step
@@ -957,7 +946,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
     }
     const steps = this.currentRecording.flow.steps;
     const currentIndex = steps.indexOf(step);
-    const indexToInsertAt = currentIndex + (position === AddStepPosition.BEFORE ? 0 : 1);
+    const indexToInsertAt = currentIndex + (actualPosition === AddStepPosition.BEFORE ? 0 : 1);
     steps.splice(indexToInsertAt, 0, {type: Models.Schema.StepType.WaitForElement, selectors: ['body']});
     const recording = {...this.currentRecording, flow: {...this.currentRecording.flow, steps}};
     this.#stepBreakpointIndexes = new Set([...this.#stepBreakpointIndexes.values()].map(breakpointIndex => {
@@ -986,13 +975,13 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
         ));
   }
 
-  async #handleStepRemoved(event: RemoveStep): Promise<void> {
+  async #handleStepRemoved(step: Models.Schema.Step): Promise<void> {
     if (!this.currentRecording) {
       throw new Error('Current recording expected to be defined.');
     }
 
     const steps = this.currentRecording.flow.steps;
-    const currentIndex = steps.indexOf(event.step);
+    const currentIndex = steps.indexOf(step);
     steps.splice(currentIndex, 1);
     const flow = {...this.currentRecording.flow, steps};
     this.#stepBreakpointIndexes = new Set([...this.#stepBreakpointIndexes.values()]
@@ -1065,19 +1054,22 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
         ));
   }
 
-  async #onDeleteRecording(event: Event): Promise<void> {
-    event.stopPropagation();
-    if (event instanceof DeleteRecordingEvent) {
-      await this.#storage.deleteRecording(event.storageName);
-      this.#screenshotStorage.deleteScreenshotsForRecording(event.storageName);
-      this.requestUpdate();
+  async #onDeleteRecording(storageNameOrEvent: string|Event): Promise<void> {
+    let storageName: string;
+    if (typeof storageNameOrEvent === 'string') {
+      storageName = storageNameOrEvent;
     } else {
+      storageNameOrEvent.stopPropagation();
       if (!this.currentRecording) {
         return;
       }
-      await this.#storage.deleteRecording(this.currentRecording.storageName);
-      this.#screenshotStorage.deleteScreenshotsForRecording(this.currentRecording.storageName);
+      storageName = this.currentRecording.storageName;
     }
+
+    await this.#storage.deleteRecording(storageName);
+    this.#screenshotStorage.deleteScreenshotsForRecording(storageName);
+    this.requestUpdate();
+
     UI.ARIAUtils.LiveAnnouncer.alert(i18nString(UIStrings.recordingDeleted));
     if ((await this.#storage.getRecordings()).length) {
       this.#setCurrentPage(Pages.ALL_RECORDINGS_PAGE);
@@ -1205,10 +1197,13 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
     }
   }
 
-  async #onRecordingSelected(event: Event): Promise<void> {
-    const storageName = event instanceof OpenRecordingEvent || event instanceof ListViewPlayRecordingEvent ?
-        event.storageName :
-        ((event as InputEvent).target as HTMLSelectElement)?.value;
+  async #onRecordingSelected(storageNameOrEvent: string|Event): Promise<void> {
+    let storageName: string;
+    if (typeof storageNameOrEvent === 'string') {
+      storageName = storageNameOrEvent;
+    } else {
+      storageName = ((storageNameOrEvent as InputEvent).target as HTMLSelectElement)?.value;
+    }
     this.#setCurrentRecording(await this.#storage.getRecording(storageName));
     if (this.currentRecording) {
       this.#setCurrentPage(Pages.RECORDING_PAGE);
@@ -1322,21 +1317,21 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
     }
   }
 
-  async #onPlayRecordingByName(event: ListViewPlayRecordingEvent): Promise<void> {
-    await this.#onRecordingSelected(event);
+  async #onPlayRecordingByName(storageName: string): Promise<void> {
+    await this.#onRecordingSelected(storageName);
     await this.#onPlayRecording({targetPanel: TargetPanel.DEFAULT, speed: this.#recorderSettings.speed});
   }
 
-  #onAddBreakpoint = (event: AddBreakpointEvent): void => {
+  #onAddBreakpoint = (index: number): void => {
     this.#stepBreakpointIndexes = structuredClone(this.#stepBreakpointIndexes);
-    this.#stepBreakpointIndexes.add(event.index);
+    this.#stepBreakpointIndexes.add(index);
     this.recordingPlayer?.updateBreakpointIndexes(this.#stepBreakpointIndexes);
     this.requestUpdate();
   };
 
-  #onRemoveBreakpoint = (event: RemoveBreakpointEvent): void => {
+  #onRemoveBreakpoint = (index: number): void => {
     this.#stepBreakpointIndexes = structuredClone(this.#stepBreakpointIndexes);
-    this.#stepBreakpointIndexes.delete(event.index);
+    this.#stepBreakpointIndexes.delete(index);
     this.recordingPlayer?.updateBreakpointIndexes(this.#stepBreakpointIndexes);
     this.requestUpdate();
   };
@@ -1431,7 +1426,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
     ];
   }
 
-  #renderCurrentPage(): Lit.TemplateResult {
+  #renderCurrentPage(): LitTemplate {
     switch (this.currentPage) {
       case Pages.START_PAGE:
         return this.#renderStartPage();
@@ -1444,7 +1439,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
     }
   }
 
-  #renderAllRecordingsPage(): Lit.TemplateResult {
+  #renderAllRecordingsPage(): LitTemplate {
     const recordings = this.#storage.getRecordings();
     // clang-format off
     return html`
@@ -1455,18 +1450,18 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
             name: recording.flow.title,
           })),
           replayAllowed: this.#replayAllowed,
+          onCreateRecording: this.#onCreateNewRecording.bind(this),
+          onDeleteRecording: this.#onDeleteRecording.bind(this),
+          onOpenRecording: this.#onRecordingSelected.bind(this),
+          onPlayRecording: this.#onPlayRecordingByName.bind(this),
         })}
-        @createrecording=${this.#onCreateNewRecording.bind(this)}
-        @deleterecording=${this.#onDeleteRecording.bind(this)}
-        @openrecording=${this.#onRecordingSelected.bind(this)}
-        @playrecording=${this.#onPlayRecordingByName.bind(this)}
       >
       </devtools-widget>
     `;
     // clang-format on
   }
 
-  #renderStartPage(): Lit.TemplateResult {
+  #renderStartPage(): LitTemplate {
     // clang-format off
     return html`
       <div class="empty-state" jslog=${VisualLogging.section().context('start-view')}>
@@ -1485,7 +1480,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
     // clang-format on
   }
 
-  #renderRecordingPage(): Lit.TemplateResult {
+  #renderRecordingPage(): LitTemplate {
     // clang-format off
     return html`
       <devtools-widget
@@ -1507,24 +1502,22 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
             extensionConverters: this.extensionConverters,
             replayExtensions: this.replayExtensions,
             extensionDescriptor: this.viewDescriptor,
-            recordingFinished: this.#onRecordingFinished.bind(this),
-            addAssertion: this.#handleAddAssertionEvent.bind(this),
-            abortReplay: this.#onAbortReplay.bind(this),
-            playRecording: this.#onPlayRecording.bind(this),
-            networkConditionsChanged: this.#onNetworkConditionsChanged.bind(this),
-            timeoutChanged: this.#onTimeoutChanged.bind(this),
-            titleChanged: this.#handleRecordingTitleChanged.bind(this),
+            onPlayRecording: this.#onPlayRecording.bind(this),
+            onNetworkConditionsChanged: this.#onNetworkConditionsChanged.bind(this),
+            onTimeoutChanged: this.#onTimeoutChanged.bind(this),
+            onTitleChanged: this.#handleRecordingTitleChanged.bind(this),
+            onAddAssertion: this.#handleAddAssertionEvent.bind(this),
+            onRecordingFinished: this.#onRecordingFinished.bind(this),
+            onAbortReplay: this.#onAbortReplay.bind(this),
+            onStepChanged: this.#handleRecordingChanged.bind(this),
+            onAddStep: this.#handleStepAdded.bind(this),
+            onRemoveStep: this.#handleStepRemoved.bind(this),
+            onAddBreakpoint: this.#onAddBreakpoint.bind(this),
+            onRemoveBreakpoint: this.#onRemoveBreakpoint.bind(this),
+            onAttributeRequested: send => {
+              send(this.currentRecording?.flow.selectorAttribute);
+            },
           })}
-          @requestselectorattribute=${(
-            event: RequestSelectorAttributeEvent,
-          ) => {
-            event.send(this.currentRecording?.flow.selectorAttribute);
-          }}
-          @stepchanged=${this.#handleRecordingChanged.bind(this)}
-          @addstep=${this.#handleStepAdded.bind(this)}
-          @removestep=${this.#handleStepRemoved.bind(this)}
-          @addbreakpoint=${this.#onAddBreakpoint.bind(this)}
-          @removebreakpoint=${this.#onRemoveBreakpoint.bind(this)}
           @recorderextensionviewclosed=${this.#onExtensionViewClosed.bind(this)}
           ${UI.Widget.widgetRef(RecordingView, widget => {this.#recordingView = widget;})}
         ></devtools-widget>
@@ -1532,7 +1525,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
     // clang-format on
   }
 
-  #renderCreateRecordingPage(): Lit.TemplateResult {
+  #renderCreateRecordingPage(): LitTemplate {
     // clang-format off
     return html`
       <devtools-widget
@@ -1572,14 +1565,14 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
 
   override performUpdate(): void {
     // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
-    Lit.render(this.render(), this.contentElement, {
+    render(this.render(), this.contentElement, {
       container: {
         listeners: {setrecording: this.#onSetRecording.bind(this)},
       }
     });
   }
 
-  protected render(): Lit.TemplateResult {
+  protected render(): LitTemplate {
     const recordings = this.#storage.getRecordings();
     const selectValue: string = this.currentRecording ? this.currentRecording.storageName : this.currentPage;
     // clang-format off
@@ -1637,7 +1630,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
               @change=${this.#onRecordingSelected.bind(this)}
               jslog=${VisualLogging.dropDown('recordings').track({change: true})}
             >
-              ${Lit.Directives.repeat(
+              ${repeat(
                 values,
                 item => item.value,
                 item => {
@@ -1684,7 +1677,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
               .open=${this.exportMenuExpanded}
             >
               <devtools-menu-group .name=${i18nString(UIStrings.export)}>
-                ${Lit.Directives.repeat(
+                ${repeat(
                   this.#builtInConverters,
                   converter => {
                     return html`
@@ -1698,7 +1691,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
                 )}
               </devtools-menu-group>
               <devtools-menu-group .name=${i18nString(UIStrings.exportViaExtensions)}>
-                ${Lit.Directives.repeat(
+                ${repeat(
                   this.extensionConverters,
                   converter => {
                     return html`

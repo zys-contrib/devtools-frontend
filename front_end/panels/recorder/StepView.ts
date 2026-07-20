@@ -13,7 +13,7 @@ import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import type * as Converters from './converters/converters.js';
 import * as Models from './models/models.js';
-import {type StepEditedEvent, StepEditor} from './StepEditor.js';
+import {StepEditor} from './StepEditor.js';
 import stepViewStyles from './stepView.css.js';
 import {TimelineSection} from './TimelineSection.js';
 
@@ -142,89 +142,10 @@ export const enum State {
   STOPPED = 'stopped',
 }
 
-export class CaptureSelectorsEvent extends Event {
-  static readonly eventName = 'captureselectors';
-  data: Models.Schema.StepWithSelectors&Partial<Models.Schema.ClickAttributes>;
-
-  constructor(
-      step: Models.Schema.StepWithSelectors&Partial<Models.Schema.ClickAttributes>,
-  ) {
-    super(CaptureSelectorsEvent.eventName, {bubbles: true, composed: true});
-    this.data = step;
-  }
-}
-
-export class CopyStepEvent extends Event {
-  static readonly eventName = 'copystep';
-  step: Models.Schema.Step;
-  constructor(step: Models.Schema.Step) {
-    super(CopyStepEvent.eventName, {bubbles: true, composed: true});
-    this.step = step;
-  }
-}
-
-export class StepChanged extends Event {
-  static readonly eventName = 'stepchanged';
-  currentStep: Models.Schema.Step;
-  newStep: Models.Schema.Step;
-
-  constructor(currentStep: Models.Schema.Step, newStep: Models.Schema.Step) {
-    super(StepChanged.eventName, {bubbles: true, composed: true});
-    this.currentStep = currentStep;
-    this.newStep = newStep;
-  }
-}
-
 export const enum AddStepPosition {
   BEFORE = 'before',
   AFTER = 'after',
 }
-
-export class AddStep extends Event {
-  static readonly eventName = 'addstep';
-  position: AddStepPosition;
-  stepOrSection: Models.Schema.Step|Models.Section.Section;
-
-  constructor(
-      stepOrSection: Models.Schema.Step|Models.Section.Section,
-      position: AddStepPosition,
-  ) {
-    super(AddStep.eventName, {bubbles: true, composed: true});
-    this.stepOrSection = stepOrSection;
-    this.position = position;
-  }
-}
-
-export class RemoveStep extends Event {
-  static readonly eventName = 'removestep';
-  step: Models.Schema.Step;
-
-  constructor(step: Models.Schema.Step) {
-    super(RemoveStep.eventName, {bubbles: true, composed: true});
-    this.step = step;
-  }
-}
-
-export class AddBreakpointEvent extends Event {
-  static readonly eventName = 'addbreakpoint';
-  index: number;
-
-  constructor(index: number) {
-    super(AddBreakpointEvent.eventName, {bubbles: true, composed: true});
-    this.index = index;
-  }
-}
-
-export class RemoveBreakpointEvent extends Event {
-  static readonly eventName = 'removebreakpoint';
-  index: number;
-
-  constructor(index: number) {
-    super(RemoveBreakpointEvent.eventName, {bubbles: true, composed: true});
-    this.index = index;
-  }
-}
-
 const COPY_ACTION_PREFIX = 'copy-step-as-';
 
 interface Action {
@@ -258,7 +179,8 @@ export interface ViewInput {
   recorderSettings?: Models.RecorderSettings.RecorderSettings;
   actions: Action[];
 
-  stepEdited: (event: StepEditedEvent) => void;
+  stepEdited: (newStep: Models.Schema.Step) => void;
+  onAttributeRequested?: (send: (attribute?: string) => void) => void;
   onBreakpointClick: () => void;
   handleStepAction: (event: Menus.Menu.MenuItemSelectedEvent) => void;
   toggleShowDetails: () => void;
@@ -466,9 +388,10 @@ export const DEFAULT_VIEW = (input: ViewInput, _output: ViewOutput, target: HTML
             html`<devtools-widget ${widget(StepEditor, {
               step: input.step,
               disabled: input.isPlaying,
+              onStepEdited: input.stepEdited,
+              onAttributeRequested: input.onAttributeRequested,
             })}
-            class=${input.isSelected ? 'is-selected' : ''}
-            @stepedited=${input.stepEdited}></devtools-widget>`
+            class=${input.isSelected ? 'is-selected' : ''}></devtools-widget>`
           }
           ${
             input.section?.causingStep &&
@@ -476,8 +399,10 @@ export const DEFAULT_VIEW = (input: ViewInput, _output: ViewOutput, target: HTML
               step: input.section.causingStep,
               isTypeEditable: false,
               disabled: input.isPlaying,
-            })}
-            @stepedited=${input.stepEdited}></devtools-widget>`
+              onStepEdited: input.stepEdited,
+              onAttributeRequested: input.onAttributeRequested,
+            })}></devtools-widget>`
+          }
           }
         </div>
         ${
@@ -500,6 +425,13 @@ export class StepView extends UI.Widget.Widget<ShadowRoot> {
   #observer: IntersectionObserver = new IntersectionObserver(result => {
     this.#viewInput.isVisible = result[0].isIntersecting;
   });
+  onStepChanged?: (currentStep: Models.Schema.Step, newStep: Models.Schema.Step) => void;
+  onAddStep?: (stepOrSection: Models.Schema.Step|Models.Section.Section, position: AddStepPosition) => void;
+  onRemoveStep?: (step: Models.Schema.Step) => void;
+  onAddBreakpoint?: (index: number) => void;
+  onRemoveBreakpoint?: (index: number) => void;
+  onCopyStep?: (step: Models.Schema.Step) => void;
+  onAttributeRequested?: (send: (attribute?: string) => void) => void;
   #viewInput: ViewInput = {
     state: State.DEFAULT,
     showDetails: false,
@@ -520,6 +452,7 @@ export class StepView extends UI.Widget.Widget<ShadowRoot> {
     actions: [],
 
     stepEdited: this.#stepEdited.bind(this),
+    onAttributeRequested: send => this.onAttributeRequested?.(send),
     onBreakpointClick: this.#onBreakpointClick.bind(this),
     handleStepAction: this.#handleStepAction.bind(this),
     toggleShowDetails: this.#toggleShowDetails.bind(this),
@@ -672,12 +605,12 @@ export class StepView extends UI.Widget.Widget<ShadowRoot> {
     }
   }
 
-  #stepEdited(event: StepEditedEvent): void {
+  #stepEdited(newStep: Models.Schema.Step): void {
     const step = this.#viewInput.step || this.#viewInput.section?.causingStep;
     if (!step) {
       throw new Error('Expected step.');
     }
-    this.contentElement.dispatchEvent(new StepChanged(step, event.data));
+    this.onStepChanged?.(step, newStep);
   }
 
   #handleStepAction(event: Menus.Menu.MenuItemSelectedEvent): void {
@@ -687,7 +620,7 @@ export class StepView extends UI.Widget.Widget<ShadowRoot> {
         if (!stepOrSection) {
           throw new Error('Expected step or section.');
         }
-        this.contentElement.dispatchEvent(new AddStep(stepOrSection, AddStepPosition.BEFORE));
+        this.onAddStep?.(stepOrSection, AddStepPosition.BEFORE);
         break;
       }
       case 'add-step-after': {
@@ -695,7 +628,7 @@ export class StepView extends UI.Widget.Widget<ShadowRoot> {
         if (!stepOrSection) {
           throw new Error('Expected step or section.');
         }
-        this.contentElement.dispatchEvent(new AddStep(stepOrSection, AddStepPosition.AFTER));
+        this.onAddStep?.(stepOrSection, AddStepPosition.AFTER);
         break;
       }
       case 'remove-step': {
@@ -703,23 +636,21 @@ export class StepView extends UI.Widget.Widget<ShadowRoot> {
         if (!this.#viewInput.step && !causingStep) {
           throw new Error('Expected step.');
         }
-        this.contentElement.dispatchEvent(
-            new RemoveStep(this.#viewInput.step || (causingStep as Models.Schema.Step)),
-        );
+        this.onRemoveStep?.(this.#viewInput.step || (causingStep as Models.Schema.Step));
         break;
       }
       case 'add-breakpoint': {
         if (!this.#viewInput.step) {
           throw new Error('Expected step');
         }
-        this.contentElement.dispatchEvent(new AddBreakpointEvent(this.#viewInput.stepIndex));
+        this.onAddBreakpoint?.(this.#viewInput.stepIndex);
         break;
       }
       case 'remove-breakpoint': {
         if (!this.#viewInput.step) {
           throw new Error('Expected step');
         }
-        this.contentElement.dispatchEvent(new RemoveBreakpointEvent(this.#viewInput.stepIndex));
+        this.onRemoveBreakpoint?.(this.#viewInput.stepIndex);
         break;
       }
       default: {
@@ -738,16 +669,16 @@ export class StepView extends UI.Widget.Widget<ShadowRoot> {
           this.#viewInput.recorderSettings.preferredCopyFormat = converterId;
         }
 
-        this.contentElement.dispatchEvent(new CopyStepEvent(structuredClone(copyStep)));
+        this.onCopyStep?.(structuredClone(copyStep));
       }
     }
   }
 
   #onBreakpointClick(): void {
     if (this.#viewInput.hasBreakpoint) {
-      this.contentElement.dispatchEvent(new RemoveBreakpointEvent(this.#viewInput.stepIndex));
+      this.onRemoveBreakpoint?.(this.#viewInput.stepIndex);
     } else {
-      this.contentElement.dispatchEvent(new AddBreakpointEvent(this.#viewInput.stepIndex));
+      this.onAddBreakpoint?.(this.#viewInput.stepIndex);
     }
     this.requestUpdate();
   }

@@ -5,7 +5,6 @@
 import {assert} from 'chai';
 import type {Page} from 'puppeteer-core';
 
-import type {StepChanged} from '../../../front_end/panels/recorder/StepView.js';
 import {
   changeNetworkConditions,
   fillCreateRecordingForm,
@@ -1390,23 +1389,26 @@ describe('Recorder', function() {
         ':scope >>>> .details devtools-widget >>>> div:nth-of-type(1) > devtools-suggestion-input');
     await input!.click();
 
-    const eventPromise = step.evaluate(element => {
-      return new Promise(resolve => {
-        element.addEventListener('stepchanged', event => {
-          resolve((event as StepChanged).newStep);
-        }, {once: true});
-      });
-    });
-
     await devToolsPage.page.keyboard.type('emulateNetworkConditions');
     await devToolsPage.page.keyboard.press('Enter');
 
-    assert.deepEqual(await eventPromise, {
-      download: 1000,
-      latency: 25,
-      type: 'emulateNetworkConditions',
-      upload: 1000,
-    });
+    const downloadRow =
+        await step.waitForSelector(':scope >>>> .details devtools-widget >>>> div[data-attribute="download"]');
+    const downloadInput = await downloadRow!.waitForSelector(':scope >>>> devtools-suggestion-input');
+    const downloadValue = await downloadInput!.evaluate(el => (el as HTMLElement & {value: string}).value);
+    assert.strictEqual(downloadValue, '1000');
+
+    const latencyRow =
+        await step.waitForSelector(':scope >>>> .details devtools-widget >>>> div[data-attribute="latency"]');
+    const latencyInput = await latencyRow!.waitForSelector(':scope >>>> devtools-suggestion-input');
+    const latencyValue = await latencyInput!.evaluate(el => (el as HTMLElement & {value: string}).value);
+    assert.strictEqual(latencyValue, '25');
+
+    const uploadRow =
+        await step.waitForSelector(':scope >>>> .details devtools-widget >>>> div[data-attribute="upload"]');
+    const uploadInput = await uploadRow!.waitForSelector(':scope >>>> devtools-suggestion-input');
+    const uploadValue = await uploadInput!.evaluate(el => (el as HTMLElement & {value: string}).value);
+    assert.strictEqual(uploadValue, '1000');
 
     const recording = await stopRecording(devToolsPage);
     assert.deepEqual(processAndVerifyBaseRecording(recording), {
