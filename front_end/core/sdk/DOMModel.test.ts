@@ -8,8 +8,11 @@ import sinon from 'sinon';
 import * as ProtocolModule from '../../generated/protocol.js';
 import type * as Protocol from '../../generated/protocol.js';
 import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
+import * as Platform from '../platform/platform.js';
 
 import * as SDK from './sdk.js';
+
+const {urlString} = Platform.DevToolsPath;
 
 describeWithEnvironment('DOMModel', () => {
   it('updates the document on an documentUpdate event if there already is a previous document', async () => {
@@ -1404,5 +1407,69 @@ describeWithEnvironment('DOMModel', () => {
       const snapshot = await elementNode.takeSnapshot();
       assert.isFalse(snapshot.canInspectNode());
     });
+  });
+
+  it('correctly parses baseURL and documentURL for main document and iframes', () => {
+    const parentTarget = createTarget();
+    const target = createTarget({parentTarget});
+    const domModel = target.model(SDK.DOMModel.DOMModel);
+    assert.exists(domModel);
+
+    const DOCUMENT_NODE_ID = 1 as Protocol.DOM.NodeId;
+    const IFRAME_NODE_ID = 2 as Protocol.DOM.NodeId;
+    const CONTENT_DOCUMENT_NODE_ID = 3 as Protocol.DOM.NodeId;
+
+    const mainBaseURL = urlString`http://127.0.0.1:8000/devtools/elements/`;
+    const mainDocumentURL = urlString`http://127.0.0.1:8000/devtools/resources/inspected-page.html`;
+    const iframeBaseURL = urlString`http://127.0.0.1:8000/devtools/elements/resources/elements-empty-iframe.html`;
+    const iframeDocumentURL = urlString`http://127.0.0.1:8000/devtools/elements/resources/elements-empty-iframe.html`;
+
+    domModel.setDocumentForTest({
+      nodeId: DOCUMENT_NODE_ID,
+      backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.DOCUMENT_NODE,
+      nodeName: '#document',
+      localName: '',
+      nodeValue: '',
+      baseURL: mainBaseURL,
+      documentURL: mainDocumentURL,
+      childNodeCount: 1,
+      children: [
+        {
+          nodeId: IFRAME_NODE_ID,
+          backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'iframe',
+          localName: 'iframe',
+          nodeValue: '',
+          contentDocument: {
+            nodeId: CONTENT_DOCUMENT_NODE_ID,
+            backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.DOCUMENT_NODE,
+            nodeName: '#document',
+            localName: '',
+            nodeValue: '',
+            baseURL: iframeBaseURL,
+            documentURL: iframeDocumentURL,
+            childNodeCount: 0,
+            children: [],
+          },
+        },
+      ],
+    } as Protocol.DOM.Node);
+
+    const mainDocument = domModel.existingDocument();
+    assert.exists(mainDocument);
+    assert.strictEqual(mainDocument.baseURL, mainBaseURL);
+    assert.strictEqual(mainDocument.documentURL, mainDocumentURL);
+    assert.isNull(mainDocument.parentNode);
+
+    const iframeNode = domModel.nodeForId(IFRAME_NODE_ID);
+    assert.exists(iframeNode);
+    const iframeDocument = iframeNode.contentDocument();
+    assert.exists(iframeDocument);
+    assert.strictEqual(iframeDocument.baseURL, iframeBaseURL);
+    assert.strictEqual(iframeDocument.documentURL, iframeDocumentURL);
+    assert.strictEqual(iframeDocument.parentNode, iframeNode);
   });
 });
