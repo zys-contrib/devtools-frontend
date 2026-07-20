@@ -2375,4 +2375,326 @@ color: pink !important;`;
       });
     });
   });
+
+  describeWithEnvironment('UpdatesFromJS', () => {
+    let connection: MockCDPConnection;
+    let domModel: SDK.DOMModel.DOMModel;
+    let cssModel: SDK.CSSModel.CSSModel;
+    let stylesSidebarPane: Elements.StylesSidebarPane.StylesSidebarPane;
+
+    beforeEach(() => {
+      connection = new MockCDPConnection();
+      const target = createTarget({connection});
+      domModel = target.model(SDK.DOMModel.DOMModel) as SDK.DOMModel.DOMModel;
+      cssModel = target.model(SDK.CSSModel.CSSModel) as SDK.CSSModel.CSSModel;
+      sinon.stub(ComputedStyle.ComputedStyleModel.ComputedStyleModel.prototype, 'cssModel').returns(cssModel);
+    });
+
+    it('updates inline styles when style attribute is modified', async () => {
+      const CONTAINER_NODE_ID = 1 as Protocol.DOM.NodeId;
+
+      domModel.setDocumentForTest({
+        nodeId: 0 as Protocol.DOM.NodeId,
+        backendNodeId: 0 as Protocol.DOM.BackendNodeId,
+        nodeType: Node.DOCUMENT_NODE,
+        nodeName: '#document',
+        localName: '',
+        nodeValue: '',
+        childNodeCount: 1,
+        children: [
+          {
+            nodeId: CONTAINER_NODE_ID,
+            backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.ELEMENT_NODE,
+            nodeName: 'div',
+            localName: 'div',
+            attributes: ['id', 'container', 'style', 'font-weight:bold'],
+            nodeValue: '',
+          },
+        ],
+      } as Protocol.DOM.Node);
+
+      const containerNode = domModel.nodeForId(CONTAINER_NODE_ID);
+      assert.exists(containerNode);
+
+      UI.Context.Context.instance().setFlavor(SDK.DOMModel.DOMNode, containerNode);
+
+      const inlineStyle: Protocol.CSS.CSSStyle = {
+        styleSheetId: '0' as Protocol.DOM.StyleSheetId,
+        cssProperties: [{name: 'font-weight', value: 'bold'}],
+        shorthandEntries: [],
+      };
+
+      const matchedStylesPayload: Protocol.CSS.GetMatchedStylesForNodeResponse = {
+        inlineStyle,
+        matchedCSSRules: [],
+        pseudoElements: [],
+        inherited: [],
+        inheritedPseudoElements: [],
+        cssKeyframesRules: [],
+        cssPositionTryRules: [],
+        cssPropertyRules: [],
+        cssPropertyRegistrations: [],
+        cssAtRules: [],
+        activePositionFallbackIndex: -1,
+        cssFunctionRules: [],
+        getError: () => undefined,
+      };
+
+      connection.setSuccessHandler('CSS.getMatchedStylesForNode', () => matchedStylesPayload);
+
+      const computedStyleModel = new ComputedStyle.ComputedStyleModel.ComputedStyleModel();
+      computedStyleModel.node = containerNode;
+      stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
+      renderElementIntoDOM(stylesSidebarPane);
+
+      stylesSidebarPane.forceUpdate();
+
+      await new Promise<void>(resolve => {
+        stylesSidebarPane.addEventListener(Elements.StylesSidebarPane.Events.INITIAL_UPDATE_COMPLETED, () => resolve(),
+                                           {once: true});
+      });
+
+      let sections = stylesSidebarPane.allSections();
+      assert.lengthOf(sections, 1);
+      assert.strictEqual(sections[0].headerText(), 'element.style');
+      assert.lengthOf(sections[0].style().leadingProperties(), 1);
+      assert.strictEqual(sections[0].style().leadingProperties()[0].name, 'font-weight');
+      assert.strictEqual(sections[0].style().leadingProperties()[0].value, 'bold');
+
+      matchedStylesPayload.inlineStyle = {
+        styleSheetId: '0' as Protocol.DOM.StyleSheetId,
+        cssProperties: [
+          {name: 'color', value: 'rgb(218, 192, 222)'},
+          {name: 'border', value: '1px solid black'},
+        ],
+        shorthandEntries: [],
+      };
+
+      connection.dispatchEvent('DOM.attributeModified', {
+        nodeId: CONTAINER_NODE_ID,
+        name: 'style',
+        value: 'color: #daC0DE; border: 1px solid black;',
+      },
+                               undefined);
+
+      await new Promise<void>(resolve => {
+        stylesSidebarPane.addEventListener(Elements.StylesSidebarPane.Events.STYLES_UPDATE_COMPLETED, () => resolve(),
+                                           {once: true});
+      });
+
+      sections = stylesSidebarPane.allSections();
+      assert.lengthOf(sections, 1);
+      const properties = sections[0].style().leadingProperties();
+      assert.lengthOf(properties, 2);
+      assert.strictEqual(properties[0].name, 'color');
+      assert.strictEqual(properties[0].value, 'rgb(218, 192, 222)');
+      assert.strictEqual(properties[1].name, 'border');
+      assert.strictEqual(properties[1].value, '1px solid black');
+    });
+
+    it('updates styles when ancestor class is modified', async () => {
+      const CONTAINER_NODE_ID = 1 as Protocol.DOM.NodeId;
+      const CHILD_NODE_ID = 2 as Protocol.DOM.NodeId;
+
+      domModel.setDocumentForTest({
+        nodeId: 0 as Protocol.DOM.NodeId,
+        backendNodeId: 0 as Protocol.DOM.BackendNodeId,
+        nodeType: Node.DOCUMENT_NODE,
+        nodeName: '#document',
+        localName: '',
+        nodeValue: '',
+        childNodeCount: 1,
+        children: [
+          {
+            nodeId: CONTAINER_NODE_ID,
+            backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.ELEMENT_NODE,
+            nodeName: 'div',
+            localName: 'div',
+            attributes: ['id', 'container'],
+            nodeValue: '',
+            childNodeCount: 1,
+            children: [
+              {
+                nodeId: CHILD_NODE_ID,
+                backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+                nodeType: Node.ELEMENT_NODE,
+                nodeName: 'div',
+                localName: 'div',
+                attributes: ['id', 'child'],
+                nodeValue: '',
+              },
+            ],
+          },
+        ],
+      } as Protocol.DOM.Node);
+
+      const childNode = domModel.nodeForId(CHILD_NODE_ID);
+      assert.exists(childNode);
+
+      UI.Context.Context.instance().setFlavor(SDK.DOMModel.DOMNode, childNode);
+
+      const matchedStylesPayload: Protocol.CSS.GetMatchedStylesForNodeResponse = {
+        inlineStyle: undefined,
+        matchedCSSRules: [],
+        pseudoElements: [],
+        inherited: [],
+        inheritedPseudoElements: [],
+        cssKeyframesRules: [],
+        cssPositionTryRules: [],
+        cssPropertyRules: [],
+        cssPropertyRegistrations: [],
+        cssAtRules: [],
+        activePositionFallbackIndex: -1,
+        cssFunctionRules: [],
+        getError: () => undefined,
+      };
+
+      connection.setSuccessHandler('CSS.getMatchedStylesForNode', () => matchedStylesPayload);
+
+      const computedStyleModel = new ComputedStyle.ComputedStyleModel.ComputedStyleModel();
+      computedStyleModel.node = childNode;
+      stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
+      renderElementIntoDOM(stylesSidebarPane);
+
+      stylesSidebarPane.forceUpdate();
+      await new Promise<void>(resolve => {
+        stylesSidebarPane.addEventListener(Elements.StylesSidebarPane.Events.INITIAL_UPDATE_COMPLETED, () => resolve(),
+                                           {once: true});
+      });
+
+      let sections = stylesSidebarPane.allSections();
+      assert.isUndefined(sections.find(s => s.headerText() === '.red div:first-child'));
+
+      matchedStylesPayload.matchedCSSRules = [
+        ruleMatch('.red div:first-child', {'background-color': 'red'}),
+      ];
+
+      connection.dispatchEvent('DOM.attributeModified', {
+        nodeId: CONTAINER_NODE_ID,
+        name: 'class',
+        value: 'red',
+      },
+                               undefined);
+
+      await new Promise<void>(resolve => {
+        stylesSidebarPane.addEventListener(Elements.StylesSidebarPane.Events.STYLES_UPDATE_COMPLETED, () => resolve(),
+                                           {once: true});
+      });
+
+      sections = stylesSidebarPane.allSections();
+      const redSection = sections.find(s => s.headerText() === '.red div:first-child');
+      assert.exists(redSection);
+      assert.strictEqual(redSection.style().leadingProperties()[0].name, 'background-color');
+      assert.strictEqual(redSection.style().leadingProperties()[0].value, 'red');
+    });
+
+    it('updates styles when sibling attribute is modified', async () => {
+      const CONTAINER_NODE_ID = 1 as Protocol.DOM.NodeId;
+      const CHILD_NODE_ID = 2 as Protocol.DOM.NodeId;
+      const SIBLING_NODE_ID = 3 as Protocol.DOM.NodeId;
+
+      domModel.setDocumentForTest({
+        nodeId: 0 as Protocol.DOM.NodeId,
+        backendNodeId: 0 as Protocol.DOM.BackendNodeId,
+        nodeType: Node.DOCUMENT_NODE,
+        nodeName: '#document',
+        localName: '',
+        nodeValue: '',
+        childNodeCount: 1,
+        children: [
+          {
+            nodeId: CONTAINER_NODE_ID,
+            backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.ELEMENT_NODE,
+            nodeName: 'div',
+            localName: 'div',
+            attributes: ['id', 'container'],
+            nodeValue: '',
+            childNodeCount: 2,
+            children: [
+              {
+                nodeId: CHILD_NODE_ID,
+                backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+                nodeType: Node.ELEMENT_NODE,
+                nodeName: 'div',
+                localName: 'div',
+                attributes: ['id', 'child'],
+                nodeValue: '',
+              },
+              {
+                nodeId: SIBLING_NODE_ID,
+                backendNodeId: 4 as Protocol.DOM.BackendNodeId,
+                nodeType: Node.ELEMENT_NODE,
+                nodeName: 'div',
+                localName: 'div',
+                attributes: ['id', 'childSibling'],
+                nodeValue: '',
+              },
+            ],
+          },
+        ],
+      } as Protocol.DOM.Node);
+
+      const siblingNode = domModel.nodeForId(SIBLING_NODE_ID);
+      assert.exists(siblingNode);
+
+      UI.Context.Context.instance().setFlavor(SDK.DOMModel.DOMNode, siblingNode);
+
+      const matchedStylesPayload: Protocol.CSS.GetMatchedStylesForNodeResponse = {
+        inlineStyle: undefined,
+        matchedCSSRules: [],
+        pseudoElements: [],
+        inherited: [],
+        inheritedPseudoElements: [],
+        cssKeyframesRules: [],
+        cssPositionTryRules: [],
+        cssPropertyRules: [],
+        cssPropertyRegistrations: [],
+        cssAtRules: [],
+        activePositionFallbackIndex: -1,
+        cssFunctionRules: [],
+        getError: () => undefined,
+      };
+
+      connection.setSuccessHandler('CSS.getMatchedStylesForNode', () => matchedStylesPayload);
+
+      const computedStyleModel = new ComputedStyle.ComputedStyleModel.ComputedStyleModel();
+      computedStyleModel.node = siblingNode;
+      stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
+      renderElementIntoDOM(stylesSidebarPane);
+
+      stylesSidebarPane.forceUpdate();
+      await new Promise<void>(resolve => {
+        stylesSidebarPane.addEventListener(Elements.StylesSidebarPane.Events.INITIAL_UPDATE_COMPLETED, () => resolve(),
+                                           {once: true});
+      });
+
+      let sections = stylesSidebarPane.allSections();
+      assert.isUndefined(sections.find(s => s.headerText() === 'div[foo="bar"] + div'));
+
+      matchedStylesPayload.matchedCSSRules = [
+        ruleMatch('div[foo="bar"] + div', {'background-color': 'blue'}),
+      ];
+
+      connection.dispatchEvent('DOM.attributeModified', {
+        nodeId: CHILD_NODE_ID,
+        name: 'foo',
+        value: 'bar',
+      },
+                               undefined);
+
+      await new Promise<void>(resolve => {
+        stylesSidebarPane.addEventListener(Elements.StylesSidebarPane.Events.STYLES_UPDATE_COMPLETED, () => resolve(),
+                                           {once: true});
+      });
+
+      sections = stylesSidebarPane.allSections();
+      const siblingSection = sections.find(s => s.headerText() === 'div[foo="bar"] + div');
+      assert.exists(siblingSection);
+      assert.strictEqual(siblingSection.style().leadingProperties()[0].name, 'background-color');
+      assert.strictEqual(siblingSection.style().leadingProperties()[0].value, 'blue');
+    });
+  });
 });
