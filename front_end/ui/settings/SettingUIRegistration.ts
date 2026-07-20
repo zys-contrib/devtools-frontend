@@ -1,0 +1,78 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+import type * as Common from '../../core/common/common.js';
+import type * as Platform from '../../core/platform/platform.js';
+
+export interface SettingUIDescriptor {
+  /**
+   * The category with which the setting is displayed in the UI.
+   */
+  category?: Common.SettingRegistration.SettingCategory;
+  /**
+   * Used to sort on screen the settings that belong to the same category.
+   */
+  order?: number;
+  /**
+   * The title with which the setting is shown on screen.
+   */
+  title?: () => Platform.UIString.LocalizedString;
+  /**
+   * Words used to find a setting in the Command Menu.
+   */
+  tags?: Array<() => Platform.UIString.LocalizedString>;
+  /**
+   * The possible values the setting can have, each with a description composed of a title and an optional text.
+   */
+  options?: Common.SettingRegistration.SettingExtensionOption[];
+  /**
+   * Whether DevTools must be reloaded for a change in the setting to take effect.
+   */
+  reloadRequired?: boolean;
+  /**
+   * If a setting is deprecated, define this notice to show an appropriate warning according to the `warning` property.
+   * If `disabled` is set, the setting will be disabled in the settings UI. In that case, `experiment` optionally can be
+   * set to link to an experiment (by experiment name). The information icon in the settings UI can then be clicked to
+   * jump to the experiment. If a setting is not disabled, the experiment entry will be ignored.
+   */
+  deprecationNotice?: {disabled: boolean, warning: () => Platform.UIString.LocalizedString, experiment?: string};
+  /**
+   * See {@link LearnMore} for more info.
+   */
+  learnMore?: Common.SettingRegistration.LearnMore;
+}
+
+export interface RegisteredSettingUI {
+  descriptor: Common.Settings.SettingDescriptor<unknown>;
+  uiDescriptor: SettingUIDescriptor;
+}
+
+const registeredSettings = new Map<string, RegisteredSettingUI>();
+
+export function register(
+    settingDescriptor: Common.Settings.SettingDescriptor<unknown>,
+    settingUIDescriptor: SettingUIDescriptor,
+    ): void {
+  const settingName = settingDescriptor.name;
+  if (registeredSettings.has(settingName)) {
+    throw new Error(`Duplicate setting name '${settingName}'`);
+  }
+  registeredSettings.set(settingName, {descriptor: settingDescriptor, uiDescriptor: settingUIDescriptor});
+}
+
+export function getRegisteredSettings(): readonly RegisteredSettingUI[] {
+  return Array.from(registeredSettings.values());
+}
+
+export function resolve(settingDescriptor: Common.Settings.SettingDescriptor<unknown>): SettingUIDescriptor {
+  const settingUI = registeredSettings.get(settingDescriptor.name);
+  if (!settingUI) {
+    throw new Error(`No UI descriptor registered for setting '${settingDescriptor.name}'`);
+  }
+  return settingUI.uiDescriptor;
+}
+
+export function resetSettings(): void {
+  registeredSettings.clear();
+}
