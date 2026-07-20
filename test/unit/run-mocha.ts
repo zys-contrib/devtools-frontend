@@ -4,14 +4,14 @@
 
 import path from 'node:path';
 
-import {GEN_DIR} from '../../test/conductor/paths.js';
+import {GEN_DIR, SOURCE_ROOT} from '../../test/conductor/paths.js';
 import {loadTests, TestConfig} from '../conductor/test_config.js';
 import {run} from '../shared/run-mocha.js';
 
 void run({
   allowUncaught: false,
   require: [
-    'source-map-support/register.js',
+    path.join(SOURCE_ROOT, 'node_modules', 'source-map-support', 'register.js'),
     path.join(GEN_DIR, 'test', 'unit', 'mocha-hooks.js'),
   ],
   spec: [

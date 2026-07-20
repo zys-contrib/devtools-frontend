@@ -4,6 +4,7 @@
 
 import * as path from 'node:path';
 
+import {SOURCE_ROOT} from '../conductor/paths.js';
 import {loadTests, TestConfig} from '../conductor/test_config.js';
 import {run} from '../shared/run-mocha.js';
 TestConfig.isPerfTest = true;
@@ -15,7 +16,8 @@ void run({
   spec,
   require: [
     path.join(path.dirname(__dirname), 'perf', 'setup', 'test_setup.js'),
-    path.join(path.dirname(__dirname), 'e2e', 'conductor', 'mocha_hooks.js'), 'source-map-support/register.js'
+    path.join(path.dirname(__dirname), 'e2e', 'conductor', 'mocha_hooks.js'),
+    path.join(SOURCE_ROOT, 'node_modules', 'source-map-support', 'register.js'),
   ],
   timeout: TestConfig.debug ? 0 : 30_000,
   retries: TestConfig.retries,
