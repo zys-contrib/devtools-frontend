@@ -25,9 +25,11 @@ export class PresentationSourceFrameMessageManager implements
     SDK.TargetManager.SDKModelObserver<SDK.DebuggerModel.DebuggerModel>,
     SDK.TargetManager.SDKModelObserver<SDK.CSSModel.CSSModel> {
   #targetToMessageHelperMap = new WeakMap<SDK.Target.Target, PresentationSourceFrameMessageHelper>();
-  constructor() {
-    SDK.TargetManager.TargetManager.instance().observeModels(SDK.DebuggerModel.DebuggerModel, this);
-    SDK.TargetManager.TargetManager.instance().observeModels(SDK.CSSModel.CSSModel, this);
+  #targetManager: SDK.TargetManager.TargetManager;
+  constructor(targetManager: SDK.TargetManager.TargetManager) {
+    this.#targetManager = targetManager;
+    targetManager.observeModels(SDK.DebuggerModel.DebuggerModel, this);
+    targetManager.observeModels(SDK.CSSModel.CSSModel, this);
   }
 
   modelAdded(model: SDK.DebuggerModel.DebuggerModel|SDK.CSSModel.CSSModel): void {
@@ -53,7 +55,7 @@ export class PresentationSourceFrameMessageManager implements
   }
 
   clear(): void {
-    for (const target of SDK.TargetManager.TargetManager.instance().targets()) {
+    for (const target of this.#targetManager.targets()) {
       const helper = this.#targetToMessageHelperMap.get(target);
       helper?.clear();
     }
@@ -61,9 +63,10 @@ export class PresentationSourceFrameMessageManager implements
 }
 
 export class PresentationConsoleMessageManager {
-  #sourceFrameMessageManager = new PresentationSourceFrameMessageManager();
+  #sourceFrameMessageManager: PresentationSourceFrameMessageManager;
 
   constructor(targetManager: SDK.TargetManager.TargetManager) {
+    this.#sourceFrameMessageManager = new PresentationSourceFrameMessageManager(targetManager);
     targetManager.addModelListener(SDK.ConsoleModel.ConsoleModel, SDK.ConsoleModel.Events.MessageAdded,
                                    event => this.consoleMessageAdded(event.data));
     SDK.ConsoleModel.ConsoleModel.allMessagesUnordered(targetManager).forEach(this.consoleMessageAdded, this);

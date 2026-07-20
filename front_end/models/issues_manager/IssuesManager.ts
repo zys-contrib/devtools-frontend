@@ -237,7 +237,7 @@ export class IssuesManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
     super();
     this.#frameManager = frameManager;
     this.#targetManager = targetManager;
-    new SourceFrameIssuesManager(this);
+    new SourceFrameIssuesManager(this, targetManager);
     this.#targetManager.observeModels(SDK.IssuesModel.IssuesModel, this);
     this.#targetManager.addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
                                          SDK.ResourceTreeModel.Events.PrimaryPageChanged, this.#onPrimaryPageChanged,
