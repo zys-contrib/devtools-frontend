@@ -537,6 +537,15 @@ export class Setting<V> {
     this.#serializer = serializer;
   }
 
+  descriptor(): SettingDescriptor<V> {
+    return {
+      name: this.name,
+      type: this.type() ?? SettingType.BOOLEAN,
+      defaultValue: this.defaultValue,
+      storageType: this.#registration?.storageType,
+    };
+  }
+
   addChangeListener(listener: (arg0: EventTargetEvent<V>) => void, thisObject?: Object): EventDescriptor {
     return this.eventSupport.addEventListener(this.name, listener, thisObject);
   }

@@ -259,6 +259,12 @@ describe('Settings instance', () => {
 
     assert.isFalse(setting.get());
     assert.strictEqual(setting.category(), Common.Settings.SettingCategory.CONSOLE);
+    assert.deepEqual(setting.descriptor(), {
+      name: 'test-setting',
+      type: Common.Settings.SettingType.BOOLEAN,
+      defaultValue: false,
+      storageType: undefined,
+    });
   });
 
   describe('resolve', () => {
