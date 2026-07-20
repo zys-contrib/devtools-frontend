@@ -39,14 +39,16 @@ If problems were detected, list the different problems found and how often they 
 
 The second bot should do the following:
 
-- Create a branch flaky_test_<test name> and append a datestamp, such as _2026_07_04_14h16m.
+- Create a branch with a meaningful name, such as `deflake_<test_name>`.
 - Ensure you use the instructions from the `devtools-version-control` skill to create and switch branches appropriately.
-- Create a file called `stressor-trigger.txt`, and have it contain the text 'This file is needed to trigger an empty build for the stressor bots. It should not be checked in.'. Explain to the user the need to create this file, before attempting to do so.
-- Add this file (with `git add`) and commit it to the branch created with a timestamp (`git commit -m 'Stressor <HH:MM>: <test name>'`). Ask the user which bug number to use for the changelist description.
-- Upload this change using `git cl upload`.
+- Make a minor, harmless modification directly to the test file being investigated (e.g., adding a comment `// Trigger stressor bot`) to ensure the commit is not empty.
+- Add this file (with `git add`) and commit it using a meaningful commit message (e.g., `git commit -m "Deflake <test name>"`). Ask the user which bug number to use for the changelist description.
+- Upload this change using `git cl upload`. This creates a debugging CL that all agents (like the fix agent) will continue to work on.
 - Note the <issue number> created during upload.
 - To start the stressor bot, run this command (substituting `<test file>:exact_test_id` with the actual file and exact test ID):
   `git cl try -B devtools-frontend/try -b e2e_stressor_linux -b e2e_stressor_win64 -b e2e_stressor_mac -p runner_args='<test file>:exact_test_id --repeat=100'`
+  - **Note on Screenshot Tests:** If the test involves screenshot assertions (`assertScreenshot`), it should ONLY be run on the Linux stressor bot (`-b e2e_stressor_linux`), because screenshot assertions are not supported on Mac or Windows. Furthermore, they cannot be reproduced locally on a Mac.
+  - **Auth Issues:** If `git cl try` fails with a login error (e.g., `Login required: run bb auth-login`), inform the user so they can resolve the auth issue and ask you to retry.
 
 - Note that the test file name needs to be relative to the root, so use `test/e2e/foo.test.ts` instead of `e2e/foo.test.ts`.
 - Check the results of the stressor tests with `git cl try-results --issue=<issue number> --patchset=<patchset number>`. You can dive into each result by id using `bb get <id>`.
@@ -74,7 +76,7 @@ The test fixing sub-agent should do the following:
 - Find the test in the codebase and look at its implementation. Look at the relevant production code that is being testing.
 - Look at the failures reproduced in the test (if any) by prior sub-agents.
 - Suggest a fix for the failure(s).
-- IMPORTANT: Delete the `stressor-trigger.txt` file before uploading the first fix.
+- IMPORTANT: Ensure any dummy comments added earlier to trigger the stressor bot are removed before finalizing the fix.
 - Run the full verification process (TypeScript checks, and linters) as required by the repository best practices.
 - Compile and run the test locally, to make sure there are no obvious errors introduced.
 - Commit the changes (to the branch created earlier). Make sure to list (in the changelist description) the test name, the fix, reasoning for why the test failed, why the fix fixes the issue and the failure rate (if non-zero). If you were not able to reproduce the error, state that the fix is speculative. Ask the user to provide the bug number to use in the changelist description.
