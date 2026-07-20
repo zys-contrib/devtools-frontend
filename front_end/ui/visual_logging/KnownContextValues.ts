@@ -3957,6 +3957,8 @@ export const knownContextValues = new Set([
   'sv',
   'sw',
   'sw-scope',
+  'switch-to-accessibility-tree',
+  'switch-to-dom-tree',
   'symbols',
   'sync-preferences',
   'sync-tag',

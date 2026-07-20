@@ -20,6 +20,14 @@ const UIStrings = {
    * @description Text for copying, copy should be used as a verb
    */
   copy: 'Copy',
+  /**
+   * @description Text to scroll the displayed content into view
+   */
+  scrollIntoView: 'Scroll into view',
+  /**
+   * @description A context menu item in the Accessibility Tree View to switch to DOM tree
+   */
+  switchToDomTree: 'Switch to DOM tree',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/elements/AccessibilityTreeView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -30,6 +38,8 @@ export interface ViewInput {
   onNodeHighlight: (node: SDK.AccessibilityModel.AccessibilityNode) => void;
   onNodeClearHighlight: () => void;
   onCopy: (node: SDK.AccessibilityModel.AccessibilityNode) => void;
+  onScrollIntoView: (node: SDK.AccessibilityModel.AccessibilityNode) => void;
+  onSwitchToDomTree: () => void;
 }
 
 export interface ViewOutput {
@@ -78,12 +88,20 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
   };
   const onItemContextMenu =
       (event: TreeOutline.TreeOutline.ItemContextMenuEvent<AccessibilityTreeUtils.AXTreeNodeData>): void => {
-        event.data.originalEvent.preventDefault();
-        event.data.originalEvent.stopPropagation();
-        const contextMenu = new UI.ContextMenu.ContextMenu(event.data.originalEvent);
+        const contextMenu = event.createContextMenu();
         const axNode = event.data.node.treeNodeData;
         contextMenu.clipboardSection().appendItem(i18nString(UIStrings.copy), () => input.onCopy(axNode),
                                                   {jslogContext: 'copy'});
+
+        if (axNode.isDOMNode()) {
+          contextMenu.viewSection().appendItem(i18nString(UIStrings.scrollIntoView),
+                                               () => input.onScrollIntoView(axNode),
+                                               {jslogContext: 'scroll-into-view'});
+        }
+
+        contextMenu.viewSection().appendItem(i18nString(UIStrings.switchToDomTree), () => input.onSwitchToDomTree(),
+                                             {jslogContext: 'switch-to-dom-tree'});
+
         void contextMenu.show();
       };
 
@@ -157,6 +175,21 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
     UI.UIUtils.copyTextToClipboard(text);
   };
 
+  #onScrollIntoView = (axNode: SDK.AccessibilityModel.AccessibilityNode): void => {
+    const deferredNode = axNode.deferredDOMNode();
+    if (deferredNode) {
+      deferredNode.resolve(domNode => {
+        if (domNode) {
+          void domNode.scrollIntoView();
+        }
+      });
+    }
+  };
+
+  #onSwitchToDomTree = async(): Promise<void> => {
+    ElementsPanel.instance().toggleAccessibilityTree();
+  };
+
   override async wasShown(): Promise<void> {
     super.wasShown();
     this.requestUpdate();
@@ -183,6 +216,8 @@ export class AccessibilityTreeView extends UI.Widget.VBox implements
       onNodeHighlight: this.#onNodeHighlight,
       onNodeClearHighlight: this.#onNodeClearHighlight,
       onCopy: this.#onCopy,
+      onScrollIntoView: this.#onScrollIntoView,
+      onSwitchToDomTree: this.#onSwitchToDomTree,
     };
     this.#view(input, this.#treeOperations, this.contentElement);
   }

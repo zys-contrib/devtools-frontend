@@ -131,4 +131,69 @@ describe('Accessibility Tree in the Elements Tab', function() {
       return (await devToolsPage.readClipboard()).replaceAll('\r\n', '\n');
     }, 'Waiting for clipboard to exactly contain ' + JSON.stringify(expectedClipboardText));
   });
+
+  it('allows switching between DOM tree and Accessibility tree via context menu',
+     async ({devToolsPage, inspectedPage}) => {
+       await inspectedPage.goToResource('elements/accessibility-simple-page.html');
+       await toggleAccessibilityTree(devToolsPage);
+
+       // 1. Right click on a non-body node in Accessibility tree (heading "Title")
+       const headingText = 'heading\xa0"Title"';
+       const headingSelector = getAccessibilityTreeNodeSelector(headingText);
+       await devToolsPage.waitForElementWithTextContent(headingText);
+
+       await devToolsPage.click(headingSelector, {clickOptions: {button: 'right'}});
+       await waitForSelectedTreeElementSelectorWhichIncludesText('Title', devToolsPage);
+
+       const contextMenu = await devToolsPage.waitFor('.soft-context-menu');
+       await devToolsPage.click('[aria-label="Switch to DOM tree"]', {root: contextMenu});
+
+       // 2. Verify DOM tree is displayed and the corresponding DOM node (<h1>) is selected
+       await devToolsPage.waitForFunction(async () => {
+         // The DOM tree might not use role="treeitem" for its selected element depending on which tree component it uses,
+         // but it definitely has the .selected class. We look inside the elements panel.
+         const selectedNode = await devToolsPage.waitFor('.elements-tree-outline .selected');
+         const text = await selectedNode.evaluate(node => node.textContent);
+         return text && text.includes('Title');
+       });
+
+       // 3. Right click on a non-body element in DOM tree (<a>)
+       const linkNode = await devToolsPage.waitForFunction(async () => {
+         const nodes = await devToolsPage.$$('.webkit-html-tag-name');
+         for (const node of nodes) {
+           const text = await node.evaluate(e => e.textContent);
+           if (text === 'a') {
+             return node;
+           }
+         }
+         return undefined;
+       });
+       // Right click to open context menu and wait for the node to be selected
+       await linkNode.click({button: 'right'});
+       await devToolsPage.waitForFunction(async () => {
+         const selectedNode = await devToolsPage.waitFor('.elements-tree-outline .selected');
+         const text = await selectedNode.evaluate(node => node.textContent);
+         return text && text.includes('cats');
+       });
+
+       const root = await devToolsPage.waitFor('.soft-context-menu');
+       await devToolsPage.click('[aria-label="Switch to accessibility tree"]', {root});
+
+       // 4. Verify Accessibility tree is displayed and the corresponding accessibility node (link "cats") is selected
+       await devToolsPage.waitForFunction(async () => {
+         const treeOutline = await devToolsPage.waitFor('devtools-tree-outline');
+         if (!treeOutline) {
+           return false;
+         }
+         const text = await treeOutline.evaluate(node => {
+           const selected = node.shadowRoot?.querySelector('.selected[role="treeitem"]');
+           if (!selected) {
+             return null;
+           }
+           const axNode = selected.querySelector('devtools-accessibility-tree-node');
+           return axNode && axNode.shadowRoot ? axNode.shadowRoot.textContent : null;
+         });
+         return text && text.includes('cats');
+       });
+     });
 });

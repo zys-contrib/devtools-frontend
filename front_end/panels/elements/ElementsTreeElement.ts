@@ -122,6 +122,10 @@ const UIStrings = {
    */
   scrollIntoView: 'Scroll into view',
   /**
+   * @description A context menu item in the Elements panel to switch to Accessibility tree
+   */
+  switchToAccessibilityTree: 'Switch to accessibility tree',
+  /**
    * @description A context menu item in the Elements Tree Element of the Elements panel
    */
   editText: 'Edit text',
@@ -2361,8 +2365,11 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
     }
 
     this.populateExpandRecursively(contextMenu);
-    contextMenu.viewSection().appendItem(
-        i18nString(UIStrings.collapseChildren), this.collapseChildren.bind(this), {jslogContext: 'collapse-children'});
+    contextMenu.viewSection().appendItem(i18nString(UIStrings.collapseChildren), this.collapseChildren.bind(this),
+                                         {jslogContext: 'collapse-children'});
+    contextMenu.viewSection().appendItem(i18nString(UIStrings.switchToAccessibilityTree),
+                                         () => ElementsPanel.instance().toggleAccessibilityTree(),
+                                         {jslogContext: 'switch-to-accessibility-tree'});
     const deviceModeWrapperAction = new Emulation.DeviceModeWrapper.ActionDelegate();
     contextMenu.viewSection().appendItem(
         i18nString(UIStrings.captureNodeScreenshot),

@@ -74,8 +74,14 @@ export class ItemContextMenuEvent<TreeNodeDataType> extends Event {
   };
 
   constructor(node: TreeNode<TreeNodeDataType>, originalEvent: MouseEvent) {
-    super(ItemContextMenuEvent.eventName, {bubbles: true, composed: true});
+    super(ItemContextMenuEvent.eventName, {bubbles: true, composed: true, cancelable: true});
     this.data = {node, originalEvent};
+  }
+
+  createContextMenu(): UI.ContextMenu.ContextMenu {
+    this.preventDefault();
+    this.stopPropagation();
+    return new UI.ContextMenu.ContextMenu(this.data.originalEvent);
   }
 }
 
