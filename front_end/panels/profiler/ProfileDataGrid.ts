@@ -590,16 +590,20 @@ export class ProfileDataGridTree implements UI.SearchableView.Searchable {
 
     this.searchResults = [];
     const deepSearch = this.deepSearch;
-    let current: DataGrid.DataGrid.DataGridNode<unknown>|null;
-    for (current = this.children[0]; current; current = current.traverseNextNode(!deepSearch, null, !deepSearch)) {
-      const item = (current as ProfileDataGridNode | null);
-      if (!item) {
-        break;
-      }
 
-      if (matchesQuery(item)) {
-        this.searchResults.push({profileNode: item});
+    const walk = (node: ProfileDataGridNode): void => {
+      if (matchesQuery(node)) {
+        this.searchResults.push({profileNode: node});
       }
+      if (deepSearch || node.expanded) {
+        for (const child of node.children as ProfileDataGridNode[]) {
+          walk(child);
+        }
+      }
+    };
+
+    for (const child of this.children as ProfileDataGridNode[]) {
+      walk(child);
     }
     this.searchResultIndex = jumpBackwards ? 0 : this.searchResults.length - 1;
     this.searchableView.updateSearchMatchesCount(this.searchResults.length);
