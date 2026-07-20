@@ -186,6 +186,7 @@ devtools_ui_module("unittests") {
     "PreloadingTreeElement.test.ts",
     "ReportingApiTreeElement.test.ts",
     "ReportingApiView.test.ts",
+    "ServiceWorkerCacheTreeElement.test.ts",
     "ServiceWorkerCacheViews.test.ts",
     "ServiceWorkerUpdateCycleView.test.ts",
     "ServiceWorkersView.test.ts",

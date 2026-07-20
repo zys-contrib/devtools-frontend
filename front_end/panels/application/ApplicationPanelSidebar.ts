@@ -655,7 +655,6 @@ export class ApplicationPanelSidebar extends UI.Widget.VBox implements SDK.Targe
       this.addCookieDocument(frame);
     }
 
-    this.cacheStorageListTreeElement.initialize();
     const backgroundServiceModel = this.target?.model(BackgroundServiceModel) || null;
     this.backgroundFetchTreeElement.initialize(backgroundServiceModel);
     this.backgroundSyncTreeElement.initialize(backgroundServiceModel);
