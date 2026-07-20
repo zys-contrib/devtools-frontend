@@ -463,11 +463,27 @@ export class BackForwardCacheView extends UI.Widget.Widget {
   constructor(view = DEFAULT_VIEW) {
     super({useShadowDom: true, delegatesFocus: true});
     this.#view = view;
-    this.#getMainResourceTreeModel()?.addEventListener(
-        SDK.ResourceTreeModel.Events.PrimaryPageChanged, this.requestUpdate, this);
-    this.#getMainResourceTreeModel()?.addEventListener(
-        SDK.ResourceTreeModel.Events.BackForwardCacheDetailsUpdated, this.requestUpdate, this);
+  }
+
+  override wasShown(): void {
+    super.wasShown();
+    SDK.TargetManager.TargetManager.instance().addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
+                                                                SDK.ResourceTreeModel.Events.PrimaryPageChanged,
+                                                                this.requestUpdate, this);
+    SDK.TargetManager.TargetManager.instance().addModelListener(
+        SDK.ResourceTreeModel.ResourceTreeModel, SDK.ResourceTreeModel.Events.BackForwardCacheDetailsUpdated,
+        this.requestUpdate, this);
     this.requestUpdate();
+  }
+
+  override willHide(): void {
+    SDK.TargetManager.TargetManager.instance().removeModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
+                                                                   SDK.ResourceTreeModel.Events.PrimaryPageChanged,
+                                                                   this.requestUpdate, this);
+    SDK.TargetManager.TargetManager.instance().removeModelListener(
+        SDK.ResourceTreeModel.ResourceTreeModel, SDK.ResourceTreeModel.Events.BackForwardCacheDetailsUpdated,
+        this.requestUpdate, this);
+    super.willHide();
   }
 
   #getMainResourceTreeModel(): SDK.ResourceTreeModel.ResourceTreeModel|null {
