@@ -870,4 +870,94 @@ describeWithEnvironment('ElementsTreeOutline', () => {
     const selectedTreeElement = treeOutline.selectedTreeElement as Elements.ElementsTreeElement.ElementsTreeElement;
     assert.strictEqual(selectedTreeElement?.node().nodeName(), 'BODY');
   });
+
+  it('tests that elements hidden by "Show more" limit are revealed properly', async () => {
+    const childrenPayload = [];
+    for (let i = 1; i <= 10; i++) {
+      childrenPayload.push({
+        nodeId: (i + 2) as Protocol.DOM.NodeId,
+        parentId: 2 as Protocol.DOM.NodeId,
+        backendNodeId: (i + 2) as Protocol.DOM.BackendNodeId,
+        nodeType: Node.ELEMENT_NODE,
+        nodeName: 'DIV',
+        localName: 'div',
+        nodeValue: '',
+        childNodeCount: 1,
+        children: [{
+          nodeId: (i + 100) as Protocol.DOM.NodeId,
+          parentId: (i + 2) as Protocol.DOM.NodeId,
+          backendNodeId: (i + 100) as Protocol.DOM.BackendNodeId,
+          nodeType: Node.ELEMENT_NODE,
+          nodeName: 'SPAN',
+          localName: 'span',
+          nodeValue: '',
+          childNodeCount: 0,
+          attributes: ['id', `id${i}`],
+        } as Protocol.DOM.Node],
+        attributes: [],
+      } as Protocol.DOM.Node);
+    }
+
+    const containerPayload = {
+      nodeId: 2 as Protocol.DOM.NodeId,
+      parentId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      attributes: ['id', 'data'],
+      childNodeCount: 10,
+      children: childrenPayload,
+    } as Protocol.DOM.Node;
+
+    const rootNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+      nodeId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [containerPayload],
+      attributes: [],
+    });
+
+    treeOutline.rootDOMNode = rootNode;
+
+    const containerNode = rootNode.children()![0];
+    assert.exists(containerNode);
+
+    const containerTreeElement =
+        treeOutline.findTreeElement(containerNode) as Elements.ElementsTreeElement.ElementsTreeElement;
+    assert.exists(containerTreeElement);
+
+    // Set the expanded children limit to 5.
+    treeOutline.setExpandedChildrenLimit(containerTreeElement, 5);
+
+    await treeOutline.populateTreeElement(containerTreeElement);
+    containerTreeElement.expand();
+
+    // Verify only 5 children are visible, along with 1 button and 1 closing tag.
+    assert.strictEqual(containerTreeElement.childCount(), 7);  // Five children, one button, and one closing tag.
+    assert.exists(containerTreeElement.expandAllButtonElement);
+    assert.strictEqual(containerTreeElement.expandAllButtonElement.title, 'Show all nodes (5 more)');
+
+    // Now reveal the 10th child (id10).
+    const hiddenNode = containerNode.children()![9];
+    assert.exists(hiddenNode);
+
+    // Select the hidden node, which should trigger a reveal and expand the limit.
+    treeOutline.selectDOMNode(hiddenNode);
+
+    // Wait for updates.
+    await new Promise(r => setTimeout(r, 0));
+
+    // Verify the limit is expanded to 10.
+    assert.strictEqual(containerTreeElement.expandedChildrenLimit(), 10);
+    // Verify the "Show all" button is gone.
+    assert.isNull(containerTreeElement.expandAllButtonElement);
+    // Verify all 10 children are visible, plus 1 closing tag.
+    assert.strictEqual(containerTreeElement.childCount(), 11);
+  });
 });
