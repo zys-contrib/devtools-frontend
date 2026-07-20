@@ -226,7 +226,7 @@ export const NativeFunctions = [
   {
     name: "create",
     signatures: [["?options"]],
-    receivers: ["CredentialsContainer","Classifier","SemanticEmbedder"]
+    receivers: ["CredentialsContainer","SemanticEmbedder"]
   },
   {
     name: "defineProperty",
@@ -8258,15 +8258,6 @@ export const NativeFunctions = [
     signatures: [["animatorName","effects","?timeline","?options"]]
   },
   {
-    name: "availability",
-    signatures: [["?options"]],
-    receivers: ["SemanticEmbedder"]
-  },
-  {
-    name: "classify",
-    signatures: [["input","?options"]]
-  },
-  {
     name: "LanguageModelToolCall",
     signatures: [["init"]]
   },
@@ -8277,6 +8268,10 @@ export const NativeFunctions = [
   {
     name: "LanguageModelToolError",
     signatures: [["init"]]
+  },
+  {
+    name: "availability",
+    signatures: [["?options"]]
   },
   {
     name: "embed",
@@ -8641,6 +8636,10 @@ export const NativeFunctions = [
   {
     name: "Touch",
     signatures: [["initDict"]]
+  },
+  {
+    name: "InstallResultEvent",
+    signatures: [["type","?eventInitDict"]]
   },
   {
     name: "TrackEvent",
