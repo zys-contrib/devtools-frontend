@@ -11,7 +11,7 @@ import * as Root from '../../core/root/root.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 import {createIcon} from '../kit/kit.js';
-import type {TemplateResult} from '../lit/lit.js';
+import {nothing, render, type TemplateResult} from '../lit/lit.js';
 
 import {type Action, Events as ActionEvents} from './ActionRegistration.js';
 import {ActionRegistry} from './ActionRegistry.js';
@@ -412,10 +412,13 @@ export class Toolbar extends HTMLElement {
       const widget = Widget.get(item.element);
       if (widget) {
         widget.detach();
+      } else {
+        item.element.remove();
       }
     }
     this.items = [];
-    this.removeChildren();
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(nothing, this);
   }
 
   hideSeparatorDupes(): void {
