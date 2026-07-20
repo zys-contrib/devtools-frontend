@@ -9,7 +9,7 @@ import * as Host from '../../core/host/host.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as ProtocolClient from '../../core/protocol_client/protocol_client.js';
 import * as SDK from '../../core/sdk/sdk.js';
-import * as TextUtils from '../../models/text_utils/text_utils.js';
+import * as TextUtils from '../../core/text_utils/text_utils.js';
 import {findMenuItemWithLabel} from '../../testing/ContextMenuHelpers.js';
 import {assertScreenshot, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {deinitializeGlobalVars, initializeGlobalVars} from '../../testing/EnvironmentHelpers.js';

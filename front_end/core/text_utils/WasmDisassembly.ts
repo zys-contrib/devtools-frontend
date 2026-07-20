@@ -51,8 +51,8 @@ export class WasmDisassembly extends ContentData {
   }
 
   bytecodeOffsetToLineNumber(bytecodeOffset: number): number {
-    return Platform.ArrayUtilities.upperBound(
-               this.#offsets, bytecodeOffset, Platform.ArrayUtilities.DEFAULT_COMPARATOR) -
+    return Platform.ArrayUtilities.upperBound(this.#offsets, bytecodeOffset,
+                                              Platform.ArrayUtilities.DEFAULT_COMPARATOR) -
         1;
   }
 

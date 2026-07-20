@@ -6,6 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 
 import type * as Platform from '../../../core/platform/platform.js';
+import * as TextUtils from '../../../core/text_utils/text_utils.js';
 import * as CrUXManager from '../../../models/crux-manager/crux-manager.js';
 import * as Trace from '../../../models/trace/trace.js';
 import {setupLocaleHooks} from '../../../testing/LocaleHelpers.js';
@@ -18,7 +19,6 @@ import {
   type PerformanceAPIExtensionTestData,
 } from '../../../testing/TraceHelpersCore.js';
 import {TraceLoader} from '../../../testing/TraceLoader.js';
-import * as TextUtils from '../../text_utils/text_utils.js';
 import type * as Workspace from '../../workspace/workspace.js';
 import {AICallTree, AIContext, PerformanceTraceFormatter} from '../ai_assistance.js';
 

@@ -29,6 +29,7 @@ group("front_end") {
     "entrypoints/trace_app:entrypoint",
     "entrypoints/wasmparser_worker:worker_entrypoint",
     "entrypoints/worker_app:entrypoint",
+    "models/text_utils:bundle",
     "third_party/vscode.web-custom-data:web_custom_data",
   ]
 }
@@ -276,6 +277,7 @@ group("foundation_unittests") {
     "core/protocol_client:unittests",
     "core/root:foundation_unittests",
     "core/sdk:foundation_unittests",
+    "core/text_utils:unittests",
     "entrypoints/formatter_worker:unittests",
     "entrypoints/heap_snapshot_worker:unittests",
     "foundation:unittests",
@@ -286,7 +288,6 @@ group("foundation_unittests") {
     "models/heap_snapshot:unittests",
     "models/issues_manager:foundation_unittests",
     "models/stack_trace:unittests",
-    "models/text_utils:unittests",
     "models/workspace:foundation_unittests",
     "testing:foundation_unittests",
   ]

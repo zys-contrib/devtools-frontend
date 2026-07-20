@@ -13,24 +13,24 @@ interface ExpectedTextRange {
   endColumn: number;
 }
 
-function assertIsTextRangeAndEqualsRange(
-    range: TextUtils.TextRange.TextRange, expectedRange: ExpectedTextRange, description: string) {
+function assertIsTextRangeAndEqualsRange(range: TextUtils.TextRange.TextRange, expectedRange: ExpectedTextRange,
+                                         description: string) {
   const prefix = description.length ? `${description}, but ` : '';
   assert.instanceOf(range, TextUtils.TextRange.TextRange, `${prefix}range is not a TextUtils.TextRange.TextRange`);
   assert.strictEqual(range.startLine, expectedRange.startLine, `${prefix}range's startLine differs from expectation`);
-  assert.strictEqual(
-      range.startColumn, expectedRange.startColumn, `${prefix}range's startColumn differs from expectation`);
+  assert.strictEqual(range.startColumn, expectedRange.startColumn,
+                     `${prefix}range's startColumn differs from expectation`);
   assert.strictEqual(range.endLine, expectedRange.endLine, `${prefix}range's endLine differs from expectation`);
   assert.strictEqual(range.endColumn, expectedRange.endColumn, `${prefix}range's endColumn differs from expectation`);
 }
 
-function assertIsUnitTextRange(
-    range: TextUtils.TextRange.TextRange, line: number, column: number, description: string) {
+function assertIsUnitTextRange(range: TextUtils.TextRange.TextRange, line: number, column: number,
+                               description: string) {
   const prefix = description.length ? `${description}, but ` : '';
   assert.instanceOf(range, TextUtils.TextRange.TextRange, `${prefix}range is not a TextUtils.TextRange.TextRange`);
   assert.strictEqual(range.startLine, range.endLine, `${prefix}the range is not a unit range: start/end lines differ`);
-  assert.strictEqual(
-      range.startColumn, range.endColumn, `${prefix}the range is not a unit range: start/end columns differ`);
+  assert.strictEqual(range.startColumn, range.endColumn,
+                     `${prefix}the range is not a unit range: start/end columns differ`);
   assert.strictEqual(range.startLine, line, `${prefix}the line was not set correctly`);
   assert.strictEqual(range.startColumn, column, `${prefix}the column was not set correctly`);
 }
@@ -145,13 +145,11 @@ describe('TextRange', () => {
     const rangeB = {startLine: 4, startColumn: 2, endLine: 2, endColumn: 2};
     const textRangeB = TextUtils.TextRange.TextRange.fromObject(rangeB);
     const textRangeACollapsed = textRangeA.collapseToStart();
-    assertIsUnitTextRange(
-        textRangeACollapsed, rangeA.startLine, rangeA.startColumn,
-        'collapsing to start should produce a unit range at start');
+    assertIsUnitTextRange(textRangeACollapsed, rangeA.startLine, rangeA.startColumn,
+                          'collapsing to start should produce a unit range at start');
     const textRangeBCollapsed = textRangeB.collapseToStart();
-    assertIsUnitTextRange(
-        textRangeBCollapsed, rangeB.startLine, rangeB.startColumn,
-        'collapsing to start should produce a unit range at start');
+    assertIsUnitTextRange(textRangeBCollapsed, rangeB.startLine, rangeB.startColumn,
+                          'collapsing to start should produce a unit range at start');
     assertIsTextRangeAndEqualsRange(textRangeA, rangeA, 'original TextUtils.TextRange.TextRange should be unchanged');
     assertIsTextRangeAndEqualsRange(textRangeB, rangeB, 'original TextUtils.TextRange.TextRange should be unchanged');
   });
@@ -162,11 +160,11 @@ describe('TextRange', () => {
     const rangeB = {startLine: 4, startColumn: 2, endLine: 2, endColumn: 2};
     const textRangeB = TextUtils.TextRange.TextRange.fromObject(rangeB);
     const textRangeACollapsed = textRangeA.collapseToEnd();
-    assertIsUnitTextRange(
-        textRangeACollapsed, rangeA.endLine, rangeA.endColumn, 'collapsing to end should produce a unit range at end');
+    assertIsUnitTextRange(textRangeACollapsed, rangeA.endLine, rangeA.endColumn,
+                          'collapsing to end should produce a unit range at end');
     const textRangeBCollapsed = textRangeB.collapseToEnd();
-    assertIsUnitTextRange(
-        textRangeBCollapsed, rangeB.endLine, rangeB.endColumn, 'collapsing to end should produce a unit range at end');
+    assertIsUnitTextRange(textRangeBCollapsed, rangeB.endLine, rangeB.endColumn,
+                          'collapsing to end should produce a unit range at end');
     assertIsTextRangeAndEqualsRange(textRangeA, rangeA, 'original TextUtils.TextRange.TextRange should be unchanged');
     assertIsTextRangeAndEqualsRange(textRangeB, rangeB, 'original TextUtils.TextRange.TextRange should be unchanged');
   });
@@ -231,8 +229,8 @@ describe('TextRange', () => {
     const textRangeD =
         TextUtils.TextRange.TextRange.fromObject({startLine: 3, startColumn: 1, endLine: 3, endColumn: 4});
 
-    assert.strictEqual(
-        TextUtils.TextRange.TextRange.comparator(textRangeA, textRangeA), 0, 'A should be equal to itself');
+    assert.strictEqual(TextUtils.TextRange.TextRange.comparator(textRangeA, textRangeA), 0,
+                       'A should be equal to itself');
     assert.strictEqual(TextUtils.TextRange.TextRange.comparator(textRangeA, textRangeB), -1, 'A should be before B');
     assert.strictEqual(TextUtils.TextRange.TextRange.comparator(textRangeB, textRangeA), 1, 'B should be after A');
     assert.strictEqual(TextUtils.TextRange.TextRange.comparator(textRangeA, textRangeC), -1, 'A should be before C');
@@ -258,17 +256,16 @@ describe('TextRange', () => {
         TextUtils.TextRange.TextRange.fromObject({startLine: 4, startColumn: 3, endLine: 6, endColumn: 7});
     const relativeTextRangeA = textRange.relativeTo(2, 2);
     const expectedRangeA = {startLine: 2, startColumn: 3, endLine: 4, endColumn: 7};
-    assertIsTextRangeAndEqualsRange(
-        relativeTextRangeA, expectedRangeA,
-        'relativating to position strictly inside line range should not change columns');
+    assertIsTextRangeAndEqualsRange(relativeTextRangeA, expectedRangeA,
+                                    'relativating to position strictly inside line range should not change columns');
     const relativeTextRangeB = textRange.relativeTo(4, 2);
     const expectedRangeB = {startLine: 0, startColumn: 1, endLine: 2, endColumn: 7};
-    assertIsTextRangeAndEqualsRange(
-        relativeTextRangeB, expectedRangeB, 'relativating to position on start line should change start column');
+    assertIsTextRangeAndEqualsRange(relativeTextRangeB, expectedRangeB,
+                                    'relativating to position on start line should change start column');
     const relativeTextRangeC = textRange.relativeTo(6, 3);
     const expectedRangeC = {startLine: -2, startColumn: 3, endLine: 0, endColumn: 4};
-    assertIsTextRangeAndEqualsRange(
-        relativeTextRangeC, expectedRangeC, 'relativating to position on end line should change end column');
+    assertIsTextRangeAndEqualsRange(relativeTextRangeC, expectedRangeC,
+                                    'relativating to position on end line should change end column');
     const relativeTextRangeD = textRange.relativeTo(0, 0);
     assert.notStrictEqual(relativeTextRangeD, textRange, 'relativeTo should clone range');
   });
@@ -278,17 +275,16 @@ describe('TextRange', () => {
         TextUtils.TextRange.TextRange.fromObject({startLine: 4, startColumn: 3, endLine: 6, endColumn: 7});
     const relativeTextRangeA = textRange.relativeFrom(2, 2);
     const expectedRangeA = {startLine: 6, startColumn: 3, endLine: 8, endColumn: 7};
-    assertIsTextRangeAndEqualsRange(
-        relativeTextRangeA, expectedRangeA,
-        'relativating from position strictly inside line range should not change columns');
+    assertIsTextRangeAndEqualsRange(relativeTextRangeA, expectedRangeA,
+                                    'relativating from position strictly inside line range should not change columns');
     const relativeTextRangeB = textRange.relativeFrom(4, 2);
     const expectedRangeB = {startLine: 8, startColumn: 3, endLine: 10, endColumn: 7};
-    assertIsTextRangeAndEqualsRange(
-        relativeTextRangeB, expectedRangeB, 'relativating from position on start line should not change columns');
+    assertIsTextRangeAndEqualsRange(relativeTextRangeB, expectedRangeB,
+                                    'relativating from position on start line should not change columns');
     const relativeTextRangeC = textRange.relativeFrom(6, 3);
     const expectedRangeC = {startLine: 10, startColumn: 3, endLine: 12, endColumn: 7};
-    assertIsTextRangeAndEqualsRange(
-        relativeTextRangeC, expectedRangeC, 'relativating from position on end line should not change columns');
+    assertIsTextRangeAndEqualsRange(relativeTextRangeC, expectedRangeC,
+                                    'relativating from position on end line should not change columns');
     const relativeTextRangeD = textRange.relativeFrom(0, 0);
     assert.notStrictEqual(relativeTextRangeD, textRange, 'relativeFrom should clone range');
 
@@ -296,15 +292,15 @@ describe('TextRange', () => {
         TextUtils.TextRange.TextRange.fromObject({startLine: 0, startColumn: 3, endLine: 6, endColumn: 7});
     const relativeTextRangeE = textRange2.relativeFrom(2, 2);
     const expectedRangeE = {startLine: 2, startColumn: 5, endLine: 8, endColumn: 7};
-    assertIsTextRangeAndEqualsRange(
-        relativeTextRangeE, expectedRangeE, 'relativating range with startLine 0 should change start column');
+    assertIsTextRangeAndEqualsRange(relativeTextRangeE, expectedRangeE,
+                                    'relativating range with startLine 0 should change start column');
 
     const textRange3 =
         TextUtils.TextRange.TextRange.fromObject({startLine: 1, startColumn: 3, endLine: 0, endColumn: 7});
     const relativeTextRangeF = textRange3.relativeFrom(2, 2);
     const expectedRangeF = {startLine: 3, startColumn: 3, endLine: 2, endColumn: 9};
-    assertIsTextRangeAndEqualsRange(
-        relativeTextRangeF, expectedRangeF, 'relativating range with endLine 0 should change end column');
+    assertIsTextRangeAndEqualsRange(relativeTextRangeF, expectedRangeF,
+                                    'relativating range with endLine 0 should change end column');
   });
 
   describe('containsLocation', () => {
@@ -387,8 +383,8 @@ describe('TextRange', () => {
           TextUtils.TextRange.TextRange.fromObject({startLine: 3, startColumn: 5, endLine: 6, endColumn: 8});
       const rebasedTextRange = textRangeToRebase.rebaseAfterTextEdit(originalRange, editedRange);
       const expectedRange = {startLine: 7, startColumn: 9, endLine: 10, endColumn: 8};
-      assertIsTextRangeAndEqualsRange(
-          rebasedTextRange, expectedRange, 'range’s lines and start column should have been shifted back');
+      assertIsTextRangeAndEqualsRange(rebasedTextRange, expectedRange,
+                                      'range’s lines and start column should have been shifted back');
     });
 
     it('can rebase a range if its rebased range starts and ends at the end of the edited range', () => {
@@ -396,8 +392,8 @@ describe('TextRange', () => {
           TextUtils.TextRange.TextRange.fromObject({startLine: 3, startColumn: 5, endLine: 3, endColumn: 8});
       const rebasedTextRange = textRangeToRebase.rebaseAfterTextEdit(originalRange, editedRange);
       const expectedRange = {startLine: 7, startColumn: 9, endLine: 7, endColumn: 12};
-      assertIsTextRangeAndEqualsRange(
-          rebasedTextRange, expectedRange, 'range’s lines and columns should have been shifted back');
+      assertIsTextRangeAndEqualsRange(rebasedTextRange, expectedRange,
+                                      'range’s lines and columns should have been shifted back');
     });
   });
 

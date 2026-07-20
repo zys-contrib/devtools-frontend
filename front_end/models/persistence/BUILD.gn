@@ -28,11 +28,11 @@ devtools_module("persistence") {
     "../../core/platform:bundle",
     "../../core/root:bundle",
     "../../core/sdk:bundle",
+    "../../core/text_utils:bundle",
     "../../generated",
     "../../models/bindings:bundle",
     "../../models/breakpoints:bundle",
     "../../models/project_settings:bundle",
-    "../../models/text_utils:bundle",
     "../../models/workspace:bundle",
   ]
 }

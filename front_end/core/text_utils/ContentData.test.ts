@@ -140,9 +140,9 @@ describe('ContentData', () => {
     assert.isTrue(deferredBinaryData.isEncoded);
     assert.strictEqual(deferredBinaryData.content, 'AQIDBA==');
 
-    const binaryTextData = new ContentData(
-        'PCFET0NUWVBFIGh0bWw+CjxwPknDsXTDq3Juw6J0acO0bsOgbGl6w6Z0acO4buKYg/CdjIY8L3A+Cg==', true, MimeType.HTML,
-        'utf-8');
+    const binaryTextData =
+        new ContentData('PCFET0NUWVBFIGh0bWw+CjxwPknDsXTDq3Juw6J0acO0bsOgbGl6w6Z0acO4buKYg/CdjIY8L3A+Cg==', true,
+                        MimeType.HTML, 'utf-8');
     const deferredBinaryTextData = binaryTextData.asDeferedContent();
 
     assert.isFalse(deferredBinaryTextData.isEncoded);

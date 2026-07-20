@@ -1,4 +1,4 @@
-# Copyright 2020 The Chromium Authors
+# Copyright 2020 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -7,35 +7,15 @@ import("../../../scripts/build/ninja/devtools_module.gni")
 import("../../../scripts/build/typescript/typescript.gni")
 import("../visibility.gni")
 
-devtools_foundation_module("text_utils") {
-  sources = [
-    "CodeMirrorUtils.ts",
-    "ContentData.ts",
-    "ContentProvider.ts",
-    "StaticContentProvider.ts",
-    "StreamingContentData.ts",
-    "Text.ts",
-    "TextCursor.ts",
-    "TextRange.ts",
-    "TextUtils.ts",
-    "WasmDisassembly.ts",
-  ]
-
-  deps = [
-    "../../core/common:bundle",
-    "../../core/platform:bundle",
-    "../../third_party/codemirror.next:bundle",
-  ]
-}
-
 devtools_entrypoint("bundle") {
   entrypoint = "text_utils.ts"
 
-  deps = [ ":text_utils" ]
+  deps = [ "../../core/text_utils:bundle" ]
 
   visibility = [
     ":*",
     "../*",
+    "../../:*",
     "../../core/sdk/*",
     "../../entrypoints/*",
     "../../legacy_test_runner/test_runner/*",
@@ -50,26 +30,4 @@ devtools_entrypoint("bundle") {
   ]
 
   visibility += devtools_models_visibility
-}
-
-devtools_foundation_module("unittests") {
-  testonly = true
-
-  sources = [
-    "ContentData.test.ts",
-    "StaticContentProvider.test.ts",
-    "StreamingContentData.test.ts",
-    "Text.test.ts",
-    "TextCursor.test.ts",
-    "TextRange.test.ts",
-    "TextUtils.test.ts",
-    "WasmDisassembly.test.ts",
-  ]
-
-  deps = [
-    ":bundle",
-    "../../core/common:bundle",
-    "../../core/platform:bundle",
-    "../../testing",
-  ]
 }

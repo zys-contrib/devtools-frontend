@@ -15,11 +15,11 @@ devtools_module("breakpoints") {
     "../../core/platform:bundle",
     "../../core/root:bundle",
     "../../core/sdk:bundle",
+    "../../core/text_utils:bundle",
     "../../generated",
     "../bindings:bundle",
     "../formatter:bundle",
     "../source_map_scopes:bundle",
-    "../text_utils:bundle",
     "../workspace:bundle",
   ]
 }
@@ -60,11 +60,11 @@ ts_library("unittests") {
     "../../core/platform:bundle",
     "../../core/root:bundle",
     "../../core/sdk:bundle",
+    "../../core/text_utils:bundle",
     "../../generated",
     "../../testing",
     "../bindings:bundle",
     "../persistence:bundle",
-    "../text_utils:bundle",
     "../workspace:bundle",
   ]
 }

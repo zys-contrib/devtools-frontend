@@ -10,6 +10,7 @@ import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
+import * as TextUtils from '../../core/text_utils/text_utils.js';
 import * as Protocol from '../../generated/protocol.js';
 import {describeWithEnvironment, expectConsoleLogs} from '../../testing/EnvironmentHelpers.js';
 import {TestPlugin} from '../../testing/LanguagePluginHelpers.js';
@@ -25,7 +26,6 @@ import {
 import type * as Bindings from '../bindings/bindings.js';
 import * as Breakpoints from '../breakpoints/breakpoints.js';
 import * as Persistence from '../persistence/persistence.js';
-import * as TextUtils from '../text_utils/text_utils.js';
 import * as Workspace from '../workspace/workspace.js';
 
 const {urlString} = Platform.DevToolsPath;

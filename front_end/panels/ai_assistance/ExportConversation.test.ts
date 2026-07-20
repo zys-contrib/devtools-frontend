@@ -5,8 +5,8 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
+import type * as TextUtils from '../../core/text_utils/text_utils.js';
 import * as AiAssistanceModel from '../../models/ai_assistance/ai_assistance.js';
-import type * as TextUtils from '../../models/text_utils/text_utils.js';
 import {mockAidaClient} from '../../testing/AiAssistanceHelpers.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {stubFileManager} from '../../testing/FileManagerHelpers.js';

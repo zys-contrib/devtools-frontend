@@ -6,8 +6,8 @@ import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import type * as Platform from '../../core/platform/platform.js';
 import * as Root from '../../core/root/root.js';
-import type {ContentDataOrError} from '../text_utils/ContentData.js';
-import type {SearchMatch} from '../text_utils/ContentProvider.js';
+import type {ContentDataOrError} from '../../core/text_utils/ContentData.js';
+import type {SearchMatch} from '../../core/text_utils/ContentProvider.js';
 import * as Workspace from '../workspace/workspace.js';
 
 import {

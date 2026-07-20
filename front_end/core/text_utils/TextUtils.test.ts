@@ -17,14 +17,13 @@ interface SplitByRegexTestCase {
   expected: SplitByRegexExpected;
 }
 
-function assertResults(
-    results: Array<{
-      value: string,
-      position: number,
-      regexIndex: number,
-      captureGroups: Array<string|undefined>,
-    }>,
-    expected: Array<[string, number, number]>) {
+function assertResults(results: Array<{
+                         value: string,
+                         position: number,
+                         regexIndex: number,
+                         captureGroups: Array<string|undefined>,
+                       }>,
+                       expected: Array<[string, number, number]>) {
   if (results.length !== expected.length) {
     throw new Error('error they should match');
   }
@@ -561,8 +560,8 @@ describe('TextUtils', () => {
         for (let i = 0; i < jsonString.length; i += sample) {
           const result = tokenizer.write(jsonString.substring(i, i + sample));
           const expectedResult = (i + sample < jsonString.length);
-          assert.strictEqual(
-              !!result, expectedResult, `tokenizer.write() returned ${result}, ${expectedResult} expected`);
+          assert.strictEqual(!!result, expectedResult,
+                             `tokenizer.write() returned ${result}, ${expectedResult} expected`);
         }
       }
       snapshotTester.assert(this, results.join('\n'));
@@ -654,8 +653,7 @@ for(let e=0;e<l.lineCount();++e){const t=l.lineAt(e);s.lastIndex=0;const i=s.exe
     it('correctly detects tab indentation', () => {
       assert.strictEqual(detectIndentation(['\ta', '\t\tb', 'c', 'd', '\t\t\tf']), '\t');
       assert.strictEqual(detectIndentation(['hello():', '\tworld();', '\treturn;']), '\t');
-      assert.strictEqual(
-          detectIndentation(`/**
+      assert.strictEqual(detectIndentation(`/**
  * Heuristic to check whether a given text was likely minified. Intended to
  * be used for HTML, CSS, and JavaScript inputs.
  *
@@ -676,12 +674,11 @@ function isMinified(text) {
 \t}
 \treturn (text.length - lineCount) / lineCount >= 80;
 }`.split('\n')),
-          '\t');
+                         '\t');
     });
 
     it('correctly detects 1-space indentation', () => {
-      assert.strictEqual(
-          detectIndentation(`/**
+      assert.strictEqual(detectIndentation(`/**
  * Heuristic to check whether a given text was likely minified. Intended to
  * be used for HTML, CSS, and JavaScript inputs.
  *
@@ -702,12 +699,11 @@ function isMinified(text) {
  }
  return (text.length - lineCount) / lineCount >= 80;
 }`.split('\n')),
-          ' ');
+                         ' ');
     });
 
     it('correctly detects 2-space indentation', () => {
-      assert.strictEqual(
-          detectIndentation(`/**
+      assert.strictEqual(detectIndentation(`/**
  * Heuristic to check whether a given text was likely minified. Intended to
  * be used for HTML, CSS, and JavaScript inputs.
  *
@@ -728,13 +724,12 @@ function isMinified(text) {
   }
   return (text.length - lineCount) / lineCount >= 80;
 }`.split('\n')),
-          '  ');
+                         '  ');
     });
 
     it('correctly detects 4-space indentation', () => {
       assert.strictEqual(detectIndentation(['hello():', '    world();', '    return;']), '    ');
-      assert.strictEqual(
-          detectIndentation(`/**
+      assert.strictEqual(detectIndentation(`/**
  * Heuristic to check whether a given text was likely minified. Intended to
  * be used for HTML, CSS, and JavaScript inputs.
  *
@@ -755,12 +750,11 @@ function isMinified(text) {
     }
     return (text.length - lineCount) / lineCount >= 80;
 }`.split('\n')),
-          '    ');
+                         '    ');
 
       // Below is the problematic example explicitly called out
       // in go/chrome-devtools:indentation-markers-proposal
-      assert.strictEqual(
-          detectIndentation(`import { HOOK_PLUGIN_SETTINGS_SET } from './const.js';
+      assert.strictEqual(detectIndentation(`import { HOOK_PLUGIN_SETTINGS_SET } from './const.js';
 import { now } from './time.js';
 export class ApiProxy {
     constructor(plugin, hook) {
@@ -858,7 +852,7 @@ export class ApiProxy {
         });
     }
 }`.split('\n')),
-          '    ');
+                         '    ');
     });
   });
 

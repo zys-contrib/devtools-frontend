@@ -3,8 +3,8 @@
 // found in the LICENSE file.
 
 import * as Protocol from '../../generated/protocol.js';
-import * as TextUtils from '../../models/text_utils/text_utils.js';
 import * as Platform from '../platform/platform.js';
+import * as TextUtils from '../text_utils/text_utils.js';
 
 import {CSSContainerQuery} from './CSSContainerQuery.js';
 import {CSSLayer} from './CSSLayer.js';

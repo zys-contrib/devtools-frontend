@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import * as TextUtils from '../../models/text_utils/text_utils.js';
 import type * as Common from '../common/common.js';
 import * as i18n from '../i18n/i18n.js';
 import type * as Platform from '../platform/platform.js';
+import * as TextUtils from '../text_utils/text_utils.js';
 
 import type {PageResourceLoader, PageResourceLoadInitiator} from './PageResourceLoader.js';
 

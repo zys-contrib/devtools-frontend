@@ -86,8 +86,7 @@ export class StreamingContentData extends Common.ObjectWrapper.ObjectWrapper<Eve
 export type StreamingContentDataOrError = StreamingContentData|{error: string};
 
 export const isError = function(contentDataOrError: StreamingContentDataOrError): contentDataOrError is {
-error:
-  string,
+  error: string,
 } {
   return 'error' in contentDataOrError;
 };

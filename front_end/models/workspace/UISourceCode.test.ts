@@ -6,8 +6,8 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 
 import type * as Platform from '../../core/platform/platform.js';
+import * as TextUtils from '../../core/text_utils/text_utils.js';
 import {setupMockedUISourceCode} from '../../testing/UISourceCodeHelpers.js';
-import * as TextUtils from '../text_utils/text_utils.js';
 
 import * as Workspace from './workspace.js';
 

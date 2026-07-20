@@ -8,6 +8,7 @@ import sinon from 'sinon';
 import * as Common from '../../../core/common/common.js';
 import * as Host from '../../../core/host/host.js';
 import * as SDK from '../../../core/sdk/sdk.js';
+import * as TextUtils from '../../../core/text_utils/text_utils.js';
 import type * as Protocol from '../../../generated/protocol.js';
 import * as Tracing from '../../../services/tracing/tracing.js';
 import {createNetworkRequest, mockAidaClient} from '../../../testing/AiAssistanceHelpers.js';
@@ -27,7 +28,6 @@ import {TraceLoader} from '../../../testing/TraceLoader.js';
 import * as Bindings from '../../bindings/bindings.js';
 import * as Logs from '../../logs/logs.js';
 import type * as SourceMapScopes from '../../source_map_scopes/source_map_scopes.js';
-import * as TextUtils from '../../text_utils/text_utils.js';
 import * as Trace from '../../trace/trace.js';
 import {
   AiAgent,

@@ -8,8 +8,8 @@ import sinon from 'sinon';
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as SDK from '../../core/sdk/sdk.js';
+import * as TextUtils from '../../core/text_utils/text_utils.js';
 import * as AiCodeCompletion from '../../models/ai_code_completion/ai_code_completion.js';
-import * as TextUtils from '../../models/text_utils/text_utils.js';
 import {createTarget, describeWithEnvironment, updateHostConfig} from '../../testing/EnvironmentHelpers.js';
 import * as TextEditor from '../../ui/components/text_editor/text_editor.js';
 

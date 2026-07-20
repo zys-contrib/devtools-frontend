@@ -14,17 +14,15 @@ export class StaticContentProvider implements ContentProvider {
   readonly #contentType: Common.ResourceType.ResourceType;
   readonly #lazyContent: () => Promise<ContentDataOrError>;
 
-  constructor(
-      contentURL: Platform.DevToolsPath.UrlString, contentType: Common.ResourceType.ResourceType,
-      lazyContent: () => Promise<ContentDataOrError>) {
+  constructor(contentURL: Platform.DevToolsPath.UrlString, contentType: Common.ResourceType.ResourceType,
+              lazyContent: () => Promise<ContentDataOrError>) {
     this.#contentURL = contentURL;
     this.#contentType = contentType;
     this.#lazyContent = lazyContent;
   }
 
-  static fromString(
-      contentURL: Platform.DevToolsPath.UrlString, contentType: Common.ResourceType.ResourceType,
-      content: string): StaticContentProvider {
+  static fromString(contentURL: Platform.DevToolsPath.UrlString, contentType: Common.ResourceType.ResourceType,
+                    content: string): StaticContentProvider {
     const lazyContent = (): Promise<ContentData> =>
         Promise.resolve(new ContentData(content, /* isBase64 */ false, contentType.canonicalMimeType()));
     return new StaticContentProvider(contentURL, contentType, lazyContent);

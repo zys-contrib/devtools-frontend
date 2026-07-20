@@ -17,9 +17,8 @@ export interface ContentProvider {
 }
 
 export class SearchMatch {
-  constructor(
-      readonly lineNumber: number, readonly lineContent: string, readonly columnNumber: number,
-      readonly matchLength: number) {
+  constructor(readonly lineNumber: number, readonly lineContent: string, readonly columnNumber: number,
+              readonly matchLength: number) {
   }
 
   static comparator(a: SearchMatch, b: SearchMatch): number {
@@ -27,9 +26,8 @@ export class SearchMatch {
   }
 }
 
-export const contentAsDataURL = function(
-    content: string|null, mimeType: string, contentEncoded: boolean, charset?: string|null,
-    limitSize = true): string|null {
+export const contentAsDataURL = function(content: string|null, mimeType: string, contentEncoded: boolean,
+                                         charset?: string|null, limitSize = true): string|null {
   const maxDataUrlSize = 1024 * 1024;
   if (content === undefined || content === null || (limitSize && content.length > maxDataUrlSize)) {
     return null;

@@ -9,9 +9,9 @@ import * as Common from '../../../core/common/common.js';
 import * as Host from '../../../core/host/host.js';
 import type * as Platform from '../../../core/platform/platform.js';
 import * as SDK from '../../../core/sdk/sdk.js';
+import * as TextUtils from '../../../core/text_utils/text_utils.js';
 import type * as Protocol from '../../../generated/protocol.js';
 import * as AIAssistanceModel from '../../../models/ai_assistance/ai_assistance.js';
-import * as TextUtils from '../../../models/text_utils/text_utils.js';
 import type * as Workspace from '../../../models/workspace/workspace.js';
 import {
   assertScreenshot,

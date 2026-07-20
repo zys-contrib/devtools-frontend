@@ -10,8 +10,8 @@ describe('StreamingContentData', () => {
   it('notifies listeners when new chunks are added', () => {
     const streamingContentData = TextUtils.StreamingContentData.StreamingContentData.create('text/plain', 'utf-8');
     const events: Array<{content: TextUtils.StreamingContentData.StreamingContentData, chunk: string}> = [];
-    streamingContentData.addEventListener(
-        TextUtils.StreamingContentData.Events.CHUNK_ADDED, ({data}) => events.push(data));
+    streamingContentData.addEventListener(TextUtils.StreamingContentData.Events.CHUNK_ADDED,
+                                          ({data}) => events.push(data));
 
     streamingContentData.addChunk('Zm9v');
     assert.lengthOf(events, 1);

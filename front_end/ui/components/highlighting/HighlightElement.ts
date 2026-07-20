@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 /* eslint-disable @devtools/enforce-custom-element-definitions-location */
 
-import * as TextUtils from '../../../models/text_utils/text_utils.js';
+import * as TextUtils from '../../../core/text_utils/text_utils.js';
 
 import {HighlightManager} from './HighlightManager.js';
 import {type HighlightChange, highlightRangesWithStyleClass, revertDomChanges} from './MarkupHighlight.js';

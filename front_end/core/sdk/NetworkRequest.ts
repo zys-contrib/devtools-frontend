@@ -3,10 +3,10 @@
 // found in the LICENSE file.
 
 import * as Protocol from '../../generated/protocol.js';
-import * as TextUtils from '../../models/text_utils/text_utils.js';
 import * as Common from '../common/common.js';
 import * as i18n from '../i18n/i18n.js';
 import * as Platform from '../platform/platform.js';
+import * as TextUtils from '../text_utils/text_utils.js';
 
 import {Attribute, type Cookie} from './Cookie.js';
 import {CookieModel} from './CookieModel.js';

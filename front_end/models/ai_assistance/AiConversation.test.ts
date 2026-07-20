@@ -9,8 +9,8 @@ import * as Common from '../../core/common/common.js';
 import type * as Host from '../../core/host/host.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
+import * as TextUtils from '../../core/text_utils/text_utils.js';
 import type * as Protocol from '../../generated/protocol.js';
-import * as TextUtils from '../../models/text_utils/text_utils.js';
 import {createNetworkRequest, mockAidaClient} from '../../testing/AiAssistanceHelpers.js';
 import {
   deinitializeGlobalVars,

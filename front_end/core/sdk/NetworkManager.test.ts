@@ -8,7 +8,6 @@ import sinon from 'sinon';
 import * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as Persistence from '../../models/persistence/persistence.js';
-import * as TextUtils from '../../models/text_utils/text_utils.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
@@ -17,6 +16,7 @@ import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
 import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as Common from '../common/common.js';
 import * as Platform from '../platform/platform.js';
+import * as TextUtils from '../text_utils/text_utils.js';
 
 import * as SDK from './sdk.js';
 

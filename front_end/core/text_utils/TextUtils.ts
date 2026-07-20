@@ -310,8 +310,8 @@ export const isMinified = function(text: string): boolean {
  *
  * @returns empty search matches if `contentData` is an error or not text content.
  */
-export const performSearchInContentData = function(
-    contentData: ContentDataOrError, query: string, caseSensitive: boolean, isRegex: boolean): SearchMatch[] {
+export const performSearchInContentData = function(contentData: ContentDataOrError, query: string,
+                                                   caseSensitive: boolean, isRegex: boolean): SearchMatch[] {
   if (ContentData.isError(contentData) || !contentData.isTextContent) {
     return [];
   }
@@ -322,8 +322,8 @@ export const performSearchInContentData = function(
  * @returns One {@link SearchMatch} per match. Multiple matches on the same line each
  * result in their own `SearchMatchExact` instance.
  */
-export const performSearchInContent = function(
-    text: Text, query: string, caseSensitive: boolean, isRegex: boolean): SearchMatch[] {
+export const performSearchInContent = function(text: Text, query: string, caseSensitive: boolean,
+                                               isRegex: boolean): SearchMatch[] {
   const regex = Platform.StringUtilities.createSearchRegex(query, caseSensitive, isRegex);
 
   const result = [];
@@ -343,9 +343,9 @@ export const performSearchInContent = function(
  * @param matches is deliberatedly typed as an object literal so we can pass the
  *                CDP search result type.
  */
-export const performSearchInSearchMatches = function(
-    matches: Array<{lineNumber: number, lineContent: string}>, query: string, caseSensitive: boolean,
-    isRegex: boolean): SearchMatch[] {
+export const performSearchInSearchMatches = function(matches: Array<{lineNumber: number, lineContent: string}>,
+                                                     query: string, caseSensitive: boolean,
+                                                     isRegex: boolean): SearchMatch[] {
   const regex = Platform.StringUtilities.createSearchRegex(query, caseSensitive, isRegex);
   const result = [];
 

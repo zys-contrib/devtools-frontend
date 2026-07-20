@@ -5,8 +5,8 @@
 import * as Platform from '../../core/platform/platform.js';
 import * as ProtocolClient from '../../core/protocol_client/protocol_client.js';
 import * as SDK from '../../core/sdk/sdk.js';
+import * as TextUtils from '../../core/text_utils/text_utils.js';
 import * as Bindings from '../../models/bindings/bindings.js';
-import * as TextUtils from '../../models/text_utils/text_utils.js';
 import {TestRunner} from '../test_runner/test_runner.js';
 
 /**

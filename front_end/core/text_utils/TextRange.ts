@@ -26,9 +26,8 @@ export class TextRange {
   }
 
   static fromObject(serializedTextRange: SerializedTextRange): TextRange {
-    return new TextRange(
-        serializedTextRange.startLine, serializedTextRange.startColumn, serializedTextRange.endLine,
-        serializedTextRange.endColumn);
+    return new TextRange(serializedTextRange.startLine, serializedTextRange.startColumn, serializedTextRange.endLine,
+                         serializedTextRange.endColumn);
   }
 
   static comparator(range1: TextRange, range2: TextRange): number {

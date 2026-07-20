@@ -4,7 +4,7 @@
 /* eslint-disable @devtools/no-imperative-dom-api */
 
 import type * as Platform from '../../../../core/platform/platform.js';
-import type * as TextUtils from '../../../../models/text_utils/text_utils.js';
+import type * as TextUtils from '../../../../core/text_utils/text_utils.js';
 import * as Lit from '../../../lit/lit.js';
 import * as UI from '../../legacy.js';
 
