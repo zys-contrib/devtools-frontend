@@ -210,7 +210,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   #selectedNode: ProfileDataGridNode|null = null;
 
   readonly linkifierInternal: Components.Linkifier.Linkifier = new Components.Linkifier.Linkifier(maxLinkLength);
-  nodeFormatter!: Formatter;
+  nodeFormatter!: NodeFormatter;
   viewType!: Common.Settings.Setting<ViewTypes>;
   bottomUpProfileDataGridTree?: BottomUpProfileDataGridTree|null;
   topDownProfileDataGridTree?: TopDownProfileDataGridTree|null;
@@ -344,16 +344,16 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
       <tr data-uid=${node.callUID} ?selected=${this.#selectedNode === node} ?expanded=${node.expanded} @select=${onSelect}
           @contextmenu=${onContextMenu} @expand=${onExpand} @collapse=${onCollapse}>
         <td data-value=${node.self} class="numeric-column ${node.searchMatchedSelfColumn ? 'highlight' : ''}"
-            aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.self, node)}, ${this.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
+            aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.self)}, ${this.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
           <div class="profile-multiple-values">
-            <span>${this.nodeFormatter.formatValue(node.self, node)}</span>
+            <span>${this.nodeFormatter.formatValue(node.self)}</span>
             <span class="percent-column">${this.nodeFormatter.formatPercent(node.selfPercent, node)}</span>
           </div>
         </td>
         <td data-value=${node.total} class="numeric-column ${node.searchMatchedTotalColumn ? 'highlight' : ''}"
-            aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.total, node)}, ${this.nodeFormatter.formatPercent(node.totalPercent, node)}`}>
+            aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.total)}, ${this.nodeFormatter.formatPercent(node.totalPercent, node)}`}>
           <div class="profile-multiple-values">
-            <span>${this.nodeFormatter.formatValue(node.total, node)}</span>
+            <span>${this.nodeFormatter.formatValue(node.total)}</span>
             <span class="percent-column">${this.nodeFormatter.formatPercent(node.totalPercent, node)}</span>
           </div>
         </td>
@@ -525,7 +525,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     return this.profileInternal;
   }
 
-  initialize(nodeFormatter: Formatter): void {
+  initialize(nodeFormatter: NodeFormatter): void {
     this.nodeFormatter = nodeFormatter;
 
     this.viewType = Common.Settings.Settings.instance().createSetting('profile-view', ViewTypes.HEAVY);
