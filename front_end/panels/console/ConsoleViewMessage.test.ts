@@ -215,6 +215,41 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       assert.exists(propertiesSectionElement);
       assert.include(propertiesSectionElement.textContent, 'HTMLDocument');
     });
+
+    it('formats an object which throws on string conversion without crashing', () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      assert.exists(runtimeModel);
+      const remoteObject = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        className: 'Object',
+        description: 'Object',
+        objectId: '1' as Protocol.Runtime.RemoteObjectId,
+        preview: {
+          type: Protocol.Runtime.ObjectPreviewType.Object,
+          description: 'Object',
+          overflow: false,
+          properties: [
+            {
+              name: 'toString',
+              type: Protocol.Runtime.PropertyPreviewType.Object,
+              value: 'Object',
+            },
+          ],
+        },
+      });
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, Protocol.Log.LogEntryLevel.Info, '', {
+            type: Protocol.Runtime.ConsoleAPICalledEventType.Log,
+            parameters: [remoteObject],
+          });
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      const propertiesSectionElement = messageElement.querySelector('.console-view-object-properties-section');
+      assert.exists(propertiesSectionElement);
+      assert.include(propertiesSectionElement.textContent, 'toString');
+    });
   });
   describe('console insights', () => {
     const createMessage =
