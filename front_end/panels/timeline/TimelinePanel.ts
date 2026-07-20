@@ -663,24 +663,6 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
 
     SDK.TargetManager.TargetManager.instance().addEventListener(
         SDK.TargetManager.Events.SUSPEND_STATE_CHANGED, this.onSuspendStateChanged, this);
-    const profilerModels = SDK.TargetManager.TargetManager.instance().models(SDK.CPUProfilerModel.CPUProfilerModel);
-    for (const model of profilerModels) {
-      for (const message of model.registeredConsoleProfileMessages) {
-        this.consoleProfileFinished(message);
-      }
-    }
-    SDK.TargetManager.TargetManager.instance().observeModels(
-        SDK.CPUProfilerModel.CPUProfilerModel,
-        {
-          modelAdded: (model: SDK.CPUProfilerModel.CPUProfilerModel) => {
-            model.addEventListener(
-                SDK.CPUProfilerModel.Events.CONSOLE_PROFILE_FINISHED, event => this.consoleProfileFinished(event.data));
-          },
-          modelRemoved: (_model: SDK.CPUProfilerModel.CPUProfilerModel) => {
-
-          },
-        },
-    );
   }
 
   zoomEvent(event: Trace.Types.Events.Event): void {
@@ -1031,7 +1013,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
     this.#minimapComponent.highlightBounds(bounds, /* withBracket */ false);
   }
 
-  private loadFromCpuProfile(profile: Protocol.Profiler.Profile|null): void {
+  loadFromCpuProfile(profile: Protocol.Profiler.Profile|null): void {
     if (this.state !== State.IDLE || profile === null) {
       return;
     }
@@ -2008,11 +1990,6 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
 
   private onSuspendStateChanged(): void {
     this.updateTimelineControls();
-  }
-
-  private consoleProfileFinished(data: SDK.CPUProfilerModel.ProfileFinishedData): void {
-    this.loadFromCpuProfile(data.cpuProfile);
-    void UI.InspectorView.InspectorView.instance().showPanel('timeline');
   }
 
   private updateTimelineControls(): void {
@@ -3183,6 +3160,13 @@ export class BottomUpProfileRevealer implements Common.Revealer.Revealer<Utils.H
         revealable.bounds, {ignoreMiniMapBounds: true, shouldAnimate: true});
     panel.select(null);
     panel.getFlameChart().selectDetailsViewTab(Tab.BottomUp, revealable.node ?? null);
+  }
+}
+
+export class ProfileFinishedRevealer implements Common.Revealer.Revealer<SDK.CPUProfilerModel.ProfileFinishedData> {
+  async reveal(data: SDK.CPUProfilerModel.ProfileFinishedData): Promise<void> {
+    await UI.ViewManager.ViewManager.instance().showView('timeline');
+    TimelinePanel.instance().loadFromCpuProfile(data.cpuProfile);
   }
 }
 

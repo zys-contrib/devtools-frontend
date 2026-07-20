@@ -98,13 +98,13 @@ describe('TimelinePanel', function() {
     // the flamechart data.
     const extensionTracksInFlamechartBeforeDisabling =
         tracksBeforeDisablingSetting
-            .filter(
-                track => track.jslogContext === Timeline.CompatibilityTracksAppender.VisualLoggingTrackName.EXTENSION)
+            .filter(track =>
+                        track.jslogContext === Timeline.CompatibilityTracksAppender.VisualLoggingTrackName.EXTENSION)
             .map(track => track.name.split(' — Custom track')[0]);
     const nonExtensionTrackNames =
         tracksBeforeDisablingSetting
-            .filter(
-                track => track.jslogContext !== Timeline.CompatibilityTracksAppender.VisualLoggingTrackName.EXTENSION)
+            .filter(track =>
+                        track.jslogContext !== Timeline.CompatibilityTracksAppender.VisualLoggingTrackName.EXTENSION)
             .map(track => track.name);
 
     assert.includeMembers(extensionTracksInFlamechartBeforeDisabling, extensionTrackInTraceNames.map(track => track));
@@ -182,14 +182,12 @@ describe('TimelinePanel', function() {
        assert.isOk(modificationsManager);
        const ariaAlertStub = sinon.spy(UI.ARIAUtils.LiveAnnouncer, 'alert');
        // Add an annotation
-       modificationsManager.createAnnotation(
-           {
-             bounds:
-                 Trace.Helpers.Timing.traceWindowFromMicroSeconds(data.Meta.traceBounds.min, data.Meta.traceBounds.max),
-             type: 'TIME_RANGE',
-             label: '',
-           },
-           {loadedFromFile: false, muteAriaNotifications: false});
+       modificationsManager.createAnnotation({
+         bounds: Trace.Helpers.Timing.traceWindowFromMicroSeconds(data.Meta.traceBounds.min, data.Meta.traceBounds.max),
+         type: 'TIME_RANGE',
+         label: '',
+       },
+                                             {loadedFromFile: false, muteAriaNotifications: false});
 
        sinon.assert.calledOnceWithExactly(ariaAlertStub, 'The time range annotation has been added');
 
@@ -214,8 +212,8 @@ describe('TimelinePanel', function() {
     const context = UI.Context.Context.instance();
 
     const mockParsedTrace = {insights: new Map()} as Trace.TraceModel.ParsedTrace;
-    context.setFlavor(
-        AIAssistance.AIContext.AgentFocus, AIAssistance.AIContext.AgentFocus.fromParsedTrace(mockParsedTrace));
+    context.setFlavor(AIAssistance.AIContext.AgentFocus,
+                      AIAssistance.AIContext.AgentFocus.fromParsedTrace(mockParsedTrace));
 
     const clearButton = timeline.element.querySelector('[aria-label="Clear"]');
     assert.isOk(clearButton);
@@ -462,14 +460,13 @@ describe('TimelinePanel', function() {
         const modificationsManager = Timeline.ModificationsManager.ModificationsManager.activeManager();
         assert.isOk(modificationsManager);
 
-        modificationsManager.createAnnotation(
-            {
-              bounds: Trace.Helpers.Timing.traceWindowFromMicroSeconds(
-                  Trace.Types.Timing.Micro(1), Trace.Types.Timing.Micro(2)),
-              type: 'TIME_RANGE',
-              label: 'Test Annotation',
-            },
-            {loadedFromFile: false, muteAriaNotifications: false});
+        modificationsManager.createAnnotation({
+          bounds: Trace.Helpers.Timing.traceWindowFromMicroSeconds(Trace.Types.Timing.Micro(1),
+                                                                   Trace.Types.Timing.Micro(2)),
+          type: 'TIME_RANGE',
+          label: 'Test Annotation',
+        },
+                                              {loadedFromFile: false, muteAriaNotifications: false});
 
         await timeline.saveToFile({
           includeResourceContent: false,

@@ -488,6 +488,7 @@ export class MainImpl {
         () => Snackbar.Snackbar.Snackbar.show({message: i18nString(UIStrings.aiModelDownloaded)}));
 
     new PauseListener();
+    new ConsoleProfileFinishedListener();
 
     const actionRegistryInstance = UI.ActionRegistry.ActionRegistry.instance({forceNew: true});
     // Required for legacy a11y layout tests
@@ -958,6 +959,18 @@ export class PauseListener {
     const debuggerPausedDetails = debuggerModel.debuggerPausedDetails();
     UI.Context.Context.instance().setFlavor(SDK.Target.Target, debuggerModel.target());
     void Common.Revealer.reveal(debuggerPausedDetails);
+  }
+}
+
+export class ConsoleProfileFinishedListener {
+  constructor() {
+    SDK.TargetManager.TargetManager.instance().addModelListener(SDK.CPUProfilerModel.CPUProfilerModel,
+                                                                SDK.CPUProfilerModel.Events.CONSOLE_PROFILE_FINISHED,
+                                                                this.#consoleProfileFinished, this);
+  }
+
+  #consoleProfileFinished(event: Common.EventTarget.EventTargetEvent<SDK.CPUProfilerModel.ProfileFinishedData>): void {
+    void Common.Revealer.reveal(event.data);
   }
 }
 

@@ -456,3 +456,16 @@ Common.Revealer.registerRevealer({
     return new Timeline.TimelinePanel.BottomUpProfileRevealer();
   },
 });
+
+Common.Revealer.registerRevealer({
+  contextTypes() {
+    return [
+      SDK.CPUProfilerModel.ProfileFinishedData,
+    ];
+  },
+  destination: Common.Revealer.RevealerDestination.TIMELINE_PANEL,
+  async loadRevealer() {
+    const Timeline = await loadTimelineModule();
+    return new Timeline.TimelinePanel.ProfileFinishedRevealer();
+  },
+});
