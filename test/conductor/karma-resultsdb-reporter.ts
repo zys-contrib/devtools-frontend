@@ -38,6 +38,10 @@ export const ResultsDBReporter = function(
     capturedLog.push({log, type});
   };
 
+  this.onBrowserError = (_browser: any, error: string) => {
+    this.write(`==== FATAL ERROR ====\n${error}\n=====================\n`);
+  };
+
   const specComplete = (_browser: any, result: any) => {
     if (result.mocha?.hasExclusiveTests) {
       this.hasExclusiveTests = true;

@@ -143,23 +143,6 @@ karma.start = () => {
   duplicateTests(mocha.suite, karma.config.repetitions);
 
   const runner = mocha.run(() => {
-    // Find all tests that were never reported (e.g. because Mocha aborted on a hook failure)
-    const reportUnrunTests = (suite: Mocha.Suite, hasFailedHook: boolean) => {
-      const suiteFailed = hasFailedHook || failedSuites.has(suite);
-      suite.tests.forEach((t: Mocha.Test) => {
-        const testExt = t as TestExt;
-        if (suiteFailed && !reportedTests.has(testExt)) {
-          testExt[errorsSymbol] ??= [];
-          testExt[errorsSymbol].push(`Test skipped due to hook failure`);
-          reportedTests.add(testExt);
-          reportTestResult(testExt);
-        }
-      });
-      suite.suites.forEach(s => reportUnrunTests(s, suiteFailed));
-    };
-    if (runner.suite) {
-      reportUnrunTests(runner.suite, false);
-    }
     karma.complete({coverage: window.__coverage__});
   });
 
@@ -173,17 +156,23 @@ karma.start = () => {
   });
 
   runner.on('fail', (test: TestExt, error: Error) => {
-    let targetTest = test;
-    if (test.type === 'hook') {
-      if (test.parent) {
-        failedSuites.add(test.parent);
-      }
-      targetTest = (test.ctx?.currentTest ?? test) as TestExt;
-      targetTest.state = 'failed';
-      targetTest.type ??= 'test';
+    const isHook = test.type === 'hook';
+    const isGlobalHook = isHook && !test.ctx?.currentTest;
+    const isTestHook = isHook && Boolean(test.ctx?.currentTest);
+
+    if (isHook && test.parent) {
+      failedSuites.add(test.parent);
     }
 
-    const simpleError = test.type === 'hook' ? `(failed in ${test.title})\n${formatError(error)}` : formatError(error);
+    // Resolve the target test block. If the failure originated from a global hook,
+    // there is no current test, so we fall back to the hook itself.
+    const targetTest = (test.ctx?.currentTest ?? test) as TestExt;
+
+    if (isHook) {
+      targetTest.state = 'failed';
+    }
+
+    const simpleError = isHook ? `(failed in ${test.title})\n${formatError(error)}` : formatError(error);
     const assertionError = processAssertionError(error);
 
     targetTest[errorsSymbol] ??= [];
@@ -193,7 +182,13 @@ karma.start = () => {
       targetTest[assertionErrorsSymbol].push(assertionError);
     }
 
-    if (test.type === 'hook' || targetTest[endedSymbol]) {
+    if (isGlobalHook) {
+      karma.error(simpleError);
+    } else if (isTestHook || targetTest[endedSymbol]) {
+      // For beforeEach/afterEach hooks, Mocha may abort execution and fail to emit a 'test end' event.
+      // To prevent the test from hanging in an unreported state, we forcefully report it now.
+      // Additionally, if a test has already officially ended (endedSymbol is true) but fails later
+      // (e.g. due to an unhandled promise rejection), we re-report the updated failure.
       reportedTests.add(targetTest);
       reportTestResult(targetTest);
     }

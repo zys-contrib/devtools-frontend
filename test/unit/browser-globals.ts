@@ -25,6 +25,7 @@ export interface Karma {
   info: (info: {total: number}) => void;
   result: (result: unknown) => void;
   complete: (data: {coverage?: unknown}) => void;
+  error: (error: string|Error) => void;
 }
 
 export interface BrowserMocha extends Mocha {

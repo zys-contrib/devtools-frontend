@@ -35,7 +35,11 @@ ts_e2e_library("e2e_fixtures") {
 devtools_foundation_module("unit_fixtures") {
   testonly = true
   sources = [
+    "unit/after_each_hook_fail.test.ts",
+    "unit/before_each_hook_fail.test.ts",
     "unit/duplicate.test.ts",
+    "unit/global_after_hook_fail.test.ts",
+    "unit/global_before_hook_fail.test.ts",
     "unit/hooks.test.ts",
     "unit/unit.test.ts",
   ]

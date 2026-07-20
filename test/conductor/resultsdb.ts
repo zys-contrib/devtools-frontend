@@ -22,7 +22,7 @@ export interface TestResult {
     caseNameComponents: string[],
   };
   expected?: boolean;
-  status?: 'PASS'|'FAIL'|'SKIP';
+  status?: 'PASS'|'FAIL'|'SKIP'|'CRASH'|'ABORT';
   summaryHtml?: string;
   duration?: string;
   tags?: Array<{key: string, value: string}>;

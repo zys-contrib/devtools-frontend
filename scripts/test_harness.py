@@ -88,11 +88,17 @@ class DevToolsTestHarness(unittest.TestCase):
         return os.path.abspath(path_part) + suffix
 
     def run_unit_test(self, test_file):
-        abs_test_file = self._resolve_test_file(test_file)
-        return self.run_test_with_rdb([
+        if isinstance(test_file, str):
+            test_files = [test_file]
+        else:
+            test_files = test_file
+
+        abs_test_files = [self._resolve_test_file(f) for f in test_files]
+        cmd = [
             "node_modules/karma/bin/karma", "start",
-            "out/Default/gen/test/unit/karma.conf.js", "--", abs_test_file
-        ])
+            "out/Default/gen/test/unit/karma.conf.js", "--"
+        ] + abs_test_files
+        return self.run_test_with_rdb(cmd)
 
     def run_e2e_test(self, test_file):
         abs_test_file = self._resolve_test_file(test_file)
@@ -142,20 +148,76 @@ class DevToolsTestHarness(unittest.TestCase):
             "test/harness/unit/hooks.test.ts")
         self.assertEqual(exit_code, 1)
         self.assertEqual(
-            len(results), 4,
-            f"Expected exactly 4 test results, got {len(results)}")
+            len(results), 3,
+            f"Expected exactly 3 test results, got {len(results)}")
         self.assertEqual(results[0].get('testId'),
                          'test/harness/unit/hooks.test.ts:block_1:run_1')
         self.assertEqual(results[0].get('status'), 'FAIL')
         self.assertEqual(results[1].get('testId'),
-                         'test/harness/unit/hooks.test.ts:block_1:run_2')
-        self.assertEqual(results[1].get('status'), 'FAIL')
-        self.assertEqual(results[2].get('testId'),
                          'test/harness/unit/hooks.test.ts:block_2:run_3')
-        self.assertEqual(results[2].get('status'), 'PASS')
-        self.assertEqual(results[3].get('testId'),
+        self.assertEqual(results[1].get('status'), 'PASS')
+        self.assertEqual(results[2].get('testId'),
                          'test/harness/unit/hooks.test.ts:block_2:run_4')
-        self.assertEqual(results[3].get('status'), 'PASS')
+        self.assertEqual(results[2].get('status'), 'PASS')
+
+    def test_unit_global_before_hook(self):
+        results, exit_code = self.run_unit_test(
+            "test/harness/unit/global_before_hook_fail.test.ts")
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            len(results), 0,
+            f"Expected exactly 0 test result, got {len(results)}")
+
+    def test_unit_multiple_files_hook_failure(self):
+        results, exit_code = self.run_unit_test([
+            "test/harness/unit/global_before_hook_fail.test.ts",
+            "test/harness/unit/unit.test.ts"
+        ])
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            len(results), 0,
+            f"Expected exactly 0 test results, got {len(results)}")
+
+    def test_unit_global_after_hook(self):
+        results, exit_code = self.run_unit_test(
+            "test/harness/unit/global_after_hook_fail.test.ts")
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            len(results), 1,
+            f"Expected exactly 1 test result, got {len(results)}")
+        self.assertEqual(
+            results[0].get('testId'),
+            'test/harness/unit/global_after_hook_fail.test.ts:block:run')
+        self.assertEqual(results[0].get('status'), 'PASS')
+
+    def test_unit_after_each_hook(self):
+        results, exit_code = self.run_unit_test(
+            "test/harness/unit/after_each_hook_fail.test.ts")
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            len(results), 2,
+            f"Expected exactly 2 test results, got {len(results)}")
+        results.sort(key=lambda r: r.get('status'))
+        self.assertEqual(
+            results[0].get('testId'),
+            'test/harness/unit/after_each_hook_fail.test.ts:block:run')
+        self.assertEqual(results[0].get('status'), 'FAIL')
+        self.assertEqual(
+            results[1].get('testId'),
+            'test/harness/unit/after_each_hook_fail.test.ts:block:run')
+        self.assertEqual(results[1].get('status'), 'PASS')
+
+    def test_unit_before_each_hook(self):
+        results, exit_code = self.run_unit_test(
+            "test/harness/unit/before_each_hook_fail.test.ts")
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            len(results), 1,
+            f"Expected exactly 1 test result, got {len(results)}")
+        self.assertEqual(
+            results[0].get('testId'),
+            'test/harness/unit/before_each_hook_fail.test.ts:block:run')
+        self.assertEqual(results[0].get('status'), 'FAIL')
 
     def test_unit_ids(self):
         results, exit_code = self.run_unit_test(
