@@ -188,7 +188,7 @@ export class Universe {
     const liveMetrics = new LiveMetrics.LiveMetrics(targetManager, deviceModeModel);
     context.set(LiveMetrics.LiveMetrics, liveMetrics);
 
-    const userBadges = new Badges.UserBadges(settings, gdpClient);
+    const userBadges = new Badges.UserBadges(settings, gdpClient, options.inspectorFrontendHost);
     context.set(Badges.UserBadges, userBadges);
 
     const aiHistoryStorage = new AiAssistance.AiHistoryStorage.AiHistoryStorage(settings);

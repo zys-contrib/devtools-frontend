@@ -417,7 +417,14 @@ export class TestUniverse implements Foundation.Universe.Universe {
 
   get userBadges(): Badges.UserBadges {
     if (!this.#context.has(Badges.UserBadges)) {
-      this.#context.set(Badges.UserBadges, new Badges.UserBadges(this.settings, this.gdpClient));
+      this.#context.set(
+          Badges.UserBadges,
+          new Badges.UserBadges(
+              this.settings,
+              this.gdpClient,
+              this.#creationOptions?.inspectorFrontendHost ?? Host.InspectorFrontendHost.InspectorFrontendHostInstance,
+              ),
+      );
     }
     return this.#context.get(Badges.UserBadges);
   }

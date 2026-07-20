@@ -45,6 +45,7 @@ export class UserBadges extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
 
   readonly #settings: Common.Settings.Settings;
   readonly #gdpClient: Host.GdpClient.GdpClient;
+  readonly #inspectorFrontendHost: Host.InspectorFrontendHostAPI.InspectorFrontendHostAPI;
 
   static readonly BADGE_REGISTRY: BadgeClass[] = [
     StarterBadge,
@@ -57,11 +58,13 @@ export class UserBadges extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
   constructor(
       settings: Common.Settings.Settings,
       gdpClient: Host.GdpClient.GdpClient,
+      inspectorFrontendHost: Host.InspectorFrontendHostAPI.InspectorFrontendHostAPI,
   ) {
     super();
 
     this.#settings = settings;
     this.#gdpClient = gdpClient;
+    this.#inspectorFrontendHost = inspectorFrontendHost;
 
     this.#receiveBadgesSetting = this.#settings.moduleSetting('receive-gdp-badges');
     if (!Host.GdpClient.isBadgesEnabled()) {
@@ -89,6 +92,7 @@ export class UserBadges extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
           new UserBadges(
               Common.Settings.Settings.instance(),
               Host.GdpClient.GdpClient.instance(),
+              Host.InspectorFrontendHost.InspectorFrontendHostInstance,
               ),
       );
     }
@@ -195,7 +199,7 @@ export class UserBadges extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
 
   async #reconcileBadges(): Promise<void> {
     const syncInfo = await new Promise<Host.InspectorFrontendHostAPI.SyncInformation>(
-        resolve => Host.InspectorFrontendHost.InspectorFrontendHostInstance.getSyncInformation(resolve));
+        resolve => this.#inspectorFrontendHost.getSyncInformation(resolve));
     // If the user is not signed in, do not activate any badges.
     if (!syncInfo.accountEmail) {
       this.#deactivateAllBadges();
