@@ -22,7 +22,7 @@ First, create and start two sub-agents simultaneously. One called 'local-repro' 
 
 ### Local reproduction (local-repro)
 
-- Use command: `npm run test -- path/to/foo.test.ts --grep "<test name>" --repeat <count>` to locally run the tests repeatedly. Both E2E and unit tests support this flag. Do not use a `bash` script with a `for` loop.
+- Use command: `npm run test -- --repeat=<count> path/to/foo.test.ts:exact_test_id` to locally run the tests repeatedly. Both E2E and unit tests support this. Use the exact test ID printed in the test runner output (usually the suite and test names with spaces replaced by underscores). Do not use `--grep` or a `bash` script with a `for` loop.
 - First run the test three times to note how long the test runs (on average).
 - Then run the test continuously for 4 minutes, while noting any failures and failure rates. If the failure rate is still 0% after that, assume the problem does not reproduce locally.
 - After the local test run completes, then show the results in a table. For example:
@@ -45,13 +45,13 @@ The second bot should do the following:
 - Add this file (with `git add`) and commit it to the branch created with a timestamp (`git commit -m 'Stressor <HH:MM>: <test name>'`). Ask the user which bug number to use for the changelist description.
 - Upload this change using `git cl upload`.
 - Note the <issue number> created during upload.
-- To start the stressor bot, run this command (substituting `<test file>` and `<test name>` with the test file name and the test name provided by the user, respectively):
-  `git cl try -B devtools-frontend/try -b e2e_stressor_linux -b e2e_stressor_win64 -b e2e_stressor_mac -p runner_args='--grep="<test name>" <test file> --repeat=100'`
+- To start the stressor bot, run this command (substituting `<test file>:exact_test_id` with the actual file and exact test ID):
+  `git cl try -B devtools-frontend/try -b e2e_stressor_linux -b e2e_stressor_win64 -b e2e_stressor_mac -p runner_args='<test file>:exact_test_id --repeat=100'`
 
 - Note that the test file name needs to be relative to the root, so use `test/e2e/foo.test.ts` instead of `e2e/foo.test.ts`.
 - Check the results of the stressor tests with `git cl try-results --issue=<issue number> --patchset=<patchset number>`. You can dive into each result by id using `bb get <id>`.
 - Once a test run completes, always report to the user how often the tests ran and what the failure rate was.
-- Critical: Make sure that at least one test ran to completion on the bot (to catch incorrect syntax for `git cl try` or `--grep`.
+- Critical: Make sure that at least one test ran to completion on the bot (to catch incorrect syntax for `git cl try` or incorrect test IDs).
 
 ## Next steps
 
