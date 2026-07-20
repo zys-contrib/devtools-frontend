@@ -69,6 +69,22 @@ describe('SettingUIRegistration', () => {
     assert.strictEqual(resolved, uiDescriptor);
   });
 
+  it('resolves legacy setting registrations', () => {
+    Common.SettingRegistration.registerSettingExtension({
+      settingName: 'legacy-setting',
+      settingType: Common.SettingRegistration.SettingType.BOOLEAN,
+      defaultValue: true,
+      category: Common.SettingRegistration.SettingCategory.CONSOLE,
+    });
+
+    const resolved = SettingsUI.SettingUIRegistration.resolve({
+      name: 'legacy-setting',
+      type: Common.Settings.SettingType.BOOLEAN,
+      defaultValue: true,
+    });
+    assert.strictEqual(resolved.category, Common.SettingRegistration.SettingCategory.CONSOLE);
+  });
+
   it('throws an error when resolving an unregistered setting descriptor', () => {
     assert.throws(() => {
       SettingsUI.SettingUIRegistration.resolve(settingDescriptor);

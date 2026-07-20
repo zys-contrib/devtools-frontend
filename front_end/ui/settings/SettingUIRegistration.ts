@@ -92,7 +92,8 @@ export function getRegisteredSettings(): readonly RegisteredSettingUI[] {
 }
 
 export function resolve(settingDescriptor: Common.Settings.SettingDescriptor<unknown>): SettingUIDescriptor {
-  const settingUI = registeredSettings.get(settingDescriptor.name);
+  const settingUI = registeredSettings.get(settingDescriptor.name) ??
+      getRegisteredSettings().find(registered => registered.descriptor.name === settingDescriptor.name);
   if (!settingUI) {
     throw new Error(`No UI descriptor registered for setting '${settingDescriptor.name}'`);
   }
