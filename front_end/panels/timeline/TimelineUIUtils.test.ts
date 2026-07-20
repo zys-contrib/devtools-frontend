@@ -663,7 +663,7 @@ describeWithEnvironment('TimelineUIUtils', function() {
       assert.exists(timestampRow);
       assert.isNotEmpty(timestampRow.value);
 
-      const urlRow = rowData.find(row => row.title === 'Url');
+      const urlRow = rowData.find(row => row.title === 'URL');
       assert.exists(urlRow);
     });
 

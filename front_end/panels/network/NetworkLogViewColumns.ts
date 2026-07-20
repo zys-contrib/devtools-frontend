@@ -72,7 +72,7 @@ const UIStrings = {
   /**
    * @description Text in Timeline UIUtils of the Performance panel
    */
-  url: 'Url',
+  url: 'URL',
   /**
    * @description Column header in the Network log view of the Network panel
    */

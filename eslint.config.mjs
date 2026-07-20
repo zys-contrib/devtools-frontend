@@ -621,10 +621,9 @@ export default defineConfig([
       ],
       '@devtools/l10n-i18nString-call-only-with-uistrings': 'error',
       '@devtools/l10n-no-i18nString-calls-module-instantiation': 'error',
-      '@devtools/l10n-no-locked-or-placeholder-only-phrase': 'error',
       '@devtools/l10n-no-uistrings-export': 'error',
       '@devtools/l10n-no-unused-message': 'error',
-      '@devtools/l10n-use-curly-apostrophes': 'error',
+      '@devtools/l10n-uistrings-text-style': 'error',
     },
   },
   {

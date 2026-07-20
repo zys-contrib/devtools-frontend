@@ -133,7 +133,7 @@ const UIStrings = {
    * @example {http://site.com/lib.js.map} PH1
    * @example {HTTP error: status code 404, net::ERR_UNKNOWN_URL_SCHEME} PH2
    */
-  errorLoading: 'Error loading url {PH1}: {PH2}',
+  errorLoading: 'Error loading URL {PH1}: {PH2}',
   /**
    * @description Error message that is displayed in UI when a file needed for debugging information for a call frame is missing
    * @example {src/myapp.debug.wasm.dwp} PH1
