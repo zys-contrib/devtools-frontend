@@ -26,6 +26,7 @@ import * as UI from '../../ui/legacy/legacy.js';
 import {html} from '../../ui/lit/lit.js';
 import * as PanelsCommon from '../common/common.js';
 
+import type * as ElementsComponents from './components/components.js';
 import * as Elements from './elements.js';
 
 describe('StylesSidebarPane', () => {
@@ -188,6 +189,104 @@ describe('StylesSidebarPane', () => {
         assert.isFalse(inheritedStyleSections[0].element.classList.contains('hidden'));
         assert.isFalse(inheritedBlock.titleElement()?.classList.contains('hidden'));
         assert.isFalse(layerBlock.titleElement()?.classList.contains('hidden'));
+      });
+
+      it('renders media queries', async () => {
+        const stylesSidebarPane =
+            new Elements.StylesSidebarPane.StylesSidebarPane(new ComputedStyle.ComputedStyleModel.ComputedStyleModel());
+        const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        node.id = 1 as Protocol.DOM.NodeId;
+
+        const matchedStyles = await getMatchedStyles({
+          connection,
+          cssModel: stylesSidebarPane.cssModel() as SDK.CSSModel.CSSModel,
+          node,
+          matchedPayload: [{
+            rule: {
+              selectorList: {selectors: [{text: '#main'}], text: '#main'},
+              origin: Protocol.CSS.StyleSheetOrigin.Regular,
+              style: {
+                cssProperties: [{name: 'background', value: 'blue'}],
+                shorthandEntries: [],
+              },
+              media: [{
+                text: '(max-width: 100px)',
+                source: Protocol.CSS.CSSMediaSource.MediaRule,
+              }],
+              ruleTypes: [Protocol.CSS.CSSRuleType.MediaRule],
+            },
+            matchingSelectors: [0],
+          }],
+        });
+
+        const sectionBlocks = await stylesSidebarPane.rebuildSectionsForMatchedStyleRulesForTest(
+            matchedStyles, new Map(), new Map(), null);
+
+        assert.lengthOf(sectionBlocks, 1);
+        const sections = sectionBlocks[0].sections;
+        assert.lengthOf(sections, 1);
+        const section = sections[0];
+
+        const mediaQueryElements = section.element.querySelectorAll('devtools-css-query');
+        assert.lengthOf(mediaQueryElements, 1);
+        const mediaQueryElement = mediaQueryElements[0] as ElementsComponents.CSSQuery.CSSQuery;
+
+        const queryDiv = mediaQueryElement.shadowRoot?.querySelector('.query');
+        assert.exists(queryDiv);
+        assert.strictEqual(queryDiv?.textContent?.trim().replace(/\s+/g, ' '), '@media (max-width: 100px) {');
+      });
+
+      it('renders multiple media queries (imported stylesheet)', async () => {
+        const stylesSidebarPane =
+            new Elements.StylesSidebarPane.StylesSidebarPane(new ComputedStyle.ComputedStyleModel.ComputedStyleModel());
+        const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        node.id = 1 as Protocol.DOM.NodeId;
+
+        const matchedStyles = await getMatchedStyles({
+          connection,
+          cssModel: stylesSidebarPane.cssModel() as SDK.CSSModel.CSSModel,
+          node,
+          matchedPayload: [{
+            rule: {
+              selectorList: {selectors: [{text: '#main'}], text: '#main'},
+              origin: Protocol.CSS.StyleSheetOrigin.Regular,
+              style: {
+                cssProperties: [{name: 'border', value: '1px solid black'}],
+                shorthandEntries: [],
+              },
+              media: [
+                {
+                  text: '(min-width: 200px)',
+                  source: Protocol.CSS.CSSMediaSource.MediaRule,
+                },
+                {
+                  text: '(orientation: landscape)',
+                  source: Protocol.CSS.CSSMediaSource.ImportRule,
+                }
+              ],
+              ruleTypes: [Protocol.CSS.CSSRuleType.MediaRule, Protocol.CSS.CSSRuleType.MediaRule],
+            },
+            matchingSelectors: [0],
+          }],
+        });
+
+        const sectionBlocks = await stylesSidebarPane.rebuildSectionsForMatchedStyleRulesForTest(
+            matchedStyles, new Map(), new Map(), null);
+
+        assert.lengthOf(sectionBlocks, 1);
+        const sections = sectionBlocks[0].sections;
+        assert.lengthOf(sections, 1);
+        const section = sections[0];
+
+        const mediaQueryElements = section.element.querySelectorAll('devtools-css-query');
+        assert.lengthOf(mediaQueryElements, 2);
+
+        const queryTexts = Array.from(mediaQueryElements).map(el => {
+          const queryDiv = el.shadowRoot?.querySelector('.query');
+          return queryDiv?.textContent?.trim().replace(/\s+/g, ' ');
+        });
+
+        assert.deepEqual(queryTexts, ['@import (orientation: landscape) {', '@media (min-width: 200px) {']);
       });
     });
 
