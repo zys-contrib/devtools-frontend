@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import type * as Common from '../../core/common/common.js';
+import * as Common from '../../core/common/common.js';
 import type * as Platform from '../../core/platform/platform.js';
 
 export interface SettingUIDescriptor {
@@ -62,7 +62,33 @@ export function register(
 }
 
 export function getRegisteredSettings(): readonly RegisteredSettingUI[] {
-  return Array.from(registeredSettings.values());
+  const combined = new Map<string, RegisteredSettingUI>();
+  for (const legacy of Common.SettingRegistration.getRegisteredSettings()) {
+    combined.set(legacy.settingName, {
+      descriptor: {
+        name: legacy.settingName,
+        type: legacy.settingType,
+        defaultValue: legacy.defaultValue,
+        storageType: legacy.storageType,
+      },
+      uiDescriptor: {
+        category: legacy.category,
+        order: legacy.order,
+        title: legacy.title,
+        tags: legacy.tags,
+        options: legacy.options,
+        reloadRequired: legacy.reloadRequired,
+        deprecationNotice: legacy.deprecationNotice,
+        learnMore: legacy.learnMore,
+      },
+    });
+  }
+
+  for (const [name, registeredUI] of registeredSettings) {
+    combined.set(name, registeredUI);
+  }
+
+  return Array.from(combined.values());
 }
 
 export function resolve(settingDescriptor: Common.Settings.SettingDescriptor<unknown>): SettingUIDescriptor {

@@ -9,8 +9,14 @@ import * as Common from '../../core/common/common.js';
 import * as SettingsUI from './settings.js';
 
 describe('SettingUIRegistration', () => {
-  beforeEach(() => SettingsUI.SettingUIRegistration.resetSettings());
-  afterEach(() => SettingsUI.SettingUIRegistration.resetSettings());
+  beforeEach(() => {
+    SettingsUI.SettingUIRegistration.resetSettings();
+    Common.SettingRegistration.resetSettings();
+  });
+  afterEach(() => {
+    SettingsUI.SettingUIRegistration.resetSettings();
+    Common.SettingRegistration.resetSettings();
+  });
 
   const settingDescriptor: Common.Settings.SettingDescriptor<boolean> = {
     name: 'mock-setting',
@@ -27,6 +33,22 @@ describe('SettingUIRegistration', () => {
     assert.lengthOf(registered, 1);
     assert.strictEqual(registered[0].descriptor.name, 'mock-setting');
     assert.strictEqual(registered[0].uiDescriptor.category, Common.SettingRegistration.SettingCategory.GLOBAL);
+  });
+
+  it('includes synthesized legacy settings in getRegisteredSettings', () => {
+    Common.SettingRegistration.registerSettingExtension({
+      settingName: 'legacy-setting',
+      settingType: Common.SettingRegistration.SettingType.BOOLEAN,
+      defaultValue: true,
+      category: Common.SettingRegistration.SettingCategory.CONSOLE,
+    });
+
+    const registered = SettingsUI.SettingUIRegistration.getRegisteredSettings();
+    const legacyReg = registered.find(r => r.descriptor.name === 'legacy-setting');
+    assert.exists(legacyReg);
+    assert.strictEqual(legacyReg?.descriptor.name, 'legacy-setting');
+    assert.strictEqual(legacyReg?.descriptor.type, Common.SettingRegistration.SettingType.BOOLEAN);
+    assert.strictEqual(legacyReg?.uiDescriptor.category, Common.SettingRegistration.SettingCategory.CONSOLE);
   });
 
   it('throws an error when trying to register a duplicate setting name', () => {
