@@ -151,15 +151,16 @@ describeWithEnvironment('SelectWorkspaceDialog', () => {
   });
 
   it('can add projects', async () => {
-    const addProjectSpy =
-        sinon.spy(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager.instance(), 'addFileSystem');
+    const addFileSystemStub =
+        sinon.stub(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager.instance(), 'addFileSystem')
+            .resolves(null);
     const {view} = await createComponent();
     sinon.assert.callCount(view, 1);
     assert.lengthOf(view.input.folders, 2);
     assert.strictEqual(view.input.selectedIndex, 0);
 
     view.input.onAddFolderButtonClick();
-    sinon.assert.calledOnce(addProjectSpy);
+    sinon.assert.calledOnce(addFileSystemStub);
 
     createTestFilesystem('file://test3');
     const input = await view.nextInput;
@@ -170,8 +171,9 @@ describeWithEnvironment('SelectWorkspaceDialog', () => {
   });
 
   it('handles project removal', async () => {
-    const addProjectSpy =
-        sinon.spy(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager.instance(), 'addFileSystem');
+    const addFileSystemStub =
+        sinon.stub(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager.instance(), 'addFileSystem')
+            .resolves(null);
     const {view, project} = await createComponent();
 
     view.input.onProjectSelected(1);
@@ -181,7 +183,7 @@ describeWithEnvironment('SelectWorkspaceDialog', () => {
     assert.strictEqual(input.selectedIndex, 1);
 
     input.onAddFolderButtonClick();
-    sinon.assert.calledOnce(addProjectSpy);
+    sinon.assert.calledOnce(addFileSystemStub);
 
     Workspace.Workspace.WorkspaceImpl.instance().removeProject(project);
     input = await view.nextInput;
