@@ -16,6 +16,7 @@ import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
 import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as Common from '../common/common.js';
 import * as Platform from '../platform/platform.js';
+import * as Root from '../root/root.js';
 import * as TextUtils from '../text_utils/text_utils.js';
 
 import * as SDK from './sdk.js';
@@ -1300,6 +1301,51 @@ describe('MultitargetNetworkManager', () => {
 
   beforeEach(() => {
     universe = new TestUniverse();
+  });
+
+  describe('User agent', () => {
+    it('is patched with Chrome version', () => {
+      const cases = [
+        'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0',
+        'GoogleChrome/%s Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Safari/537.36 Edg/%s',
+      ];
+      const version = Root.Runtime.getChromeVersion();
+      let expected0 = cases[0];
+      const expected1 = cases[1];
+      let expected2 = cases[2];
+      let expected3 = cases[3];
+      if (version.length > 0) {
+        const appVer = version.split('.', 1)[0] + '.0.100.0';
+        expected0 = cases[0].replace('%s', version);
+        expected2 = cases[2].replace('%s', version);
+        expected3 = cases[3].replace('%s', version).replace('%s', appVer);
+      }
+
+      assert.strictEqual(SDK.NetworkManager.MultitargetNetworkManager.patchUserAgentWithChromeVersion(cases[0]),
+                         expected0);
+      assert.strictEqual(SDK.NetworkManager.MultitargetNetworkManager.patchUserAgentWithChromeVersion(cases[1]),
+                         expected1);
+      assert.strictEqual(SDK.NetworkManager.MultitargetNetworkManager.patchUserAgentWithChromeVersion(cases[2]),
+                         expected2);
+      assert.strictEqual(SDK.NetworkManager.MultitargetNetworkManager.patchUserAgentWithChromeVersion(cases[3]),
+                         expected3);
+    });
+
+    it('can be overridden manually', () => {
+      const target = universe.createTarget();
+      const networkAgent = target.networkAgent();
+      const setUserAgentOverrideSpy = sinon.spy(networkAgent, 'invoke_setUserAgentOverride');
+
+      universe.multitargetNetworkManager.setCustomUserAgentOverride('foobar with %s inside');
+
+      sinon.assert.calledOnce(setUserAgentOverrideSpy);
+      assert.deepEqual(setUserAgentOverrideSpy.firstCall.args[0], {
+        userAgent: 'foobar with %s inside',
+        userAgentMetadata: undefined,
+      });
+    });
   });
 
   describe('Trust Token done event', () => {
