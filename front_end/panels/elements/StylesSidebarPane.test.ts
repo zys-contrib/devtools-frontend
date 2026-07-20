@@ -19,7 +19,7 @@ import {
 import {expectCall} from '../../testing/ExpectStubCall.js';
 import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
-import {createStubbedDomNodeWithModels, getMatchedStyles} from '../../testing/StyleHelpers.js';
+import {createStubbedDomNodeWithModels, getMatchedStyles, ruleMatch} from '../../testing/StyleHelpers.js';
 import * as TextEditor from '../../ui/components/text_editor/text_editor.js';
 import * as InlineEditor from '../../ui/legacy/components/inline_editor/inline_editor.js';
 import * as UI from '../../ui/legacy/legacy.js';
@@ -896,6 +896,140 @@ describe('StylesSidebarPane', () => {
         assert.isTrue(
             inheritedSection.element.classList.contains('collapsed'),
             'Inherited section with all overloaded properties should be collapsed');
+      });
+    });
+
+    describe('overloaded properties', () => {
+      it('correctly identifies overloaded properties', async () => {
+        const stylesSidebarPane =
+            new Elements.StylesSidebarPane.StylesSidebarPane(new ComputedStyle.ComputedStyleModel.ComputedStyleModel());
+        const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        node.nodeName.returns('DIV');
+        node.id = 1 as Protocol.DOM.NodeId;
+
+        const parentNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        parentNode.nodeName.returns('DIV');
+        parentNode.id = 2 as Protocol.DOM.NodeId;
+
+        node.parentNode = parentNode;
+
+        // Mock the CSS rules and properties.
+        const inspectProperties: Protocol.CSS.CSSProperty[] = [
+          {name: 'margin-top', value: '1px', text: 'margin-top: 1px;'},
+          {name: 'margin-left', value: '1px', text: 'margin-left: 1px;'},
+          {name: 'margin-right', value: '1px', text: 'margin-right: 1px;'},
+          {name: 'margin-bottom', value: '1px', text: 'margin-bottom: 1px;'},
+          {name: 'font', value: '10px Arial', text: 'font: 10px Arial;'},
+          {name: 'font-size', value: '10px', implicit: true},
+          {name: 'font-family', value: 'Arial', implicit: true},
+        ];
+        const inspectRuleMatch = ruleMatch('#inspect', inspectProperties, {
+          styleSheetId: '1' as Protocol.DOM.StyleSheetId,
+        });
+
+        const divProperties: Protocol.CSS.CSSProperty[] = [
+          {name: 'margin', value: '1px', text: 'margin: 1px;'},
+          {name: 'margin-top', value: '1px', implicit: true},
+          {name: 'margin-left', value: '1px', implicit: true},
+          {name: 'margin-right', value: '1px', implicit: true},
+          {name: 'margin-bottom', value: '1px', implicit: true},
+          {name: 'border', value: '1px solid black', text: 'border: 1px solid black;'},
+          {name: 'border-top-width', value: '1px', implicit: true},
+          {name: 'border-right-width', value: '1px', implicit: true},
+          {name: 'border-bottom-width', value: '1px', implicit: true},
+          {name: 'border-left-width', value: '1px', implicit: true},
+          {name: 'border-top-style', value: 'solid', implicit: true},
+          {name: 'border-right-style', value: 'solid', implicit: true},
+          {name: 'border-bottom-style', value: 'solid', implicit: true},
+          {name: 'border-left-style', value: 'solid', implicit: true},
+          {name: 'border-top-color', value: 'black', implicit: true},
+          {name: 'border-right-color', value: 'black', implicit: true},
+          {name: 'border-bottom-color', value: 'black', implicit: true},
+          {name: 'border-left-color', value: 'black', implicit: true},
+        ];
+        const divRuleMatch = ruleMatch('div', divProperties, {
+          styleSheetId: '1' as Protocol.DOM.StyleSheetId,
+        });
+
+        const containerProperties: Protocol.CSS.CSSProperty[] = [
+          {name: 'font-size', value: '10px', text: 'font-size: 10px;'},
+          {name: 'border', value: '0', text: 'border: 0;'},
+        ];
+        const containerRuleMatch = ruleMatch('.container', containerProperties, {
+          styleSheetId: '1' as Protocol.DOM.StyleSheetId,
+        });
+
+        const matchedStyles = await getMatchedStyles({
+          connection,
+          cssModel: stylesSidebarPane.cssModel() as SDK.CSSModel.CSSModel,
+          node,
+          matchedPayload: [divRuleMatch, inspectRuleMatch],
+          inheritedPayload: [{
+            matchedCSSRules: [divRuleMatch, containerRuleMatch],
+          }],
+        });
+
+        const sectionBlocks = await stylesSidebarPane.rebuildSectionsForMatchedStyleRulesForTest(
+            matchedStyles, new Map(), new Map(), null);
+
+        assert.lengthOf(sectionBlocks, 2);
+
+        const elementBlock = sectionBlocks[0];
+        const inheritedBlock = sectionBlocks[1];
+
+        assert.lengthOf(elementBlock.sections, 2);
+        const inspectSection = elementBlock.sections.find(s => s.headerText() === '#inspect');
+        const divSection = elementBlock.sections.find(s => s.headerText() === 'div');
+
+        assert.exists(inspectSection);
+        assert.exists(divSection);
+
+        const containerSection = inheritedBlock.sections.find(s => s.headerText() === '.container');
+        assert.exists(containerSection);
+
+        // Verify overloaded properties in the div section of the element block.
+        const divMargin = divSection.style().leadingProperties().find(p => p.name === 'margin');
+        assert.exists(divMargin);
+        assert.strictEqual(matchedStyles.propertyState(divMargin), SDK.CSSMatchedStyles.PropertyState.OVERLOADED);
+
+        const divBorder = divSection.style().leadingProperties().find(p => p.name === 'border');
+        assert.exists(divBorder);
+        assert.strictEqual(matchedStyles.propertyState(divBorder), SDK.CSSMatchedStyles.PropertyState.ACTIVE);
+
+        // Verify overloaded properties in the container section of the inherited block.
+        const containerFontSize = containerSection.style().leadingProperties().find(p => p.name === 'font-size');
+        assert.exists(containerFontSize);
+        assert.strictEqual(matchedStyles.propertyState(containerFontSize),
+                           SDK.CSSMatchedStyles.PropertyState.OVERLOADED);
+
+        // Verify the inheritance status in the UI using StylePropertyTreeElement.
+        inspectSection.onpopulate();
+        divSection.onpopulate();
+        containerSection.onpopulate();
+
+        const containerTreeElements = containerSection.propertiesTreeOutline.rootElement().children();
+
+        const fontSizeTreeElement =
+            containerTreeElements.find((el): el is Elements.StylePropertyTreeElement.StylePropertyTreeElement =>
+                                           el instanceof Elements.StylePropertyTreeElement.StylePropertyTreeElement &&
+                                           el.property.name === 'font-size');
+        assert.exists(fontSizeTreeElement);
+        // `font-size` is truly inherited. In the UI, truly inherited properties
+        // in inherited sections are rendered as active (not dimmed). This
+        // corresponds to `inherited() === false` due to the reversed meaning
+        // used for styling.
+        assert.isFalse(fontSizeTreeElement.inherited());
+
+        const borderTreeElement =
+            containerTreeElements.find((el): el is Elements.StylePropertyTreeElement.StylePropertyTreeElement =>
+                                           el instanceof Elements.StylePropertyTreeElement.StylePropertyTreeElement &&
+                                           el.property.name === 'border');
+        assert.exists(borderTreeElement);
+        // `border` is not truly inherited. In the UI, non-inherited properties
+        // in inherited sections are rendered as dimmed. This corresponds to
+        // `inherited() === true` (which adds the `.inherited` class for dimming)
+        // due to the reversed meaning used for styling.
+        assert.isTrue(borderTreeElement.inherited());
       });
     });
 
