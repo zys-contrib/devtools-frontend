@@ -9,16 +9,17 @@ import * as Host from '../../../core/host/host.js';
 import * as SDK from '../../../core/sdk/sdk.js';
 import {createUISourceCode, mockAidaClient} from '../../../testing/AiAssistanceHelpers.js';
 import {
-  describeWithEnvironment,
+  deinitializeGlobalVars,
   restoreUserAgentForTesting,
   setUserAgentForTesting,
   updateHostConfig
 } from '../../../testing/EnvironmentHelpers.js';
-import * as Bindings from '../../bindings/bindings.js';
-import * as Workspace from '../../workspace/workspace.js';
+import {TestUniverse} from '../../../testing/TestUniverse.js';
 import {AiAgent, FileAgent, FileContext} from '../ai_assistance.js';
 
-describeWithEnvironment('FileAgent', () => {
+describe('FileAgent', () => {
+  let universe: TestUniverse;
+
   function mockHostConfig(modelId?: string, temperature?: number) {
     updateHostConfig({
       devToolsAiAssistanceFileAgent: {
@@ -29,17 +30,14 @@ describeWithEnvironment('FileAgent', () => {
   }
 
   beforeEach(() => {
-    const workspace = Workspace.Workspace.WorkspaceImpl.instance();
-    const targetManager = SDK.TargetManager.TargetManager.instance();
-    const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(targetManager, workspace);
-    const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({forceNew: true});
-    Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance({
-      forceNew: true,
-      resourceMapping,
-      targetManager,
-      ignoreListManager,
-      workspace,
-    });
+    universe = new TestUniverse();
+    const {targetManager} = universe;
+
+    sinon.stub(SDK.TargetManager.TargetManager, 'instance').returns(targetManager);
+  });
+
+  afterEach(async () => {
+    await deinitializeGlobalVars();
   });
 
   describe('buildRequest', () => {
@@ -137,8 +135,9 @@ describeWithEnvironment('FileAgent', () => {
           requestContentData: args.requestContentData,
           content: 'content',
         });
-        const responses = await Array.fromAsync(
-            agent.run('test', {selected: uiSourceCode ? new FileContext.FileContext(uiSourceCode) : null}));
+        const responses = await Array.fromAsync(agent.run('test', {
+          selected: uiSourceCode ? new FileContext.FileContext(uiSourceCode, universe.debuggerWorkspaceBinding) : null,
+        }));
 
         assert.deepEqual(responses, [
           {
