@@ -1178,6 +1178,76 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     });
   });
 
+  describe('console.dir', () => {
+    it('does not make boolean primitives expandable', () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      const messageDetails = {
+        type: Protocol.Runtime.ConsoleAPICalledEventType.Dir,
+        parameters: [{type: Protocol.Runtime.RemoteObjectType.Boolean, value: true} as Protocol.Runtime.RemoteObject],
+      };
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, /* level */ null, '', messageDetails);
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      assert.isNull(messageElement.querySelector('.console-view-object-properties-section'));
+    });
+
+    it('makes boolean object wrappers expandable', () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      const messageDetails = {
+        type: Protocol.Runtime.ConsoleAPICalledEventType.Dir,
+        parameters: [{
+          type: Protocol.Runtime.RemoteObjectType.Object,
+          objectId: '1' as Protocol.Runtime.RemoteObjectId,
+          description: 'Boolean'
+        } as Protocol.Runtime.RemoteObject],
+      };
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, /* level */ null, '', messageDetails);
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      assert.isNotNull(messageElement.querySelector('.console-view-object-properties-section'));
+    });
+
+    it('does not make string primitives expandable', () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      const messageDetails = {
+        type: Protocol.Runtime.ConsoleAPICalledEventType.Dir,
+        parameters: [{type: Protocol.Runtime.RemoteObjectType.String, value: 'foo'} as Protocol.Runtime.RemoteObject],
+      };
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, /* level */ null, '', messageDetails);
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      assert.isNull(messageElement.querySelector('.console-view-object-properties-section'));
+    });
+
+    it('makes string object wrappers expandable', () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      const messageDetails = {
+        type: Protocol.Runtime.ConsoleAPICalledEventType.Dir,
+        parameters: [{
+          type: Protocol.Runtime.RemoteObjectType.Object,
+          objectId: '2' as Protocol.Runtime.RemoteObjectId,
+          description: 'String'
+        } as Protocol.Runtime.RemoteObject],
+      };
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI, /* level */ null, '', messageDetails);
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      assert.isNotNull(messageElement.querySelector('.console-view-object-properties-section'));
+    });
+  });
+
   describe('linkifyWithCustomLinkifier', () => {
     it('linkifies links correctly', () => {
       const cases = [
