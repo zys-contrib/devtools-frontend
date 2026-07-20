@@ -26,7 +26,7 @@ description: Use when migrating Chromium layout tests to DevTools unit tests
 - If tests require a repetitive setup extract it into a test helper function at the top of the file.
 - Code comments must be full sentences ending with a period, except when the entire comment is a URL.
 - Do not include comments of the form `// Replaces web test: http/tests/devtools/persistence/automapping-absolute-paths.js`. Since we plan to remove migrated web tests, these are not useful references.
-- **Important** If the test imports only `TestRunner` and no other TestRunner helper or DevTools code. The test should be move to the inspector-protocol test, and the issue should be closed as "Won't Fix (Infeasible)".
+- **Important** If the test imports only `TestRunner` and no other TestRunner helper or DevTools code. The test should be move to the inspector-protocol test, and the issue should be closed as "Won't Fix (Infeasible)" and add the issue to the hotlist with ID 8691563.
 
 4.  **Update BUILD.gn**:
 
@@ -41,7 +41,7 @@ description: Use when migrating Chromium layout tests to DevTools unit tests
 
 - Critically review the newly created test to ensure it provides meaningful coverage. Cross-reference it with the original Chromium layout test to verify that all original behaviors, edge cases, and assertions have been fully migrated and are actively being tested.
 - If the newly added test does not test any logic from the component but just the getters from the mocked data explain to the user that this test does not add value and it's better to close it without adding the test. Provide a command without executing it to close the issue as "Fixed".
-- If the newly added test uses too extensive mocks of CDP objects and methods explain to the user that the test should be foundation e2e test instead of unit test and we won't migrate it. **CRITICAL**  upload a comment to the issue with your investigation and the reason why you won't submit a CL and close the issue as "Won't Fix (Infeasible)".
+- If the newly added test uses too extensive mocks of CDP objects and methods explain to the user that the test should be foundation e2e test instead of unit test and we won't migrate it. **CRITICAL**  upload a comment to the issue with your investigation and the reason why you won't submit a CL and close the issue as "Won't Fix (Infeasible)" and add the issue to the hotlist with ID 8687901.
 
 7. **Upload the CL:**
 
