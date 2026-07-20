@@ -119,7 +119,6 @@ const reportTestResult = (test: TestExt) => {
 
 karma.start = () => {
   const reportedTests = new Set<TestExt>();
-  const failedSuites = new Set<Mocha.Suite>();
   const testIds = new Set(karma.config.testIds);
   const seenTestIds = new Set<string>();
 
@@ -159,10 +158,6 @@ karma.start = () => {
     const isHook = test.type === 'hook';
     const isGlobalHook = isHook && !test.ctx?.currentTest;
     const isTestHook = isHook && Boolean(test.ctx?.currentTest);
-
-    if (isHook && test.parent) {
-      failedSuites.add(test.parent);
-    }
 
     // Resolve the target test block. If the failure originated from a global hook,
     // there is no current test, so we fall back to the hook itself.
