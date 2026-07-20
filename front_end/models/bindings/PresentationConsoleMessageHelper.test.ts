@@ -12,6 +12,7 @@ import * as Protocol from '../../generated/protocol.js';
 import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {expectCall} from '../../testing/ExpectStubCall.js';
 import {MockExecutionContext} from '../../testing/MockExecutionContext.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as Workspace from '../workspace/workspace.js';
 
 import * as Bindings from './bindings.js';
@@ -107,10 +108,14 @@ describeWithEnvironment('PresentationConsoleMessageHelper', () => {
   let cssModel: SDK.CSSModel.CSSModel;
 
   beforeEach(() => {
+    const universe = new TestUniverse();
+    const workspace = universe.workspace;
+    sinon.stub(Workspace.Workspace.WorkspaceImpl, 'instance').returns(workspace);
+
     executionContext = new MockExecutionContext(createTarget());
     const {debuggerModel} = executionContext;
     assert.exists(debuggerModel);
-    helper = new Bindings.PresentationConsoleMessageHelper.PresentationSourceFrameMessageHelper();
+    helper = new Bindings.PresentationConsoleMessageHelper.PresentationSourceFrameMessageHelper(workspace);
     helper.setDebuggerModel(debuggerModel);
 
     const target = executionContext.target();
@@ -119,7 +124,6 @@ describeWithEnvironment('PresentationConsoleMessageHelper', () => {
     cssModel = targetCSSModel;
     helper.setCSSModel(cssModel);
 
-    const workspace = Workspace.Workspace.WorkspaceImpl.instance();
     const targetManager = target.targetManager();
     const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(targetManager, workspace);
     const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({forceNew: true});

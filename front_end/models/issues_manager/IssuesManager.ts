@@ -6,6 +6,7 @@ import * as Common from '../../core/common/common.js';
 import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
+import * as Workspace from '../workspace/workspace.js';
 
 import {BounceTrackingIssue} from './BounceTrackingIssue.js';
 import {ClientHintIssue} from './ClientHintIssue.js';
@@ -233,11 +234,12 @@ export class IssuesManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
   constructor(private readonly showThirdPartyIssuesSetting?: Common.Settings.Setting<boolean>,
               private readonly hideIssueSetting?: Common.Settings.Setting<HideIssueMenuSetting>,
               frameManager: SDK.FrameManager.FrameManager = SDK.FrameManager.FrameManager.instance(),
-              targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance()) {
+              targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
+              workspace: Workspace.Workspace.WorkspaceImpl = Workspace.Workspace.WorkspaceImpl.instance()) {
     super();
     this.#frameManager = frameManager;
     this.#targetManager = targetManager;
-    new SourceFrameIssuesManager(this, targetManager);
+    new SourceFrameIssuesManager(this, targetManager, workspace);
     this.#targetManager.observeModels(SDK.IssuesModel.IssuesModel, this);
     this.#targetManager.addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
                                          SDK.ResourceTreeModel.Events.PrimaryPageChanged, this.#onPrimaryPageChanged,

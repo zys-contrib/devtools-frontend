@@ -26,7 +26,9 @@ export class PresentationSourceFrameMessageManager implements
     SDK.TargetManager.SDKModelObserver<SDK.CSSModel.CSSModel> {
   #targetToMessageHelperMap = new WeakMap<SDK.Target.Target, PresentationSourceFrameMessageHelper>();
   #targetManager: SDK.TargetManager.TargetManager;
-  constructor(targetManager: SDK.TargetManager.TargetManager) {
+  readonly #workspace: Workspace.Workspace.WorkspaceImpl;
+  constructor(targetManager: SDK.TargetManager.TargetManager, workspace: Workspace.Workspace.WorkspaceImpl) {
+    this.#workspace = workspace;
     this.#targetManager = targetManager;
     targetManager.observeModels(SDK.DebuggerModel.DebuggerModel, this);
     targetManager.observeModels(SDK.CSSModel.CSSModel, this);
@@ -34,7 +36,8 @@ export class PresentationSourceFrameMessageManager implements
 
   modelAdded(model: SDK.DebuggerModel.DebuggerModel|SDK.CSSModel.CSSModel): void {
     const target = model.target();
-    const helper = this.#targetToMessageHelperMap.get(target) ?? new PresentationSourceFrameMessageHelper();
+    const helper =
+        this.#targetToMessageHelperMap.get(target) ?? new PresentationSourceFrameMessageHelper(this.#workspace);
     if (model instanceof SDK.DebuggerModel.DebuggerModel) {
       helper.setDebuggerModel(model);
     } else {
@@ -65,8 +68,8 @@ export class PresentationSourceFrameMessageManager implements
 export class PresentationConsoleMessageManager {
   #sourceFrameMessageManager: PresentationSourceFrameMessageManager;
 
-  constructor(targetManager: SDK.TargetManager.TargetManager) {
-    this.#sourceFrameMessageManager = new PresentationSourceFrameMessageManager(targetManager);
+  constructor(targetManager: SDK.TargetManager.TargetManager, workspace: Workspace.Workspace.WorkspaceImpl) {
+    this.#sourceFrameMessageManager = new PresentationSourceFrameMessageManager(targetManager, workspace);
     targetManager.addModelListener(SDK.ConsoleModel.ConsoleModel, SDK.ConsoleModel.Events.MessageAdded,
                                    event => this.consoleMessageAdded(event.data));
     SDK.ConsoleModel.ConsoleModel.allMessagesUnordered(targetManager).forEach(this.consoleMessageAdded, this);
@@ -96,12 +99,13 @@ export class PresentationSourceFrameMessageHelper {
                                     presentation: PresentationSourceFrameMessage,
                                   }>>();
   readonly #locationPool: LiveLocationPool;
+  readonly #workspace: Workspace.Workspace.WorkspaceImpl;
 
-  constructor() {
+  constructor(workspace: Workspace.Workspace.WorkspaceImpl) {
+    this.#workspace = workspace;
     this.#locationPool = new LiveLocationPool();
 
-    Workspace.Workspace.WorkspaceImpl.instance().addEventListener(
-        Workspace.Workspace.Events.UISourceCodeAdded, this.#uiSourceCodeAdded.bind(this));
+    this.#workspace.addEventListener(Workspace.Workspace.Events.UISourceCodeAdded, this.#uiSourceCodeAdded.bind(this));
   }
 
   setDebuggerModel(debuggerModel: SDK.DebuggerModel.DebuggerModel): void {
@@ -148,7 +152,7 @@ export class PresentationSourceFrameMessageHelper {
       return null;
     }
 
-    const uiSourceCode = Workspace.Workspace.WorkspaceImpl.instance().uiSourceCodeForURL(source.url);
+    const uiSourceCode = this.#workspace.uiSourceCodeForURL(source.url);
     if (!uiSourceCode) {
       return null;
     }

@@ -21,9 +21,10 @@ import {lateImportStylesheetLoadingCode, type StylesheetLoadingIssue} from './St
 
 export class SourceFrameIssuesManager {
   #sourceFrameMessageManager: Bindings.PresentationConsoleMessageHelper.PresentationSourceFrameMessageManager;
-  constructor(private readonly issuesManager: IssuesManager, targetManager: SDK.TargetManager.TargetManager) {
+  constructor(private readonly issuesManager: IssuesManager, targetManager: SDK.TargetManager.TargetManager,
+              workspace: Workspace.Workspace.WorkspaceImpl) {
     this.#sourceFrameMessageManager =
-        new Bindings.PresentationConsoleMessageHelper.PresentationSourceFrameMessageManager(targetManager);
+        new Bindings.PresentationConsoleMessageHelper.PresentationSourceFrameMessageManager(targetManager, workspace);
     this.issuesManager.addEventListener(Events.ISSUE_ADDED, this.#onIssueAdded, this);
     this.issuesManager.addEventListener(Events.FULL_UPDATE_REQUIRED, this.#onFullUpdateRequired, this);
   }
