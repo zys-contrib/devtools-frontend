@@ -210,6 +210,333 @@ function verifyFlowSize(flow: Models.Schema.UserFlow): void {
 }
 
 export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
+  #renderCurrentPage(): LitTemplate {
+    switch (this.currentPage) {
+      case Pages.START_PAGE:
+        return this.#renderStartPage();
+      case Pages.ALL_RECORDINGS_PAGE:
+        return this.#renderAllRecordingsPage();
+      case Pages.RECORDING_PAGE:
+        return this.#renderRecordingPage();
+      case Pages.CREATE_RECORDING_PAGE:
+        return this.#renderCreateRecordingPage();
+    }
+  }
+
+  #renderAllRecordingsPage(): LitTemplate {
+    const recordings = this.#storage.getRecordings();
+    // clang-format off
+    return html`
+      <devtools-widget
+        ${widget(RecordingListView, {
+          recordings: recordings.map(recording => ({
+            storageName: recording.storageName,
+            name: recording.flow.title,
+          })),
+          replayAllowed: this.#replayAllowed,
+          onCreateRecording: this.#onCreateNewRecording.bind(this),
+          onDeleteRecording: this.#onDeleteRecording.bind(this),
+          onOpenRecording: this.#onRecordingSelected.bind(this),
+          onPlayRecording: this.#onPlayRecordingByName.bind(this),
+        })}
+      >
+      </devtools-widget>
+    `;
+    // clang-format on
+  }
+
+  #renderStartPage(): LitTemplate {
+    // clang-format off
+    return html`
+      <div class="empty-state" jslog=${VisualLogging.section().context('start-view')}>
+        <div class="empty-state-header">${i18nString(UIStrings.header)}</div>
+        <div class="empty-state-description">
+          <span>${i18nString(UIStrings.recordingDescription)}</span>
+          <devtools-link
+            class="devtools-link"
+            href=${RECORDER_EXPLANATION_URL}
+            jslogcontext="learn-more"
+          >${i18nString(UIStrings.learnMore)}</devtools-link>
+        </div>
+        <devtools-button .variant=${Buttons.Button.Variant.TONAL} jslogContext=${Actions.RecorderActions.CREATE_RECORDING} @click=${this.#onCreateNewRecording.bind(this)}>${i18nString(UIStrings.createRecording)}</devtools-button>
+      </div>
+    `;
+    // clang-format on
+  }
+
+  #renderRecordingPage(): LitTemplate {
+    // clang-format off
+    return html`
+      <devtools-widget
+          class="recording-view"
+          ${widget(RecordingView, {
+            recording: this.currentRecording?.flow ?? {title: '', steps: []},
+            replayState: this.#replayState,
+            isRecording: this.isRecording,
+            recordingTogglingInProgress: this.isToggling,
+            currentStep: this.currentStep,
+            currentError: this.recordingError,
+            sections: this.sections ?? [],
+            settings: this.settings,
+            recorderSettings: this.#recorderSettings,
+            lastReplayResult: this.lastReplayResult,
+            replayAllowed: this.#replayAllowed,
+            breakpointIndexes: this.#stepBreakpointIndexes,
+            builtInConverters: this.#builtInConverters,
+            extensionConverters: this.extensionConverters,
+            replayExtensions: this.replayExtensions,
+            extensionDescriptor: this.viewDescriptor,
+            onPlayRecording: this.#onPlayRecording.bind(this),
+            onNetworkConditionsChanged: this.#onNetworkConditionsChanged.bind(this),
+            onTimeoutChanged: this.#onTimeoutChanged.bind(this),
+            onTitleChanged: this.#handleRecordingTitleChanged.bind(this),
+            onAddAssertion: this.#handleAddAssertionEvent.bind(this),
+            onRecordingFinished: this.#onRecordingFinished.bind(this),
+            onAbortReplay: this.#onAbortReplay.bind(this),
+            onStepChanged: this.#handleRecordingChanged.bind(this),
+            onAddStep: this.#handleStepAdded.bind(this),
+            onRemoveStep: this.#handleStepRemoved.bind(this),
+            onAddBreakpoint: this.#onAddBreakpoint.bind(this),
+            onRemoveBreakpoint: this.#onRemoveBreakpoint.bind(this),
+            onAttributeRequested: send => {
+              send(this.currentRecording?.flow.selectorAttribute);
+            },
+          })}
+          @recorderextensionviewclosed=${this.#onExtensionViewClosed.bind(this)}
+          ${UI.Widget.widgetRef(RecordingView, widget => {this.#recordingView = widget;})}
+        ></devtools-widget>
+    `;
+    // clang-format on
+  }
+
+  #renderCreateRecordingPage(): LitTemplate {
+    // clang-format off
+    return html`
+      <devtools-widget
+        class="recording-view"
+        ${widget(CreateRecordingView, {
+          recorderSettings: this.#recorderSettings,
+          onRecordingStarted: this.#onRecordingStarted.bind(this),
+          onRecordingCancelled: this.onRecordingCancelled.bind(this),
+        })}
+        ${UI.Widget.widgetRef(
+          CreateRecordingView,
+          widget => {
+            this.#createRecordingView = widget;
+          },
+        )}
+      ></devtools-widget>
+    `;
+    // clang-format on
+  }
+
+  protected render(): LitTemplate {
+    const recordings = this.#storage.getRecordings();
+    const selectValue: string = this.currentRecording ? this.currentRecording.storageName : this.currentPage;
+    // clang-format off
+    const values = [
+      recordings.length === 0
+        ? {
+            value: Pages.START_PAGE,
+            name: i18nString(UIStrings.noRecordings),
+            selected: selectValue === Pages.START_PAGE,
+          }
+        : {
+            value: Pages.ALL_RECORDINGS_PAGE,
+            name: `${recordings.length} ${i18nString(UIStrings.numberOfRecordings)}`,
+            selected: selectValue === Pages.ALL_RECORDINGS_PAGE,
+          },
+      ...recordings.map(recording => ({
+        value: recording.storageName,
+        name: recording.flow.title,
+        selected: selectValue === recording.storageName,
+      })),
+    ];
+
+    return html`
+        <style>${UI.inspectorCommonStyles}</style>
+        <style>${recorderPanelStyles}</style>
+        <div class="wrapper">
+          <div class="header" jslog=${VisualLogging.toolbar()}>
+            <devtools-button
+              @click=${this.#onCreateNewRecording.bind(this)}
+              .data=${
+                {
+                  variant: Buttons.Button.Variant.TOOLBAR,
+                  iconName: 'plus',
+                  disabled:
+                    this.#replayState.isPlaying ||
+                    this.isRecording ||
+                    this.isToggling,
+                  title: Models.Tooltip.getTooltipForActions(
+                    i18nString(UIStrings.createRecording),
+                    Actions.RecorderActions.CREATE_RECORDING,
+                  ),
+                  jslogContext: Actions.RecorderActions.CREATE_RECORDING,
+                } as Buttons.Button.ButtonData
+              }
+            ></devtools-button>
+            <div class="separator"></div>
+            <select
+              .disabled=${
+                recordings.length === 0 ||
+                this.#replayState.isPlaying ||
+                this.isRecording ||
+                this.isToggling
+              }
+              @click=${(e: Event) => e.stopPropagation()}
+              @change=${this.#onRecordingSelected.bind(this)}
+              jslog=${VisualLogging.dropDown('recordings').track({change: true})}
+            >
+              ${repeat(
+                values,
+                item => item.value,
+                item => {
+                  return html`<option .selected=${item.selected} value=${item.value}>${item.name}</option>`;
+                },
+              )}
+            </select>
+            <div class="separator"></div>
+            <devtools-button
+              @click=${this.#onImportRecording.bind(this)}
+              .data=${
+                {
+                  variant: Buttons.Button.Variant.TOOLBAR,
+                  iconName: 'import',
+                  title: i18nString(UIStrings.importRecording),
+                  jslogContext: 'import-recording',
+                } as Buttons.Button.ButtonData
+              }
+            ></devtools-button>
+            <devtools-button
+              id='origin'
+              @click=${this.#onExportRecording.bind(this)}
+              ${ref(el => {
+                if (el instanceof HTMLElement) {
+                  this.#exportMenuButton = el as Buttons.Button.Button;
+                }
+              })}
+              .data=${
+                {
+                  variant: Buttons.Button.Variant.TOOLBAR,
+                  iconName: 'download',
+                  title: i18nString(UIStrings.exportRecording),
+                  disabled: !this.currentRecording,
+                } as Buttons.Button.ButtonData
+              }
+              jslog=${VisualLogging.dropDown('export-recording').track({click: true})}
+            ></devtools-button>
+            <devtools-menu
+              @menucloserequest=${this.#onExportMenuClosed.bind(this)}
+              @menuitemselected=${this.#onExportOptionSelected.bind(this)}
+              .origin=${this.#getExportMenuButton}
+              .showDivider=${false}
+              .showSelectedItem=${false}
+              .open=${this.exportMenuExpanded}
+            >
+              <devtools-menu-group .name=${i18nString(UIStrings.export)}>
+                ${repeat(
+                  this.#builtInConverters,
+                  converter => {
+                    return html`
+                    <devtools-menu-item
+                      .value=${converter.getId()}
+                      jslog=${VisualLogging.item(`converter-${Platform.StringUtilities.toKebabCase(converter.getId())}`).track({click: true})}>
+                      ${converter.getFormatName()}
+                    </devtools-menu-item>
+                  `;
+                  },
+                )}
+              </devtools-menu-group>
+              <devtools-menu-group .name=${i18nString(UIStrings.exportViaExtensions)}>
+                ${repeat(
+                  this.extensionConverters,
+                  converter => {
+                    return html`
+                    <devtools-menu-item
+                     .value=${converter.getId()}
+                      jslog=${VisualLogging.item('converter-extension').track({click: true})}>
+                    ${converter.getFormatName()}
+                    </devtools-menu-item>
+                  `;
+                  },
+                )}
+                <devtools-menu-item .value=${GET_EXTENSIONS_MENU_ITEM}>
+                  ${i18nString(UIStrings.getExtensions)}
+                </devtools-menu-item>
+              </devtools-menu-group>
+            </devtools-menu>
+            <devtools-button
+              @click=${this.#onDeleteRecording.bind(this)}
+              .data=${
+                {
+                  variant: Buttons.Button.Variant.TOOLBAR,
+                  iconName: 'bin',
+                  disabled:
+                    !this.currentRecording ||
+                    this.#replayState.isPlaying ||
+                    this.isRecording ||
+                    this.isToggling,
+                  title: i18nString(UIStrings.deleteRecording),
+                  jslogContext: 'delete-recording',
+                } as Buttons.Button.ButtonData
+              }
+            ></devtools-button>
+            <div class="separator"></div>
+            <devtools-button
+              @click=${() => this.recordingPlayer?.continue()}
+              .data=${
+                {
+                  variant: Buttons.Button.Variant.PRIMARY_TOOLBAR,
+                  iconName: 'resume',
+                  disabled:
+                    !this.recordingPlayer ||
+                    !this.#replayState.isPausedOnBreakpoint,
+                  title: i18nString(UIStrings.continueReplay),
+                  jslogContext: 'continue-replay',
+                } as Buttons.Button.ButtonData
+              }
+            ></devtools-button>
+            <devtools-button
+              @click=${() => this.recordingPlayer?.stepOver()}
+              .data=${
+                {
+                  variant: Buttons.Button.Variant.TOOLBAR,
+                  iconName: 'step-over',
+                  disabled:
+                    !this.recordingPlayer ||
+                    !this.#replayState.isPausedOnBreakpoint,
+                  title: i18nString(UIStrings.stepOverReplay),
+                  jslogContext: 'step-over',
+                } as Buttons.Button.ButtonData
+              }
+            ></devtools-button>
+            <div class="feedback">
+              <devtools-link class="devtools-link" title=${i18nString(UIStrings.sendFeedback)} href=${
+                FEEDBACK_URL
+              } jslogcontext="feedback">${i18nString(UIStrings.sendFeedback)}</devtools-link>
+            </div>
+            <div class="separator"></div>
+            <devtools-shortcut-dialog
+              .data=${
+                {
+                  shortcuts: this.#getShortcutsInfo(),
+                } as Dialogs.ShortcutDialog.ShortcutDialogData
+              } jslog=${VisualLogging.action('show-shortcuts').track({click: true})}
+            ></devtools-shortcut-dialog>
+          </div>
+          ${
+            this.importError
+              ? html`<div class='error'>Import error: ${
+                  this.importError.message
+                }</div>`
+              : ''
+          }
+          ${this.#renderCurrentPage()}
+        </div>
+      `;
+    // clang-format on
+  }
   static panelName = 'chrome-recorder';
 
   static instance(
@@ -1426,126 +1753,6 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
     ];
   }
 
-  #renderCurrentPage(): LitTemplate {
-    switch (this.currentPage) {
-      case Pages.START_PAGE:
-        return this.#renderStartPage();
-      case Pages.ALL_RECORDINGS_PAGE:
-        return this.#renderAllRecordingsPage();
-      case Pages.RECORDING_PAGE:
-        return this.#renderRecordingPage();
-      case Pages.CREATE_RECORDING_PAGE:
-        return this.#renderCreateRecordingPage();
-    }
-  }
-
-  #renderAllRecordingsPage(): LitTemplate {
-    const recordings = this.#storage.getRecordings();
-    // clang-format off
-    return html`
-      <devtools-widget
-        ${widget(RecordingListView, {
-          recordings: recordings.map(recording => ({
-            storageName: recording.storageName,
-            name: recording.flow.title,
-          })),
-          replayAllowed: this.#replayAllowed,
-          onCreateRecording: this.#onCreateNewRecording.bind(this),
-          onDeleteRecording: this.#onDeleteRecording.bind(this),
-          onOpenRecording: this.#onRecordingSelected.bind(this),
-          onPlayRecording: this.#onPlayRecordingByName.bind(this),
-        })}
-      >
-      </devtools-widget>
-    `;
-    // clang-format on
-  }
-
-  #renderStartPage(): LitTemplate {
-    // clang-format off
-    return html`
-      <div class="empty-state" jslog=${VisualLogging.section().context('start-view')}>
-        <div class="empty-state-header">${i18nString(UIStrings.header)}</div>
-        <div class="empty-state-description">
-          <span>${i18nString(UIStrings.recordingDescription)}</span>
-          <devtools-link
-            class="devtools-link"
-            href=${RECORDER_EXPLANATION_URL}
-            jslogcontext="learn-more"
-          >${i18nString(UIStrings.learnMore)}</devtools-link>
-        </div>
-        <devtools-button .variant=${Buttons.Button.Variant.TONAL} jslogContext=${Actions.RecorderActions.CREATE_RECORDING} @click=${this.#onCreateNewRecording.bind(this)}>${i18nString(UIStrings.createRecording)}</devtools-button>
-      </div>
-    `;
-    // clang-format on
-  }
-
-  #renderRecordingPage(): LitTemplate {
-    // clang-format off
-    return html`
-      <devtools-widget
-          class="recording-view"
-          ${widget(RecordingView, {
-            recording: this.currentRecording?.flow ?? {title: '', steps: []},
-            replayState: this.#replayState,
-            isRecording: this.isRecording,
-            recordingTogglingInProgress: this.isToggling,
-            currentStep: this.currentStep,
-            currentError: this.recordingError,
-            sections: this.sections ?? [],
-            settings: this.settings,
-            recorderSettings: this.#recorderSettings,
-            lastReplayResult: this.lastReplayResult,
-            replayAllowed: this.#replayAllowed,
-            breakpointIndexes: this.#stepBreakpointIndexes,
-            builtInConverters: this.#builtInConverters,
-            extensionConverters: this.extensionConverters,
-            replayExtensions: this.replayExtensions,
-            extensionDescriptor: this.viewDescriptor,
-            onPlayRecording: this.#onPlayRecording.bind(this),
-            onNetworkConditionsChanged: this.#onNetworkConditionsChanged.bind(this),
-            onTimeoutChanged: this.#onTimeoutChanged.bind(this),
-            onTitleChanged: this.#handleRecordingTitleChanged.bind(this),
-            onAddAssertion: this.#handleAddAssertionEvent.bind(this),
-            onRecordingFinished: this.#onRecordingFinished.bind(this),
-            onAbortReplay: this.#onAbortReplay.bind(this),
-            onStepChanged: this.#handleRecordingChanged.bind(this),
-            onAddStep: this.#handleStepAdded.bind(this),
-            onRemoveStep: this.#handleStepRemoved.bind(this),
-            onAddBreakpoint: this.#onAddBreakpoint.bind(this),
-            onRemoveBreakpoint: this.#onRemoveBreakpoint.bind(this),
-            onAttributeRequested: send => {
-              send(this.currentRecording?.flow.selectorAttribute);
-            },
-          })}
-          @recorderextensionviewclosed=${this.#onExtensionViewClosed.bind(this)}
-          ${UI.Widget.widgetRef(RecordingView, widget => {this.#recordingView = widget;})}
-        ></devtools-widget>
-    `;
-    // clang-format on
-  }
-
-  #renderCreateRecordingPage(): LitTemplate {
-    // clang-format off
-    return html`
-      <devtools-widget
-        class="recording-view"
-        ${widget(CreateRecordingView, {
-          recorderSettings: this.#recorderSettings,
-          onRecordingStarted: this.#onRecordingStarted.bind(this),
-          onRecordingCancelled: this.onRecordingCancelled.bind(this),
-        })}
-        ${UI.Widget.widgetRef(
-          CreateRecordingView,
-          widget => {
-            this.#createRecordingView = widget;
-          },
-        )}
-      ></devtools-widget>
-    `;
-    // clang-format on
-  }
-
   #getExportMenuButton = (): Buttons.Button.Button => {
     if (!this.#exportMenuButton) {
       throw new Error('#exportMenuButton not found');
@@ -1570,214 +1777,6 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
         listeners: {setrecording: this.#onSetRecording.bind(this)},
       }
     });
-  }
-
-  protected render(): LitTemplate {
-    const recordings = this.#storage.getRecordings();
-    const selectValue: string = this.currentRecording ? this.currentRecording.storageName : this.currentPage;
-    // clang-format off
-    const values = [
-      recordings.length === 0
-        ? {
-            value: Pages.START_PAGE,
-            name: i18nString(UIStrings.noRecordings),
-            selected: selectValue === Pages.START_PAGE,
-          }
-        : {
-            value: Pages.ALL_RECORDINGS_PAGE,
-            name: `${recordings.length} ${i18nString(UIStrings.numberOfRecordings)}`,
-            selected: selectValue === Pages.ALL_RECORDINGS_PAGE,
-          },
-      ...recordings.map(recording => ({
-        value: recording.storageName,
-        name: recording.flow.title,
-        selected: selectValue === recording.storageName,
-      })),
-    ];
-
-    return html`
-        <style>${UI.inspectorCommonStyles}</style>
-        <style>${recorderPanelStyles}</style>
-        <div class="wrapper">
-          <div class="header" jslog=${VisualLogging.toolbar()}>
-            <devtools-button
-              @click=${this.#onCreateNewRecording.bind(this)}
-              .data=${
-                {
-                  variant: Buttons.Button.Variant.TOOLBAR,
-                  iconName: 'plus',
-                  disabled:
-                    this.#replayState.isPlaying ||
-                    this.isRecording ||
-                    this.isToggling,
-                  title: Models.Tooltip.getTooltipForActions(
-                    i18nString(UIStrings.createRecording),
-                    Actions.RecorderActions.CREATE_RECORDING,
-                  ),
-                  jslogContext: Actions.RecorderActions.CREATE_RECORDING,
-                } as Buttons.Button.ButtonData
-              }
-            ></devtools-button>
-            <div class="separator"></div>
-            <select
-              .disabled=${
-                recordings.length === 0 ||
-                this.#replayState.isPlaying ||
-                this.isRecording ||
-                this.isToggling
-              }
-              @click=${(e: Event) => e.stopPropagation()}
-              @change=${this.#onRecordingSelected.bind(this)}
-              jslog=${VisualLogging.dropDown('recordings').track({change: true})}
-            >
-              ${repeat(
-                values,
-                item => item.value,
-                item => {
-                  return html`<option .selected=${item.selected} value=${item.value}>${item.name}</option>`;
-                },
-              )}
-            </select>
-            <div class="separator"></div>
-            <devtools-button
-              @click=${this.#onImportRecording.bind(this)}
-              .data=${
-                {
-                  variant: Buttons.Button.Variant.TOOLBAR,
-                  iconName: 'import',
-                  title: i18nString(UIStrings.importRecording),
-                  jslogContext: 'import-recording',
-                } as Buttons.Button.ButtonData
-              }
-            ></devtools-button>
-            <devtools-button
-              id='origin'
-              @click=${this.#onExportRecording.bind(this)}
-              ${ref(el => {
-                if (el instanceof HTMLElement) {
-                  this.#exportMenuButton = el as Buttons.Button.Button;
-                }
-              })}
-              .data=${
-                {
-                  variant: Buttons.Button.Variant.TOOLBAR,
-                  iconName: 'download',
-                  title: i18nString(UIStrings.exportRecording),
-                  disabled: !this.currentRecording,
-                } as Buttons.Button.ButtonData
-              }
-              jslog=${VisualLogging.dropDown('export-recording').track({click: true})}
-            ></devtools-button>
-            <devtools-menu
-              @menucloserequest=${this.#onExportMenuClosed.bind(this)}
-              @menuitemselected=${this.#onExportOptionSelected.bind(this)}
-              .origin=${this.#getExportMenuButton}
-              .showDivider=${false}
-              .showSelectedItem=${false}
-              .open=${this.exportMenuExpanded}
-            >
-              <devtools-menu-group .name=${i18nString(UIStrings.export)}>
-                ${repeat(
-                  this.#builtInConverters,
-                  converter => {
-                    return html`
-                    <devtools-menu-item
-                      .value=${converter.getId()}
-                      jslog=${VisualLogging.item(`converter-${Platform.StringUtilities.toKebabCase(converter.getId())}`).track({click: true})}>
-                      ${converter.getFormatName()}
-                    </devtools-menu-item>
-                  `;
-                  },
-                )}
-              </devtools-menu-group>
-              <devtools-menu-group .name=${i18nString(UIStrings.exportViaExtensions)}>
-                ${repeat(
-                  this.extensionConverters,
-                  converter => {
-                    return html`
-                    <devtools-menu-item
-                     .value=${converter.getId()}
-                      jslog=${VisualLogging.item('converter-extension').track({click: true})}>
-                    ${converter.getFormatName()}
-                    </devtools-menu-item>
-                  `;
-                  },
-                )}
-                <devtools-menu-item .value=${GET_EXTENSIONS_MENU_ITEM}>
-                  ${i18nString(UIStrings.getExtensions)}
-                </devtools-menu-item>
-              </devtools-menu-group>
-            </devtools-menu>
-            <devtools-button
-              @click=${this.#onDeleteRecording.bind(this)}
-              .data=${
-                {
-                  variant: Buttons.Button.Variant.TOOLBAR,
-                  iconName: 'bin',
-                  disabled:
-                    !this.currentRecording ||
-                    this.#replayState.isPlaying ||
-                    this.isRecording ||
-                    this.isToggling,
-                  title: i18nString(UIStrings.deleteRecording),
-                  jslogContext: 'delete-recording',
-                } as Buttons.Button.ButtonData
-              }
-            ></devtools-button>
-            <div class="separator"></div>
-            <devtools-button
-              @click=${() => this.recordingPlayer?.continue()}
-              .data=${
-                {
-                  variant: Buttons.Button.Variant.PRIMARY_TOOLBAR,
-                  iconName: 'resume',
-                  disabled:
-                    !this.recordingPlayer ||
-                    !this.#replayState.isPausedOnBreakpoint,
-                  title: i18nString(UIStrings.continueReplay),
-                  jslogContext: 'continue-replay',
-                } as Buttons.Button.ButtonData
-              }
-            ></devtools-button>
-            <devtools-button
-              @click=${() => this.recordingPlayer?.stepOver()}
-              .data=${
-                {
-                  variant: Buttons.Button.Variant.TOOLBAR,
-                  iconName: 'step-over',
-                  disabled:
-                    !this.recordingPlayer ||
-                    !this.#replayState.isPausedOnBreakpoint,
-                  title: i18nString(UIStrings.stepOverReplay),
-                  jslogContext: 'step-over',
-                } as Buttons.Button.ButtonData
-              }
-            ></devtools-button>
-            <div class="feedback">
-              <devtools-link class="devtools-link" title=${i18nString(UIStrings.sendFeedback)} href=${
-                FEEDBACK_URL
-              } jslogcontext="feedback">${i18nString(UIStrings.sendFeedback)}</devtools-link>
-            </div>
-            <div class="separator"></div>
-            <devtools-shortcut-dialog
-              .data=${
-                {
-                  shortcuts: this.#getShortcutsInfo(),
-                } as Dialogs.ShortcutDialog.ShortcutDialogData
-              } jslog=${VisualLogging.action('show-shortcuts').track({click: true})}
-            ></devtools-shortcut-dialog>
-          </div>
-          ${
-            this.importError
-              ? html`<div class='error'>Import error: ${
-                  this.importError.message
-                }</div>`
-              : ''
-          }
-          ${this.#renderCurrentPage()}
-        </div>
-      `;
-    // clang-format on
   }
 }
 
