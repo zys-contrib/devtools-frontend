@@ -79,10 +79,12 @@ export class UserBadges extends Common.ObjectWrapper.ObjectWrapper<EventTypes> {
     this.#starterBadgeDismissed =
         this.#settings.createSetting('starter-badge-dismissed', false, Common.Settings.SettingStorageType.SYNCED);
 
-    this.#allBadges = UserBadges.BADGE_REGISTRY.map(badgeCtor => new badgeCtor({
-                                                      onTriggerBadge: this.#onTriggerBadge.bind(this),
-                                                      badgeActionEventTarget: this.#badgeActionEventTarget,
-                                                    }));
+    const badgeContext: BadgeContext = {
+      onTriggerBadge: this.#onTriggerBadge.bind(this),
+      badgeActionEventTarget: this.#badgeActionEventTarget,
+      settings: this.#settings,
+    };
+    this.#allBadges = UserBadges.BADGE_REGISTRY.map(badgeCtor => new badgeCtor(badgeContext));
   }
 
   static instance({forceNew}: {forceNew: boolean} = {forceNew: false}): UserBadges {
