@@ -166,6 +166,7 @@ ts_library("unittests") {
     "PreloadingModel.test.ts",
     "RehydratingConnection.test.ts",
     "RemoteObject.test.ts",
+    "Resource.test.ts",
     "ResourceTreeModel.test.ts",
     "ScopeTreeCache.test.ts",
     "ScreenCaptureModel.test.ts",
