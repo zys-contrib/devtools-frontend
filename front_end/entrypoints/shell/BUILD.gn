@@ -12,6 +12,7 @@ devtools_entrypoint("shell") {
     "../../Images:optimize_images",
     "../../core/sdk:meta",
     "../../entrypoints/main:meta",
+    "../../models/badges:meta",
     "../../models/logs:meta",
     "../../models/persistence:meta",
     "../../models/workspace:meta",
