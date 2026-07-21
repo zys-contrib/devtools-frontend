@@ -13,7 +13,7 @@ instances simultaneously.
 
 The following is a prioritized list of architectural shortcomings and refactoring projects aimed at reducing coupling, eliminating global state, and improving the modularity of the DevTools foundation.
 
-### Priority 1: Move `models/text_utils` to `core/text_utils`
+### Priority 1: Move `models/text_utils` to `core/text_utils` [DONE]
 *   **Problem**: 22 files in `front_end/core/sdk` depend directly on `front_end/models/text_utils` for basic text structures (layering violation).
 *   **Rationale**: `text_utils` contains fundamental, non-business-logic utilities (`TextRange`, `TextCursor`, `ContentData`, `ContentProvider`) that represent the base data structures of the editor, debugger, and network panels. It only depends on `core/common` and `core/platform`. Moving it to `core` is a natural fit and resolves the majority of `core` -> `models` layering violations.
 *   **Action**:
