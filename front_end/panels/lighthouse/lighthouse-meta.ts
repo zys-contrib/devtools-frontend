@@ -10,7 +10,7 @@ import * as Lighthouse from './lighthouse.js';
 
 const UIStrings = {
   /**
-   * @description Command for showing the 'Lighthouse' tool
+   * @description Command for showing the Lighthouse panel.
    */
   showLighthouse: 'Show `Lighthouse`',
   /**
