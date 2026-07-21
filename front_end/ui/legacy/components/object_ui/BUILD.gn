@@ -97,6 +97,7 @@ devtools_ui_module("unittests") {
     "JavaScriptREPL.test.ts",
     "ObjectPopoverHelper.test.ts",
     "ObjectPropertiesSection.test.ts",
+    "RemoteObjectPreviewFormatter.test.ts",
   ]
 
   deps = [
