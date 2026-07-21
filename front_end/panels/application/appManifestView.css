@@ -81,6 +81,7 @@ devtools-report .report-section {
   /* The safe zone is a centrally positioned circle, with radius 2/5
   * (40%) of the minimum of the icon's width and height.
   * https://w3c.github.io/manifest/#icon-masks */
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
   clip-path: circle(40% at 50% 50%);
 }
 
