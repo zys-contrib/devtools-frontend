@@ -18,6 +18,7 @@ import * as SettingsUI from '../../ui/legacy/components/settings_ui/settings_ui.
 import * as Components from '../../ui/legacy/components/utils/utils.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import {html, render} from '../../ui/lit/lit.js';
+import * as SettingUIRegistration from '../../ui/settings/settings.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 import {PanelUtils} from '../utils/utils.js';
 
@@ -254,24 +255,27 @@ export class GenericSettingsTab extends UI.Widget.VBox implements SettingsTab {
     ];
 
     // Some settings define their initial ordering.
-    const preRegisteredSettings = Common.Settings.Settings.instance().getRegisteredSettings().sort(
-        (firstSetting, secondSetting) => {
-          if (firstSetting.order && secondSetting.order) {
-            return (firstSetting.order - secondSetting.order);
-          }
-          if (firstSetting.order) {
-            return -1;
-          }
-          if (secondSetting.order) {
-            return 1;
-          }
-          return 0;
-        },
-    );
+    const preRegisteredSettings = Array.from(SettingUIRegistration.SettingUIRegistration.getRegisteredSettings())
+                                      .sort(
+                                          (firstSetting, secondSetting) => {
+                                            const firstOrder = firstSetting.uiDescriptor.order;
+                                            const secondOrder = secondSetting.uiDescriptor.order;
+                                            if (firstOrder !== undefined && secondOrder !== undefined) {
+                                              return (firstOrder - secondOrder);
+                                            }
+                                            if (firstOrder) {
+                                              return -1;
+                                            }
+                                            if (secondOrder) {
+                                              return 1;
+                                            }
+                                            return 0;
+                                          },
+                                      );
 
     for (const sectionCategory of explicitSectionOrder) {
-      const settingsForSection = preRegisteredSettings.filter(setting => setting.category === sectionCategory &&
-                                                                  GenericSettingsTab.isSettingVisible(setting));
+      const settingsForSection = preRegisteredSettings.filter(
+          setting => setting.uiDescriptor.category === sectionCategory && GenericSettingsTab.isSettingVisible(setting));
       this.createSectionElement(sectionCategory, settingsForSection);
     }
 
@@ -286,8 +290,8 @@ export class GenericSettingsTab extends UI.Widget.VBox implements SettingsTab {
     }
   }
 
-  static isSettingVisible(setting: Common.Settings.SettingRegistration): boolean {
-    return Boolean(setting.title?.()) && Boolean(setting.category);
+  static isSettingVisible(setting: SettingUIRegistration.SettingUIRegistration.RegisteredSettingUI): boolean {
+    return Boolean(setting.uiDescriptor.title?.()) && Boolean(setting.uiDescriptor.category);
   }
 
   override wasShown(): void {
@@ -322,7 +326,7 @@ export class GenericSettingsTab extends UI.Widget.VBox implements SettingsTab {
             });
   }
 
-  private createExtensionSection(settings: Common.Settings.SettingRegistration[]): void {
+  private createExtensionSection(settings: SettingUIRegistration.SettingUIRegistration.RegisteredSettingUI[]): void {
     const sectionName = Common.Settings.SettingCategory.EXTENSIONS;
     const settingUI = Components.Linkifier.LinkHandlerSettingUI.instance();
     const element = settingUI.settingElement();
@@ -330,7 +334,7 @@ export class GenericSettingsTab extends UI.Widget.VBox implements SettingsTab {
   }
 
   private createSectionElement(category: Common.Settings.SettingCategory,
-                               settings: Common.Settings.SettingRegistration[]): void {
+                               settings: SettingUIRegistration.SettingUIRegistration.RegisteredSettingUI[]): void {
     // Always create the EXTENSIONS section and append the link handling control.
     if (category === Common.Settings.SettingCategory.EXTENSIONS) {
       this.createExtensionSection(settings);
@@ -345,11 +349,12 @@ export class GenericSettingsTab extends UI.Widget.VBox implements SettingsTab {
   }
 
   private createStandardSectionElement(category: Common.Settings.SettingCategory,
-                                       settings: Common.Settings.SettingRegistration[], content?: Element): void {
+                                       settings: SettingUIRegistration.SettingUIRegistration.RegisteredSettingUI[],
+                                       content?: Element): void {
     const uiSectionName = Common.Settings.getLocalizedSettingsCategory(category);
     const sectionElement = document.createElement('div');
     for (const settingRegistration of settings) {
-      const setting = Common.Settings.Settings.instance().moduleSetting(settingRegistration.settingName);
+      const setting = Common.Settings.Settings.instance().resolve(settingRegistration.descriptor);
       const settingControl = SettingsUI.SettingsUI.createControlForSetting(setting);
       if (settingControl) {
         this.settingToControl.set(setting, settingControl);
@@ -552,11 +557,11 @@ export class Revealer implements
       return;
     }
 
-    for (const settingRegistration of Common.Settings.Settings.instance().getRegisteredSettings()) {
+    for (const settingRegistration of SettingUIRegistration.SettingUIRegistration.getRegisteredSettings()) {
       if (!GenericSettingsTab.isSettingVisible(settingRegistration)) {
         continue;
       }
-      if (settingRegistration.settingName === object.name) {
+      if (settingRegistration.descriptor.name === object.name) {
         Host.InspectorFrontendHost.InspectorFrontendHostInstance.bringToFront();
         await SettingsScreen.showSettingsScreen();
         const genericSettingsTab = context.flavor(GenericSettingsTab);

@@ -48,6 +48,7 @@ devtools_ui_module("settings") {
     "../../ui/legacy/components/settings_ui:bundle",
     "../../ui/legacy/components/utils:bundle",
     "../../ui/lit:bundle",
+    "../../ui/settings:bundle",
     "../../ui/visual_logging:bundle",
     "../utils:bundle",
     "./components:bundle",
