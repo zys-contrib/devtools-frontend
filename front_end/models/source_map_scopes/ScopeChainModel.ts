@@ -4,7 +4,7 @@
 
 import * as Common from '../../core/common/common.js';
 import * as SDK from '../../core/sdk/sdk.js';
-import * as Bindings from '../bindings/bindings.js';
+import type * as Bindings from '../bindings/bindings.js';
 
 import {resolveScopeChain} from './NamesResolver.js';
 
@@ -29,8 +29,7 @@ export class ScopeChainModel extends Common.ObjectWrapper.ObjectWrapper<EventTyp
   readonly #boundUpdate = this.#update.bind(this);
 
   constructor(callFrame: SDK.DebuggerModel.CallFrame,
-              debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
-                  Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()) {
+              debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding) {
     super();
     this.#callFrame = callFrame;
     this.#debuggerWorkspaceBinding = debuggerWorkspaceBinding;

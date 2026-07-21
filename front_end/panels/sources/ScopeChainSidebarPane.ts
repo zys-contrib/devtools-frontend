@@ -32,6 +32,7 @@ import type * as Common from '../../core/common/common.js';
 import * as i18n from '../../core/i18n/i18n.js';
 import type * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
+import * as Bindings from '../../models/bindings/bindings.js';
 import * as SourceMapScopes from '../../models/source_map_scopes/source_map_scopes.js';
 import * as StackTrace from '../../models/stack_trace/stack_trace.js';
 import * as ObjectUI from '../../ui/legacy/components/object_ui/object_ui.js';
@@ -214,7 +215,8 @@ export class ScopeChainSidebarPane extends UI.Widget.VBox implements UI.ContextF
     this.#linkifier.reset();
 
     if (callFrame) {
-      const scopeChainModel = new SourceMapScopes.ScopeChainModel.ScopeChainModel(callFrame.sdkFrame);
+      const scopeChainModel = new SourceMapScopes.ScopeChainModel.ScopeChainModel(
+          callFrame.sdkFrame, Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance());
       this.#scopeChainModel = scopeChainModel;
       this.#scopeChainModel.addEventListener(SourceMapScopes.ScopeChainModel.Events.SCOPE_CHAIN_UPDATED, event => {
         if (this.#scopeChainModel === scopeChainModel) {

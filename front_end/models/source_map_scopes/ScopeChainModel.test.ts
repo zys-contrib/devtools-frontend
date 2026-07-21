@@ -21,9 +21,6 @@ describe('ScopeChainModel', () => {
     clock = sinon.useFakeTimers();
     universe = new TestUniverse();
 
-    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
-        .returns(universe.debuggerWorkspaceBinding);
-
     stubPluginManager = sinon.createStubInstance(
         Bindings.DebuggerLanguagePlugins.DebuggerLanguagePluginManager, {resolveScopeChain: Promise.resolve(null)});
     sinon.stub(universe.debuggerWorkspaceBinding, 'pluginManager').value(stubPluginManager);
@@ -44,7 +41,8 @@ describe('ScopeChainModel', () => {
     fakeFrame.script = sinon.createStubInstance(SDK.Script.Script, {isWasm: false});
     fakeFrame.scopeChain.returns([]);
 
-    const scopeChainModel = new SourceMapScopes.ScopeChainModel.ScopeChainModel(fakeFrame);
+    const scopeChainModel =
+        new SourceMapScopes.ScopeChainModel.ScopeChainModel(fakeFrame, universe.debuggerWorkspaceBinding);
     const listenerStub = sinon.stub();
     scopeChainModel.addEventListener(SourceMapScopes.ScopeChainModel.Events.SCOPE_CHAIN_UPDATED, listenerStub);
 
@@ -67,7 +65,8 @@ describe('ScopeChainModel', () => {
 
     fakeFrame.scopeChain.returns([]);
 
-    const scopeChainModel = new SourceMapScopes.ScopeChainModel.ScopeChainModel(fakeFrame);
+    const scopeChainModel =
+        new SourceMapScopes.ScopeChainModel.ScopeChainModel(fakeFrame, universe.debuggerWorkspaceBinding);
     const listenerStub = sinon.stub();
     scopeChainModel.addEventListener(SourceMapScopes.ScopeChainModel.Events.SCOPE_CHAIN_UPDATED, listenerStub);
 
