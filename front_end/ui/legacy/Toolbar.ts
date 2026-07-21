@@ -12,6 +12,7 @@ import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 import {createIcon} from '../kit/kit.js';
 import {nothing, render, type TemplateResult} from '../lit/lit.js';
+import * as SettingUIRegistration from '../settings/settings.js';
 
 import {type Action, Events as ActionEvents} from './ActionRegistration.js';
 import {ActionRegistry} from './ActionRegistry.js';
@@ -1429,7 +1430,9 @@ export class ToolbarSettingCheckbox extends ToolbarCheckbox {
   constructor(
       setting: Common.Settings.Setting<boolean>, tooltip?: Common.UIString.LocalizedString,
       alternateTitle?: Common.UIString.LocalizedString) {
-    super(alternateTitle || setting.title(), tooltip, undefined, setting.name);
+    const uiDescriptor = SettingUIRegistration.SettingUIRegistration.maybeResolve(setting.descriptor());
+    const title = alternateTitle || uiDescriptor?.title?.() || setting.title();
+    super(title, tooltip, undefined, setting.name);
     bindCheckbox(this.element as CheckboxLabel, setting);
   }
 }

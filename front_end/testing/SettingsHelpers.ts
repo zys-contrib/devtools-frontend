@@ -13,46 +13,29 @@ function createSettingValue(
 }
 
 export function stubNoopSettings() {
+  const createDummySetting = (name: string) => ({
+    name,
+    get: () => [],
+    set: () => {},
+    addChangeListener: () => {},
+    removeChangeListener: () => {},
+    setDisabled: () => {},
+    setTitle: () => {},
+    title: () => {},
+    asRegExp: () => {},
+    type: () => Common.Settings.SettingType.BOOLEAN,
+    getAsArray: () => [],
+    descriptor: () => ({
+      name,
+      settingType: Common.Settings.SettingType.BOOLEAN,
+      defaultValue: false,
+    }),
+  });
+
   sinon.stub(Common.Settings.Settings, 'instance').returns({
-    createSetting: (name: string) => ({
-      name,
-      get: () => [],
-      set: () => {},
-      addChangeListener: () => {},
-      removeChangeListener: () => {},
-      setDisabled: () => {},
-      setTitle: () => {},
-      title: () => {},
-      asRegExp: () => {},
-      type: () => Common.Settings.SettingType.BOOLEAN,
-      getAsArray: () => [],
-    }),
-    moduleSetting: (name: string) => ({
-      name,
-      get: () => [],
-      set: () => {},
-      addChangeListener: () => {},
-      removeChangeListener: () => {},
-      setDisabled: () => {},
-      setTitle: () => {},
-      title: () => {},
-      asRegExp: () => {},
-      type: () => Common.Settings.SettingType.BOOLEAN,
-      getAsArray: () => [],
-    }),
-    createLocalSetting: (name: string) => ({
-      name,
-      get: () => [],
-      set: () => {},
-      addChangeListener: () => {},
-      removeChangeListener: () => {},
-      setDisabled: () => {},
-      setTitle: () => {},
-      title: () => {},
-      asRegExp: () => {},
-      type: () => Common.Settings.SettingType.BOOLEAN,
-      getAsArray: () => [],
-    }),
+    createSetting: createDummySetting,
+    moduleSetting: createDummySetting,
+    createLocalSetting: createDummySetting,
   } as unknown as Common.Settings.Settings);
 }
 

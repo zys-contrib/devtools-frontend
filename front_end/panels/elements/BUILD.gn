@@ -113,6 +113,7 @@ devtools_ui_module("elements") {
     "../../ui/legacy/components/object_ui:bundle",
     "../../ui/legacy/components/utils:bundle",
     "../../ui/lit:bundle",
+    "../../ui/settings:bundle",
     "../../ui/visual_logging:bundle",
     "../common:bundle",
     "./components:bundle",
