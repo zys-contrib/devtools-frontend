@@ -43,7 +43,7 @@ The second bot should do the following:
 - Ensure you use the instructions from the `devtools-version-control` skill to create and switch branches appropriately.
 - Make a minor, harmless modification directly to the test file being investigated (e.g., adding a comment `// Trigger stressor bot`) to ensure the commit is not empty.
 - Add this file (with `git add`) and commit it using a meaningful commit message (e.g., `git commit -m "Deflake <test name>"`). Ask the user which bug number to use for the changelist description.
-- Upload this change using `git cl upload`. This creates a debugging CL that all agents (like the fix agent) will continue to work on.
+- Upload this change using `git cl upload -f`. Always use `-f` (`--force`) so the upload runs non-interactively without opening a text editor or prompt. This creates a debugging CL that all agents (like the fix agent) will continue to work on.
 - Note the <issue number> created during upload.
 - To start the stressor bot, run this command (substituting `<test file>:exact_test_id` with the actual file and exact test ID):
   `git cl try -B devtools-frontend/try -b e2e_stressor_linux -b e2e_stressor_win64 -b e2e_stressor_mac -p runner_args='<test file>:exact_test_id --repeat=100'`
@@ -81,7 +81,7 @@ The test fixing sub-agent should do the following:
 - Compile and run the test locally, to make sure there are no obvious errors introduced.
 - Commit the changes (to the branch created earlier). Make sure to list (in the changelist description) the test name, the fix, reasoning for why the test failed, why the fix fixes the issue and the failure rate (if non-zero). If you were not able to reproduce the error, state that the fix is speculative. Ask the user to provide the bug number to use in the changelist description.
 - CRITICAL: Iff the 'local-repro' bot does not reproduce the error, the 'fix-test' agent MUST wait until the stressor bot finishes its run before uploading the fix to the server (so that the stressor try run isn't aborted prematurely). If the error reproduces locally, you can upload immediately.
-- Once it is safe to do so, upload the change with `git cl upload`.
+- Once it is safe to do so, upload the change with `git cl upload -f`.
 
 ## Results
 

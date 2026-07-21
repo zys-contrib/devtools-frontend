@@ -112,9 +112,9 @@ When all tests and presubmit checks pass, commit your changes and upload the CL 
    *(If you update an existing commit on this branch, use `git commit --amend`).*
 
 2. **Upload the CL to Gerrit**
-   Upload the CL using `git cl upload`. Provide a dynamic summary of changes (depending on the actual content of the change) and the bug trailer:
+   Upload the CL using `git cl upload -f`. Always pass `-f` (`--force`) to prevent `git cl upload` from prompting or opening an interactive text editor in background agent shells:
    ```bash
-   git cl upload -d --commit-description="Ensure consistent UI Strings in <folder_path>
+   git cl upload -f -d --commit-description="Ensure consistent UI Strings in <folder_path>
 
    Summary of changes:
    - <dynamically list specific words replaced, contractions adopted, or sentence case fixes>
