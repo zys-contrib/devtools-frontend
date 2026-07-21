@@ -217,7 +217,8 @@ describe('NameResolver', () => {
     const callFrame = await backend.createCallFrame(
         target, {url: URL, content: source}, scopes, {url: sourceMapUrl, content: sourceMapContent}, [scopeObject]);
 
-    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(callFrame.scopeChain()[0]);
+    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(
+        callFrame.scopeChain()[0], backend.universe.debuggerWorkspaceBinding);
     const properties = await resolvedScopeObject.getAllProperties(false, false);
     const namesAndValues = properties.properties?.map(p => ({name: p.name, value: p.value?.value})) ?? [];
 
@@ -242,7 +243,8 @@ describe('NameResolver', () => {
     const callFrame = await backend.createCallFrame(
         target, {url: URL, content: source}, scopes, {url: sourceMapUrl, content: sourceMapContent}, [scopeObject]);
 
-    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(callFrame.scopeChain()[0]);
+    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(
+        callFrame.scopeChain()[0], backend.universe.debuggerWorkspaceBinding);
     const properties = await resolvedScopeObject.getAllProperties(false, false);
     const namesAndValues = properties.properties?.map(p => ({name: p.name, value: p.value?.value})) ?? [];
 
@@ -267,7 +269,8 @@ describe('NameResolver', () => {
     const callFrame = await backend.createCallFrame(
         target, {url: URL, content: source}, scopes, {url: sourceMapUrl, content: sourceMapContent}, [scopeObject]);
 
-    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(callFrame.scopeChain()[0]);
+    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(
+        callFrame.scopeChain()[0], backend.universe.debuggerWorkspaceBinding);
     const properties = await resolvedScopeObject.getAllProperties(false, false);
     const namesAndValues = properties.properties?.map(p => ({name: p.name, value: p.value?.value})) ?? [];
 
@@ -291,7 +294,8 @@ describe('NameResolver', () => {
     const callFrame = await backend.createCallFrame(
         target, {url: URL, content: source}, scopes, {url: sourceMapUrl, content: sourceMapContent}, [scopeObject]);
 
-    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(callFrame.scopeChain()[0]);
+    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(
+        callFrame.scopeChain()[0], backend.universe.debuggerWorkspaceBinding);
     const properties = await resolvedScopeObject.getAllProperties(false, false);
     const namesAndValues = properties.properties?.map(p => ({name: p.name, value: p.value?.value})) ?? [];
 
@@ -318,7 +322,8 @@ describe('NameResolver', () => {
     const callFrame = await backend.createCallFrame(
         target, {url: URL, content: source}, scopes, {url: sourceMapUrl, content: sourceMapContent}, [scopeObject]);
 
-    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(callFrame.scopeChain()[0]);
+    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(
+        callFrame.scopeChain()[0], backend.universe.debuggerWorkspaceBinding);
     const properties = await resolvedScopeObject.getAllProperties(false, false);
     const namesAndValues = properties.properties?.map(p => ({name: p.name, value: p.value?.value})) ?? [];
 
@@ -371,7 +376,8 @@ describe('NameResolver', () => {
         target, {url: URL, content: source.join('\n')}, scopes.join('\n'),
         {url: sourceMapUrl, content: sourceMapContent}, [scopeObject]);
 
-    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(callFrame.scopeChain()[0]);
+    const resolvedScopeObject = await SourceMapScopes.NamesResolver.resolveScopeInObject(
+        callFrame.scopeChain()[0], backend.universe.debuggerWorkspaceBinding);
     const properties = await resolvedScopeObject.getAllProperties(false, false);
     const namesAndValues = properties.properties?.map(p => ({name: p.name, value: p.value?.value})) ?? [];
 
@@ -414,7 +420,7 @@ describe('NameResolver', () => {
       const {lineNumber, columnNumber} = scopeLocation;
       await script?.requestContentData();
       const functionName = await SourceMapScopes.NamesResolver.resolveProfileFrameFunctionName(
-          {scriptId, columnNumber, lineNumber}, target);
+          {scriptId, columnNumber, lineNumber}, target, backend.universe.debuggerWorkspaceBinding);
       assert.strictEqual(functionName, 'unminified');
     });
   });
@@ -513,7 +519,8 @@ function mulWithOffset(param1, param2, offset) {
       const location = script.rawLocation(0, 30);  // Beginning of function scope.
       assert.exists(location);
 
-      const mapping = await SourceMapScopes.NamesResolver.allVariablesAtPosition(location);
+      const mapping = await SourceMapScopes.NamesResolver.allVariablesAtPosition(
+          location, backend.universe.debuggerWorkspaceBinding);
 
       assert.strictEqual(mapping.get('param1'), 'n');
       assert.strictEqual(mapping.get('param2'), 't');
@@ -526,7 +533,8 @@ function mulWithOffset(param1, param2, offset) {
       const location = script.rawLocation(0, 70);  // Beginning of block scope.
       assert.exists(location);
 
-      const mapping = await SourceMapScopes.NamesResolver.allVariablesAtPosition(location);
+      const mapping = await SourceMapScopes.NamesResolver.allVariablesAtPosition(
+          location, backend.universe.debuggerWorkspaceBinding);
 
       // Block scope {intermediate} shadows function scope {intermediate}.
       assert.strictEqual(mapping.get('intermediate'), 'n');
@@ -536,7 +544,8 @@ function mulWithOffset(param1, param2, offset) {
       const location = script.rawLocation(0, 70);  // Beginning of block scope.
       assert.exists(location);
 
-      const mapping = await SourceMapScopes.NamesResolver.allVariablesAtPosition(location);
+      const mapping = await SourceMapScopes.NamesResolver.allVariablesAtPosition(
+          location, backend.universe.debuggerWorkspaceBinding);
 
       assert.isNull(mapping.get('param1'));
     });

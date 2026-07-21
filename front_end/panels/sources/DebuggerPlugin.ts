@@ -694,7 +694,8 @@ export class DebuggerPlugin extends Plugin {
       show: async (popover: UI.GlassPane.GlassPane) => {
         let resolvedText = '';
         if (selectedCallFrame.script.isJavaScript()) {
-          const nameMap = await SourceMapScopes.NamesResolver.allVariablesInCallFrame(selectedCallFrame);
+          const nameMap = await SourceMapScopes.NamesResolver.allVariablesInCallFrame(
+              selectedCallFrame, Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance());
           try {
             resolvedText =
                 await Formatter.FormatterWorkerPool.formatterWorkerPool().javaScriptSubstitute(evaluationText, nameMap);
@@ -2147,7 +2148,9 @@ export async function computeScopeMappings(
       break;
     }
 
-    const {properties} = await SourceMapScopes.NamesResolver.resolveScopeInObject(scope).getAllProperties(false, false);
+    const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
+    const {properties} = await SourceMapScopes.NamesResolver.resolveScopeInObject(scope, debuggerWorkspaceBinding)
+                             .getAllProperties(false, false);
     if (!properties || properties.length > MAX_PROPERTIES_IN_SCOPE_FOR_VALUE_DECORATIONS) {
       break;
     }

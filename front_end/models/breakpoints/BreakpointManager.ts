@@ -837,7 +837,8 @@ export class Breakpoint implements SDK.TargetManager.SDKModelObserver<SDK.Debugg
     };
 
     if (location) {
-      return SourceMapScopes.NamesResolver.allVariablesAtPosition(location)
+      return SourceMapScopes.NamesResolver
+          .allVariablesAtPosition(location, this.breakpointManager.debuggerWorkspaceBinding)
           .then(nameMap => Formatter.FormatterWorkerPool.formatterWorkerPool().javaScriptSubstitute(condition, nameMap))
           .catch(() => condition)
           .then(subsitutedCondition => addSourceUrl(subsitutedCondition), () => addSourceUrl(condition));
