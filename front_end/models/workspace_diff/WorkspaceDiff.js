@@ -4,10 +4,10 @@
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as Root from '../../core/root/root.js';
+import * as TextUtils from '../../core/text_utils/text_utils.js';
 import * as Diff from '../../third_party/diff/diff.js';
 import * as FormatterModule from '../formatter/formatter.js';
 import * as Persistence from '../persistence/persistence.js';
-import * as TextUtils from '../text_utils/text_utils.js';
 import * as Workspace from '../workspace/workspace.js';
 export class WorkspaceDiffImpl extends Common.ObjectWrapper.ObjectWrapper {
     #persistence;

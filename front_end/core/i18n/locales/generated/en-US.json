@@ -558,7 +558,7 @@
     "message": "Do not pause on exceptions"
   },
   "core/sdk/sdk-meta.ts | doNotPreserveLogUponNavigation": {
-    "message": "Do not preserve log upon navigation"
+    "message": "Don’t keep log on navigation"
   },
   "core/sdk/sdk-meta.ts | doNotShowGridNamedAreas": {
     "message": "Do not show grid named areas"
@@ -738,7 +738,7 @@
     "message": "Pause on exceptions"
   },
   "core/sdk/sdk-meta.ts | preserveLogUponNavigation": {
-    "message": "Preserve log upon navigation"
+    "message": "Keep log on navigation"
   },
   "core/sdk/sdk-meta.ts | print": {
     "message": "print"
@@ -1779,16 +1779,16 @@
     "message": "clear"
   },
   "models/logs/logs-meta.ts | doNotPreserveLogOnPageReload": {
-    "message": "Do not preserve log on page reload / navigation"
+    "message": "Don’t keep log on page reload / navigation"
   },
   "models/logs/logs-meta.ts | preserve": {
     "message": "preserve"
   },
   "models/logs/logs-meta.ts | preserveLog": {
-    "message": "Preserve log"
+    "message": "Keep log"
   },
   "models/logs/logs-meta.ts | preserveLogOnPageReload": {
-    "message": "Preserve log on page reload / navigation"
+    "message": "Keep log on page reload / navigation"
   },
   "models/logs/logs-meta.ts | recordNetworkLog": {
     "message": "Record network log"
@@ -4749,7 +4749,7 @@
     "message": "Deletion reason"
   },
   "panels/application/DeviceBoundSessionsView.ts | doNotClearLogOnPageReload": {
-    "message": "Do not clear log on page reload/navigation."
+    "message": "Don’t clear log on page reload/navigation"
   },
   "panels/application/DeviceBoundSessionsView.ts | emptyScopeSpecificationDomain": {
     "message": "Empty scope specification domain"
@@ -4944,7 +4944,7 @@
     "message": "Persistent HTTP error"
   },
   "panels/application/DeviceBoundSessionsView.ts | preserveLog": {
-    "message": "Preserve log"
+    "message": "Keep log"
   },
   "panels/application/DeviceBoundSessionsView.ts | proxyError": {
     "message": "Proxy error"
@@ -7715,6 +7715,12 @@
   "panels/elements/AccessibilityTreeView.ts | copy": {
     "message": "Copy"
   },
+  "panels/elements/AccessibilityTreeView.ts | scrollIntoView": {
+    "message": "Scroll into view"
+  },
+  "panels/elements/AccessibilityTreeView.ts | switchToDomTree": {
+    "message": "Switch to DOM tree"
+  },
   "panels/elements/ClassesPaneWidget.ts | addNewClass": {
     "message": "Add new class"
   },
@@ -8284,6 +8290,9 @@
   },
   "panels/elements/ElementsTreeElement.ts | styleScrollbars": {
     "message": "Style scrollbars"
+  },
+  "panels/elements/ElementsTreeElement.ts | switchToAccessibilityTree": {
+    "message": "Switch to accessibility tree"
   },
   "panels/elements/ElementsTreeElement.ts | thisElementWasIdentifiedAsAnAd": {
     "message": "This element was identified as an ad"
@@ -11274,7 +11283,7 @@
     "message": "Disable cache while DevTools is open"
   },
   "panels/network/NetworkPanel.ts | doNotClearLogOnPageReload": {
-    "message": "Do not clear log on page reload / navigation"
+    "message": "Don’t clear log on page reload / navigation"
   },
   "panels/network/NetworkPanel.ts | exportHar": {
     "message": "Export HAR (either sanitized or with sensitive data)"
@@ -11313,7 +11322,7 @@
     "message": "Open in Network panel (missing request)"
   },
   "panels/network/NetworkPanel.ts | preserveLog": {
-    "message": "Preserve log"
+    "message": "Keep log"
   },
   "panels/network/NetworkPanel.ts | recordingFrames": {
     "message": "Recording frames…"
@@ -14612,6 +14621,9 @@
   "panels/sources/FilteredUISourceCodeListProvider.ts | sIgnoreListed": {
     "message": "{PH1} (ignore listed)"
   },
+  "panels/sources/FilteredUISourceCodeListProvider.ts | workspace": {
+    "message": "Workspace"
+  },
   "panels/sources/GoToLineQuickOpen.ts | currentLineSTypeALineNumber": {
     "message": "Type a line number between 1 and {PH1} to navigate to"
   },
@@ -16522,6 +16534,21 @@
   },
   "panels/timeline/TimelinePanel.ts | recordingFailed": {
     "message": "Recording failed"
+  },
+  "panels/timeline/TimelinePanel.ts | screenshotCapture": {
+    "message": "Screenshot capture"
+  },
+  "panels/timeline/TimelinePanel.ts | screenshotPresetDefault": {
+    "message": "500 x 500 px, up to 450 frames"
+  },
+  "panels/timeline/TimelinePanel.ts | screenshotPresetLarge": {
+    "message": "1000 x 1000 px, up to 100 frames"
+  },
+  "panels/timeline/TimelinePanel.ts | screenshotPresetMedium": {
+    "message": "250 x 250 px, up to 1800 frames"
+  },
+  "panels/timeline/TimelinePanel.ts | screenshotPresetTiny": {
+    "message": "100 x 100 px, up to 11250 frames"
   },
   "panels/timeline/TimelinePanel.ts | screenshots": {
     "message": "Screenshots"

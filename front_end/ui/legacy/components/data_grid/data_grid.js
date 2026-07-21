@@ -63,7 +63,7 @@ var dataGrid_css_default = `/*
   position: sticky;
   top: 0;
   height: 21px;
-  z-index: 1;
+  z-index: 2;
 }
 
 .data-grid .aria-live-label {

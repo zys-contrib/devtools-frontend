@@ -816,6 +816,12 @@ const DEFAULT_COLUMN_CONFIG = {
 };
 const DEFAULT_COLUMNS = [
     {
+        id: 'request-number',
+        title: i18nLazyString(UIStrings.requestNumber),
+        align: "right" /* DataGrid.DataGrid.Align.RIGHT */,
+        sortingFunction: NetworkRequestNode.RequestNumberComparator,
+    },
+    {
         id: 'name',
         title: i18nLazyString(UIStrings.name),
         subtitle: i18nLazyString(UIStrings.path),
@@ -838,12 +844,6 @@ const DEFAULT_COLUMNS = [
         hideable: true,
         hideableGroup: 'path',
         sortingFunction: NetworkRequestNode.RequestURLComparator,
-    },
-    {
-        id: 'request-number',
-        title: i18nLazyString(UIStrings.requestNumber),
-        align: "right" /* DataGrid.DataGrid.Align.RIGHT */,
-        sortingFunction: NetworkRequestNode.RequestNumberComparator,
     },
     {
         id: 'method',

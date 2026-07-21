@@ -1,10 +1,10 @@
 // Copyright 2012 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-import * as TextUtils from '../../models/text_utils/text_utils.js';
 import * as Common from '../common/common.js';
 import * as i18n from '../i18n/i18n.js';
 import * as Platform from '../platform/platform.js';
+import * as TextUtils from '../text_utils/text_utils.js';
 import { CookieModel } from './CookieModel.js';
 import { CookieParser } from './CookieParser.js';
 import * as HttpReasonPhraseStrings from './HttpReasonPhraseStrings.js';
