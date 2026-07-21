@@ -18,7 +18,7 @@ import {DebuggerLanguagePluginManager} from './DebuggerLanguagePlugins.js';
 import {DefaultScriptMapping} from './DefaultScriptMapping.js';
 import {type LiveLocation, type LiveLocationPool, LiveLocationWithPool} from './LiveLocation.js';
 import {NetworkProject} from './NetworkProject.js';
-import type {ResourceMapping} from './ResourceMapping.js';
+import type {DebuggerLocationUpdater, ResourceMapping} from './ResourceMapping.js';
 import {type ResourceScriptFile, ResourceScriptMapping} from './ResourceScriptMapping.js';
 import {
   isErrorLike,
@@ -27,7 +27,8 @@ import {
   UnparsableError,
 } from './SymbolizedError.js';
 
-export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObserver<SDK.DebuggerModel.DebuggerModel> {
+export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObserver<SDK.DebuggerModel.DebuggerModel>,
+                                                 DebuggerLocationUpdater {
   readonly resourceMapping: ResourceMapping;
   readonly #debuggerModelToData: Map<SDK.DebuggerModel.DebuggerModel, ModelData>;
   readonly #liveLocationPromises: Set<unknown>;
@@ -40,7 +41,7 @@ export class DebuggerWorkspaceBinding implements SDK.TargetManager.SDKModelObser
       resourceMapping: ResourceMapping, targetManager: SDK.TargetManager.TargetManager,
       ignoreListManager: Workspace.IgnoreListManager.IgnoreListManager, workspace: Workspace.Workspace.WorkspaceImpl) {
     this.resourceMapping = resourceMapping;
-    this.resourceMapping.debuggerWorkspaceBinding = this;
+    this.resourceMapping.debuggerLocationUpdater = this;
     this.ignoreListManager = ignoreListManager;
     this.workspace = workspace;
     this.#settings = targetManager.settings;

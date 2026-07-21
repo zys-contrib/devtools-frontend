@@ -13,18 +13,19 @@ import {
   type LiveLocationPool,
   LiveLocationWithPool,
 } from './LiveLocation.js';
-import type {ResourceMapping} from './ResourceMapping.js';
+import type {CSSLocationUpdater, ResourceMapping} from './ResourceMapping.js';
 import {SASSSourceMapping} from './SASSSourceMapping.js';
 import {StylesSourceMapping} from './StylesSourceMapping.js';
 
-export class CSSWorkspaceBinding implements SDK.TargetManager.SDKModelObserver<SDK.CSSModel.CSSModel> {
+export class CSSWorkspaceBinding implements SDK.TargetManager.SDKModelObserver<SDK.CSSModel.CSSModel>,
+                                            CSSLocationUpdater {
   readonly #resourceMapping: ResourceMapping;
   readonly #modelToInfo: Map<SDK.CSSModel.CSSModel, ModelInfo>;
   readonly #liveLocationPromises: Set<Promise<unknown>>;
 
   constructor(resourceMapping: ResourceMapping, targetManager: SDK.TargetManager.TargetManager) {
     this.#resourceMapping = resourceMapping;
-    this.#resourceMapping.cssWorkspaceBinding = this;
+    this.#resourceMapping.cssLocationUpdater = this;
     this.#modelToInfo = new Map();
     targetManager.observeModels(SDK.CSSModel.CSSModel, this);
 
