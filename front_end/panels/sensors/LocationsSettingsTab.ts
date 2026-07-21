@@ -10,6 +10,7 @@ import * as i18n from '../../core/i18n/i18n.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
 import * as UI from '../../ui/legacy/legacy.js';
+import {html, type LitTemplate, render} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import locationsSettingsTabStyles from './locationsSettingsTab.css.js';
@@ -114,6 +115,46 @@ const UIStrings = {
 const str_ = i18n.i18n.registerUIStrings('panels/sensors/LocationsSettingsTab.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
+interface EditorInputControls {
+  titleInput: Element;
+  latInput: Element;
+  longInput: Element;
+  timezoneIdInput: Element;
+  localeInput: Element;
+  accuracyInput: Element;
+}
+
+function renderEditorView(controls: EditorInputControls): LitTemplate {
+  // clang-format off
+  return html`
+    <div class="locations-edit-row">
+      <div class="locations-list-text locations-list-title">${i18nString(UIStrings.locationName)}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text">${i18nString(UIStrings.lat)}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text">${i18nString(UIStrings.long)}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text">${i18nString(UIStrings.timezoneId)}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text">${i18nString(UIStrings.locale)}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text">${i18nString(UIStrings.accuracy)}</div>
+    </div>
+    <div class="locations-edit-row">
+      <div class="locations-list-text locations-list-title locations-input-container">${controls.titleInput}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text locations-input-container">${controls.latInput}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text locations-list-text-longitude locations-input-container">${controls.longInput}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text locations-input-container">${controls.timezoneIdInput}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text locations-input-container">${controls.localeInput}</div>
+      <div class="locations-list-separator locations-list-separator-invisible"></div>
+      <div class="locations-list-text locations-input-container">${controls.accuracyInput}</div>
+    </div>`;
+  // clang-format on
+}
 export class LocationsSettingsTab extends UI.Widget.VBox implements UI.ListWidget.Delegate<LocationDescription> {
   private readonly list: UI.ListWidget.ListWidget<LocationDescription>;
   private readonly customSetting: Common.Settings.Setting<LocationDescription[]>;
@@ -284,189 +325,41 @@ export class LocationsSettingsTab extends UI.Widget.VBox implements UI.ListWidge
     this.editor = editor;
     const content = editor.contentElement();
 
-    const titles = content.createChild('div', 'locations-edit-row');
-    titles.createChild('div', 'locations-list-text locations-list-title').textContent =
-        i18nString(UIStrings.locationName);
-    titles.createChild('div', 'locations-list-separator locations-list-separator-invisible');
-    titles.createChild('div', 'locations-list-text').textContent = i18nString(UIStrings.lat);
-    titles.createChild('div', 'locations-list-separator locations-list-separator-invisible');
-    titles.createChild('div', 'locations-list-text').textContent = i18nString(UIStrings.long);
-    titles.createChild('div', 'locations-list-separator locations-list-separator-invisible');
-    titles.createChild('div', 'locations-list-text').textContent = i18nString(UIStrings.timezoneId);
-    titles.createChild('div', 'locations-list-separator locations-list-separator-invisible');
-    titles.createChild('div', 'locations-list-text').textContent = i18nString(UIStrings.locale);
-    titles.createChild('div', 'locations-list-separator locations-list-separator-invisible');
-    titles.createChild('div', 'locations-list-text').textContent = i18nString(UIStrings.accuracy);
+    const createValidator = (validator: (value: string) => string | null) =>
+        (_item: LocationDescription, _index: number,
+         input: UI.ListWidget.EditorControl): UI.ListWidget.ValidatorResult => {
+          const errorMessage = validator(input.value);
+          if (errorMessage) {
+            return {valid: false, errorMessage};
+          }
+          return {valid: true};
+        };
 
-    const fields = content.createChild('div', 'locations-edit-row');
-    fields.createChild('div', 'locations-list-text locations-list-title locations-input-container')
-        .appendChild(editor.createInput('title', 'text', i18nString(UIStrings.locationName), titleValidator));
-    fields.createChild('div', 'locations-list-separator locations-list-separator-invisible');
+    const titleInput =
+        editor.createInput('title', 'text', i18nString(UIStrings.locationName), createValidator(validateTitle));
+    const latInput =
+        editor.createInput('lat', 'text', i18nString(UIStrings.latitude), createValidator(validateLatitude));
+    const longInput =
+        editor.createInput('long', 'text', i18nString(UIStrings.longitude), createValidator(validateLongitude));
+    const timezoneIdInput = editor.createInput('timezone-id', 'text', i18nString(UIStrings.timezoneId),
+                                               createValidator(validateTimezoneId));
+    const localeInput =
+        editor.createInput('locale', 'text', i18nString(UIStrings.locale), createValidator(validateLocale));
+    const accuracyInput =
+        editor.createInput('accuracy', 'text', i18nString(UIStrings.accuracy), createValidator(validateAccuracy));
 
-    let cell = fields.createChild('div', 'locations-list-text locations-input-container');
-    cell.appendChild(editor.createInput('lat', 'text', i18nString(UIStrings.latitude), latValidator));
-    fields.createChild('div', 'locations-list-separator locations-list-separator-invisible');
-
-    cell = fields.createChild('div', 'locations-list-text locations-list-text-longitude locations-input-container');
-    cell.appendChild(editor.createInput('long', 'text', i18nString(UIStrings.longitude), longValidator));
-    fields.createChild('div', 'locations-list-separator locations-list-separator-invisible');
-
-    cell = fields.createChild('div', 'locations-list-text locations-input-container');
-    cell.appendChild(editor.createInput('timezone-id', 'text', i18nString(UIStrings.timezoneId), timezoneIdValidator));
-    fields.createChild('div', 'locations-list-separator locations-list-separator-invisible');
-
-    cell = fields.createChild('div', 'locations-list-text locations-input-container');
-    cell.appendChild(editor.createInput('locale', 'text', i18nString(UIStrings.locale), localeValidator));
-    fields.createChild('div', 'locations-list-separator locations-list-separator-invisible');
-
-    cell = fields.createChild('div', 'locations-list-text locations-input-container');
-    cell.appendChild(editor.createInput('accuracy', 'text', i18nString(UIStrings.accuracy), accuracyValidator));
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(renderEditorView({
+             titleInput,
+             latInput,
+             longInput,
+             timezoneIdInput,
+             localeInput,
+             accuracyInput,
+           }),
+           content as HTMLElement);
 
     return editor;
-
-    function titleValidator(
-        _item: LocationDescription, _index: number, input: UI.ListWidget.EditorControl): UI.ListWidget.ValidatorResult {
-      const maxLength = 50;
-      const value = input.value.trim();
-
-      let errorMessage;
-      if (!value.length) {
-        errorMessage = i18nString(UIStrings.locationNameCannotBeEmpty);
-      } else if (value.length > maxLength) {
-        errorMessage = i18nString(UIStrings.locationNameMustBeLessThanS, {PH1: maxLength});
-      }
-
-      if (errorMessage) {
-        return {valid: false, errorMessage};
-      }
-      return {
-        valid: true,
-      };
-    }
-
-    function latValidator(
-        _item: LocationDescription, _index: number, input: UI.ListWidget.EditorControl): UI.ListWidget.ValidatorResult {
-      const minLat = -90;
-      const maxLat = 90;
-      const value = input.value.trim();
-      const parsedValue = Number(value);
-
-      if (!value) {
-        return {
-          valid: true,
-        };
-      }
-
-      let errorMessage;
-      if (Number.isNaN(parsedValue)) {
-        errorMessage = i18nString(UIStrings.latitudeMustBeANumber);
-      } else if (parseFloat(value) < minLat) {
-        errorMessage = i18nString(UIStrings.latitudeMustBeGreaterThanOrEqual, {PH1: minLat});
-      } else if (parseFloat(value) > maxLat) {
-        errorMessage = i18nString(UIStrings.latitudeMustBeLessThanOrEqualToS, {PH1: maxLat});
-      }
-
-      if (errorMessage) {
-        return {valid: false, errorMessage};
-      }
-      return {
-        valid: true,
-      };
-    }
-
-    function longValidator(
-        _item: LocationDescription, _index: number, input: UI.ListWidget.EditorControl): UI.ListWidget.ValidatorResult {
-      const minLong = -180;
-      const maxLong = 180;
-      const value = input.value.trim();
-      const parsedValue = Number(value);
-
-      if (!value) {
-        return {
-          valid: true,
-        };
-      }
-
-      let errorMessage;
-      if (Number.isNaN(parsedValue)) {
-        errorMessage = i18nString(UIStrings.longitudeMustBeANumber);
-      } else if (parseFloat(value) < minLong) {
-        errorMessage = i18nString(UIStrings.longitudeMustBeGreaterThanOr, {PH1: minLong});
-      } else if (parseFloat(value) > maxLong) {
-        errorMessage = i18nString(UIStrings.longitudeMustBeLessThanOrEqualTo, {PH1: maxLong});
-      }
-
-      if (errorMessage) {
-        return {valid: false, errorMessage};
-      }
-      return {
-        valid: true,
-      };
-    }
-
-    function timezoneIdValidator(
-        _item: LocationDescription, _index: number, input: UI.ListWidget.EditorControl): UI.ListWidget.ValidatorResult {
-      const value = input.value.trim();
-      // Chromium uses ICU's timezone implementation, which is very
-      // liberal in what it accepts. ICU does not simply use an allowlist
-      // but instead tries to make sense of the input, even for
-      // weird-looking timezone IDs. There's not much point in validating
-      // the input other than checking if it contains at least one
-      // alphabetic character. The empty string resets the override,
-      // and is accepted as well.
-      if (value === '' || /[a-zA-Z]/.test(value)) {
-        return {
-          valid: true,
-        };
-      }
-      const errorMessage = i18nString(UIStrings.timezoneIdMustContainAlphabetic);
-      return {valid: false, errorMessage};
-    }
-
-    function localeValidator(
-        _item: LocationDescription, _index: number, input: UI.ListWidget.EditorControl): UI.ListWidget.ValidatorResult {
-      const value = input.value.trim();
-      // Similarly to timezone IDs, there's not much point in validating
-      // input locales other than checking if it contains at least two
-      // alphabetic characters.
-      // https://unicode.org/reports/tr35/#Unicode_language_identifier
-      // The empty string resets the override, and is accepted as
-      // well.
-      if (value === '' || /[a-zA-Z]{2}/.test(value)) {
-        return {
-          valid: true,
-        };
-      }
-      const errorMessage = i18nString(UIStrings.localeMustContainAlphabetic);
-      return {valid: false, errorMessage};
-    }
-
-    function accuracyValidator(
-        _item: LocationDescription, _index: number, input: UI.ListWidget.EditorControl): UI.ListWidget.ValidatorResult {
-      const minAccuracy = 0;
-      const value = input.value.trim();
-      const parsedValue = Number(value);
-
-      if (!value) {
-        return {
-          valid: true,
-        };
-      }
-
-      let errorMessage;
-      if (Number.isNaN(parsedValue)) {
-        errorMessage = i18nString(UIStrings.accuracyMustBeANumber);
-      } else if (parseFloat(value) < minAccuracy) {
-        errorMessage = i18nString(UIStrings.accuracyMustBeGreaterThanOrEqual, {PH1: minAccuracy});
-      }
-
-      if (errorMessage) {
-        return {valid: false, errorMessage};
-      }
-      return {
-        valid: true,
-      };
-    }
   }
 }
 export interface LocationDescription {
@@ -476,4 +369,105 @@ export interface LocationDescription {
   timezoneId: string;
   locale: string;
   accuracy?: number;
+}
+
+export function validateTitle(value: string): string|null {
+  const maxLength = 50;
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue.length) {
+    return i18nString(UIStrings.locationNameCannotBeEmpty);
+  }
+  if (trimmedValue.length > maxLength) {
+    return i18nString(UIStrings.locationNameMustBeLessThanS, {PH1: maxLength});
+  }
+  return null;
+}
+
+export function validateLatitude(value: string): string|null {
+  const minLat = -90;
+  const maxLat = 90;
+  const trimmedValue = value.trim();
+  const parsedValue = Number(trimmedValue);
+
+  if (!trimmedValue) {
+    return null;
+  }
+  if (Number.isNaN(parsedValue)) {
+    return i18nString(UIStrings.latitudeMustBeANumber);
+  }
+  if (parsedValue < minLat) {
+    return i18nString(UIStrings.latitudeMustBeGreaterThanOrEqual, {PH1: minLat});
+  }
+  if (parsedValue > maxLat) {
+    return i18nString(UIStrings.latitudeMustBeLessThanOrEqualToS, {PH1: maxLat});
+  }
+  return null;
+}
+
+export function validateLongitude(value: string): string|null {
+  const minLong = -180;
+  const maxLong = 180;
+  const trimmedValue = value.trim();
+  const parsedValue = Number(trimmedValue);
+
+  if (!trimmedValue) {
+    return null;
+  }
+  if (Number.isNaN(parsedValue)) {
+    return i18nString(UIStrings.longitudeMustBeANumber);
+  }
+  if (parsedValue < minLong) {
+    return i18nString(UIStrings.longitudeMustBeGreaterThanOr, {PH1: minLong});
+  }
+  if (parsedValue > maxLong) {
+    return i18nString(UIStrings.longitudeMustBeLessThanOrEqualTo, {PH1: maxLong});
+  }
+  return null;
+}
+
+export function validateTimezoneId(value: string): string|null {
+  const trimmedValue = value.trim();
+  // Chromium uses ICU's timezone implementation, which is very
+  // liberal in what it accepts. ICU does not simply use an allowlist
+  // but instead tries to make sense of the input, even for
+  // weird-looking timezone IDs. There's not much point in validating
+  // the input other than checking if it contains at least one
+  // alphabetic character. The empty string resets the override,
+  // and is accepted as well.
+  if (trimmedValue === '' || /[a-zA-Z]/.test(trimmedValue)) {
+    return null;
+  }
+  return i18nString(UIStrings.timezoneIdMustContainAlphabetic);
+}
+
+export function validateLocale(value: string): string|null {
+  const trimmedValue = value.trim();
+  // Similarly to timezone IDs, there's not much point in validating
+  // input locales other than checking if it contains at least two
+  // alphabetic characters.
+  // https://unicode.org/reports/tr35/#Unicode_language_identifier
+  // The empty string resets the override, and is accepted as
+  // well.
+  if (trimmedValue === '' || /[a-zA-Z]{2}/.test(trimmedValue)) {
+    return null;
+  }
+  return i18nString(UIStrings.localeMustContainAlphabetic);
+}
+
+export function validateAccuracy(value: string): string|null {
+  const minAccuracy = 0;
+  const trimmedValue = value.trim();
+  const parsedValue = Number(trimmedValue);
+
+  if (!trimmedValue) {
+    return null;
+  }
+  if (Number.isNaN(parsedValue)) {
+    return i18nString(UIStrings.accuracyMustBeANumber);
+  }
+  if (parsedValue < minAccuracy) {
+    return i18nString(UIStrings.accuracyMustBeGreaterThanOrEqual, {PH1: minAccuracy});
+  }
+  return null;
 }

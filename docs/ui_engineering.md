@@ -1515,3 +1515,92 @@ The component will automatically sort and merge the ranges provided.
 
 In this example, the ranges `1,3` and `2,3` will be merged into `1,4`. The
 ranges `10,2` and the current range `5,3` will also be highlighted.
+
+## Migrating `UI.ListWidget.ListWidget`
+
+Replace the legacy imperative `UI.ListWidget.ListWidget` (which rendered inline editing controls and required custom delegates) with the modern `<devtools-list>` component.
+
+### Guidelines
+1. **Dialogue Modals for Complex Editors:** If the editor contains multiple input fields (e.g., location details, headers), show the editor in a modal card dialog powered by `UI.Dialog.Dialog`.
+2. **Inline Prompts for Trivial Editors:** If the editor is trivial (i.e., a single text input, such as URL pattern blocking rules), handle editing inline using a `<devtools-prompt>` component. In this case, clicking the item focuses the prompt and toggles `editing` mode inline, dispatching `@commit` and `@cancel` events to update the state. See `RequestConditionsDrawer` for a reference implementation.
+3. **Conditionally render list:** Use `<devtools-list>` and conditionally render it inside the card only if the list has elements (`input.locations.length > 0`). This ensures empty state layout rules are correctly applied and prevents extra spacing/gaps.
+4. **Declarative dialog views:** Define the edit/add modal content in a separate, customizable view function (e.g. `DEFAULT_DIALOG_VIEW`). Instantiating `UI.Dialog.Dialog` in the class is fine, but its content rendering should be driven declaratively by the dialog view function.
+5. **Common styles integration:** Ensure `{includeCommonStyles: true}` is passed when rendering elements into the DOM inside test setups to import proper layout variables and global typography styles (e.g. Roboto).
+
+**Before:**
+```typescript
+class SettingsTab extends UI.Widget.VBox implements UI.ListWidget.Delegate<Location> {
+  private readonly listWidget: UI.ListWidget.ListWidget<Location>;
+  constructor() {
+    super();
+    this.listWidget = new UI.ListWidget.ListWidget(this);
+    this.listWidget.show(this.element);
+  }
+
+  renderItem(item: Location, editable: boolean): Element {
+    const element = document.createElement('div');
+    element.createChild('span').textContent = item.title;
+    return element;
+  }
+
+  beginEdit(item: Location): UI.ListWidget.Editor<Location> {
+    const editor = new UI.ListWidget.Editor<Location>();
+    editor.createInput('title', 'text', 'Title', titleValidator);
+    return editor;
+  }
+
+  commitEdit(item: Location, editor: UI.ListWidget.Editor<Location>, isNew: boolean): void {
+    item.title = editor.control('title').value;
+    this.update();
+  }
+}
+```
+
+**After:**
+```typescript
+export interface SettingsTabInput {
+  items: Location[];
+  onAddClicked: () => void;
+  onEdit: (index: number) => void;
+  onDelete: (index: number) => void;
+}
+
+export const DEFAULT_VIEW: View = (input, _output, target) => {
+  render(html`
+    <devtools-card heading="Locations">
+      ${input.items.length > 0 ? html`
+        <devtools-list
+          .editable=${true}
+          .deletable=${true}
+          @edit=${(e: Lists.List.ItemEditEvent) => input.onEdit(e.detail.index)}
+          @delete=${(e: Lists.List.ItemRemoveEvent) => input.onDelete(e.detail.index)}>
+          ${input.items.map((item, index) => html`
+            <div slot="slot-${index}">
+              <span>${item.title}</span>
+            </div>
+          `)}
+        </devtools-list>
+      ` : nothing}
+      <devtools-button @click=${input.onAddClicked}>Add location</devtools-button>
+    </devtools-card>
+  `, target);
+};
+
+export interface SettingsTabDialogInput {
+  editingValues: {title: string};
+  validationErrors: {title: string | null};
+  onTitleInput: (val: string) => void;
+  onCancel: () => void;
+  onSave: () => void;
+}
+
+export const DEFAULT_DIALOG_VIEW = (input: SettingsTabDialogInput, target: HTMLElement) => {
+  render(html`
+    <div class="editor-container">
+      <input type="text" .value=${input.editingValues.title} @input=${(e: Event) => input.onTitleInput((e.target as HTMLInputElement).value)}>
+      <devtools-button @click=${input.onCancel}>Cancel</devtools-button>
+      <devtools-button @click=${input.onSave}>Save</devtools-button>
+    </div>
+  `, target);
+};
+```
