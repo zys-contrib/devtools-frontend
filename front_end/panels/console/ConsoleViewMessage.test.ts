@@ -1015,7 +1015,7 @@ describeWithEnvironment('ConsoleViewMessage', () => {
     });
   });
 
-  describe('ConsoleTableMessageView Context Menu', () => {
+  describe('ConsoleTableMessageView', () => {
     let copyTextStub: sinon.SinonStub;
 
     beforeEach(() => {
@@ -1174,6 +1174,173 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       contextMenu.invokeHandler(csvItem.id());
       const expectedCSV = '(index),a\n' +
           '0,1';
+      sinon.assert.calledOnceWithExactly(copyTextStub, expectedCSV);
+    });
+
+    function setupMockTableMessageViewWithLargeObject(tableType: 'c'|'d') {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+
+      const aProperties: Protocol.Runtime.PropertyPreview[] = [];
+      const bProperties: Protocol.Runtime.PropertyPreview[] = [];
+
+      for (let i = 0; i < 15; ++i) {
+        bProperties.push({
+          name: 'a' + i,
+          type: Protocol.Runtime.PropertyPreviewType.String,
+          value: 'a' + i,
+        });
+      }
+      for (let i = 0; i < 15; ++i) {
+        aProperties.push({
+          name: 'b' + i,
+          type: Protocol.Runtime.PropertyPreviewType.String,
+          value: 'b' + i,
+        });
+        bProperties.push({
+          name: 'b' + i,
+          type: Protocol.Runtime.PropertyPreviewType.String,
+          value: 'b' + i,
+        });
+      }
+
+      const aPreview: Protocol.Runtime.ObjectPreview = {
+        type: Protocol.Runtime.ObjectPreviewType.Object,
+        overflow: false,
+        properties: aProperties,
+      };
+
+      const bPreview: Protocol.Runtime.ObjectPreview = {
+        type: Protocol.Runtime.ObjectPreviewType.Object,
+        overflow: false,
+        properties: bProperties,
+      };
+
+      const preview: Protocol.Runtime.ObjectPreview = {
+        type: Protocol.Runtime.ObjectPreviewType.Object,
+        overflow: false,
+        properties: [],
+      };
+
+      if (tableType === 'c') {
+        preview.properties = [
+          {name: '0', type: Protocol.Runtime.PropertyPreviewType.Object, valuePreview: aPreview},
+          {name: '1', type: Protocol.Runtime.PropertyPreviewType.Object, valuePreview: bPreview},
+          {name: '2', type: Protocol.Runtime.PropertyPreviewType.Object, valuePreview: aPreview},
+          {name: '3', type: Protocol.Runtime.PropertyPreviewType.Object, valuePreview: bPreview},
+        ];
+      } else {
+        preview.properties = [
+          {name: '0', type: Protocol.Runtime.PropertyPreviewType.Object, valuePreview: bPreview},
+          {name: '1', type: Protocol.Runtime.PropertyPreviewType.Object, valuePreview: aPreview},
+          {name: '2', type: Protocol.Runtime.PropertyPreviewType.Object, valuePreview: bPreview},
+          {name: '3', type: Protocol.Runtime.PropertyPreviewType.Object, valuePreview: aPreview},
+        ];
+      }
+
+      const mockRemoteObject = sinon.createStubInstance(
+          SDK.RemoteObject.RemoteObject,
+      );
+      Object.defineProperty(mockRemoteObject, 'preview', {
+        get: () => preview,
+        configurable: true,
+      });
+      Object.defineProperty(mockRemoteObject, 'type', {
+        get: () => 'object',
+        configurable: true,
+      });
+      Object.defineProperty(mockRemoteObject, 'subtype', {
+        get: () => undefined,
+        configurable: true,
+      });
+      Object.defineProperty(mockRemoteObject, 'description', {
+        get: () => 'Object',
+        configurable: true,
+      });
+      Object.defineProperty(mockRemoteObject, 'hasChildren', {
+        get: () => false,
+        configurable: true,
+      });
+      mockRemoteObject.customPreview.returns(null);
+
+      const messageDetails = {
+        type: Protocol.Runtime.ConsoleAPICalledEventType.Table,
+        parameters: [mockRemoteObject],
+      };
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          null,
+          '',
+          messageDetails,
+      );
+      const {message} = createConsoleTableMessageView(rawMessage);
+      return message;
+    }
+
+    it('properly renders tables with more than 20 columns (maxColumnsToRender) for object c', () => {
+      const message = setupMockTableMessageViewWithLargeObject('c');
+
+      message.toMessageElement();  // Render
+      const dataGrid = message.getDataGridForTest();
+      assert.exists(dataGrid);
+
+      const contextMenu = new UI.ContextMenu.ContextMenu(
+          new MouseEvent('contextmenu'),
+      );
+      message.populateTableContextMenuForTest(contextMenu);
+
+      const clipboardSection = contextMenu.clipboardSection();
+      const copySubMenu = clipboardSection.items.find(
+          item => item.buildDescriptor().label === 'Copy table as',
+      );
+      assert.exists(copySubMenu);
+
+      const subItems = (copySubMenu as UI.ContextMenu.SubMenu).defaultSection().items;
+      const csvItem = subItems.find(
+          item => item.buildDescriptor().label === 'Copy as CSV',
+      );
+      assert.exists(csvItem);
+
+      contextMenu.invokeHandler(csvItem.id());
+      const expectedCSV = `(index),b0,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,a0,a1,a2,a3,a4
+0,'b0','b1','b2','b3','b4','b5','b6','b7','b8','b9','b10','b11','b12','b13','b14',,,,,
+1,'b0','b1','b2','b3','b4','b5','b6','b7','b8','b9','b10','b11','b12','b13','b14','a0','a1','a2','a3','a4'
+2,'b0','b1','b2','b3','b4','b5','b6','b7','b8','b9','b10','b11','b12','b13','b14',,,,,
+3,'b0','b1','b2','b3','b4','b5','b6','b7','b8','b9','b10','b11','b12','b13','b14','a0','a1','a2','a3','a4'`;
+      sinon.assert.calledOnceWithExactly(copyTextStub, expectedCSV);
+    });
+
+    it('properly renders tables with more than 20 columns (maxColumnsToRender) for object d', () => {
+      const message = setupMockTableMessageViewWithLargeObject('d');
+
+      message.toMessageElement();  // Render
+      const dataGrid = message.getDataGridForTest();
+      assert.exists(dataGrid);
+
+      const contextMenu = new UI.ContextMenu.ContextMenu(
+          new MouseEvent('contextmenu'),
+      );
+      message.populateTableContextMenuForTest(contextMenu);
+
+      const clipboardSection = contextMenu.clipboardSection();
+      const copySubMenu = clipboardSection.items.find(
+          item => item.buildDescriptor().label === 'Copy table as',
+      );
+      assert.exists(copySubMenu);
+
+      const subItems = (copySubMenu as UI.ContextMenu.SubMenu).defaultSection().items;
+      const csvItem = subItems.find(
+          item => item.buildDescriptor().label === 'Copy as CSV',
+      );
+      assert.exists(csvItem);
+
+      contextMenu.invokeHandler(csvItem.id());
+      const expectedCSV = `(index),a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,b0,b1,b2,b3,b4
+0,'a0','a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','a11','a12','a13','a14','b0','b1','b2','b3','b4'
+1,,,,,,,,,,,,,,,,'b0','b1','b2','b3','b4'
+2,'a0','a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','a11','a12','a13','a14','b0','b1','b2','b3','b4'
+3,,,,,,,,,,,,,,,,'b0','b1','b2','b3','b4'`;
       sinon.assert.calledOnceWithExactly(copyTextStub, expectedCSV);
     });
   });
