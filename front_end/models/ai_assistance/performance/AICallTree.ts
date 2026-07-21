@@ -33,6 +33,7 @@ export class AICallTree {
       public selectedNode: Trace.Extras.TraceTree.Node|null,
       public rootNode: Trace.Extras.TraceTree.TopDownRootNode,
       public parsedTrace: Trace.TraceModel.ParsedTrace,
+      public workspace: Workspace.Workspace.WorkspaceImpl = Workspace.Workspace.WorkspaceImpl.instance(),
   ) {
   }
 
@@ -336,8 +337,7 @@ export class AICallTree {
     const selfTimeStr = roundToTenths(node.selfTime);
 
     // 6. URL Index
-    const location = SourceMapsResolver.SourceMapsResolver.codeLocationForEntry(
-        parsedTrace, event, Workspace.Workspace.WorkspaceImpl.instance());
+    const location = SourceMapsResolver.SourceMapsResolver.codeLocationForEntry(parsedTrace, event, this.workspace);
     const url = location?.url;
     let urlIndexStr = '';
     if (url) {
