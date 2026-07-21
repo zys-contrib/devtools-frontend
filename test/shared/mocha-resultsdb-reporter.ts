@@ -107,8 +107,9 @@ class ResultsDbReporter extends Mocha.reporters.Base {
 
     if (!TestConfig.isAiAgent) {
       this.n++;
-      process.stdout.write(`[FAIL] ${generateExactTestId(GEN_DIR, targetTest.file!, targetTest.titlePath())} ${
-          targetTest.duration}ms\n`);
+      process.stdout.write(
+          `[FAIL] ${generateExactTestId(GEN_DIR, targetTest.file!, targetTest.titlePath()).exactTestId} ${
+              targetTest.duration}ms\n`);
     }
 
     const testResult = this.buildDefaultTestResultFrom(targetTest);
