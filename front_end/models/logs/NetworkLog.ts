@@ -35,8 +35,8 @@ export class NetworkLog extends Common.ObjectWrapper.ObjectWrapper<EventTypes> i
   readonly #settings: Common.Settings.Settings;
 
   constructor(
-      targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
-      settings: Common.Settings.Settings = Common.Settings.Settings.instance(),
+      targetManager: SDK.TargetManager.TargetManager,
+      settings: Common.Settings.Settings,
   ) {
     super();
     this.#targetManager = targetManager;
@@ -55,7 +55,8 @@ export class NetworkLog extends Common.ObjectWrapper.ObjectWrapper<EventTypes> i
 
   static instance(): NetworkLog {
     if (!Root.DevToolsContext.globalInstance().has(NetworkLog)) {
-      Root.DevToolsContext.globalInstance().set(NetworkLog, new NetworkLog());
+      Root.DevToolsContext.globalInstance().set(
+          NetworkLog, new NetworkLog(SDK.TargetManager.TargetManager.instance(), Common.Settings.Settings.instance()));
     }
 
     return Root.DevToolsContext.globalInstance().get(NetworkLog);
