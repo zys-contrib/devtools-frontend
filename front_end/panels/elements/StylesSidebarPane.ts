@@ -235,6 +235,7 @@ export class StylesSidebarPane extends Common.ObjectWrapper.eventMixin<EventType
   #shouldRenderLazily = false;
   #lazyRenderObserver?: IntersectionObserver;
   #lazyRenderCallbacks = new WeakMap<Element, () => void>();
+  #elementsForSyncViewportCheck: Element[] = [];
   #updateId = 0;
 
   constructor(computedStyleModel: ComputedStyle.ComputedStyleModel.ComputedStyleModel) {
@@ -990,6 +991,7 @@ export class StylesSidebarPane extends Common.ObjectWrapper.eventMixin<EventType
 
     const focusedIndex = this.focusedSectionIndex();
 
+    this.#elementsForSyncViewportCheck = [];
     this.linkifier.reset();
     const prevSections = this.sectionBlocks.map(block => block.sections).flat();
 
@@ -1047,6 +1049,7 @@ export class StylesSidebarPane extends Common.ObjectWrapper.eventMixin<EventType
     }
 
     this.sectionsContainer.contentElement.appendChild(fragment);
+    this.#performSyncViewportCheck();
 
     if (elementToFocus) {
       elementToFocus.focus();
@@ -1655,7 +1658,52 @@ export class StylesSidebarPane extends Common.ObjectWrapper.eventMixin<EventType
       }, {rootMargin: '100px'});
     }
     this.#lazyRenderCallbacks.set(element, callback);
+    this.#elementsForSyncViewportCheck.push(element);
     this.#lazyRenderObserver.observe(element);
+  }
+
+  #performSyncViewportCheck(): void {
+    if (!this.#shouldRenderLazily || this.#elementsForSyncViewportCheck.length === 0) {
+      this.#elementsForSyncViewportCheck = [];
+      return;
+    }
+    const scrollContainer = this.contentElement.parentElement;
+    if (!scrollContainer) {
+      this.#elementsForSyncViewportCheck = [];
+      return;
+    }
+    const {top, bottom} = scrollContainer.getBoundingClientRect();
+    if (bottom === top) {
+      this.#elementsForSyncViewportCheck = [];
+      return;
+    }
+    // Expand the bounding calculation by ±100px to accurately match the {rootMargin: '100px'}
+    // option configured on the IntersectionObserver in trackForLazyRendering.
+    const viewportTop = top - 100;
+    const viewportBottom = bottom + 100;
+
+    const visibleElements: Element[] = [];
+    for (const element of this.#elementsForSyncViewportCheck) {
+      if (!element.isConnected || !this.#lazyRenderCallbacks.has(element)) {
+        continue;
+      }
+      const rect = element.getBoundingClientRect();
+      if (rect.top > viewportBottom) {
+        break;
+      }
+      if (rect.bottom >= viewportTop) {
+        visibleElements.push(element);
+      }
+    }
+    this.#elementsForSyncViewportCheck = [];
+
+    for (const element of visibleElements) {
+      const callback = this.#lazyRenderCallbacks.get(element);
+      if (callback) {
+        callback();
+        this.untrackForLazyRendering(element);
+      }
+    }
   }
 
   shouldRenderLazily(): boolean {
