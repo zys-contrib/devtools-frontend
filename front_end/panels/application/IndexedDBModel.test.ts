@@ -209,6 +209,59 @@ describeWithEnvironment('IndexedDBModel', () => {
     assert.deepEqual(databases.map(db => db.name), dbNames);
   });
 
+  it('updates databases and dispatches events when databases are added or removed', async () => {
+    indexedDBModel.enable();
+    manager?.storageBucketCreatedOrUpdated({bucketInfo: testStorageBucketInfo});
+    const dispatcherSpy = sinon.spy(indexedDBModel, 'dispatchEventToListeners');
+
+    connection.setSuccessHandler('IndexedDB.requestDatabaseNames', () => ({databaseNames: ['testDatabase1']}));
+    await indexedDBModel.refreshDatabaseNames();
+
+    assert.deepEqual(indexedDBModel.databases().map(db => db.name), ['testDatabase1']);
+    sinon.assert.calledWithExactly(
+        dispatcherSpy, Resources.IndexedDBModel.Events.DatabaseAdded as unknown as sinon.SinonMatcher, {
+          model: indexedDBModel,
+          databaseId: sinon.match({name: 'testDatabase1'}) as unknown as Resources.IndexedDBModel.DatabaseId
+        });
+    dispatcherSpy.resetHistory();
+
+    connection.setHandler('IndexedDB.requestDatabaseNames', null);
+    connection.setSuccessHandler('IndexedDB.requestDatabaseNames',
+                                 () => ({databaseNames: ['testDatabase1', 'testDatabase2']}));
+    await indexedDBModel.refreshDatabaseNames();
+
+    assert.deepEqual(indexedDBModel.databases().map(db => db.name), ['testDatabase1', 'testDatabase2']);
+    sinon.assert.calledWithExactly(
+        dispatcherSpy, Resources.IndexedDBModel.Events.DatabaseAdded as unknown as sinon.SinonMatcher, {
+          model: indexedDBModel,
+          databaseId: sinon.match({name: 'testDatabase2'}) as unknown as Resources.IndexedDBModel.DatabaseId
+        });
+    dispatcherSpy.resetHistory();
+
+    connection.setHandler('IndexedDB.requestDatabaseNames', null);
+    connection.setSuccessHandler('IndexedDB.requestDatabaseNames', () => ({databaseNames: ['testDatabase1']}));
+    await indexedDBModel.refreshDatabaseNames();
+
+    assert.deepEqual(indexedDBModel.databases().map(db => db.name), ['testDatabase1']);
+    sinon.assert.calledWithExactly(
+        dispatcherSpy, Resources.IndexedDBModel.Events.DatabaseRemoved as unknown as sinon.SinonMatcher, {
+          model: indexedDBModel,
+          databaseId: sinon.match({name: 'testDatabase2'}) as unknown as Resources.IndexedDBModel.DatabaseId
+        });
+    dispatcherSpy.resetHistory();
+
+    connection.setHandler('IndexedDB.requestDatabaseNames', null);
+    connection.setSuccessHandler('IndexedDB.requestDatabaseNames', () => ({databaseNames: []}));
+    await indexedDBModel.refreshDatabaseNames();
+
+    assert.isEmpty(indexedDBModel.databases());
+    sinon.assert.calledWithExactly(
+        dispatcherSpy, Resources.IndexedDBModel.Events.DatabaseRemoved as unknown as sinon.SinonMatcher, {
+          model: indexedDBModel,
+          databaseId: sinon.match({name: 'testDatabase1'}) as unknown as Resources.IndexedDBModel.DatabaseId
+        });
+  });
+
   it('calls protocol method on deleteDatabase', () => {
     const deleteDBSpy = sinon.spy(indexedDBAgent, 'invoke_deleteDatabase');
     connection.setSuccessHandler('IndexedDB.requestDatabaseNames', () => ({databaseNames: ['test-database']}));
