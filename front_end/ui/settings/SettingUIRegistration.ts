@@ -91,13 +91,18 @@ export function getRegisteredSettings(): readonly RegisteredSettingUI[] {
   return Array.from(combined.values());
 }
 
-export function resolve(settingDescriptor: Common.Settings.SettingDescriptor<unknown>): SettingUIDescriptor {
+export function maybeResolve(settingDescriptor: Common.Settings.SettingDescriptor<unknown>): SettingUIDescriptor|null {
   const settingUI = registeredSettings.get(settingDescriptor.name) ??
       getRegisteredSettings().find(registered => registered.descriptor.name === settingDescriptor.name);
-  if (!settingUI) {
+  return settingUI?.uiDescriptor ?? null;
+}
+
+export function resolve(settingDescriptor: Common.Settings.SettingDescriptor<unknown>): SettingUIDescriptor {
+  const uiDescriptor = maybeResolve(settingDescriptor);
+  if (!uiDescriptor) {
     throw new Error(`No UI descriptor registered for setting '${settingDescriptor.name}'`);
   }
-  return settingUI.uiDescriptor;
+  return uiDescriptor;
 }
 
 export function resetSettings(): void {

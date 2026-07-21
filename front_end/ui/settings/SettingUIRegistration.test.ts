@@ -90,4 +90,8 @@ describe('SettingUIRegistration', () => {
       SettingsUI.SettingUIRegistration.resolve(settingDescriptor);
     }, 'No UI descriptor registered for setting \'mock-setting\'');
   });
+
+  it('returns null when maybeResolve is called for an unregistered setting descriptor', () => {
+    assert.isNull(SettingsUI.SettingUIRegistration.maybeResolve(settingDescriptor));
+  });
 });

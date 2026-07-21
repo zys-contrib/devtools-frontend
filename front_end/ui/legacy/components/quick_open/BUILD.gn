@@ -33,6 +33,7 @@ devtools_ui_module("quick_open") {
     "../../../components/highlighting:bundle",
     "../../../kit:bundle",
     "../../../lit:bundle",
+    "../../../settings:bundle",
     "../../../visual_logging:bundle",
   ]
 }
