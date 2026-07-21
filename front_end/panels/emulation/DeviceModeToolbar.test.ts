@@ -93,11 +93,8 @@ describeWithEnvironment('DeviceModeToolbar', () => {
       createSaveDataOverrideSelector: () => fakeSelectElement,
     } as unknown as MobileThrottling.ThrottlingManager.ThrottlingManager);
 
-    toolbar = new Emulation.DeviceModeToolbar.DeviceModeToolbar(
-        deviceModeModel,
-        createFakeSetting(false),
-        createFakeSetting(false),
-    );
+    toolbar = new Emulation.DeviceModeToolbar.DeviceModeToolbar();
+    toolbar.model = deviceModeModel;
   });
 
   afterEach(async () => {
@@ -123,11 +120,8 @@ describeWithEnvironment('DeviceModeToolbar', () => {
     beforeEach(() => {
       renderSpy = sinon.spy(Emulation.DeviceModeToolbar.DeviceModeToolbar.prototype, 'performUpdate');
       // Re-create toolbar so that it registers the spied update method.
-      toolbar = new Emulation.DeviceModeToolbar.DeviceModeToolbar(
-          deviceModeModel,
-          createFakeSetting(false),
-          createFakeSetting(false),
-      );
+      toolbar = new Emulation.DeviceModeToolbar.DeviceModeToolbar();
+      toolbar.model = deviceModeModel;
       renderSpy.resetHistory();
     });
 

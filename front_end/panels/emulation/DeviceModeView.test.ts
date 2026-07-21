@@ -14,6 +14,7 @@ import {
   describeWithEnvironment,
 } from '../../testing/EnvironmentHelpers.js';
 import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
+import * as UI from '../../ui/legacy/legacy.js';
 import * as MobileThrottling from '../mobile_throttling/mobile_throttling.js';
 
 import * as Emulation from './emulation.js';
@@ -40,6 +41,7 @@ describeWithEnvironment('DeviceModeView', () => {
 
     it('renders the view', async () => {
       renderElementIntoDOM(view, {includeCommonStyles: true});
+      await UI.Widget.Widget.allUpdatesComplete;
       await assertScreenshot('device_mode_view/base.png');
     });
 
@@ -48,6 +50,7 @@ describeWithEnvironment('DeviceModeView', () => {
       renderElementIntoDOM(view, {includeCommonStyles: true, width: 800, height: 600});
       deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.Responsive, null, null);
       await new Promise(resolve => setTimeout(resolve, 100));
+      await UI.Widget.Widget.allUpdatesComplete;
       await assertScreenshot('device_mode_view/rulers.png');
     });
 
