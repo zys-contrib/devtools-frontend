@@ -81,6 +81,28 @@ describe('StylesSidebarPane', () => {
           'https://abc.com/*/?q=*%2F#hash');
     });
 
+    describe('update', () => {
+      it('does not update when a selector is being edited', () => {
+        const stylesSidebarPane =
+            new Elements.StylesSidebarPane.StylesSidebarPane(new ComputedStyle.ComputedStyleModel.ComputedStyleModel());
+
+        const requestUpdateSpy = sinon.spy(stylesSidebarPane, 'requestUpdate');
+        const event = {data: null} as unknown as
+            Common.EventTarget.EventTargetEvent<ComputedStyle.ComputedStyleModel.CSSModelChangedEvent>;
+
+        // The pane should update when a selector is not being edited.
+        stylesSidebarPane.onCSSModelChanged(event);
+        sinon.assert.calledOnce(requestUpdateSpy);
+
+        requestUpdateSpy.resetHistory();
+
+        // The pane shouldn't update when a selector is being edited.
+        stylesSidebarPane.setEditingStyle(true);
+        stylesSidebarPane.onCSSModelChanged(event);
+        sinon.assert.notCalled(requestUpdateSpy);
+      });
+    });
+
     describe('rebuildSectionsForMatchedStyleRulesForTest', () => {
       it('should add @position-try section', async () => {
         const stylesSidebarPane =
