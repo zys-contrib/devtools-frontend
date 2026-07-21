@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import * as Bindings from '../../bindings/bindings.js';
+import * as Logs from '../../logs/logs.js';
 import * as NetworkTimeCalculator from '../../network_time_calculator/network_time_calculator.js';
 import type * as Workspace from '../../workspace/workspace.js';
 
@@ -51,12 +52,18 @@ export class FileFormatter {
 
   #file: Workspace.UISourceCode.UISourceCode;
   #debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding;
-  constructor(file: Workspace.UISourceCode.UISourceCode,
-              debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
-                  Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()) {
+  #networkLog: Logs.NetworkLog.NetworkLog;
+  constructor(
+      file: Workspace.UISourceCode.UISourceCode,
+      debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+          Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance(),
+      networkLog: Logs.NetworkLog.NetworkLog = Logs.NetworkLog.NetworkLog.instance(),
+  ) {
     this.#file = file;
     this.#debuggerWorkspaceBinding = debuggerWorkspaceBinding;
+    this.#networkLog = networkLog;
   }
+
   formatFile(): string {
     const sourceMapDetails = FileFormatter.formatSourceMapDetails(this.#file, this.#debuggerWorkspaceBinding);
     const lines = [
@@ -69,7 +76,7 @@ export class FileFormatter {
       const calculator = new NetworkTimeCalculator.NetworkTransferTimeCalculator();
       calculator.updateBoundaries(resource.request);
       lines.push(`Request initiator chain:
-${new NetworkRequestFormatter(resource.request, calculator).formatRequestInitiatorChain()}`);
+${new NetworkRequestFormatter(resource.request, calculator, this.#networkLog).formatRequestInitiatorChain()}`);
     }
     lines.push(`File content:
 ${this.#formatFileContent()}`);

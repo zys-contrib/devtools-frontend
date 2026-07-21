@@ -15,6 +15,7 @@ import {
   updateHostConfig
 } from '../../../testing/EnvironmentHelpers.js';
 import {TestUniverse} from '../../../testing/TestUniverse.js';
+import * as Logs from '../../logs/logs.js';
 import {AiAgent, FileAgent, FileContext} from '../ai_assistance.js';
 
 describe('FileAgent', () => {
@@ -34,6 +35,7 @@ describe('FileAgent', () => {
     const {targetManager} = universe;
 
     sinon.stub(SDK.TargetManager.TargetManager, 'instance').returns(targetManager);
+    sinon.stub(Logs.NetworkLog.NetworkLog, 'instance').returns(universe.networkLog);
   });
 
   afterEach(async () => {

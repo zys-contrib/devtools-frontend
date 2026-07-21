@@ -13,17 +13,24 @@ import {
   assertIsError,
   assertIsResult,
 } from '../../../testing/AiAssistanceHelpers.js';
-import {describeWithEnvironment} from '../../../testing/EnvironmentHelpers.js';
-import * as Logs from '../../logs/logs.js';
+import {deinitializeGlobalVars} from '../../../testing/EnvironmentHelpers.js';
+import {TestUniverse} from '../../../testing/TestUniverse.js';
+import type * as Logs from '../../logs/logs.js';
 import * as AiAssistance from '../ai_assistance.js';
 
 const {urlString} = Platform.DevToolsPath;
 
-describeWithEnvironment('GetNetworkRequestDetailsTool', () => {
+describe('GetNetworkRequestDetailsTool', () => {
+  let universe: TestUniverse;
   let networkLog: Logs.NetworkLog.NetworkLog;
 
   beforeEach(() => {
-    networkLog = Logs.NetworkLog.NetworkLog.instance();
+    universe = new TestUniverse();
+    networkLog = universe.networkLog;
+  });
+
+  afterEach(async () => {
+    await deinitializeGlobalVars();
   });
 
   it('retrieves details successfully', async () => {
@@ -44,7 +51,7 @@ describeWithEnvironment('GetNetworkRequestDetailsTool', () => {
 
     sinon.stub(networkLog, 'requests').returns([request]);
 
-    const tool = new AiAssistance.GetNetworkRequestDetails.GetNetworkRequestDetailsTool();
+    const tool = new AiAssistance.GetNetworkRequestDetails.GetNetworkRequestDetailsTool(networkLog);
     const context = {
       conversationContext: null,
       getEstablishedOrigin: () => 'https://example.com',
@@ -62,7 +69,7 @@ describeWithEnvironment('GetNetworkRequestDetailsTool', () => {
   it('returns error if request is not found', async () => {
     sinon.stub(networkLog, 'requests').returns([]);
 
-    const tool = new AiAssistance.GetNetworkRequestDetails.GetNetworkRequestDetailsTool();
+    const tool = new AiAssistance.GetNetworkRequestDetails.GetNetworkRequestDetailsTool(networkLog);
     const context = {
       conversationContext: null,
       getEstablishedOrigin: () => 'https://example.com',
@@ -85,7 +92,7 @@ describeWithEnvironment('GetNetworkRequestDetailsTool', () => {
 
     sinon.stub(networkLog, 'requests').returns([request]);
 
-    const tool = new AiAssistance.GetNetworkRequestDetails.GetNetworkRequestDetailsTool();
+    const tool = new AiAssistance.GetNetworkRequestDetails.GetNetworkRequestDetailsTool(networkLog);
     const context = {
       conversationContext: null,
       getEstablishedOrigin: () => 'https://example.com',
@@ -97,7 +104,7 @@ describeWithEnvironment('GetNetworkRequestDetailsTool', () => {
   });
 
   it('returns error for opaque origins', async () => {
-    const tool = new AiAssistance.GetNetworkRequestDetails.GetNetworkRequestDetailsTool();
+    const tool = new AiAssistance.GetNetworkRequestDetails.GetNetworkRequestDetailsTool(networkLog);
     const context = {
       conversationContext: null,
       getEstablishedOrigin: () => 'null',

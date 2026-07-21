@@ -47,10 +47,6 @@ export class ListNetworkRequestsTool implements
     this.#networkLog = networkLog;
   }
 
-  #getNetworkLog(): Logs.NetworkLog.NetworkLog {
-    return this.#networkLog ?? Logs.NetworkLog.NetworkLog.instance();
-  }
-
   readonly parameters: Host.AidaClient.FunctionObjectParam<never> = {
     type: Host.AidaClient.ParametersTypes.OBJECT,
     description: '',
@@ -89,9 +85,10 @@ export class ListNetworkRequestsTool implements
       };
     }
 
+    const networkLog = this.#networkLog ?? Logs.NetworkLog.NetworkLog.instance();
     let hasCrossOriginRequest = false;
     const requestsToShow: SDK.NetworkRequest.NetworkRequest[] = [];
-    for (const request of this.#getNetworkLog().requests()) {
+    for (const request of networkLog.requests()) {
       // To prevent cross-origin prompt injection attacks, HAR-imported requests
       // are assigned a virtual origin (e.g., `imported-har://${domain}`) rather than
       // sharing the origin of live pages.

@@ -38,6 +38,12 @@ export class GetNetworkRequestDetailsTool implements
   readonly description =
       'Retrieves the full headers, timing, status, and body details of a specific network request by ID.';
 
+  readonly #networkLog?: Logs.NetworkLog.NetworkLog;
+
+  constructor(networkLog?: Logs.NetworkLog.NetworkLog) {
+    this.#networkLog = networkLog;
+  }
+
   readonly parameters: Host.AidaClient.FunctionObjectParam<keyof GetNetworkRequestDetailsArgs> = {
     type: Host.AidaClient.ParametersTypes.OBJECT,
     description: 'Arguments for retrieving detailed information about a specific network request.',
@@ -81,7 +87,8 @@ export class GetNetworkRequestDetailsTool implements
       };
     }
 
-    const request = Logs.NetworkLog.NetworkLog.instance().requests().find(req => {
+    const networkLog = this.#networkLog ?? Logs.NetworkLog.NetworkLog.instance();
+    const request = networkLog.requests().find(req => {
       if (req.requestId() !== args.id) {
         return false;
       }
@@ -102,7 +109,7 @@ export class GetNetworkRequestDetailsTool implements
     }
 
     const calculator = new NetworkTimeCalculator.NetworkTransferTimeCalculator();
-    const formatter = new NetworkRequestFormatter(request, calculator);
+    const formatter = new NetworkRequestFormatter(request, calculator, networkLog);
     const formattedDetails = await formatter.formatNetworkRequest();
 
     return {

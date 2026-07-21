@@ -131,10 +131,16 @@ export class NetworkRequestFormatter {
     return lines.length > 0 ? `${lines.join('\n')}\n` : '';
   }
 
+  readonly #networkLog: Logs.NetworkLog.NetworkLog;
+
   constructor(
-      request: SDK.NetworkRequest.NetworkRequest, calculator: NetworkTimeCalculator.NetworkTransferTimeCalculator) {
+      request: SDK.NetworkRequest.NetworkRequest,
+      calculator: NetworkTimeCalculator.NetworkTransferTimeCalculator,
+      networkLog: Logs.NetworkLog.NetworkLog = Logs.NetworkLog.NetworkLog.instance(),
+  ) {
     this.#request = request;
     this.#calculator = calculator;
+    this.#networkLog = networkLog;
   }
 
   formatRequestHeaders(): string {
@@ -199,7 +205,7 @@ Request initiator chain:\n${this.formatRequestInitiatorChain()}`;
     const allowedOrigin = Common.ParsedURL.ParsedURL.extractOrigin(this.#request.url());
     let initiatorChain = '';
     let lineStart = '- URL: ';
-    const graph = Logs.NetworkLog.NetworkLog.instance().initiatorGraphForRequest(this.#request);
+    const graph = this.#networkLog.initiatorGraphForRequest(this.#request);
 
     for (const initiator of Array.from(graph.initiators).reverse()) {
       initiatorChain = initiatorChain + lineStart +
