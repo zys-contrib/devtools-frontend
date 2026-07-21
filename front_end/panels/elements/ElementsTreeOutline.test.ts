@@ -960,4 +960,60 @@ describeWithEnvironment('ElementsTreeOutline', () => {
     // Verify all 10 children are visible, plus 1 closing tag.
     assert.strictEqual(containerTreeElement.childCount(), 11);
   });
+
+  it('expands elements recursively', async () => {
+    let childPayload: Protocol.DOM.Node = {
+      nodeId: 10 as Protocol.DOM.NodeId,
+      parentId: 9 as Protocol.DOM.NodeId,
+      backendNodeId: 10 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      attributes: ['id', 'depth-10'],
+    } as Protocol.DOM.Node;
+
+    for (let i = 9; i >= 1; i--) {
+      childPayload = {
+        nodeId: i as Protocol.DOM.NodeId,
+        parentId: (i - 1) as Protocol.DOM.NodeId,
+        backendNodeId: i as Protocol.DOM.BackendNodeId,
+        nodeType: Node.ELEMENT_NODE,
+        nodeName: 'DIV',
+        localName: 'div',
+        nodeValue: '',
+        childNodeCount: 1,
+        children: [childPayload],
+        attributes: ['id', `depth-${i}`],
+      } as Protocol.DOM.Node;
+    }
+
+    const rootNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+      nodeId: 0 as Protocol.DOM.NodeId,
+      backendNodeId: 0 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.DOCUMENT_NODE,
+      nodeName: '#document',
+      localName: '',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [childPayload],
+      attributes: [],
+    });
+
+    treeOutline.rootDOMNode = rootNode;
+    const depth1Node = rootNode.children()![0];
+    const treeElement = treeOutline.findTreeElement(depth1Node) as Elements.ElementsTreeElement.ElementsTreeElement;
+
+    await treeElement.expandRecursively();
+
+    let currentTreeElement: UI.TreeOutline.TreeElement = treeElement;
+    for (let i = 1; i < 10; i++) {
+      assert.isTrue(currentTreeElement.expanded, `depth-${i} should be expanded`);
+      // It should have some visible child
+      assert.isAbove(currentTreeElement.childCount(), 0, `depth-${i} should have at least 1 child`);
+      currentTreeElement = currentTreeElement.childAt(0) as UI.TreeOutline.TreeElement;
+    }
+    assert.isFalse(currentTreeElement.expanded, 'depth-10 should not be expanded');
+  });
 });
