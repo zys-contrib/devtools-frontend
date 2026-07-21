@@ -581,7 +581,7 @@ export class EmulatedDevicesList extends Common.ObjectWrapper.ObjectWrapper<Even
   #standard: Set<EmulatedDevice>;
   readonly #customSetting: Common.Settings.Setting<any[]>;
   readonly #custom: Set<EmulatedDevice>;
-  constructor(settings: Common.Settings.Settings = Common.Settings.Settings.instance()) {
+  constructor(settings: Common.Settings.Settings) {
     super();
 
     this.#standardSetting = settings.createSetting('standard-emulated-device-list', []);
@@ -598,7 +598,8 @@ export class EmulatedDevicesList extends Common.ObjectWrapper.ObjectWrapper<Even
 
   static instance(): EmulatedDevicesList {
     if (!Root.DevToolsContext.globalInstance().has(EmulatedDevicesList)) {
-      Root.DevToolsContext.globalInstance().set(EmulatedDevicesList, new EmulatedDevicesList());
+      Root.DevToolsContext.globalInstance().set(EmulatedDevicesList,
+                                                new EmulatedDevicesList(Common.Settings.Settings.instance()));
     }
     return Root.DevToolsContext.globalInstance().get(EmulatedDevicesList);
   }
