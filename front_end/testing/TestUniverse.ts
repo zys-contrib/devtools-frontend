@@ -456,8 +456,8 @@ export class TestUniverse implements Foundation.Universe.Universe {
   get workspaceDiff(): WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl {
     if (!this.#context.has(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl)) {
       this.#context.set(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl,
-                        new WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl(this.workspace, this.persistence,
-                                                                          this.networkPersistenceManager));
+                        new WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl(
+                            this.workspace, this.persistence, this.networkPersistenceManager, this.settings));
     }
     return this.#context.get(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl);
   }

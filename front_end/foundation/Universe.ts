@@ -173,6 +173,7 @@ export class Universe {
         workspace,
         persistence,
         networkPersistenceManager,
+        settings,
     );
     context.set(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl, workspaceDiff);
 

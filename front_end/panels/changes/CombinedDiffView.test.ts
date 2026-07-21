@@ -50,7 +50,12 @@ function createWorkspaceDiff({workspace}: {workspace: Workspace.Workspace.Worksp
   });
   Persistence.Persistence.PersistenceImpl.instance({forceNew: true, workspace, breakpointManager});
   Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance({forceNew: true, workspace});
-  return new WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl(workspace);
+  return new WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl(
+      workspace,
+      Persistence.Persistence.PersistenceImpl.instance(),
+      Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance(),
+      Common.Settings.Settings.instance(),
+  );
 }
 
 async function createCombinedDiffView({workspaceDiff}: {workspaceDiff: WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl}) {

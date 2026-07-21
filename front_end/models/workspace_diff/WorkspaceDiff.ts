@@ -28,10 +28,9 @@ export class WorkspaceDiffImpl extends Common.ObjectWrapper.ObjectWrapper<EventT
 
   constructor(
       workspace: Workspace.Workspace.WorkspaceImpl,
-      persistence: Persistence.Persistence.PersistenceImpl = Persistence.Persistence.PersistenceImpl.instance(),
-      networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager =
-          Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance(),
-      settings: Common.Settings.Settings = Common.Settings.Settings.instance(),
+      persistence: Persistence.Persistence.PersistenceImpl,
+      networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager,
+      settings: Common.Settings.Settings,
   ) {
     super();
     this.#persistence = persistence;
@@ -215,7 +214,7 @@ export class UISourceCodeDiff extends Common.ObjectWrapper.ObjectWrapper<UISourc
   constructor(
       uiSourceCode: Workspace.UISourceCode.UISourceCode,
       networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager,
-      settings: Common.Settings.Settings = Common.Settings.Settings.instance(),
+      settings: Common.Settings.Settings,
   ) {
     super();
     this.#uiSourceCode = uiSourceCode;
@@ -325,8 +324,14 @@ export interface UISourceCodeDiffEventTypes {
 
 export function workspaceDiff({forceNew}: {forceNew?: boolean} = {}): WorkspaceDiffImpl {
   if (!Root.DevToolsContext.globalInstance().has(WorkspaceDiffImpl) || forceNew) {
-    Root.DevToolsContext.globalInstance().set(WorkspaceDiffImpl,
-                                              new WorkspaceDiffImpl(Workspace.Workspace.WorkspaceImpl.instance()));
+    Root.DevToolsContext.globalInstance().set(
+        WorkspaceDiffImpl,
+        new WorkspaceDiffImpl(
+            Workspace.Workspace.WorkspaceImpl.instance(),
+            Persistence.Persistence.PersistenceImpl.instance(),
+            Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance(),
+            Common.Settings.Settings.instance(),
+            ));
   }
   return Root.DevToolsContext.globalInstance().get(WorkspaceDiffImpl);
 }
