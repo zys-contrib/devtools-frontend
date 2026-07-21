@@ -1293,6 +1293,72 @@ describe('CSSMatchedStyles', () => {
                            ['--body-variable', '--div-variable', '--another-div-variable']);
       });
     });
+
+    describe('propertyState', () => {
+      it('marks a shorthand as overloaded if all its longhands are overloaded', async () => {
+        const shorthandRule = ruleMatch('div.foo', []);
+        shorthandRule.rule.style.shorthandEntries = [{name: 'margin', value: '10px'}];
+        shorthandRule.rule.style.cssProperties = [
+          {name: 'margin-top', value: '10px'},
+          {name: 'margin-right', value: '10px'},
+          {name: 'margin-bottom', value: '10px'},
+          {name: 'margin-left', value: '10px'},
+        ];
+
+        const longhandRule = ruleMatch('div', [
+          {name: 'margin-top', value: '0px', important: true},
+          {name: 'margin-right', value: '0px', important: true},
+          {name: 'margin-bottom', value: '0px', important: true},
+          {name: 'margin-left', value: '0px', important: true},
+        ]);
+
+        const matchedStyles = await getMatchedStyles({
+          connection,
+          matchedPayload: [
+            longhandRule,
+            shorthandRule,
+          ],
+        });
+
+        const style = matchedStyles.nodeStyles().find(
+            s => s.allProperties().find(p => p.name === 'margin-top' && p.value === '10px'));
+        assert.exists(style);
+        const marginShorthand = style.allProperties().find(p => p.name === 'margin');
+        assert.exists(marginShorthand);
+        assert.strictEqual(matchedStyles.propertyState(marginShorthand), SDK.CSSMatchedStyles.PropertyState.OVERLOADED);
+      });
+
+      it('does not mark a shorthand as overloaded if not all its longhands are overloaded', async () => {
+        const shorthandRule = ruleMatch('div.foo', []);
+        shorthandRule.rule.style.shorthandEntries = [{name: 'margin', value: '10px'}];
+        shorthandRule.rule.style.cssProperties = [
+          {name: 'margin-top', value: '10px'},
+          {name: 'margin-right', value: '10px'},
+          {name: 'margin-bottom', value: '10px'},
+          {name: 'margin-left', value: '10px'},
+        ];
+
+        const longhandRule = ruleMatch('div', [
+          {name: 'margin-top', value: '0px', important: true},
+          {name: 'margin-left', value: '0px', important: true},
+        ]);
+
+        const matchedStyles = await getMatchedStyles({
+          connection,
+          matchedPayload: [
+            longhandRule,
+            shorthandRule,
+          ],
+        });
+
+        const style = matchedStyles.nodeStyles().find(
+            s => s.allProperties().find(p => p.name === 'margin-top' && p.value === '10px'));
+        assert.exists(style);
+        const marginShorthand = style.allProperties().find(p => p.name === 'margin');
+        assert.exists(marginShorthand);
+        assert.strictEqual(matchedStyles.propertyState(marginShorthand), SDK.CSSMatchedStyles.PropertyState.ACTIVE);
+      });
+    });
   });
 
   describe('findParentRule', () => {
