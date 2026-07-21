@@ -464,7 +464,6 @@ export interface HostConfigFreestyler {
   enabled: boolean;
   userTier: string;
   executionMode?: HostConfigFreestylerExecutionMode;
-  patching?: boolean;
   multimodal?: boolean;
   multimodalUploadInput?: boolean;
   functionCalling?: boolean;

@@ -5,18 +5,12 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
-import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
-import * as Protocol from '../../generated/protocol.js';
+import type * as Protocol from '../../generated/protocol.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
-import {createResource, getMainFrame} from '../../testing/ResourceTreeHelpers.js';
 import {createCSSStyle, getMatchedStyles, ruleMatch} from '../../testing/StyleHelpers.js';
-import {TestUniverse} from '../../testing/TestUniverse.js';
-import type * as Workspace from '../workspace/workspace.js';
 
 import * as AiAssistance from './ai_assistance.js';
-
-const {urlString} = Platform.DevToolsPath;
 
 function createNode(options?: {getAttribute?: (attribute: string) => string | undefined}) {
   const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
@@ -371,88 +365,4 @@ describe('ExtensionScope', () => {
     });
   });
 
-  describe('getSourceLocation', () => {
-    async function setupMockedStyleRules() {
-      const universe = new TestUniverse();
-      const connection = new MockCDPConnection();
-      const target = universe.createTarget({connection});
-
-      const targetManager = target.targetManager();
-      targetManager.setScopeTarget(target);
-      const workspace = universe.workspace;
-      const cssWorkspaceBinding = universe.cssWorkspaceBinding;
-      const sourceURL = urlString`http://localhost/something/style.css`;
-      createResource(getMainFrame(target), sourceURL, 'text/html', '');
-      const uiSourceCode = workspace.uiSourceCodeForURL(sourceURL) as Workspace.UISourceCode.UISourceCode;
-      assert.isNotNull(uiSourceCode);
-      const cssModel = target.model(SDK.CSSModel.CSSModel)!;
-      const cssStyleSheetHeader = new SDK.CSSStyleSheetHeader.CSSStyleSheetHeader(cssModel, {
-        styleSheetId: 'test' as Protocol.DOM.StyleSheetId,
-        frameId: 'test' as Protocol.Page.FrameId,
-        sourceURL,
-        origin: Protocol.CSS.StyleSheetOrigin.Regular,
-        title: 'style.css',
-        disabled: false,
-        isInline: false,
-        isMutable: false,
-        isConstructed: false,
-        startLine: 0,
-        startColumn: 0,
-        length: 10,
-        endLine: 1,
-        endColumn: 8,
-      });
-      sinon.stub(cssModel, 'styleSheetHeaderForId').returns(cssStyleSheetHeader);
-      const node = createNode();
-      const matchedPayload = [
-        ruleMatch(
-            {
-              text: '.test',
-              selectors: [{
-                text: '.test',
-                range: {
-                  startLine: 0,
-                  startColumn: 0,
-                  endLine: 0,
-                  endColumn: 10,
-                }
-              }]
-            },
-            MOCK_STYLE, {
-              styleSheetId: cssStyleSheetHeader.id,
-            }),
-        ruleMatch(
-
-            {
-              selectors: [{text: 'div&'}],
-              text: 'div&',
-            },
-            MOCK_STYLE,
-            {
-              nestingSelectors: [`.${AiAssistance.Injected.AI_ASSISTANCE_CSS_CLASS_NAME}-1`],
-            },
-            ),
-      ];
-
-      const matchedStyles = await getMatchedStyles({
-        node,
-        matchedPayload,
-        cssModel,
-        connection,
-      });
-
-      return {
-        styleRule: AiAssistance.ExtensionScope.ExtensionScope.getStyleRuleFromMatchesStyles(matchedStyles)!,
-        cssWorkspaceBinding,
-      };
-    }
-
-    it('should compute a source location', async () => {
-      const {styleRule, cssWorkspaceBinding} = await setupMockedStyleRules();
-      assert.strictEqual(
-          AiAssistance.ExtensionScope.ExtensionScope.getSourceLocation(styleRule, cssWorkspaceBinding),
-          'style.css:1:1',
-      );
-    });
-  });
 });

@@ -56,7 +56,6 @@ const {widget} = UI.Widget;
 
 const REPORT_URL = 'https://crbug.com/508304827' as Platform.DevToolsPath.UrlString;
 const SCROLL_ROUNDING_OFFSET = 1;
-const MAX_NUM_LINES_IN_CODEBLOCK = 11;
 
 /*
 * Strings that don't need to be translated at this time.
@@ -545,14 +544,12 @@ export interface MessageInput {
   isLastMessage: boolean;
   isFirstMessage: boolean;
   prompt: string;
-  shouldShowCSSChangeSummary: boolean;
   canShowFeedbackForm: boolean;
   markdownRenderer: MarkdownLitRenderer;
   onSuggestionClick: (suggestion: string) => void;
   onFeedbackSubmit: (rpcId: Host.AidaClient.RpcGlobalId, rate: Host.AidaClient.Rating, feedback?: string) => void;
   onCopyResponseClick: (message: ModelChatMessage) => void;
   onExportClick?: () => void;
-  changeSummary?: string;
   walkthrough: {
     onOpen: (message: ModelChatMessage) => void,
     isExpanded: boolean,
@@ -647,15 +644,6 @@ export const DEFAULT_VIEW = (input: ChatMessageViewInput, output: ViewOutput, ta
           },
         )}
         ${renderError(message)}
-        ${input.shouldShowCSSChangeSummary && hasAiV2 && input.changeSummary ? html`
-          <devtools-code-block
-            .code=${input.changeSummary}
-            .codeLang=${'css'}
-            .displayLimit=${MAX_NUM_LINES_IN_CODEBLOCK}
-            .displayNotice=${true}
-            class="ai-css-change"
-          ></devtools-code-block>
-        ` : Lit.nothing}
         ${input.showActions ? renderActions(input, output) : Lit.nothing}
       </div>
       ${hasAiV2 ? renderSideEffectStepsUI(input, steps) : Lit.nothing}
@@ -2073,14 +2061,12 @@ export class ChatMessage extends UI.Widget.Widget {
   canShowFeedbackForm = false;
   isLastMessage = false;
   isFirstMessage = false;
-  shouldShowCSSChangeSummary = false;
   markdownRenderer!: MarkdownLitRenderer;
   onSuggestionClick: (suggestion: string) => void = () => {};
   onFeedbackSubmit:
       (rpcId: Host.AidaClient.RpcGlobalId, rate: Host.AidaClient.Rating, feedback?: string) => void = () => {};
   onCopyResponseClick: (message: ModelChatMessage) => void = () => {};
   onExportClick: () => void = () => {};
-  changeSummary?: string;
   walkthrough: MessageInput['walkthrough'] = {
     onOpen: () => {},
     onToggle: () => {},
@@ -2127,7 +2113,6 @@ export class ChatMessage extends UI.Widget.Widget {
           isLastMessage: this.isLastMessage,
           isFirstMessage: this.isFirstMessage,
           prompt: this.prompt,
-          shouldShowCSSChangeSummary: this.shouldShowCSSChangeSummary,
           onSuggestionClick: this.onSuggestionClick,
           onRatingClick: this.#handleRateClick.bind(this),
           onReportClick: () => UIHelpers.openInNewTab(REPORT_URL),
@@ -2153,7 +2138,6 @@ export class ChatMessage extends UI.Widget.Widget {
           currentRating: this.#currentRating,
           isShowingFeedbackForm: this.#isShowingFeedbackForm,
           onFeedbackSubmit: this.onFeedbackSubmit,
-          changeSummary: this.changeSummary,
           walkthrough: this.walkthrough,
         },
         this.#viewOutput, this.contentElement);

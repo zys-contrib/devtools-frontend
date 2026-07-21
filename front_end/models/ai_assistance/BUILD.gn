@@ -9,7 +9,6 @@ import("../visibility.gni")
 
 devtools_module("ai_assistance") {
   sources = [
-    "AgentProject.ts",
     "AiAgent2.ts",
     "AiConversation.ts",
     "AiHistoryStorage.ts",
@@ -28,7 +27,6 @@ devtools_module("ai_assistance") {
     "agents/ExecuteJavascript.ts",
     "agents/FileAgent.ts",
     "agents/NetworkAgent.ts",
-    "agents/PatchAgent.ts",
     "agents/PerformanceAgent.ts",
     "agents/StorageAgent.ts",
     "agents/StylingAgent.ts",
@@ -122,7 +120,6 @@ ts_library("unittests") {
   testonly = true
 
   sources = [
-    "AgentProject.test.ts",
     "AiAgent2.test.ts",
     "AiConversation.test.ts",
     "AiHistoryStorage.test.ts",
@@ -139,7 +136,6 @@ ts_library("unittests") {
     "agents/ContextSelectionAgent.test.ts",
     "agents/FileAgent.test.ts",
     "agents/NetworkAgent.test.ts",
-    "agents/PatchAgent.test.ts",
     "agents/PerformanceAgent.test.ts",
     "agents/StorageAgent.test.ts",
     "agents/StylingAgent.test.ts",

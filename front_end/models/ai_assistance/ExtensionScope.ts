@@ -6,7 +6,6 @@ import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
-import * as Bindings from '../bindings/bindings.js';
 
 import type {ChangeManager} from './ChangeManager.js';
 import {
@@ -20,9 +19,6 @@ import {
 
 interface ElementContext {
   selector: string;
-  simpleSelector?: string;
-  sourceLocation?: string;
-  backendNodeId?: Protocol.DOM.BackendNodeId;
 }
 
 /**
@@ -237,27 +233,6 @@ export class ExtensionScope {
     return node.localName() || node.nodeName().toLowerCase();
   }
 
-  static getSourceLocation(
-      styleRule: SDK.CSSRule.CSSStyleRule,
-      cssWorkspaceBinding: Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding =
-          Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding.instance(),
-      ): string|undefined {
-    const styleSheetHeader = styleRule.header;
-    if (!styleSheetHeader) {
-      return;
-    }
-
-    const range = styleRule.selectorRange();
-    if (!range) {
-      return;
-    }
-    const lineNumber = styleSheetHeader.lineNumberInSource(range.startLine);
-    const columnNumber = styleSheetHeader.columnNumberInSource(range.startLine, range.startColumn);
-    const location = new SDK.CSSModel.CSSLocation(styleSheetHeader, lineNumber, columnNumber);
-    const uiLocation = cssWorkspaceBinding.rawLocationToUILocation(location);
-    return uiLocation?.linkText(/* skipTrim= */ true, /* showColumnNumber= */ true);
-  }
-
   async #computeContextFromElement(remoteObject: SDK.RemoteObject.RemoteObject): Promise<ElementContext> {
     if (!remoteObject.objectId) {
       throw new Error('DOMModel is not found');
@@ -278,7 +253,6 @@ export class ExtensionScope {
       throw new Error('Node is not found');
     }
 
-    const backendNodeId = node.backendNodeId();
     try {
       const matchedStyles = await cssModel.getMatchedStyles(node.id);
 
@@ -300,9 +274,6 @@ export class ExtensionScope {
 
       return {
         selector,
-        simpleSelector: ExtensionScope.getSelectorForNode(node),
-        sourceLocation: ExtensionScope.getSourceLocation(styleRule),
-        backendNodeId,
       };
     } catch {
       // no-op to allow the fallback below to run.
@@ -311,7 +282,6 @@ export class ExtensionScope {
     // Fallback
     return {
       selector: ExtensionScope.getSelectorForNode(node),
-      backendNodeId,
     };
   }
 
@@ -345,7 +315,6 @@ export class ExtensionScope {
       let context: ElementContext = {
         // TODO: Should this a be a *?
         selector: '',
-        backendNodeId: undefined,
       };
       try {
         context = await this.#computeContextFromElement(element.object);
@@ -359,12 +328,9 @@ export class ExtensionScope {
         const sanitizedStyles = await this.sanitizedStyleChanges(context.selector, arg.styles);
         const styleChanges = await this.#changeManager.addChange(cssModel, this.frameId, {
           groupId: this.#agentId,
-          sourceLocation: context.sourceLocation,
           selector: context.selector,
-          simpleSelector: context.simpleSelector,
           className: arg.className,
           styles: sanitizedStyles,
-          backendNodeId: context.backendNodeId,
         });
         await this.#simpleEval(executionContext, `freestyler.respond(${id}, ${JSON.stringify(styleChanges)})`);
       } catch (error) {

@@ -255,45 +255,6 @@ export const setupAutomaticFileSystem = (options: {hasFileSystem: boolean} = {
   sinon.stub(manager, 'connectAutomaticFileSystem').resolves(true);
 };
 
-let patchWidgets: AiAssistancePanel.PatchWidget.PatchWidget[] = [];
-/**
- * Creates and shows an AiAssistancePanel instance returning the view
- * stubs and the initial view input caused by Widget.show().
- */
-export async function createPatchWidget(options?: {
-  aidaClient?: Host.AidaClient.AidaClient,
-}) {
-  const view = createViewFunctionStub(AiAssistancePanel.PatchWidget.PatchWidget);
-  const aidaClient = options?.aidaClient ?? mockAidaClient();
-  const widget = new AiAssistancePanel.PatchWidget.PatchWidget(undefined, view, {
-    aidaClient,
-  });
-  patchWidgets.push(widget);
-
-  widget.markAsRoot();
-  renderElementIntoDOM(widget);
-  await view.nextInput;
-
-  return {
-    widget,
-    view,
-    aidaClient,
-  };
-}
-
-export async function createPatchWidgetWithDiffView(options?: {
-  aidaClient?: Host.AidaClient.AidaClient,
-}) {
-  const aidaClient = options?.aidaClient ?? mockAidaClient([[{explanation: 'patch applied'}]]);
-  const {view, widget} = await createPatchWidget({aidaClient});
-  widget.changeSummary = 'body { background-color: red; }';
-  view.input.onApplyToWorkspace();
-  assert.strictEqual(
-      (await view.nextInput).patchSuggestionState, AiAssistancePanel.PatchWidget.PatchSuggestionState.SUCCESS);
-
-  return {widget, view, aidaClient};
-}
-
 export function initializePersistenceImplForTests(): void {
   const workspace = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
   const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance({
@@ -321,10 +282,6 @@ export function cleanup() {
     panel.detach();
   }
   panels = [];
-  for (const widget of patchWidgets) {
-    widget.detach();
-  }
-  patchWidgets = [];
 }
 
 /**

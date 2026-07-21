@@ -32,7 +32,6 @@ import {
   createViewFunctionStub,
   type ViewFunctionStub,
 } from '../../../testing/ViewFunctionHelpers.js';
-import * as MarkdownView from '../../../ui/components/markdown_view/markdown_view.js';
 import * as Snackbars from '../../../ui/components/snackbars/snackbars.js';
 import * as AiAssistance from '../ai_assistance.js';
 
@@ -58,7 +57,6 @@ describeWithEnvironment('ChatMessage', () => {
       isLastMessage: true,
       isFirstMessage: false,
       prompt: 'test prompt',
-      shouldShowCSSChangeSummary: false,
       markdownRenderer: new AiAssistance.MarkdownRendererWithCodeBlock(),
       canShowFeedbackForm: true,
       onSuggestionClick: sinon.stub(),
@@ -101,7 +99,6 @@ describeWithEnvironment('ChatMessage', () => {
           isLastMessage: true,
           isFirstMessage: false,
           prompt: 'test prompt',
-          shouldShowCSSChangeSummary: false,
           showActions: true,
           message: {
             entity: AiAssistance.ChatMessage.ChatMessageEntity.MODEL,
@@ -1310,57 +1307,6 @@ describeWithEnvironment('ChatMessage', () => {
       assert.isNull(exportButton);
     });
   });
-
-  describe('CSS change summary', () => {
-    beforeEach(() => {
-      updateHostConfig({devToolsAiAssistanceV2: {enabled: true}});
-    });
-
-    it('should render devtools-code-block when hasAiV2 is true, changeSummary is present and shouldShowCSSChangeSummary is true',
-       async () => {
-         const target = renderView({
-           shouldShowCSSChangeSummary: true,
-           changeSummary: 'test summary',
-         });
-
-         const codeBlock = target.querySelector('devtools-code-block');
-         assert.instanceOf(codeBlock, MarkdownView.CodeBlock.CodeBlock);
-         assert.strictEqual(codeBlock.code, 'test summary');
-         assert.strictEqual(codeBlock.displayLimit, 11);
-       });
-
-    it('should NOT render devtools-code-block when changeSummary is missing', async () => {
-      const target = renderView({
-        shouldShowCSSChangeSummary: true,
-        changeSummary: undefined,
-      });
-
-      const codeBlock = target.querySelector('devtools-code-block');
-      assert.isNull(codeBlock);
-    });
-
-    it('should NOT render devtools-code-block when shouldShowCSSChangeSummary is false', async () => {
-      const target = renderView({
-        shouldShowCSSChangeSummary: false,
-        changeSummary: 'test summary',
-      });
-
-      const codeBlock = target.querySelector('devtools-code-block');
-      assert.isNull(codeBlock);
-    });
-
-    it('should NOT render devtools-code-block when hasAiV2 is false', async () => {
-      updateHostConfig({devToolsAiAssistanceV2: {enabled: false}});
-      const target = renderView({
-        shouldShowCSSChangeSummary: true,
-        changeSummary: 'test summary',
-      });
-
-      const codeBlock = target.querySelector('devtools-code-block');
-      assert.isNull(codeBlock);
-    });
-  });
-
   describe('view', () => {
     it('renders a minimal model message', async () => {
       const target = document.createElement('div');
@@ -1383,7 +1329,6 @@ describeWithEnvironment('ChatMessage', () => {
             isLastMessage: true,
             isFirstMessage: false,
             prompt: 'test prompt',
-            shouldShowCSSChangeSummary: false,
             showActions: true,
             message: {
               entity: AiAssistance.ChatMessage.ChatMessageEntity.MODEL,
@@ -1425,7 +1370,6 @@ describeWithEnvironment('ChatMessage', () => {
             isLastMessage: true,
             isFirstMessage: false,
             prompt: 'test prompt',
-            shouldShowCSSChangeSummary: false,
             showActions: false,
             message: {
               entity: AiAssistance.ChatMessage.ChatMessageEntity.USER,
@@ -1465,7 +1409,6 @@ describeWithEnvironment('ChatMessage', () => {
             isLastMessage: false,
             isFirstMessage: true,
             prompt: 'test prompt',
-            shouldShowCSSChangeSummary: false,
             showActions: false,
             message: {
               entity: AiAssistance.ChatMessage.ChatMessageEntity.USER,
@@ -1507,7 +1450,6 @@ describeWithEnvironment('ChatMessage', () => {
             isLastMessage: false,
             isFirstMessage: true,
             prompt: 'test prompt',
-            shouldShowCSSChangeSummary: false,
             showActions: false,
             message: {
               entity: AiAssistance.ChatMessage.ChatMessageEntity.MODEL,
