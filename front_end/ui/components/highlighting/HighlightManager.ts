@@ -88,7 +88,8 @@ interface HighlightState {
   currentRange?: TextUtils.TextRange.SourceRange;
 }
 
-let highlightManagerInstance: HighlightManager;
+let highlightManagerInstance: HighlightManager|null;
+
 export class HighlightManager {
   #highlights = new Highlight();
   #currentHighlights = new Highlight();
@@ -108,6 +109,10 @@ export class HighlightManager {
     }
 
     return highlightManagerInstance;
+  }
+
+  static removeInstance(): void {
+    highlightManagerInstance = null;
   }
 
   addHighlights(ranges: Range[]): void {

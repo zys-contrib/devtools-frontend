@@ -105,6 +105,7 @@ ts_library("testing") {
     "../third_party/chromium/ahem",
     "../third_party/codemirror.next:bundle",
     "../ui/components/buttons:bundle",
+    "../ui/components/highlighting:bundle",
     "../ui/components/node_text:bundle",
     "../ui/components/render_coordinator:bundle",
     "../ui/legacy:bundle",
