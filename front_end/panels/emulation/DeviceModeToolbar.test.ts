@@ -236,6 +236,70 @@ describeWithEnvironment('DeviceModeToolbar', () => {
     });
   });
 
+  describe('device mode switching', () => {
+    it('tests toolbar state when switching modes', async () => {
+      const fakePhone = EmulationModel.EmulatedDevices.EmulatedDevicesList.instance().standard()[0];
+
+      deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.None, null, null);
+      await toolbar.updateComplete;
+
+      assert.strictEqual(deviceModeModel.type(), EmulationModel.DeviceModeModel.Type.None);
+      assert.isNull(deviceModeModel.device());
+
+      const select = toolbar.element.querySelector('.toolbar-has-dropdown-shrinkable') as HTMLSelectElement;
+
+      select.value = 'Responsive';
+      select.dispatchEvent(new Event('change'));
+      await toolbar.updateComplete;
+
+      assert.strictEqual(deviceModeModel.type(), EmulationModel.DeviceModeModel.Type.Responsive);
+      assert.isNull(deviceModeModel.device());
+      let rotateButton = findRotateButton();
+      assert.isFalse(rotateButton.disabled);
+      let widthInput = toolbar.element.querySelector('.device-mode-size-input') as HTMLInputElement;
+      assert.isFalse(widthInput.disabled);
+
+      deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.None, null, null);
+      await toolbar.updateComplete;
+
+      assert.strictEqual(deviceModeModel.type(), EmulationModel.DeviceModeModel.Type.None);
+      assert.isNull(deviceModeModel.device());
+
+      select.value = fakePhone.title;
+      select.dispatchEvent(new Event('change'));
+      await toolbar.updateComplete;
+
+      assert.strictEqual(deviceModeModel.type(), EmulationModel.DeviceModeModel.Type.Device);
+      assert.strictEqual(deviceModeModel.device(), fakePhone);
+      rotateButton = findRotateButton();
+      assert.isFalse(rotateButton.disabled);
+      widthInput = toolbar.element.querySelector('.device-mode-size-input') as HTMLInputElement;
+      assert.isTrue(widthInput.disabled);
+
+      select.value = 'Responsive';
+      select.dispatchEvent(new Event('change'));
+      await toolbar.updateComplete;
+
+      assert.strictEqual(deviceModeModel.type(), EmulationModel.DeviceModeModel.Type.Responsive);
+      assert.isNull(deviceModeModel.device());
+      rotateButton = findRotateButton();
+      assert.isFalse(rotateButton.disabled);
+      widthInput = toolbar.element.querySelector('.device-mode-size-input') as HTMLInputElement;
+      assert.isFalse(widthInput.disabled);
+
+      select.value = fakePhone.title;
+      select.dispatchEvent(new Event('change'));
+      await toolbar.updateComplete;
+
+      assert.strictEqual(deviceModeModel.type(), EmulationModel.DeviceModeModel.Type.Device);
+      assert.strictEqual(deviceModeModel.device(), fakePhone);
+      rotateButton = findRotateButton();
+      assert.isFalse(rotateButton.disabled);
+      widthInput = toolbar.element.querySelector('.device-mode-size-input') as HTMLInputElement;
+      assert.isTrue(widthInput.disabled);
+    });
+  });
+
   it('resets the device dropdown to the current device when "Edit" is selected', async () => {
     deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.Responsive, null, null);
     toolbar.requestUpdate();
