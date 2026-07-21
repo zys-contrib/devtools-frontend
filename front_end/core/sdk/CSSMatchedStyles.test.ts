@@ -450,6 +450,43 @@ describe('CSSMatchedStyles', () => {
     });
   });
 
+  it('deduplicates inherited styles from the same source', async () => {
+    const parentNode1 = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+    parentNode1.id = 0 as Protocol.DOM.NodeId;
+    const parentNode2 = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+    parentNode2.id = 1 as Protocol.DOM.NodeId;
+    parentNode2.parentNode = parentNode1;
+    const parentNode3 = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+    parentNode3.id = 2 as Protocol.DOM.NodeId;
+    parentNode3.parentNode = parentNode2;
+
+    const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+    node.parentNode = parentNode3;
+    node.id = 3 as Protocol.DOM.NodeId;
+
+    const range = {startLine: 0, startColumn: 0, endLine: 2, endColumn: 1};
+    const styleSheetId = '1' as Protocol.DOM.StyleSheetId;
+    const rule = ruleMatch('div', [{name: 'color', value: 'red'}], {range, styleSheetId});
+
+    const matchedPayload = [rule];
+    const inheritedPayload = [
+      {matchedCSSRules: [rule]},
+      {matchedCSSRules: [rule]},
+      {matchedCSSRules: [rule]},
+    ];
+
+    const matchedStyles = await getMatchedStyles({
+      connection,
+      node,
+      matchedPayload,
+      inheritedPayload,
+    });
+
+    assert.deepEqual(matchedStyles.nodeStyles().map(style => style.allProperties().map(prop => prop.propertyText)), [
+      ['color: red;'],
+    ]);
+  });
+
   it('does not hide inherited rules that also apply directly to the node if it contains custom properties',
      async () => {
        const parentNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
