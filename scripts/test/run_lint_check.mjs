@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { ESLint } from 'eslint';
-import { sync } from 'globby';
+import {globbySync} from 'globby';
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { extname, join, resolve, relative } from 'node:path';
@@ -388,8 +388,8 @@ async function run() {
   const files = getFilesToLint();
   const scripts = [];
   const styles = [];
-  for (const path of sync(files, {
-    expandDirectories: { extensions: ['css', 'mjs', 'js', 'ts'] },
+  for (const path of globbySync(files, {
+    expandDirectories: {extensions: ['css', 'mjs', 'js', 'ts']},
     gitignore: true,
   })) {
     if (shouldIgnoreFile(path)) {
