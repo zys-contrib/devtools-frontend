@@ -286,7 +286,7 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
   private lastMouseOffsetX: number;
   private selectedGroupIndex: number;
   private keyboardFocusedGroup: number;
-  private offsetWidth!: number;
+  offsetWidth!: number;
   private offsetHeight!: number;
   private dragStartX!: number;
   private dragStartY!: number;
