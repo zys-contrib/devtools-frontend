@@ -57,7 +57,7 @@ type DataGridElementNode = SortableNode|DynamicHeightNode;
 const elementToNode = new WeakMap<Element, DataGridElementNode>();
 
 export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate {
-  static readonly observedAttributes = ['striped', 'name', 'inline', 'resize'];
+  static readonly observedAttributes = ['striped', 'name', 'inline', 'resize', 'highlight'];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #dataGrid!: DataGridImpl<any>;
@@ -153,6 +153,11 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
       case 'resize':
         this.#dataGrid.setResizeMethod(newValue as ResizeMethod);
         break;
+      case 'highlight':
+        queueMicrotask(() => {
+          this.#revealHighlightedNode(Number(newValue));
+        });
+        break;
     }
   }
 
@@ -207,6 +212,24 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
       hasChildren = Boolean(dataRow.querySelector('td table'));
     }
     dataGridNode.setHasChildren(hasChildren);
+  }
+
+  #revealHighlightedNode(index: number): void {
+    if (isNaN(index) || index < 1) {
+      return;
+    }
+    let count = 0;
+    let node = this.#dataGrid.rootNode().traverseNextNode(true) as DataGridElementNode | null;
+    while (node) {
+      if (node.configElement.hasAttribute('highlighted')) {
+        count++;
+        if (count === index) {
+          node.revealAndSelect();
+          return;
+        }
+      }
+      node = node.traverseNextNode(true) as DataGridElementNode | null;
+    }
   }
 
   #updateColumns(): void {

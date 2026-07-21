@@ -24,9 +24,10 @@ import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import {BottomUpProfileDataGridTree} from './BottomUpProfileDataGrid.js';
 import {Events, HeapTimelineOverview, type IdsRangeChangedEvent, type Samples} from './HeapTimelineOverview.js';
-import {type Formatter, type ProfileDataGridNode, ProfileDataGridTree} from './ProfileDataGrid.js';
+import type {Formatter, ProfileDataGridNode, ProfileDataGridTree} from './ProfileDataGrid.js';
 import {ProfileFlameChart, ProfileFlameChartDataProvider} from './ProfileFlameChartDataProvider.js';
 import {ProfileEvents, type ProfileHeader, ProfileType} from './ProfileHeader.js';
+import profilesPanelStyles from './profilesPanel.css.js';
 import {TopDownProfileDataGridTree} from './TopDownProfileDataGrid.js';
 import {WritableProfileHeader} from './WritableProfileHeader.js';
 
@@ -205,8 +206,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   focusButton: Buttons.Button.Button|undefined;
   excludeButton: Buttons.Button.Button|undefined;
   resetButton: Buttons.Button.Button|undefined;
-  #sortColumnId = 'self';
-  #sortAscending = false;
+
   #selectedNode: ProfileDataGridNode|null = null;
 
   readonly linkifierInternal: Components.Linkifier.Linkifier = new Components.Linkifier.Linkifier(maxLinkLength);
@@ -274,11 +274,6 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     if (!this.profileDataGridTree) {
       return;
     }
-    const onSort = (e: CustomEvent<{columnId: string, ascending: boolean}>): void => {
-      this.#sortColumnId = e.detail.columnId;
-      this.#sortAscending = e.detail.ascending;
-      this.sortProfile();
-    };
 
     const onDeselect = (): void => {
       this.#selectedNode = null;
@@ -286,22 +281,27 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     };
 
     // clang-format off
+    let highlightIndex = -1;
+    if (this.profileDataGridTree && this.profileDataGridTree.searchResults) {
+      highlightIndex = this.profileDataGridTree.searchResultIndex + 1;
+    }
+
     // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
     render(html`
+      <style>${profilesPanelStyles}</style>
       <devtools-data-grid class="flex-auto" name=${i18nString(UIStrings.profiler)} striped autofocus resize="last"
-                          @sort=${onSort} @deselect=${onDeselect} .template=${html`
+                          highlight=${highlightIndex >= 1 ? highlightIndex : nothing}
+                          @deselect=${onDeselect} .template=${html`
+        <style>${profilesPanelStyles}</style>
         <table>
           <tr>
-            <th id="self" width="120px" fixed weight="1" sortable
-                sort=${this.#sortColumnId === 'self' ? (this.#sortAscending ? 'ascending' : 'descending') : 'none'}>
+            <th id="self" width="120px" fixed weight="1" sortable sort="descending">
               ${this.columnHeader('self')}
             </th>
-            <th id="total" width="120px" fixed weight="1" sortable
-                sort=${this.#sortColumnId === 'total' ? (this.#sortAscending ? 'ascending' : 'descending') : 'none'}>
+            <th id="total" width="120px" fixed weight="1" sortable>
               ${this.columnHeader('total')}
             </th>
-            <th id="function" weight="3" sortable disclosure
-                sort=${this.#sortColumnId === 'function' ? (this.#sortAscending ? 'ascending' : 'descending') : 'none'}>
+            <th id="function" weight="3" sortable disclosure>
               ${i18nString(UIStrings.function)}
             </th>
           </tr>
@@ -341,7 +341,9 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
 
     // clang-format off
     return html`
-      <tr data-uid=${node.callUID} ?selected=${this.#selectedNode === node} ?expanded=${node.expanded} @select=${onSelect}
+      <tr data-uid=${node.callUID} ?selected=${this.#selectedNode === node} ?expanded=${node.expanded}
+          ?highlighted=${node.searchMatchedSelfColumn || node.searchMatchedTotalColumn || node.searchMatchedFunctionColumn}
+          @select=${onSelect}
           @contextmenu=${onContextMenu} @expand=${onExpand} @collapse=${onCollapse}>
         <td data-value=${node.self} class="numeric-column ${node.searchMatchedSelfColumn ? 'highlight' : ''}"
             aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.self)}, ${this.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
@@ -617,21 +619,53 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   }
 
   performSearch(searchConfig: UI.SearchableView.SearchConfig, shouldJump: boolean, jumpBackwards?: boolean): void {
-    if (this.searchableElement) {
+    if (this.searchableElement === this.profileDataGridTree && this.profileDataGridTree) {
+      // 1. Delegate to model to find ALL matches (including virtualized ones) using complex query logic
+      this.profileDataGridTree.performSearch(searchConfig, shouldJump, jumpBackwards);
+
+      // 2. Guarantee Deep Matches: Expand ancestors of matching nodes if deep search is on
+      if (this.profileDataGridTree.deepSearch) {
+        for (const match of this.profileDataGridTree.searchResults) {
+          let parent = match.profileNode.parent;
+          while (parent && !parent.isRoot) {
+            parent.expanded = true;
+            parent = parent.parent;
+          }
+        }
+      }
+      this.refresh();
+    } else if (this.searchableElement) {
       this.searchableElement.performSearch(searchConfig, shouldJump, jumpBackwards);
       this.refresh();
     }
   }
 
   jumpToNextSearchResult(): void {
-    if (this.searchableElement) {
+    if (this.searchableElement === this.profileDataGridTree && this.profileDataGridTree) {
+      if (!this.profileDataGridTree.searchResults?.length) {
+        return;
+      }
+      this.profileDataGridTree.searchResultIndex =
+          (this.profileDataGridTree.searchResultIndex + 1) % this.profileDataGridTree.searchResults.length;
+      this.searchableViewInternal.updateCurrentMatchIndex(this.profileDataGridTree.searchResultIndex);
+      this.refresh();
+    } else if (this.searchableElement) {
       this.searchableElement.jumpToNextSearchResult();
       this.#syncSearchSelection();
     }
   }
 
   jumpToPreviousSearchResult(): void {
-    if (this.searchableElement) {
+    if (this.searchableElement === this.profileDataGridTree && this.profileDataGridTree) {
+      if (!this.profileDataGridTree.searchResults?.length) {
+        return;
+      }
+      this.profileDataGridTree.searchResultIndex =
+          (this.profileDataGridTree.searchResultIndex - 1 + this.profileDataGridTree.searchResults.length) %
+          this.profileDataGridTree.searchResults.length;
+      this.searchableViewInternal.updateCurrentMatchIndex(this.profileDataGridTree.searchResultIndex);
+      this.refresh();
+    } else if (this.searchableElement) {
       this.searchableElement.jumpToPreviousSearchResult();
       this.#syncSearchSelection();
     }
@@ -759,18 +793,6 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     this.refreshVisibleData();
   }
 
-  sortProfile(): void {
-    if (!this.profileDataGridTree) {
-      return;
-    }
-    const sortAscending = this.#sortAscending;
-    const sortColumnId = this.#sortColumnId;
-    const sortProperty = sortColumnId === 'function' ? 'functionName' : sortColumnId || '';
-    this.profileDataGridTree.sort(ProfileDataGridTree.propertyComparator(sortProperty, sortAscending), false);
-
-    this.refresh();
-  }
-
   override performUpdate(): void {
     const currentViewType = this.viewType ? this.viewType.get() : null;
     if (currentViewType && currentViewType !== this.#lastAppliedViewType) {
@@ -788,13 +810,11 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
           break;
         case ViewTypes.TREE:
           this.profileDataGridTree = this.getTopDownProfileDataGridTree();
-          this.sortProfile();
           this.visibleView = this.dataGrid;
           this.searchableElement = this.profileDataGridTree;
           break;
         case ViewTypes.HEAVY:
           this.profileDataGridTree = this.getBottomUpProfileDataGridTree();
-          this.sortProfile();
           this.visibleView = this.dataGrid;
           this.searchableElement = this.profileDataGridTree;
           break;

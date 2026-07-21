@@ -111,10 +111,6 @@ export class TopDownProfileDataGridTree extends ProfileDataGridTree {
     this.save();
 
     TopDownProfileDataGridNode.excludeRecursively(this, profileDataGridNode.callUID);
-
-    if (this.lastComparator) {
-      this.sort(this.lastComparator, true);
-    }
   }
 
   override restore(): void {

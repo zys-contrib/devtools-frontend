@@ -286,10 +286,6 @@ export class BottomUpProfileDataGridTree extends ProfileDataGridTree {
     for (let index = 0; index < count; ++index) {
       (children[index] as BottomUpProfileDataGridNode).exclude(excludedCallUID);
     }
-
-    if (this.lastComparator) {
-      this.sort(this.lastComparator, true);
-    }
   }
 
   override populateChildren(): void {
