@@ -394,7 +394,8 @@ describe('UserTimingsHandler', function() {
     }
 
     function sortAll(events: Array<Trace.Types.Events.SyntheticEventPair|Trace.Types.Events.ConsoleTimeStamp>) {
-      events.sort((a, b) => Trace.Handlers.ModelHandlers.UserTimings.userTimingComparator(a, b, [...events]));
+      const indexMap = new Map(events.map((e, i) => [e, i] as const));
+      events.sort((a, b) => Trace.Handlers.ModelHandlers.UserTimings.userTimingComparator(a, b, indexMap));
     }
 
     it('sorts synthetic events by start time in ASC order', () => {
