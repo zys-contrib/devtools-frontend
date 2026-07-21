@@ -11,6 +11,7 @@ import {platform, type Platform} from '../../conductor/platform.js';
 
 import {InstrumentedTestFunction} from './mocha-interface-helpers.js';
 import {StateProvider} from './state-provider.js';
+
 type SuiteFunction = ((this: Mocha.Suite) => void)|undefined;
 
 function devtoolsTestInterface(rootSuite: Mocha.Suite) {
@@ -44,9 +45,9 @@ function devtoolsTestInterface(rootSuite: Mocha.Suite) {
             const thisSuite = this;
             const parentDefinitions = {describe: mochaGlobals.describe, setup: mochaGlobals.setup, it: mochaGlobals.it};
             // @ts-expect-error Custom interface.
-            mochaGlobals.describe = customDescribe(defaultImplementation.suite, file, thisSuite);
+            mochaGlobals.describe = customDescribe(defaultImplementation.suite, file);
             // @ts-expect-error Custom interface.
-            mochaGlobals.setup = function(suiteSettings: SuiteSettings) {
+            mochaGlobals.setup = function(suiteSettings: E2E.SuiteSettings) {
               StateProvider.instance.registerSuiteSettings(thisSuite, suiteSettings);
             };
             // @ts-expect-error Custom interface.
@@ -67,7 +68,7 @@ function devtoolsTestInterface(rootSuite: Mocha.Suite) {
         if (!suite.isPending()) {
           suite.beforeEach(async function(this: Mocha.Context) {
             this.timeout(0);
-            await StateProvider.instance.resolveBrowser(suite);
+            await StateProvider.instance.prepareSuite(suite);
           });
         }
         return suite;
@@ -87,7 +88,9 @@ function customIt(testImplementation: TestFunctions, suite: Mocha.Suite, file: s
   function createTest(title: string, itBodyFn?: Mocha.AsyncFunc) {
     const test = new Mocha.Test(
         title,
-        suite.isPending() || !itBodyFn ? undefined : InstrumentedTestFunction.instrument(itBodyFn, 'test', suite),
+        suite.isPending() || !itBodyFn ?
+            undefined :
+            InstrumentedTestFunction.instrument(itBodyFn, 'test', suite, StateProvider.instance),
     );
     test.file = file;
 

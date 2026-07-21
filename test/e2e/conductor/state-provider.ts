@@ -6,6 +6,7 @@ import type * as Mocha from 'mocha';
 import * as puppeteer from 'puppeteer-core';
 
 import {querySelectorShadowTextAll, querySelectorShadowTextOne} from '../../conductor/custom-query-handlers.js';
+import {ScreenshotError} from '../../conductor/screenshot-error.js';
 import {TestConfig} from '../../conductor/test_config.js';
 import {startServer} from '../../conductor/test_server.js';
 import {
@@ -17,12 +18,68 @@ import {
 import {DEFAULT_DEVTOOLS_SETTINGS, setupDevToolsPage} from '../shared/frontend-helper.js';
 import {setupInspectedPage} from '../shared/target-helper.js';
 
+import type {TestStateProvider} from './mocha-interface-helpers.js';
+
 const DEFAULT_SETTINGS = {
   ...DEFAULT_BROWSER_SETTINGS,
   ...DEFAULT_DEVTOOLS_SETTINGS
 };
 
-export class StateProvider {
+export interface E2EState extends E2E.State {
+  browsingContext: puppeteer.BrowserContext;
+}
+
+export interface ScreenshotState {
+  browser?: {connected: boolean};
+  inspectedPage?: {screenshot(options?: {encoding: 'base64'}): Promise<string>};
+  devToolsPage?: {screenshot(options?: {encoding: 'base64'}): Promise<string>, screenshotLog?: Record<string, string>};
+}
+
+async function takeScreenshots(state: ScreenshotState): Promise<{inspectedPage?: string, devToolsPage?: string}> {
+  try {
+    const {devToolsPage, inspectedPage} = state;
+    const inspectedPageScreenshot = await inspectedPage?.screenshot();
+    const devToolsPageScreenshot = devToolsPage ? await devToolsPage.screenshot() : undefined;
+    return {inspectedPage: inspectedPageScreenshot, devToolsPage: devToolsPageScreenshot};
+  } catch (err) {
+    console.error('Error taking a screenshot', err);
+    return {};
+  }
+}
+
+export async function screenshotError(state: ScreenshotState, error: Error) {
+  if (state.browser && !state.browser.connected) {
+    console.error('Browser was disconnected, skipping screenshots');
+    return error;
+  }
+
+  console.error('Taking screenshots for the error:', error);
+  if (!TestConfig.debug) {
+    try {
+      const screenshotTimeout = 5_000;
+      let timer: ReturnType<typeof setTimeout>;
+      const {inspectedPage, devToolsPage} = await Promise.race([
+        takeScreenshots(state).then(result => {
+          clearTimeout(timer);
+          return result;
+        }),
+        new Promise(resolve => {
+          timer = setTimeout(resolve, screenshotTimeout);
+        }).then(() => {
+          console.error(`Could not take screenshots within ${screenshotTimeout}ms.`);
+          return {inspectedPage: undefined, devToolsPage: undefined};
+        }),
+      ]);
+      return ScreenshotError.fromBase64Images(error, inspectedPage, devToolsPage, state.devToolsPage?.screenshotLog);
+    } catch (e) {
+      console.error('Unexpected error saving screenshots', e);
+      return e;
+    }
+  }
+  return error;
+}
+
+export class StateProvider implements TestStateProvider<E2EState, E2E.SuiteSettings> {
   static instance = new StateProvider();
   static serverPort: number;
 
@@ -52,7 +109,7 @@ export class StateProvider {
     this.#suiteToSettingsMap.set(suite, suiteSettings);
   }
 
-  async resolveBrowser(suite: Mocha.Suite): Promise<void> {
+  async prepareSuite(suite: Mocha.Suite): Promise<void> {
     if (!StateProvider.serverPort) {
       StateProvider.serverPort = await StateProvider.#globalSetup();
     }
@@ -83,7 +140,11 @@ export class StateProvider {
     suite.browser = browser;
   }
 
-  async getState(suite: Mocha.Suite) {
+  async resolveBrowser(suite: Mocha.Suite): Promise<void> {
+    return await this.prepareSuite(suite);
+  }
+
+  async createState(suite: Mocha.Suite): Promise<E2EState> {
     const settings = this.#getSettings(suite);
     const browser = suite.browser;
     if (!browser.connected) {
@@ -96,15 +157,39 @@ export class StateProvider {
         inspectedPage,
         settings,
     );
-    const state = {
+    const state: E2EState = {
       devToolsPage,
       inspectedPage,
       browser,
+      browsingContext,
     };
     // Suite needs to be aware of the full state to be able to capture
     // screenshots on failures
     suite.state = state;
-    return {state, browsingContext};
+    return state;
+  }
+
+  async getState(suite: Mocha.Suite) {
+    return await this.createState(suite);
+  }
+
+  async cleanupState(state: E2EState): Promise<void> {
+    try {
+      await state.browsingContext.close();
+    } catch (e) {
+      console.error('Unexpected error closing browsing context during cleanup', e);
+    }
+  }
+
+  async onTestError(state: E2EState|undefined, error: Error): Promise<Error> {
+    if (!state) {
+      console.error('Missing browsing state. Skipping screenshot taking for error:', error);
+      return error;
+    }
+    if (error instanceof ScreenshotError) {
+      return error;
+    }
+    return await screenshotError(state, error);
   }
 
   #getSettings(suite: Mocha.Suite): E2E.HarnessSettings {
