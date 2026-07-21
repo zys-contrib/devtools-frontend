@@ -43,6 +43,7 @@ interface Config {
   shardBias: number;
   isAiAgent: boolean;
   isPerfTest: boolean;
+  expectationsFile?: string;
 }
 
 function sliceArrayFromElement(array: string[], element: string) {
@@ -148,6 +149,7 @@ export const TestConfig: Config = {
   isAiAgent: ['GEMINI_CLI', 'CLAUDECODE', 'CODEX_SANDBOX', 'CURSOR_AGENT', 'AI_AGENT', 'ANTIGRAVITY_AGENT'].some(
       agent => agent in process.env),
   isPerfTest: false,
+  expectationsFile: options['expectations-file'],
 };
 
 export function loadTests(testDirectory: string, filename = 'tests.txt') {

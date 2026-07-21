@@ -13,6 +13,7 @@ import {formatAsHtml, formatDiff, resultAssertionsDiff} from './diff-utils.js';
 import {GEN_DIR} from './paths.js';
 import * as ResultsDb from './resultsdb.js';
 import {ScreenshotError} from './screenshot-error.js';
+import {isExpectedResult} from './test_expectations.js';
 
 export function formatAsPatch(assertionDiff: any) {
   const consoleDiffLines = Array.from(formatDiff(
@@ -59,7 +60,7 @@ export const ResultsDBReporter = function(
     }
     const {suite, description, log, startTime, endTime, success, skipped} = result;
     const {exactTestId, coarseName, fineName, caseName} = generateExactTestId(GEN_DIR, file, [...suite, description]);
-    const expected = success || skipped;
+    const expected = isExpectedResult({exactTestId, success, skipped});
     const status = skipped ? 'SKIP' : success ? 'PASS' : 'FAIL';
     let duration = '.001s';
     if (startTime < endTime) {

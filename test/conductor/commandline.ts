@@ -133,5 +133,9 @@ export function commandLineArgs<T = Record<string, unknown>>(yargs: Yargs.Argv<T
             're-sharding without changing the shard count.',
         implies: ['shard-count', 'shard-number'],  // shard-bias only makes sense if sharding is enabled
         default: 0,
+      })
+      .option('expectations-file', {
+        type: 'string',
+        desc: 'Path to a custom TestExpectations file',
       });
 }

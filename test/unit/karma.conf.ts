@@ -15,6 +15,7 @@ import {formatAsPatch, ResultsDBReporter} from '../../test/conductor/karma-resul
 import {CHECKOUT_ROOT, GEN_DIR, SOURCE_ROOT, TEST_ID_REGEX} from '../../test/conductor/paths.js';
 import * as ResultsDb from '../../test/conductor/resultsdb.js';
 import {loadTests, TestConfig} from '../../test/conductor/test_config.js';
+import {isExpectedResult} from '../../test/conductor/test_expectations.js';
 import {ScreenshotError, ScreenshotErrorReporter} from '../conductor/screenshot-error.js';
 import {assertElementScreenshotUnchanged} from '../shared/screenshots.js';
 
@@ -27,6 +28,7 @@ const tests = [
 ];
 
 function* reporters() {
+  yield 'test-expectations';
   if (ResultsDb.available()) {
     yield 'resultsdb';
     yield 'exact-test-id';
@@ -238,6 +240,55 @@ const ProgressWithDiffReporter = function(
 ProgressWithDiffReporter.$inject =
     ['formatError', 'config.reportSlowerThan', 'config.colors', 'config.browserConsoleLogOptions'];
 
+const TestExpectationsReporter = function(this: any, baseReporterDecorator: any) {
+  baseReporterDecorator(this);
+
+  let expectedFailuresCount = 0;
+  let unexpectedPassesCount = 0;
+
+  this.specFailure = function(_browser: any, result: any) {
+    const file = result.mocha?.file;
+    if (!file) {
+      throw new Error(`Test ${result.description} does not have a file property`);
+    }
+    const suite = result.suite || [];
+    const description = result.description;
+    const {exactTestId} = generateExactTestId(GEN_DIR, file, [...suite, description]);
+    const isExpected = isExpectedResult({exactTestId, success: false, skipped: false});
+    if (isExpected) {
+      expectedFailuresCount++;
+      this.write(`\n[TestExpectations] Expected failure: ${exactTestId}\n`);
+    }
+  };
+
+  this.specSuccess = function(_browser: any, result: any) {
+    const file = result.mocha?.file;
+    if (!file) {
+      throw new Error(`Test ${result.description} does not have a file property`);
+    }
+    const {exactTestId} = generateExactTestId(GEN_DIR, file, [...(result.suite || []), result.description]);
+    const isExpected = isExpectedResult({exactTestId, success: true, skipped: false});
+    if (!isExpected) {
+      unexpectedPassesCount++;
+      this.write(`\n[TestExpectations] Unexpected pass: ${exactTestId}\n`);
+    }
+  };
+
+  this.onRunComplete = function(_browsers: any, _results: any) {
+    const unexpectedFailures = _results.failed - expectedFailuresCount;
+    if (_results.failed > 0 && unexpectedFailures === 0) {
+      this.write('\n[TestExpectations] All failures were expected! Overriding exit code to 0.\n');
+      _results.exitCode = 0;
+    }
+
+    if (unexpectedPassesCount > 0) {
+      this.write(`\n[TestExpectations] ${unexpectedPassesCount} unexpected passes! Overriding exit code to 1.\n`);
+      _results.exitCode = 1;
+    }
+  };
+};
+TestExpectationsReporter.$inject = ['baseReporterDecorator'];
+
 const ExactTestIdReporter = function(this: any, baseReporterDecorator: any) {
   baseReporterDecorator(this);
 
@@ -363,6 +414,7 @@ module.exports = function(config: any) {
       {'reporter:resultsdb': ['type', ResultsDBReporter]},
       {'reporter:screenshots': ['type', ScreenshotErrorReporter]},
       {'reporter:progress-diff': ['type', ProgressWithDiffReporter]},
+      {'reporter:test-expectations': ['type', TestExpectationsReporter]},
       {'middleware:snapshotTester': ['factory', snapshotTesterFactory]},
     ],
 

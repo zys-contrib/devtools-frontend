@@ -117,6 +117,7 @@ class DevToolsTestHarness(unittest.TestCase):
             'test/harness/unit/unit.test.ts:unit:should_run_a_basic_unit_test_successfully'
         )
         self.assertEqual(results[0].get('status'), 'PASS')
+        self.assertTrue(results[0].get('expected'))
 
     def test_e2e(self):
         results, exit_code = self.run_e2e_test("test/harness/e2e/e2e.test.ts")
@@ -129,6 +130,7 @@ class DevToolsTestHarness(unittest.TestCase):
             'test/harness/e2e/e2e.test.ts:test_harness_e2e_fixture:should_run_a_basic_e2e_test_successfully'
         )
         self.assertEqual(results[0].get('status'), 'PASS')
+        self.assertTrue(results[0].get('expected'))
 
     def test_e2e_duplicate(self):
         results, exit_code = self.run_e2e_test(
@@ -152,6 +154,11 @@ class DevToolsTestHarness(unittest.TestCase):
             f"Expected exactly 3 test results, got {len(results)}")
         self.assertEqual(results[0].get('testId'),
                          'test/harness/unit/hooks.test.ts:block_1:run_1')
+        for r in results:
+            if r.get('status') == 'FAIL':
+                self.assertFalse(r.get('expected'))
+            else:
+                self.assertTrue(r.get('expected'))
         self.assertEqual(results[0].get('status'), 'FAIL')
         self.assertEqual(results[1].get('testId'),
                          'test/harness/unit/hooks.test.ts:block_2:run_3')
@@ -229,6 +236,85 @@ class DevToolsTestHarness(unittest.TestCase):
         self.assertEqual(results[0].get('testId'),
                          'test/harness/unit/hooks.test.ts:block_2:run_3')
         self.assertEqual(results[0].get('status'), 'PASS')
+
+    def test_unit_expectations(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/unit/hooks.test.ts [ Failure Pass ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/unit/hooks.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "node_modules/karma/bin/karma", "start",
+                "out/Default/gen/test/unit/karma.conf.js", "--", abs_test_file,
+                f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 1)
+            self.assertEqual(len(results), 3)
+            for r in results:
+                self.assertTrue(r.get('expected', False))
+        finally:
+            os.remove(expectations_file)
+
+    def test_unit_expectations_unexpected_pass(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/unit/unit.test.ts [ Failure ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/unit/unit.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "node_modules/karma/bin/karma", "start",
+                "out/Default/gen/test/unit/karma.conf.js", "--", abs_test_file,
+                f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 1)  # Unexpected pass means exit code 1
+            self.assertEqual(len(results), 1)
+            for r in results:
+                self.assertEqual(r['status'], 'PASS')
+                self.assertFalse(r.get('expected', False))
+        finally:
+            os.remove(expectations_file)
+
+    def test_unit_expectations_exact_id(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/unit/hooks.test.ts:block_1:run_1 [ Failure ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/unit/hooks.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "node_modules/karma/bin/karma", "start",
+                "out/Default/gen/test/unit/karma.conf.js", "--", abs_test_file,
+                f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 1)  # run_2 fails and is unexpected
+            self.assertEqual(len(results), 3)
+            for r in results:
+                if r.get('testId'
+                         ) == 'test/harness/unit/hooks.test.ts:block_1:run_1':
+                    self.assertTrue(r.get('expected', False))
+                    self.assertEqual(r.get('status'), 'FAIL')
+                else:
+                    self.assertTrue(r.get('expected', False))
+                    self.assertEqual(r.get('status'), 'PASS')
+        finally:
+            os.remove(expectations_file)
 
     def test_e2e_ids(self):
         results, exit_code = self.run_e2e_test(
