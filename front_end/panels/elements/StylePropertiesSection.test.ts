@@ -447,4 +447,65 @@ describeWithEnvironment('StylesPropertySection', () => {
           commitAiSuggestionStub, 'background-color: white; color: red; font-size: 10px;');
     });
   });
+
+  it('renders ancestor rules with rich sub-selectors and specificity tooltips when parent rule is found', async () => {
+    Common.Settings.Settings.instance().moduleSetting('text-editor-indent').set('  ');
+    const cssModel = createTarget({connection}).model(SDK.CSSModel.CSSModel);
+    assert.exists(cssModel);
+    const stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
+    const origin = Protocol.CSS.StyleSheetOrigin.Regular;
+    const styleSheetId = '0' as Protocol.DOM.StyleSheetId;
+
+    const parentRule: Protocol.CSS.RuleMatch = {
+      rule: {
+        selectorList: {
+          selectors: [
+            {text: '.header', specificity: {a: 0, b: 1, c: 0}},
+            {text: '.sidebar', specificity: {a: 0, b: 1, c: 0}},
+          ],
+          text: '.header, .sidebar',
+        },
+        origin,
+        style: {cssProperties: [{name: 'display', value: 'flex'}], shorthandEntries: []},
+      },
+      matchingSelectors: [0],
+    };
+
+    const childRule: Protocol.CSS.RuleMatch = {
+      rule: {
+        nestingSelectors: ['.header, .sidebar'],
+        ruleTypes: [Protocol.CSS.CSSRuleType.StyleRule],
+        selectorList: {selectors: [{text: '& .title', specificity: {a: 0, b: 2, c: 0}}], text: '& .title'},
+        origin,
+        style: {cssProperties: [{name: 'color', value: 'blue'}], shorthandEntries: []},
+      },
+      matchingSelectors: [0],
+    };
+
+    const matchedStyles = await getMatchedStylesWithStylesheet({
+      cssModel,
+      origin,
+      styleSheetId,
+      matchedPayload: [parentRule, childRule],
+      connection,
+    });
+
+    const declaration = matchedStyles.nodeStyles()[0];  // childRule declaration
+    assert.exists(declaration);
+    const section = new Elements.StylePropertiesSection.StylePropertiesSection(stylesSidebarPane, matchedStyles,
+                                                                               declaration, 0, null, null, null);
+
+    const ancestorList = section.element.querySelector('.ancestor-rule-list');
+    assert.exists(ancestorList);
+    const simpleSelectors = ancestorList.querySelectorAll('.simple-selector');
+    assert.lengthOf(simpleSelectors, 2);
+    assert.strictEqual(simpleSelectors[0].textContent, '.header');
+    assert.isTrue(simpleSelectors[0].classList.contains('selector-matches'));
+    assert.strictEqual(simpleSelectors[1].textContent, '.sidebar');
+    assert.isFalse(simpleSelectors[1].classList.contains('selector-matches'));
+
+    const tooltip = ancestorList.querySelector('devtools-tooltip');
+    assert.exists(tooltip);
+    assert.include(tooltip.textContent ?? '', 'Specificity: (0,1,0)');
+  });
 });
