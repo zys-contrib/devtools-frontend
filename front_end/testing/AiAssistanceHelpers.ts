@@ -48,9 +48,13 @@ export const MockAidaQuotaError = {
   quotaError: true,
 } as const;
 
+export const MockAidaPayloadLimitError = {
+  payloadLimitError: true,
+} as const;
+
 export type MockAidaResponse =
     Omit<Host.AidaClient.DoConversationResponse, 'completed'|'metadata'>&{metadata?: Host.AidaClient.ResponseMetadata}|
-    typeof MockAidaAbortError|typeof MockAidaFetchError|typeof MockAidaQuotaError;
+    typeof MockAidaAbortError|typeof MockAidaFetchError|typeof MockAidaQuotaError|typeof MockAidaPayloadLimitError;
 
 /**
  * Creates a mock AIDA client that responds using `data`.
@@ -76,6 +80,9 @@ export function mockAidaClient(data: Array<[MockAidaResponse, ...MockAidaRespons
       }
       if ('quotaError' in chunk) {
         throw new Host.AidaClient.AidaQuotaError();
+      }
+      if ('payloadLimitError' in chunk) {
+        throw new Host.AidaClient.AidaPayloadTooLargeError('payload size exceeds the limit');
       }
       const metadata = chunk.metadata ?? {};
       if (metadata?.attributionMetadata?.attributionAction === Host.AidaClient.RecitationAction.BLOCK) {
@@ -393,4 +400,26 @@ export function assertRequiresApproval<T>(response: AiAssistance.AiAgent.Functio
   if (!('requiresApproval' in response)) {
     assert.fail(`Expected response requiring approval, but got: ${JSON.stringify(response)}`);
   }
+}
+
+/**
+ * Creates a dummy File object containing a solid red image with the given dimensions.
+ *
+ * @param width Width of the dummy image in pixels (px).
+ * @param height Height of the dummy image in pixels (px).
+ */
+export async function createDummyImageFile(width: number, height: number): Promise<File> {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = 'red';
+    ctx.fillRect(0, 0, width, height);
+  }
+  const blob = await new Promise<Blob|null>(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+  if (!blob) {
+    throw new Error('Failed to create blob');
+  }
+  return new File([blob], 'dummy.jpg', {type: 'image/jpeg'});
 }

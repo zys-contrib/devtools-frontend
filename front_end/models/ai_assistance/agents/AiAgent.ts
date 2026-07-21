@@ -38,6 +38,7 @@ export const enum ErrorType {
   BLOCK = 'block',
   CROSS_ORIGIN = 'cross-origin',
   QUOTA = 'quota',
+  PAYLOAD_TOO_LARGE = 'payload-too-large',
 }
 
 export const enum MultimodalInputType {
@@ -806,6 +807,9 @@ export abstract class AiAgent<T> {
         } else if (err instanceof Host.AidaClient.AidaQuotaError ||
                    (err instanceof Error && err.message.toLowerCase().includes('quota'))) {
           error = ErrorType.QUOTA;
+        } else if (err instanceof Host.AidaClient.AidaPayloadTooLargeError ||
+                   (err instanceof Error && /payload size exceeds the limit/i.test(err.message))) {
+          error = ErrorType.PAYLOAD_TOO_LARGE;
         }
         yield this.#createErrorResponse(error);
 
@@ -1096,7 +1100,11 @@ export abstract class AiAgent<T> {
         request: structuredClone(request),
         aidaResponse,
       });
-      localStorage.setItem('aiAssistanceStructuredLog', JSON.stringify(this.#structuredLog));
+      try {
+        localStorage.setItem('aiAssistanceStructuredLog', JSON.stringify(this.#structuredLog));
+      } catch (err) {
+        console.warn('Failed to write to local storage "aiAssistanceStructuredLog":', err);
+      }
     }
   }
 

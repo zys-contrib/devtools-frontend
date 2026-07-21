@@ -1920,5 +1920,22 @@ describeWithEnvironment('ChatMessage', () => {
           'You reached your limit for AI assistance requests. Try again later.',
       );
     });
+
+    it('renders payload too large error message', async () => {
+      const message: AiAssistance.ChatMessage.ModelChatMessage = {
+        entity: AiAssistance.ChatMessage.ChatMessageEntity.MODEL,
+        parts: [],
+        error: AIAssistanceModel.AiAgent.ErrorType.PAYLOAD_TOO_LARGE,
+        id: '1',
+      };
+
+      const targetElement = renderView({message});
+      const errorP = targetElement.querySelector('.error');
+      assert.isNotNull(errorP);
+      assert.strictEqual(
+          errorP?.textContent,
+          'The request payload is too large. Please try a smaller image or a screenshot.',
+      );
+    });
   });
 });

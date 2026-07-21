@@ -64,6 +64,7 @@ const AidaLanguageToMarkdown: Record<AidaInferenceLanguage, string> = {
 export class AidaAbortError extends Error {}
 export class AidaBlockError extends Error {}
 export class AidaQuotaError extends Error {}
+export class AidaPayloadTooLargeError extends Error {}
 
 interface AiStream {
   write: (data: string) => Promise<void>;
@@ -195,10 +196,13 @@ export class AidaClient {
               return;
             }
             if ('error' in result && result.error) {
-              const errorStr = typeof result.error === 'string' ? result.error : '';
-              const detailStr = typeof result.detail === 'string' ? result.detail : '';
-              if (errorStr.toLowerCase().includes('quota') || detailStr.toLowerCase().includes('quota')) {
+              if (isQuotaError(result.error, result.detail)) {
                 stream.fail(new AidaQuotaError(
+                    `Cannot send request: ${result.error}${result.detail ? ` ${result.detail}` : ''}`));
+                return;
+              }
+              if (isPayloadTooLargeError(result.error, result.detail)) {
+                stream.fail(new AidaPayloadTooLargeError(
                     `Cannot send request: ${result.error}${result.detail ? ` ${result.detail}` : ''}`));
                 return;
               }
@@ -261,8 +265,11 @@ export class AidaClient {
             thoughtSignature: result.functionCallChunk.functionCall.thoughtSignature,
           });
         } else if ('error' in result) {
-          if (typeof result.error === 'string' && result.error.toLowerCase().includes('quota')) {
+          if (isQuotaError(result.error)) {
             throw new AidaQuotaError(`Server responded: ${JSON.stringify(result)}`);
+          }
+          if (isPayloadTooLargeError(result.error)) {
+            throw new AidaPayloadTooLargeError(`Server responded: ${JSON.stringify(result)}`);
           }
           throw new Error(`Server responded: ${JSON.stringify(result)}`);
         } else {
@@ -518,4 +525,12 @@ export const enum Events {
 
 export interface EventTypes {
   [Events.AIDA_AVAILABILITY_CHANGED]: void;
+}
+
+function isQuotaError(...inputs: Array<string|undefined>): boolean {
+  return inputs.some(input => input?.toLowerCase().includes('quota'));
+}
+
+function isPayloadTooLargeError(...inputs: Array<string|undefined>): boolean {
+  return inputs.some(input => input?.toLowerCase().includes('payload size exceeds the limit'));
 }

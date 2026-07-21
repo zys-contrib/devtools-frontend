@@ -20,6 +20,7 @@ import * as Lit from '../../../ui/lit/lit.js';
 import * as VisualLogging from '../../../ui/visual_logging/visual_logging.js';
 
 import chatInputStyles from './chatInput.css.js';
+import * as ImageResize from './ImageResize.js';
 
 const {html, Directives: {createRef, ref}} = Lit;
 const {widget} = UI.Widget;
@@ -84,6 +85,10 @@ const UIStringsNotTranslate = {
    */
   uploadImageFailureMessage: 'Failed to upload image. Please try again.',
   /**
+   * @description Message displayed in toast in case of uploaded image being too large.
+   */
+  fileTooLargeMessage: 'File is too large. Please select an image under 10MB.',
+  /**
    * @description Label added to the button that add selected context from the current panel in AI Assistance panel.
    */
   addContext: 'Add item for context',
@@ -120,6 +125,11 @@ const lockedString = i18n.i18n.lockedString;
 const SCREENSHOT_QUALITY = 80;
 const JPEG_MIME_TYPE = 'image/jpeg';
 const SHOW_LOADING_STATE_TIMEOUT = 100;
+
+/**
+ * Maximum allowed size for raw images uploaded by the user to prevent browser tab out-of-memory crashes.
+ */
+export const MAX_IMAGE_FILE_SIZE_BYTES = 10 * 1024 * 1024;  // 10MB
 
 const RELEVANT_DATA_LINK_CHAT_ID = 'relevant-data-link-chat';
 const RELEVANT_DATA_LINK_FOOTER_ID = 'relevant-data-link-footer';
@@ -516,6 +526,7 @@ export class ChatInput extends UI.Widget.Widget implements SDK.TargetManager.Obs
 
   #textAreaRef = createRef<HTMLTextAreaElement>();
   #imageInput?: ImageInputData;
+
   /**
    * Tracks the user's position when navigating through prompt history.
    * -1 means the user is at the newest "uncommitted" position (the current input).
@@ -668,31 +679,24 @@ export class ChatInput extends UI.Widget.Widget implements SDK.TargetManager.Obs
   };
 
   async #handleLoadImage(file: File): Promise<void> {
+    if (file.size > MAX_IMAGE_FILE_SIZE_BYTES) {
+      Snackbars.Snackbar.Snackbar.show({message: lockedString(UIStringsNotTranslate.fileTooLargeMessage)});
+      return;
+    }
     const showLoadingTimeout = setTimeout(() => {
       this.#imageInput = {isLoading: true};
       this.performUpdate();
     }, SHOW_LOADING_STATE_TIMEOUT);
     try {
-      const reader = new FileReader();
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          if (typeof reader.result === 'string') {
-            resolve(reader.result);
-          } else {
-            reject(new Error('FileReader result was not a string.'));
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-      const commaIndex = dataUrl.indexOf(',');
-      const bytes = dataUrl.substring(commaIndex + 1);
+      const compressed = await ImageResize.compress(file);
       this.#imageInput = {
         isLoading: false,
-        data: bytes,
-        mimeType: file.type,
-        inputType: AiAssistanceModel.AiAgent.MultimodalInputType.UPLOADED_IMAGE
+        data: compressed.data,
+        mimeType: compressed.mimeType,
+        inputType: AiAssistanceModel.AiAgent.MultimodalInputType.UPLOADED_IMAGE,
       };
-    } catch {
+    } catch (err) {
+      console.error('Failed to compress image:', err);
       this.#imageInput = undefined;
       Snackbars.Snackbar.Snackbar.show({message: lockedString(UIStringsNotTranslate.uploadImageFailureMessage)});
     }

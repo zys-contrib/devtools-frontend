@@ -6,7 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 
 import * as Host from '../../../core/host/host.js';
-import {mockAidaClient, MockAidaQuotaError} from '../../../testing/AiAssistanceHelpers.js';
+import {mockAidaClient, MockAidaPayloadLimitError, MockAidaQuotaError} from '../../../testing/AiAssistanceHelpers.js';
 import {
   describeWithEnvironment,
 } from '../../../testing/EnvironmentHelpers.js';
@@ -363,6 +363,24 @@ describeWithEnvironment('AiAgent', () => {
         {
           type: AiAssistance.AiAgent.ResponseType.ERROR,
           error: AiAssistance.AiAgent.ErrorType.QUOTA,
+        },
+      ]);
+    });
+
+    it('should yield payload too large error when aida throws payload size limit error', async () => {
+      const agent = new AiAgentMock({
+        aidaClient: mockAidaClient([[MockAidaPayloadLimitError]]),
+      });
+
+      const responses = await Array.fromAsync(agent.run('query', {selected: mockConversationContext()}));
+
+      assert.deepEqual(responses, [
+        {
+          type: AiAssistance.AiAgent.ResponseType.QUERYING,
+        },
+        {
+          type: AiAssistance.AiAgent.ResponseType.ERROR,
+          error: AiAssistance.AiAgent.ErrorType.PAYLOAD_TOO_LARGE,
         },
       ]);
     });
