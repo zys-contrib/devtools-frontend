@@ -1016,4 +1016,202 @@ describeWithEnvironment('ElementsTreeOutline', () => {
     }
     assert.isFalse(currentTreeElement.expanded, 'depth-10 should not be expanded');
   });
+
+  it('updates the DOM tree structure upon node insertion', async () => {
+    const child1Payload = {
+      nodeId: 3 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      children: [],
+      attributes: ['id', 'child1'],
+    } as Protocol.DOM.Node;
+
+    const child2Payload = {
+      nodeId: 4 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 4 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      children: [],
+      attributes: ['id', 'child2'],
+    } as Protocol.DOM.Node;
+
+    const child3Payload = {
+      nodeId: 5 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 5 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      children: [],
+      attributes: ['id', 'child3'],
+    } as Protocol.DOM.Node;
+
+    const containerPayload = {
+      nodeId: 2 as Protocol.DOM.NodeId,
+      parentId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 3,
+      children: [child1Payload, child2Payload, child3Payload],
+      attributes: ['id', 'container'],
+    } as Protocol.DOM.Node;
+
+    const rootNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+      nodeId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.DOCUMENT_NODE,
+      nodeName: '#document',
+      localName: '',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [containerPayload],
+      attributes: [],
+    });
+
+    treeOutline.rootDOMNode = rootNode;
+    const containerNode = rootNode.children()![0];
+    assert.exists(containerNode);
+    const containerTreeElement =
+        treeOutline.findTreeElement(containerNode) as Elements.ElementsTreeElement.ElementsTreeElement;
+    assert.exists(containerTreeElement);
+    await treeOutline.populateTreeElement(containerTreeElement);
+    containerTreeElement.expand();
+
+    const getChildIds = (): string[] => {
+      return (containerNode.children() || []).map(child => child.getAttribute('id') || '');
+    };
+
+    // Verify the initial state.
+    assert.deepEqual(getChildIds(), ['child1', 'child2', 'child3']);
+    assert.isNotNull(treeOutline.findTreeElement(containerNode.children()![0]));
+    assert.isNotNull(treeOutline.findTreeElement(containerNode.children()![1]));
+    assert.isNotNull(treeOutline.findTreeElement(containerNode.children()![2]));
+
+    // Insert before first child.
+    const childBeforePayload = {
+      nodeId: 6 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 6 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      children: [],
+      attributes: ['id', 'child-before'],
+    } as Protocol.DOM.Node;
+    model.childNodeInserted(2 as Protocol.DOM.NodeId, 0 as Protocol.DOM.NodeId, childBeforePayload);
+    treeOutline.runPendingUpdates();
+    assert.deepEqual(getChildIds(), ['child-before', 'child1', 'child2', 'child3']);
+    const childBeforeNode = model.nodeForId(6 as Protocol.DOM.NodeId);
+    assert.exists(childBeforeNode);
+    assert.isNotNull(treeOutline.findTreeElement(childBeforeNode));
+
+    // Insert middle child (before child2, after child1).
+    const childMiddlePayload = {
+      nodeId: 7 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 7 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      children: [],
+      attributes: ['id', 'child-middle'],
+    } as Protocol.DOM.Node;
+    model.childNodeInserted(2 as Protocol.DOM.NodeId, 3 as Protocol.DOM.NodeId, childMiddlePayload);
+    treeOutline.runPendingUpdates();
+    assert.deepEqual(getChildIds(), ['child-before', 'child1', 'child-middle', 'child2', 'child3']);
+    const childMiddleNode = model.nodeForId(7 as Protocol.DOM.NodeId);
+    assert.exists(childMiddleNode);
+    assert.isNotNull(treeOutline.findTreeElement(childMiddleNode));
+
+    // Append child (after child3).
+    const childAfterPayload = {
+      nodeId: 8 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 8 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      children: [],
+      attributes: ['id', 'child-after'],
+    } as Protocol.DOM.Node;
+    model.childNodeInserted(2 as Protocol.DOM.NodeId, 5 as Protocol.DOM.NodeId, childAfterPayload);
+    treeOutline.runPendingUpdates();
+    assert.deepEqual(getChildIds(), ['child-before', 'child1', 'child-middle', 'child2', 'child3', 'child-after']);
+    const childAfterNode = model.nodeForId(8 as Protocol.DOM.NodeId);
+    assert.exists(childAfterNode);
+    assert.isNotNull(treeOutline.findTreeElement(childAfterNode));
+
+    // Append child with text node.
+    const textChildPayload = {
+      nodeId: 10 as Protocol.DOM.NodeId,
+      parentId: 9 as Protocol.DOM.NodeId,
+      backendNodeId: 10 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.TEXT_NODE,
+      nodeName: '#text',
+      localName: '',
+      nodeValue: 'Text',
+      childNodeCount: 0,
+    } as Protocol.DOM.Node;
+    const childWithTextPayload = {
+      nodeId: 9 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 9 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [textChildPayload],
+      attributes: ['id', 'child-with-text', 'style', 'display: none;'],
+    } as Protocol.DOM.Node;
+    model.childNodeInserted(2 as Protocol.DOM.NodeId, 8 as Protocol.DOM.NodeId, childWithTextPayload);
+    treeOutline.runPendingUpdates();
+    assert.deepEqual(getChildIds(),
+                     ['child-before', 'child1', 'child-middle', 'child2', 'child3', 'child-after', 'child-with-text']);
+    const childWithTextNode = model.nodeForId(9 as Protocol.DOM.NodeId);
+    assert.exists(childWithTextNode);
+    assert.isNotNull(treeOutline.findTreeElement(childWithTextNode));
+    const boundTextNode = model.nodeForId(10 as Protocol.DOM.NodeId);
+    assert.exists(boundTextNode);
+    assert.strictEqual(boundTextNode.nodeValue(), 'Text');
+
+    // Insert first text node into child3.
+    const firstTextPayload = {
+      nodeId: 11 as Protocol.DOM.NodeId,
+      parentId: 5 as Protocol.DOM.NodeId,
+      backendNodeId: 11 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.TEXT_NODE,
+      nodeName: '#text',
+      localName: '',
+      nodeValue: 'First text',
+      childNodeCount: 0,
+    } as Protocol.DOM.Node;
+    model.childNodeInserted(5 as Protocol.DOM.NodeId, 0 as Protocol.DOM.NodeId, firstTextPayload);
+    treeOutline.runPendingUpdates();
+    const child3Node = model.nodeForId(5 as Protocol.DOM.NodeId);
+    assert.exists(child3Node);
+    const boundFirstTextNode = model.nodeForId(11 as Protocol.DOM.NodeId);
+    assert.exists(boundFirstTextNode);
+    assert.strictEqual(boundFirstTextNode.nodeValue(), 'First text');
+  });
 });
