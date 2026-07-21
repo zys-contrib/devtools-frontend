@@ -221,21 +221,6 @@
   "core/sdk/CPUProfilerModel.ts | profileD": {
     "message": "الملف التعريفي {PH1}"
   },
-  "core/sdk/CPUThrottlingManager.ts | calibratedLowTierMobile": {
-    "message": "جهاز جوّال من المستوى المنخفض"
-  },
-  "core/sdk/CPUThrottlingManager.ts | calibratedMidTierMobile": {
-    "message": "جهاز جوّال من المستوى المتوسط"
-  },
-  "core/sdk/CPUThrottlingManager.ts | calibrationErrorDeviceTooWeak": {
-    "message": "الجهاز ليس سريعًا بما يكفي"
-  },
-  "core/sdk/CPUThrottlingManager.ts | dSlowdown": {
-    "message": "الإبطاء بمعدّل ×{PH1}"
-  },
-  "core/sdk/CPUThrottlingManager.ts | noThrottling": {
-    "message": "بدون تقييد"
-  },
   "core/sdk/CSSStyleSheetHeader.ts | couldNotFindTheOriginalStyle": {
     "message": "تعذَّر العثور على ورقة الأنماط الأصلية."
   },
@@ -389,20 +374,8 @@
   "core/sdk/NetworkRequest.ts | exemptionReasonStorageAccessAPI": {
     "message": "تم السماح بملف تعريف الارتباط هذا من خلال واجهة برمجة التطبيقات Storage Access. لمزيد من المعلومات، يمكنك الانتقال إلى الرابط التالي: goo.gle/saa."
   },
-  "core/sdk/NetworkRequest.ts | exemptionReasonTPCDDeprecationTrial": {
-    "message": "تمّ السماح بملف تعريف الارتباط هذا من خلال إعادة ملفات تعريف الارتباط التابعة لجهات خارجية بعد أن كان قد تقرر إيقافها بشكل تدريجي. لمزيد من المعلومات، يمكنك الانتقال إلى الرابط التالي: goo.gle/ps-dt."
-  },
-  "core/sdk/NetworkRequest.ts | exemptionReasonTPCDHeuristics": {
-    "message": "تم السماح بملف تعريف الارتباط هذا من خلال إرشادات ملفات تعريف الارتباط التابعة لجهات خارجية. لمزيد من المعلومات، يمكنك الانتقال إلى الرابط التالي: goo.gle/hbe."
-  },
-  "core/sdk/NetworkRequest.ts | exemptionReasonTPCDMetadata": {
-    "message": "تم السماح بملف تعريف الارتباط هذا بموجب فترة سماح تمت خلالها إعادة ملفات تعريف الارتباط التابعة لجهات خارجية بعد أن كان قد تم إيقافها نهائيًا. لمزيد من المعلومات، يمكنك الانتقال إلى الرابط التالي: goo.gle/dt-grace."
-  },
   "core/sdk/NetworkRequest.ts | exemptionReasonTopLevelStorageAccessAPI": {
     "message": "تم السماح بملف تعريف الارتباط هذا من خلال واجهة برمجة التطبيقات Storage Access ذات المستوى الأعلى. لمزيد من المعلومات، يمكنك الانتقال إلى الرابط التالي: goo.gle/saa-top."
-  },
-  "core/sdk/NetworkRequest.ts | exemptionReasonTopLevelTPCDDeprecationTrial": {
-    "message": "تمّ السماح بملف تعريف الارتباط هذا من خلال إعادة ملفات تعريف الارتباط التابعة لجهات خارجية ذات المستوى الأعلى بعد أن كان قد تقرر إيقافها بشكل تدريجي. لمزيد من المعلومات، يمكنك الانتقال إلى الرابط التالي: goo.gle/ps-dt."
   },
   "core/sdk/NetworkRequest.ts | exemptionReasonUserSetting": {
     "message": "تم السماح بملف تعريف الارتباط هذا وفقًا للإعدادات المفضّلة للمستخدِم."
@@ -785,6 +758,15 @@
   "core/sdk/sdk-meta.ts | osTextScaleEmulation200": {
     "message": "200%"
   },
+  "core/sdk/sdk-meta.ts | osTextScaleEmulation250": {
+    "message": "250%"
+  },
+  "core/sdk/sdk-meta.ts | osTextScaleEmulation300": {
+    "message": "300%"
+  },
+  "core/sdk/sdk-meta.ts | osTextScaleEmulation350": {
+    "message": "350%"
+  },
   "core/sdk/sdk-meta.ts | osTextScaleEmulation85": {
     "message": "85%"
   },
@@ -988,9 +970,6 @@
   },
   "entrypoints/inspector_main/inspector_main-meta.ts | cssMediaType": {
     "message": "نوع وسائط CSS"
-  },
-  "entrypoints/inspector_main/inspector_main-meta.ts | disablePaused": {
-    "message": "إيقاف العناصر المركّبة التي تشير إلى حالة الإيقاف المؤقت"
   },
   "entrypoints/inspector_main/inspector_main-meta.ts | doNotAutoOpen": {
     "message": "عدم فتح أدوات مطوري البرامج تلقائيًا عند إنشاء نوافذ منبثقة جديدة"
@@ -1334,6 +1313,9 @@
   "generated/Deprecation.ts | DataUrlInSvgUse": {
     "message": "تم بشكل نهائي إيقاف استخدام عناوين URL التي تبدأ بمخطّط \"data:‎\" في واجهة SVGUseElement، وستتم إزالة هذه الميزة في المستقبل."
   },
+  "generated/Deprecation.ts | DigitalCredentialsUnknownProtocol": {
+    "message": "تم طلب بروتوكول Digital Credentials غير معروف في navigator.credentials.get()‎ أو create()‎. سيتم حظر البروتوكولات غير المعروفة في إصدار مستقبلي."
+  },
   "generated/Deprecation.ts | DocumentCreateEventKeyboardEvents": {
     "message": "تم إيقاف واجهة document.createEvent('KeyboardEvents') نهائيًا وستتم إزالتها. يمكن استخدام new KeyboardEvent() كبديل."
   },
@@ -1499,6 +1481,12 @@
   "generated/Deprecation.ts | WebBluetoothRemoteCharacteristicWriteValue": {
     "message": "تم إيقاف \"BluetoothRemoteGATTCharacteristic.writeValue()\" نهائيًا. يُرجى استخدام \"writeValueWithResponse()\" أو \"writeValueWithoutResponse()\" بدلاً من ذلك."
   },
+  "generated/Deprecation.ts | WebTransportDatagramDuplexStreamIncomingHighWaterMark": {
+    "message": "تمت إعادة تسمية WebTransportDatagramDuplexStream.incomingHighWaterMark إلى incomingMaxBufferedDatagrams، وستتم إزالة incomingHighWaterMark في إصدار مستقبلي من Chrome."
+  },
+  "generated/Deprecation.ts | WebTransportDatagramDuplexStreamOutgoingHighWaterMark": {
+    "message": "تمت إعادة تسمية WebTransportDatagramDuplexStream.outgoingHighWaterMark إلى outgoingMaxBufferedDatagrams، وستتم إزالة outgoingHighWaterMark في إصدار مستقبلي من Chrome."
+  },
   "generated/Deprecation.ts | XHRJSONEncodingDetection": {
     "message": "لا يتوفّر الترميز UTF-16 من خلال استجابة json في واجهة برمجة التطبيقات XMLHttpRequest."
   },
@@ -1507,18 +1495,6 @@
   },
   "generated/Deprecation.ts | XSLT": {
     "message": "تم إيقاف ميزتَي XSLTProcessor و\"تعليمات معالجة XSLT\" نهائيًا في جميع المتصفّحات، وستتم إزالتهما من هذا المتصفّح قريبًا."
-  },
-  "models/ai_assistance/AiUtils.ts | ageRestricted": {
-    "message": "لا تتوفّر هذه الميزة إلّا للمستخدمين الذين يبلغ عمرهم 18 عامًا أو أكثر."
-  },
-  "models/ai_assistance/AiUtils.ts | notAvailableInIncognitoMode": {
-    "message": "لا يتوفّر \"الدعم الذكي\" في \"وضع التصفّح المتخفي\" أو \"وضع الضيف\"."
-  },
-  "models/ai_assistance/AiUtils.ts | notLoggedIn": {
-    "message": "لا تتوفّر هذه الميزة إلا عند تسجيل الدخول إلى متصفِّح Chrome باستخدام حسابك على Google."
-  },
-  "models/ai_assistance/AiUtils.ts | offline": {
-    "message": "لا تتوفّر هذه الميزة إلا مع وجود اتصال إنترنت نشط."
   },
   "models/bindings/ContentProviderBasedProject.ts | unknownErrorLoadingFile": {
     "message": "حدث خطأ غير معروف أثناء تحميل الملف."
@@ -2153,8 +2129,14 @@
   "models/trace/Styles.ts | signReply": {
     "message": "توقيع الرد"
   },
+  "models/trace/Styles.ts | softFirstContentfulPaint": {
+    "message": "القياس المرن لسرعة عرض أول محتوى مرئي"
+  },
   "models/trace/Styles.ts | softLargestContentfulPaint": {
     "message": "القيمة المبدئية لسرعة عرض أكبر محتوى مرئي"
+  },
+  "models/trace/Styles.ts | softNavigationStart": {
+    "message": "بدء التنقّل المرن"
   },
   "models/trace/Styles.ts | streamingCompileTask": {
     "message": "جارٍ بث مهمة التجميع"
@@ -3614,6 +3596,9 @@
   "panels/application/AppManifestView.ts | windowControlsOverlay": {
     "message": "Window Controls Overlay"
   },
+  "panels/application/ApplicationPanelSidebar.ts | ads": {
+    "message": "الإعلانات"
+  },
   "panels/application/ApplicationPanelSidebar.ts | application": {
     "message": "التطبيق"
   },
@@ -3640,6 +3625,12 @@
   },
   "panels/application/ApplicationPanelSidebar.ts | documentNotAvailable": {
     "message": "لم يتم رصد أي مستند"
+  },
+  "panels/application/ApplicationPanelSidebar.ts | explainCookies": {
+    "message": "شرح ملفات تعريف الارتباط"
+  },
+  "panels/application/ApplicationPanelSidebar.ts | explainStorage": {
+    "message": "شرح مساحة التخزين"
   },
   "panels/application/ApplicationPanelSidebar.ts | extensionLocalStorage": {
     "message": "مساحة التخزين المحلية"
@@ -3721,6 +3712,9 @@
   },
   "panels/application/ApplicationPanelSidebar.ts | sessionStorageDescription": {
     "message": "يمكنك في هذه الصفحة الاطّلاع على أزواج المفاتيح والقِيم في مساحة تخزين الجلسة وإضافة تلك الأزواج وتعديلها وحذفها."
+  },
+  "panels/application/ApplicationPanelSidebar.ts | startAChat": {
+    "message": "بدء محادثة"
   },
   "panels/application/ApplicationPanelSidebar.ts | storage": {
     "message": "مساحة التخزين"
@@ -3839,6 +3833,9 @@
   "panels/application/CookieItemsView.ts | clearFilteredCookies": {
     "message": "محو ملفات تعريف الارتباط التي تمت فلترتها"
   },
+  "panels/application/CookieItemsView.ts | explainCookie": {
+    "message": "شرح ملف تعريف الارتباط هذا"
+  },
   "panels/application/CookieItemsView.ts | noCookieSelected": {
     "message": "لم يتم اختيار أي ملفات تعريف ارتباط"
   },
@@ -3856,6 +3853,9 @@
   },
   "panels/application/CookieItemsView.ts | showUrlDecoded": {
     "message": "عرض عنوان URL المفكوك ترميزه"
+  },
+  "panels/application/CookieItemsView.ts | startAChat": {
+    "message": "بدء محادثة"
   },
   "panels/application/CrashReportContextView.ts | filterByText": {
     "message": "الفلترة حسب المفتاح أو القيمة"
@@ -3877,6 +3877,12 @@
   },
   "panels/application/DOMStorageItemsView.ts | domStorageItemsCleared": {
     "message": "تم محو عناصر التخزين في DOM."
+  },
+  "panels/application/DOMStorageItemsView.ts | explainItem": {
+    "message": "شرح هذا العنصر"
+  },
+  "panels/application/DOMStorageItemsView.ts | startAChat": {
+    "message": "بدء محادثة"
   },
   "panels/application/DeviceBoundSessionsTreeElement.ts | clear": {
     "message": "محو"
@@ -4079,9 +4085,6 @@
   "panels/application/DeviceBoundSessionsView.ts | invalidSessionParams": {
     "message": "مَعلمات الجلسة غير صالحة"
   },
-  "panels/application/DeviceBoundSessionsView.ts | keyError": {
-    "message": "خطأ في المفتاح"
-  },
   "panels/application/DeviceBoundSessionsView.ts | keyId": {
     "message": "المعرّف"
   },
@@ -4144,9 +4147,6 @@
   },
   "panels/application/DeviceBoundSessionsView.ts | refreshInitiatorNotString": {
     "message": "أداة بدء إعادة التحميل المسموح بها ليست سلسلة"
-  },
-  "panels/application/DeviceBoundSessionsView.ts | refreshQuotaExceeded": {
-    "message": "تم تجاوز العدد المسموح به لإعادة التحميل"
   },
   "panels/application/DeviceBoundSessionsView.ts | refreshResult": {
     "message": "إعادة تحميل النتيجة"
@@ -4520,21 +4520,6 @@
   "panels/application/IndexedDBViews.ts | version": {
     "message": "الإصدار"
   },
-  "panels/application/InterestGroupStorageView.ts | clickToDisplayBody": {
-    "message": "يُرجى اختيار أي حدث لمجموعة باهتمامات مشتركة لعرض الحالة الحالية للمجموعة"
-  },
-  "panels/application/InterestGroupStorageView.ts | noDataAvailable": {
-    "message": "ما مِن تفاصيل"
-  },
-  "panels/application/InterestGroupStorageView.ts | noDataDescription": {
-    "message": "يُحتمل أن يكون المستخدم قد غادر المجموعة في المتصفّح."
-  },
-  "panels/application/InterestGroupStorageView.ts | noValueSelected": {
-    "message": "لم يتم اختيار أي مجموعة باهتمامات مشترَكة"
-  },
-  "panels/application/InterestGroupTreeElement.ts | interestGroups": {
-    "message": "المجموعات ذات الاهتمامات المشتركة"
-  },
   "panels/application/KeyValueStorageItemsView.ts | key": {
     "message": "المفتاح"
   },
@@ -4889,9 +4874,6 @@
   "panels/application/StorageView.ts | SiteDataCleared": {
     "message": "تم محو بيانات الموقع الإلكتروني."
   },
-  "panels/application/StorageView.ts | application": {
-    "message": "تطبيق"
-  },
   "panels/application/StorageView.ts | cacheStorage": {
     "message": "مساحة ذاكرة التخزين المؤقت"
   },
@@ -4906,9 +4888,6 @@
   },
   "panels/application/StorageView.ts | fileSystem": {
     "message": "نظام الملفات"
-  },
-  "panels/application/StorageView.ts | includingThirdPartyCookies": {
-    "message": "تضمين ملفات تعريف الارتباط التابعة لجهات خارجية"
   },
   "panels/application/StorageView.ts | indexDB": {
     "message": "IndexedDB"
@@ -4981,9 +4960,6 @@
   },
   "panels/application/WebMCPView.ts | canceledCount": {
     "message": "عدد الطلبات التي تم إلغاؤها: {PH1}"
-  },
-  "panels/application/WebMCPView.ts | causedBy": {
-    "message": "السبب:"
   },
   "panels/application/WebMCPView.ts | clearFilters": {
     "message": "محو الفلاتر"
@@ -5107,6 +5083,21 @@
   },
   "panels/application/application-meta.ts | stopRecordingEvents": {
     "message": "إيقاف تسجيل الأحداث"
+  },
+  "panels/application/components/AdsView.ts | average": {
+    "message": "(المتوسط: {PH1})"
+  },
+  "panels/application/components/AdsView.ts | totalCpuUsage": {
+    "message": "إجمالي استخدام وحدة المعالجة المركزية (CPU) من قِبل الإعلانات"
+  },
+  "panels/application/components/AdsView.ts | totalNetworkUsage": {
+    "message": "إجمالي استخدام الشبكة من قِبل الإعلانات"
+  },
+  "panels/application/components/AdsView.ts | viewportAdCount": {
+    "message": "عدد الإعلانات في إطار العرض"
+  },
+  "panels/application/components/AdsView.ts | viewportAdDensity": {
+    "message": "كثافة الإعلانات في إطار العرض"
   },
   "panels/application/components/BackForwardCacheStrings.ts | HTTPMethodNotGET": {
     "message": "الصفحات فقط التي تم تحميلها من خلال طلب استرداد بيانات باستخدام GET يمكن حفظها باستخدام ميزة \"التخزين المؤقت للصفحات\"."
@@ -5587,27 +5578,6 @@
   },
   "panels/application/components/EndpointsGrid.ts | noEndpointsToDisplay": {
     "message": "ما مِن نقاط نهاية لعرضها."
-  },
-  "panels/application/components/InterestGroupAccessGrid.ts | allInterestGroupStorageEvents": {
-    "message": "جميع أحداث التخزين المرتبطة بالمجموعات ذات الاهتمامات المشتركة"
-  },
-  "panels/application/components/InterestGroupAccessGrid.ts | eventTime": {
-    "message": "وقت الحدث"
-  },
-  "panels/application/components/InterestGroupAccessGrid.ts | eventType": {
-    "message": "نوع مستوى الوصول"
-  },
-  "panels/application/components/InterestGroupAccessGrid.ts | groupName": {
-    "message": "الاسم"
-  },
-  "panels/application/components/InterestGroupAccessGrid.ts | groupOwner": {
-    "message": "المالك"
-  },
-  "panels/application/components/InterestGroupAccessGrid.ts | interestGroupDescription": {
-    "message": "في هذه الصفحة، يمكنك فحص المجموعات باهتمامات مشتركة وتحليلها"
-  },
-  "panels/application/components/InterestGroupAccessGrid.ts | noEvents": {
-    "message": "لم يتم رصد أي أحداث للمجموعات باهتمامات مشترَكة"
   },
   "panels/application/components/PermissionsPolicySection.ts | allowedFeatures": {
     "message": "الميزات المسموح بها"
@@ -7646,6 +7616,18 @@
   "panels/elements/CSSRuleValidator.ts | unusedAnchorPositioning": {
     "message": "تم تحديد علامة ارتساء، ولكن العنصر مخفي."
   },
+  "panels/elements/CSSSpecificityBreakdown.ts | classLikeSpecificity": {
+    "message": "(b) Class-like: {PH1}"
+  },
+  "panels/elements/CSSSpecificityBreakdown.ts | idLikeSpecificity": {
+    "message": "(a) ID-like: {PH1}"
+  },
+  "panels/elements/CSSSpecificityBreakdown.ts | specificity": {
+    "message": "Specificity: ({PH1},{PH2},{PH3})"
+  },
+  "panels/elements/CSSSpecificityBreakdown.ts | typeLikeSpecificity": {
+    "message": "(c) Type-like: {PH1}"
+  },
   "panels/elements/ClassesPaneWidget.ts | addNewClass": {
     "message": "إضافة فئة جديدة"
   },
@@ -8168,9 +8150,6 @@
   "panels/elements/StylePropertiesSection.ts | showAllPropertiesSMore": {
     "message": "عرض جميع الخصائص ({PH1} أخرى)"
   },
-  "panels/elements/StylePropertiesSection.ts | specificity": {
-    "message": "الدقة: {PH1}"
-  },
   "panels/elements/StylePropertiesSection.ts | styleAttribute": {
     "message": "السمة style"
   },
@@ -8456,9 +8435,6 @@
   "panels/emulation/DeviceModeToolbar.ts | addDeviceType": {
     "message": "إضافة نوع الجهاز"
   },
-  "panels/emulation/DeviceModeToolbar.ts | autoadjustZoom": {
-    "message": "الضبط التلقائي للتكبير أو التصغير"
-  },
   "panels/emulation/DeviceModeToolbar.ts | closeDevtools": {
     "message": "إغلاق أدوات مطوري البرامج"
   },
@@ -8482,9 +8458,6 @@
   },
   "panels/emulation/DeviceModeToolbar.ts | edit": {
     "message": "تعديل…"
-  },
-  "panels/emulation/DeviceModeToolbar.ts | fitToWindowPercentage": {
-    "message": "‫%{PH1} (ملاءمة حجم النافذة)"
   },
   "panels/emulation/DeviceModeToolbar.ts | heightLeaveEmptyForFull": {
     "message": "الارتفاع (اترك الحقل فارغًا لضبط الصفحة على الارتفاع الكامل)"
@@ -8918,21 +8891,6 @@
   "panels/issues/AffectedTrackingSitesView.ts | nTrackingSites": {
     "message": "{n,plural, =1{هناك موقع إلكتروني واحد يُحتمل أنّه يتتبّع نشاط المستخدم.}zero{هناك # موقع إلكتروني يُحتمل أنّه يتتبّع نشاط المستخدم.}two{هناك موقعان إلكترونيان يُحتمل أنّهما يتتبّعان نشاط المستخدم.}few{هناك # مواقع إلكترونية يُحتمل أنّها تتتبّع نشاط المستخدم.}many{هناك # موقعًا إلكترونيًا يُحتمل أنّه يتتبّع نشاط المستخدم.}other{هناك # موقع إلكتروني يُحتمل أنّه يتتبّع نشاط المستخدم.}}"
   },
-  "panels/issues/AttributionReportingIssueDetailsView.ts | element": {
-    "message": "العنصر"
-  },
-  "panels/issues/AttributionReportingIssueDetailsView.ts | invalidHeaderValue": {
-    "message": "قيمة العنوان غير الصالحة"
-  },
-  "panels/issues/AttributionReportingIssueDetailsView.ts | nViolations": {
-    "message": "{n,plural, =1{مخالفة واحدة}zero{# مخالفة}two{مخالفتان}few{# مخالفات}many{# مخالفةً}other{# مخالفة}}"
-  },
-  "panels/issues/AttributionReportingIssueDetailsView.ts | request": {
-    "message": "الطلب"
-  },
-  "panels/issues/AttributionReportingIssueDetailsView.ts | untrustworthyOrigin": {
-    "message": "أصل غير جدير بالثقة"
-  },
   "panels/issues/CorsIssueDetailsView.ts | allowCredentialsValueFromHeader": {
     "message": "قيمة العنوان Access-Control-Allow-Credentials"
   },
@@ -9070,9 +9028,6 @@
   },
   "panels/issues/IssueView.ts | warned": {
     "message": "تم إرسال تحذير حول الإعلان."
-  },
-  "panels/issues/IssuesPane.ts | attributionReporting": {
-    "message": "واجهة API لتقارير الإحالة"
   },
   "panels/issues/IssuesPane.ts | contentSecurityPolicy": {
     "message": "سياسة أمان المحتوى"
@@ -10094,9 +10049,6 @@
   "panels/mobile_throttling/ThrottlingSettingsTab.ts | needsCalibration": {
     "message": "يجب معايرة وحدة المعالجة المركزية"
   },
-  "panels/mobile_throttling/ThrottlingSettingsTab.ts | networkThrottlingProfiles": {
-    "message": "ملفات ضبط الحد الأقصى المسموح لعرض نطاق الشبكة"
-  },
   "panels/mobile_throttling/ThrottlingSettingsTab.ts | off": {
     "message": "غير مفعَّل"
   },
@@ -10760,6 +10712,9 @@
   "panels/network/NetworkLogView.ts | unblockS": {
     "message": "إزالة حظر {PH1}"
   },
+  "panels/network/NetworkLogView.ts | unsupportedUrlScheme": {
+    "message": "‫{PH1} مخطّط URL غير متوافق"
+  },
   "panels/network/NetworkLogView.ts | unthrottleS": {
     "message": "إيقاف تقييد \"{PH1}\""
   },
@@ -10973,9 +10928,6 @@
   "panels/network/RequestConditionsDrawer.ts | decreasePriority": {
     "message": "نقل {PH1} للأسفل"
   },
-  "panels/network/RequestConditionsDrawer.ts | editPattern": {
-    "message": "تعديل {PH1}"
-  },
   "panels/network/RequestConditionsDrawer.ts | enableBlockingAndThrottling": {
     "message": "تفعيل الحظر والتقييد"
   },
@@ -10990,9 +10942,6 @@
   },
   "panels/network/RequestConditionsDrawer.ts | learnMore": {
     "message": "مزيد من المعلومات"
-  },
-  "panels/network/RequestConditionsDrawer.ts | learnMoreLabel": {
-    "message": "مزيد من المعلومات عن بنية نمط عنوان URL"
   },
   "panels/network/RequestConditionsDrawer.ts | noPattern": {
     "message": "لم يتم تقييد أو حظر أي طلبات"
@@ -11020,9 +10969,6 @@
   },
   "panels/network/RequestConditionsDrawer.ts | patternWasUpgraded": {
     "message": "تمت ترقية هذا النمط من \"{PH1}\""
-  },
-  "panels/network/RequestConditionsDrawer.ts | removePattern": {
-    "message": "إزالة {PH1}"
   },
   "panels/network/RequestConditionsDrawer.ts | requestConditionsLabel": {
     "message": "شروط الطلبات"
@@ -12092,6 +12038,9 @@
   "panels/profiler/HeapSnapshotView.ts | objectsRetainedByConsole": {
     "message": "الكائنات التي تحتفظ بها \"وحدة تحكُّم أدوات مطوّري البرامج\""
   },
+  "panels/profiler/HeapSnapshotView.ts | objectsRetainedByContexts": {
+    "message": "العناصر التي تحتفظ بها السياقات"
+  },
   "panels/profiler/HeapSnapshotView.ts | objectsRetainedByDetachedDomNodes": {
     "message": "الكائنات التي تحتفظ بها عُقد DOM المنفصلة"
   },
@@ -12209,6 +12158,9 @@
   "panels/profiler/ModuleUIStrings.ts | calculatingDistances": {
     "message": "جارٍ حساب المسافات…"
   },
+  "panels/profiler/ModuleUIStrings.ts | calculatingNativeContextAttribution": {
+    "message": "Calculating native context attribution…"
+  },
   "panels/profiler/ModuleUIStrings.ts | calculatingNodeFlags": {
     "message": "جارٍ احتساب عمليات الإبلاغ عن العُقد…"
   },
@@ -12289,60 +12241,6 @@
   },
   "panels/profiler/ProfileSidebarTreeElement.ts | profileOptions": {
     "message": "خيارات اللقطات"
-  },
-  "panels/profiler/ProfileView.ts | chart": {
-    "message": "رسم بياني"
-  },
-  "panels/profiler/ProfileView.ts | excludeSelectedFunction": {
-    "message": "استبعاد الوظائف المحدَّدة"
-  },
-  "panels/profiler/ProfileView.ts | failedToReadFile": {
-    "message": "تعذَّرت قراءة الملف."
-  },
-  "panels/profiler/ProfileView.ts | fileSReadErrorS": {
-    "message": "خطأ في قراءة الملف \"{PH1}\": {PH2}"
-  },
-  "panels/profiler/ProfileView.ts | findByCostMsNameOrFile": {
-    "message": "البحث حسب التكلفة (أكبر من 50 ملي ثانية) أو الاسم أو الملف"
-  },
-  "panels/profiler/ProfileView.ts | focusSelectedFunction": {
-    "message": "التركيز على الوظيفة التي تم اختيارها"
-  },
-  "panels/profiler/ProfileView.ts | function": {
-    "message": "الوظيفة"
-  },
-  "panels/profiler/ProfileView.ts | heavyBottomUp": {
-    "message": "استهلاك كثيف (تصاعديًا)"
-  },
-  "panels/profiler/ProfileView.ts | loaded": {
-    "message": "تمّ تحميل البيانات."
-  },
-  "panels/profiler/ProfileView.ts | loading": {
-    "message": "جارٍ التحميل…"
-  },
-  "panels/profiler/ProfileView.ts | loadingD": {
-    "message": "جارٍ التحميل… {PH1}%"
-  },
-  "panels/profiler/ProfileView.ts | parsing": {
-    "message": "جارٍ التحليل…"
-  },
-  "panels/profiler/ProfileView.ts | profile": {
-    "message": "الملف الشخصي"
-  },
-  "panels/profiler/ProfileView.ts | profileD": {
-    "message": "الملف التعريفي {PH1}"
-  },
-  "panels/profiler/ProfileView.ts | profileViewMode": {
-    "message": "وضع عرض أدوات التحليل"
-  },
-  "panels/profiler/ProfileView.ts | profiler": {
-    "message": "مسجِّل اللقطات "
-  },
-  "panels/profiler/ProfileView.ts | restoreAllFunctions": {
-    "message": "استعادة جميع الوظائف"
-  },
-  "panels/profiler/ProfileView.ts | treeTopDown": {
-    "message": "الشجرة (من أعلاها إلى أسفلها)"
   },
   "panels/profiler/ProfilesPanel.ts | cantLoadFileSupportedFile": {
     "message": "يتعذّر تحميل الملف. امتدادات الملفات المتوافقة: \"{PH1}\"."
@@ -12478,369 +12376,6 @@
   },
   "panels/protocol_monitor/protocol_monitor-meta.ts | showProtocolMonitor": {
     "message": "اعرِض أداة \"رصد البروتوكول\""
-  },
-  "panels/recorder/RecorderController.ts | allowImporting": {
-    "message": "السماح بالاستيراد"
-  },
-  "panels/recorder/RecorderController.ts | continueReplay": {
-    "message": "متابعة"
-  },
-  "panels/recorder/RecorderController.ts | copyShortcut": {
-    "message": "نسخ التسجيل أو الخطوة المحدَّدة"
-  },
-  "panels/recorder/RecorderController.ts | createRecording": {
-    "message": "إنشاء تسجيل"
-  },
-  "panels/recorder/RecorderController.ts | deleteRecording": {
-    "message": "حذف التسجيل"
-  },
-  "panels/recorder/RecorderController.ts | doNotImport": {
-    "message": "يُرجى عدم استيراد التسجيلات غير المفهومة لك أو التي لم تتم مراجعتها من قِبلك في \"أدوات مطوّري البرامج\". فقد يسمح هذا للمهاجمين بسرقة هويتك أو التحكم في جهاز الكمبيوتر الخاص بك. يُرجى كتابة \"{PH1}\" أدناه للسماح باستيراد البيانات."
-  },
-  "panels/recorder/RecorderController.ts | doYouTrustThisCode": {
-    "message": "هل هذا التسجيل موثوق؟"
-  },
-  "panels/recorder/RecorderController.ts | export": {
-    "message": "التصدير"
-  },
-  "panels/recorder/RecorderController.ts | exportRecording": {
-    "message": "تصدير التسجيل"
-  },
-  "panels/recorder/RecorderController.ts | exportViaExtensions": {
-    "message": "التصدير عبر الإضافات"
-  },
-  "panels/recorder/RecorderController.ts | getExtensions": {
-    "message": "الحصول على إضافات…"
-  },
-  "panels/recorder/RecorderController.ts | header": {
-    "message": "ما مِن تسجيلات حتى الآن"
-  },
-  "panels/recorder/RecorderController.ts | importRecording": {
-    "message": "استيراد التسجيل"
-  },
-  "panels/recorder/RecorderController.ts | learnMore": {
-    "message": "مزيد من المعلومات"
-  },
-  "panels/recorder/RecorderController.ts | noRecordings": {
-    "message": "ما مِن تسجيلات"
-  },
-  "panels/recorder/RecorderController.ts | numberOfRecordings": {
-    "message": "تسجيل"
-  },
-  "panels/recorder/RecorderController.ts | recordingDeleted": {
-    "message": "تم حذف التسجيل"
-  },
-  "panels/recorder/RecorderController.ts | recordingDescription": {
-    "message": "يمكنك استخدام التسجيلات لإنشاء اختبارات تلقائية شاملة أو لتتبُّع الأداء."
-  },
-  "panels/recorder/RecorderController.ts | recordingExported": {
-    "message": "تم تصدير التسجيل"
-  },
-  "panels/recorder/RecorderController.ts | recordingImported": {
-    "message": "تم استيراد التسجيل"
-  },
-  "panels/recorder/RecorderController.ts | replayRecording": {
-    "message": "إعادة تشغيل التسجيل"
-  },
-  "panels/recorder/RecorderController.ts | sendFeedback": {
-    "message": "إرسال ملاحظات"
-  },
-  "panels/recorder/RecorderController.ts | startStopRecording": {
-    "message": "بدء/إيقاف التسجيل"
-  },
-  "panels/recorder/RecorderController.ts | stepOverReplay": {
-    "message": "تنفيذ خطوة واحدة"
-  },
-  "panels/recorder/RecorderController.ts | toggleCode": {
-    "message": "تبديل طريقة عرض الرمز"
-  },
-  "panels/recorder/RecorderController.ts | typeAllowImporting": {
-    "message": "يُرجى كتابة \"{PH1}\""
-  },
-  "panels/recorder/components/CreateRecordingView.ts | cancelRecording": {
-    "message": "إلغاء التسجيل"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | createRecording": {
-    "message": "إنشاء تسجيل جديد"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | includeNecessarySelectors": {
-    "message": "يجب اختيار CSS أو Pierce أو XPath كأحد الخيارات. إنّ أدوات الاختيار المذكورة هي فقط التي يمكن ضمان تسجيلها، إذ قد لا تكون أداتا الاختيار ARIA وText فريدتين."
-  },
-  "panels/recorder/components/CreateRecordingView.ts | learnMore": {
-    "message": "مزيد من المعلومات"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | recordingName": {
-    "message": "اسم التسجيل"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | recordingNameIsRequired": {
-    "message": "يجب إدخال اسم للتسجيل."
-  },
-  "panels/recorder/components/CreateRecordingView.ts | selectorAttribute": {
-    "message": "سمة أداة الاختيار"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | selectorTypeARIA": {
-    "message": "ARIA"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | selectorTypeCSS": {
-    "message": "CSS"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | selectorTypePierce": {
-    "message": "Pierce"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | selectorTypeText": {
-    "message": "نص"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | selectorTypeXPath": {
-    "message": "XPath"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | selectorTypes": {
-    "message": "أنواع أداة الاختيار المُستخدَمة أثناء التسجيل"
-  },
-  "panels/recorder/components/CreateRecordingView.ts | startRecording": {
-    "message": "بدء التسجيل"
-  },
-  "panels/recorder/components/ExtensionView.ts | closeView": {
-    "message": "إغلاق"
-  },
-  "panels/recorder/components/ExtensionView.ts | extension": {
-    "message": "وفّرت إحدى إضافات المتصفِّح هذا المحتوى."
-  },
-  "panels/recorder/components/RecordingListView.ts | createRecording": {
-    "message": "إنشاء تسجيل جديد"
-  },
-  "panels/recorder/components/RecordingListView.ts | deleteRecording": {
-    "message": "حذف التسجيل"
-  },
-  "panels/recorder/components/RecordingListView.ts | openRecording": {
-    "message": "فتح التسجيل"
-  },
-  "panels/recorder/components/RecordingListView.ts | playRecording": {
-    "message": "تشغيل التسجيل"
-  },
-  "panels/recorder/components/RecordingListView.ts | savedRecordings": {
-    "message": "التسجيلات التي تم حفظها"
-  },
-  "panels/recorder/components/RecordingView.ts | addAssertion": {
-    "message": "إضافة تأكيد"
-  },
-  "panels/recorder/components/RecordingView.ts | cancelReplay": {
-    "message": "إلغاء إعادة التشغيل"
-  },
-  "panels/recorder/components/RecordingView.ts | codeSidebarClosed": {
-    "message": "تم إغلاق الشريط الجانبي للرمز البرمجي"
-  },
-  "panels/recorder/components/RecordingView.ts | codeSidebarOpened": {
-    "message": "تم فتح الشريط الجانبي للرمز البرمجي"
-  },
-  "panels/recorder/components/RecordingView.ts | default": {
-    "message": "الخيار التلقائي"
-  },
-  "panels/recorder/components/RecordingView.ts | desktop": {
-    "message": "الكمبيوتر المكتبي"
-  },
-  "panels/recorder/components/RecordingView.ts | download": {
-    "message": "سرعة التنزيل: {value}"
-  },
-  "panels/recorder/components/RecordingView.ts | editReplaySettings": {
-    "message": "تعديل إعدادات إعادة التشغيل"
-  },
-  "panels/recorder/components/RecordingView.ts | editTitle": {
-    "message": "تعديل العنوان"
-  },
-  "panels/recorder/components/RecordingView.ts | endRecording": {
-    "message": "إنهاء التسجيل"
-  },
-  "panels/recorder/components/RecordingView.ts | environment": {
-    "message": "البيئة"
-  },
-  "panels/recorder/components/RecordingView.ts | hideCode": {
-    "message": "إخفاء الرمز"
-  },
-  "panels/recorder/components/RecordingView.ts | latency": {
-    "message": "وقت الاستجابة: {value} ملي ثانية"
-  },
-  "panels/recorder/components/RecordingView.ts | mobile": {
-    "message": "الجهاز الجوّال"
-  },
-  "panels/recorder/components/RecordingView.ts | network": {
-    "message": "الشبكة"
-  },
-  "panels/recorder/components/RecordingView.ts | performancePanel": {
-    "message": "لوحة الأداء"
-  },
-  "panels/recorder/components/RecordingView.ts | recording": {
-    "message": "جارٍ التسجيل…"
-  },
-  "panels/recorder/components/RecordingView.ts | recordingIsBeingStopped": {
-    "message": "جارٍ إيقاف التسجيل…"
-  },
-  "panels/recorder/components/RecordingView.ts | replaySettings": {
-    "message": "إعدادات إعادة التشغيل"
-  },
-  "panels/recorder/components/RecordingView.ts | requiredTitleError": {
-    "message": "يجب إدخال عنوان."
-  },
-  "panels/recorder/components/RecordingView.ts | screenshotForSection": {
-    "message": "لقطة شاشة لهذا القسم"
-  },
-  "panels/recorder/components/RecordingView.ts | showCode": {
-    "message": "عرض الرمز"
-  },
-  "panels/recorder/components/RecordingView.ts | timeout": {
-    "message": "المهلة: {value} ملي ثانية"
-  },
-  "panels/recorder/components/RecordingView.ts | timeoutExplanation": {
-    "message": "تسري المهلة الزمنية (بالملي ثانية) على كل إجراء عند إعادة تشغيل التسجيل. على سبيل المثال، إذا لم يظهر عنصر DOM المحدَّد بواسطة أداة اختيار لغة CSS في الصفحة خلال المهلة الزمنية المحدّدة، لن تتم عملية إعادة التشغيل وستظهر رسالة خطأ."
-  },
-  "panels/recorder/components/RecordingView.ts | timeoutLabel": {
-    "message": "المهلة"
-  },
-  "panels/recorder/components/RecordingView.ts | upload": {
-    "message": "سرعة التحميل: {value}"
-  },
-  "panels/recorder/components/ReplaySection.ts | Replay": {
-    "message": "إعادة التشغيل"
-  },
-  "panels/recorder/components/ReplaySection.ts | ReplayExtremelySlowButtonLabel": {
-    "message": "مستوى سرعة منخفض بشدة"
-  },
-  "panels/recorder/components/ReplaySection.ts | ReplayExtremelySlowItemLabel": {
-    "message": "مستوى سرعة بطيء للغاية"
-  },
-  "panels/recorder/components/ReplaySection.ts | ReplayNormalButtonLabel": {
-    "message": "مستوى سرعة عادي"
-  },
-  "panels/recorder/components/ReplaySection.ts | ReplayNormalItemLabel": {
-    "message": "مستوى سرعة عادي (الخيار التلقائي)"
-  },
-  "panels/recorder/components/ReplaySection.ts | ReplaySlowButtonLabel": {
-    "message": "مستوى سرعة منخفض"
-  },
-  "panels/recorder/components/ReplaySection.ts | ReplaySlowItemLabel": {
-    "message": "مستوى سرعة بطيء"
-  },
-  "panels/recorder/components/ReplaySection.ts | ReplayVerySlowButtonLabel": {
-    "message": "مستوى سرعة منخفض جدًا"
-  },
-  "panels/recorder/components/ReplaySection.ts | ReplayVerySlowItemLabel": {
-    "message": "مستوى سرعة بطيء جدًا"
-  },
-  "panels/recorder/components/ReplaySection.ts | extensionGroup": {
-    "message": "الإضافات"
-  },
-  "panels/recorder/components/ReplaySection.ts | speedGroup": {
-    "message": "السرعة"
-  },
-  "panels/recorder/components/SelectorPicker.ts | selectorPicker": {
-    "message": "اختيار عنصر في الصفحة لتعديل أدوات الاختيار"
-  },
-  "panels/recorder/components/StepEditor.ts | addAttribute": {
-    "message": "إضافة {attributeName}"
-  },
-  "panels/recorder/components/StepEditor.ts | addFrameIndex": {
-    "message": "إضافة فهرس إطارات ضِمن مجموعة إطارات الصفحة"
-  },
-  "panels/recorder/components/StepEditor.ts | addSelector": {
-    "message": "إضافة أداة اختيار"
-  },
-  "panels/recorder/components/StepEditor.ts | addSelectorPart": {
-    "message": "إضافة أحد أجزاء أداة الاختيار"
-  },
-  "panels/recorder/components/StepEditor.ts | deleteRow": {
-    "message": "حذف صف"
-  },
-  "panels/recorder/components/StepEditor.ts | notSaved": {
-    "message": "تعذَّر الحفظ: {error}"
-  },
-  "panels/recorder/components/StepEditor.ts | removeFrameIndex": {
-    "message": "إزالة فهرس الإطارات"
-  },
-  "panels/recorder/components/StepEditor.ts | removeSelector": {
-    "message": "إزالة أداة اختيار"
-  },
-  "panels/recorder/components/StepEditor.ts | removeSelectorPart": {
-    "message": "إزالة أحد أجزاء أداة الاختيار"
-  },
-  "panels/recorder/components/StepEditor.ts | unknownActionType": {
-    "message": "نوع الإجراء غير معروف."
-  },
-  "panels/recorder/components/StepView.ts | addBreakpoint": {
-    "message": "إضافة نقطة إيقاف"
-  },
-  "panels/recorder/components/StepView.ts | addStepAfter": {
-    "message": "إضافة خطوة لاحقة"
-  },
-  "panels/recorder/components/StepView.ts | addStepBefore": {
-    "message": "إضافة خطوة سابقة"
-  },
-  "panels/recorder/components/StepView.ts | breakpoints": {
-    "message": "نقاط الإيقاف"
-  },
-  "panels/recorder/components/StepView.ts | changeStepTitle": {
-    "message": "تغيير"
-  },
-  "panels/recorder/components/StepView.ts | clickStepTitle": {
-    "message": "النقر"
-  },
-  "panels/recorder/components/StepView.ts | closeStepTitle": {
-    "message": "إغلاق"
-  },
-  "panels/recorder/components/StepView.ts | copyAs": {
-    "message": "نسخ التسجيل بتنسيق"
-  },
-  "panels/recorder/components/StepView.ts | customStepTitle": {
-    "message": "خطوة مخصَّصة"
-  },
-  "panels/recorder/components/StepView.ts | doubleClickStepTitle": {
-    "message": "النقر مرّتين"
-  },
-  "panels/recorder/components/StepView.ts | elementRoleButton": {
-    "message": "زرّ"
-  },
-  "panels/recorder/components/StepView.ts | elementRoleFallback": {
-    "message": "العنصر"
-  },
-  "panels/recorder/components/StepView.ts | elementRoleInput": {
-    "message": "إدخال"
-  },
-  "panels/recorder/components/StepView.ts | emulateNetworkConditionsStepTitle": {
-    "message": "محاكاة حالات الشبكة"
-  },
-  "panels/recorder/components/StepView.ts | hoverStepTitle": {
-    "message": "التمرير"
-  },
-  "panels/recorder/components/StepView.ts | keyDownStepTitle": {
-    "message": "الضغط على المفتاح"
-  },
-  "panels/recorder/components/StepView.ts | keyUpStepTitle": {
-    "message": "رفع الإصبع عن المفتاح"
-  },
-  "panels/recorder/components/StepView.ts | navigateStepTitle": {
-    "message": "تنقُّل"
-  },
-  "panels/recorder/components/StepView.ts | openStepActions": {
-    "message": "فتح إجراءات الخطوة"
-  },
-  "panels/recorder/components/StepView.ts | removeBreakpoint": {
-    "message": "إزالة نقطة الإيقاف"
-  },
-  "panels/recorder/components/StepView.ts | removeStep": {
-    "message": "إزالة الخطوة"
-  },
-  "panels/recorder/components/StepView.ts | scrollStepTitle": {
-    "message": "الانتقال"
-  },
-  "panels/recorder/components/StepView.ts | setViewportClickTitle": {
-    "message": "ضبط إطار العرض"
-  },
-  "panels/recorder/components/StepView.ts | stepManagement": {
-    "message": "إدارة الخطوات"
-  },
-  "panels/recorder/components/StepView.ts | waitForElementStepTitle": {
-    "message": "انتظار العنصر"
-  },
-  "panels/recorder/components/StepView.ts | waitForExpressionStepTitle": {
-    "message": "انتظار التعبير"
   },
   "panels/recorder/models/RecorderSettings.ts | defaultRecordingName": {
     "message": "التسجيل في ‎{DATE} الساعة {TIME}"
@@ -13463,26 +12998,8 @@
   "panels/sensors/sensors-meta.ts | accelerometer": {
     "message": "مقياس التسارع"
   },
-  "panels/sensors/sensors-meta.ts | cpuPressure": {
-    "message": "نوع ضغط وحدة المعالجة المركزية (CPU)"
-  },
-  "panels/sensors/sensors-meta.ts | critical": {
-    "message": "حرجة"
-  },
   "panels/sensors/sensors-meta.ts | deviceOrientation": {
     "message": "اتجاه الجهاز"
-  },
-  "panels/sensors/sensors-meta.ts | devicebased": {
-    "message": "إدخال لمس مستند إلى الجهاز"
-  },
-  "panels/sensors/sensors-meta.ts | emulateIdleDetectorState": {
-    "message": "محاكاة حالة أداة Idle Detector"
-  },
-  "panels/sensors/sensors-meta.ts | fair": {
-    "message": "مقبول"
-  },
-  "panels/sensors/sensors-meta.ts | forceEnabled": {
-    "message": "فرض الإدخال باللمس مفعَّل"
   },
   "panels/sensors/sensors-meta.ts | geolocation": {
     "message": "رصد الموقع الجغرافي"
@@ -13496,20 +13013,8 @@
   "panels/sensors/sensors-meta.ts | locations": {
     "message": "المواقع الجغرافية"
   },
-  "panels/sensors/sensors-meta.ts | noIdleEmulation": {
-    "message": "ما مِن محاكاة غير مستخدَمة حاليًا"
-  },
-  "panels/sensors/sensors-meta.ts | noPressureEmulation": {
-    "message": "عدم تجاوز الموقع الجغرافي للمستخدم"
-  },
-  "panels/sensors/sensors-meta.ts | nominal": {
-    "message": "اسمية"
-  },
   "panels/sensors/sensors-meta.ts | sensors": {
     "message": "أجهزة الاستشعار"
-  },
-  "panels/sensors/sensors-meta.ts | serious": {
-    "message": "مُهمة"
   },
   "panels/sensors/sensors-meta.ts | showLocations": {
     "message": "إظهار المواقع الجغرافية"
@@ -13519,21 +13024,6 @@
   },
   "panels/sensors/sensors-meta.ts | timezones": {
     "message": "مناطق زمنية"
-  },
-  "panels/sensors/sensors-meta.ts | touch": {
-    "message": "اللمس"
-  },
-  "panels/sensors/sensors-meta.ts | userActiveScreenLocked": {
-    "message": "محاكاة مستخدم نشِط، مع قفل الشاشة"
-  },
-  "panels/sensors/sensors-meta.ts | userActiveScreenUnlocked": {
-    "message": "محاكاة مستخدم نشِط، مع فتح قفل الشاشة"
-  },
-  "panels/sensors/sensors-meta.ts | userIdleScreenLocked": {
-    "message": "محاكاة مستخدم غير نشِط لفترة قصيرة، مع قفل الشاشة"
-  },
-  "panels/sensors/sensors-meta.ts | userIdleScreenUnlocked": {
-    "message": "محاكاة مستخدم غير نشِط لفترة قصيرة، مع فتح قفل الشاشة"
   },
   "panels/settings/AISettingsTab.ts | aIAnnotationsFeatureDescription": {
     "message": "إنشاء عناوين تلقائيًا لتعليقات تتبُّع الأداء التوضيحية"
@@ -13814,9 +13304,6 @@
   "panels/settings/SettingsScreen.ts | experimentsFound": {
     "message": "{n,plural, =1{تم العثور على تجربة واحدة}zero{تم العثور على # تجربة}two{تم العثور على تجربتَين}few{تم العثور على # تجارب}many{تم العثور على # تجربة}other{تم العثور على # تجربة}}"
   },
-  "panels/settings/SettingsScreen.ts | greenDevUnstable": {
-    "message": "تحذير: كل هذه الميزات هي نماذج أولية وغير مستقرة تمامًا ومخصّصة لاختبار المستخدمين ولا يُفترض الاعتماد عليها."
-  },
   "panels/settings/SettingsScreen.ts | learnMore": {
     "message": "مزيد من المعلومات"
   },
@@ -14072,9 +13559,6 @@
   "panels/settings/settings-meta.ts | experiments": {
     "message": "التجارب"
   },
-  "panels/settings/settings-meta.ts | greenDevProtoTypes": {
-    "message": "GreenDev"
-  },
   "panels/settings/settings-meta.ts | ignoreList": {
     "message": "قائمة التجاهل"
   },
@@ -14092,9 +13576,6 @@
   },
   "panels/settings/settings-meta.ts | showExperiments": {
     "message": "عرض الميزات التجريبية"
-  },
-  "panels/settings/settings-meta.ts | showGreenDev": {
-    "message": "عرض GreenDev"
   },
   "panels/settings/settings-meta.ts | showIgnoreList": {
     "message": "عرض قائمة التجاهل"
@@ -14513,12 +13994,6 @@
   "panels/sources/GoToLineQuickOpen.ts | typeANumberToGoToThatLine": {
     "message": "أدخِل رقمًا للانتقال إلى هذا السطر"
   },
-  "panels/sources/InplaceFormatterEditorAction.ts | format": {
-    "message": "تنسيق"
-  },
-  "panels/sources/InplaceFormatterEditorAction.ts | formatS": {
-    "message": "تنسيق {PH1}"
-  },
   "panels/sources/NavigatorView.ts | actionCannotBeUndone": {
     "message": "ولا يمكن التراجع عن هذا الإجراء."
   },
@@ -14857,9 +14332,6 @@
   },
   "panels/sources/WatchExpressionsSidebarPane.ts | refreshWatchExpressions": {
     "message": "إعادة تحميل تعبيرات المشاهدة"
-  },
-  "panels/sources/WatchExpressionsSidebarPane.ts | watchExpressionDeleted": {
-    "message": "تم حذف تعبير المشاهدة"
   },
   "panels/sources/components/HeadersView.ts | addHeader": {
     "message": "إضافة عنوان"
@@ -15311,12 +14783,6 @@
   "panels/timeline/ThirdPartyTreeView.ts | unattributed": {
     "message": "[نص غير منسوب لأي جهة]"
   },
-  "panels/timeline/ThreadAppender.ts | bidderWorklet": {
-    "message": "الوظيفة المصغّرة لنظام عروض الأسعار"
-  },
-  "panels/timeline/ThreadAppender.ts | bidderWorkletS": {
-    "message": "الوظيفة المصغّرة لنظام عروض الأسعار — {PH1}"
-  },
   "panels/timeline/ThreadAppender.ts | dedicatedWorker": {
     "message": "Worker مخصَّص"
   },
@@ -15338,12 +14804,6 @@
   "panels/timeline/ThreadAppender.ts | rasterizerThreadS": {
     "message": "سلسلة تعليمات أداة تحويل الصور الخطية إلى نقطية {PH1}"
   },
-  "panels/timeline/ThreadAppender.ts | sellerWorklet": {
-    "message": "الوظيفة المصغّرة للبائع"
-  },
-  "panels/timeline/ThreadAppender.ts | sellerWorkletS": {
-    "message": "الوظيفة المصغّرة للبائع — {PH1}"
-  },
   "panels/timeline/ThreadAppender.ts | threadPool": {
     "message": "اختزال سلسلة التعليمات"
   },
@@ -15353,23 +14813,11 @@
   "panels/timeline/ThreadAppender.ts | threadS": {
     "message": "سلسلة التعليمات البرمجية: {PH1}"
   },
-  "panels/timeline/ThreadAppender.ts | unknownWorklet": {
-    "message": "الوظيفة المصغّرة للمزاد"
-  },
-  "panels/timeline/ThreadAppender.ts | unknownWorkletS": {
-    "message": "الوظيفة المصغّرة للمزاد - {PH1}"
-  },
   "panels/timeline/ThreadAppender.ts | workerS": {
     "message": "Worker — {PH1}"
   },
   "panels/timeline/ThreadAppender.ts | workerSS": {
     "message": "Worker: {PH1} — {PH2}"
-  },
-  "panels/timeline/ThreadAppender.ts | workletService": {
-    "message": "خدمة Auction Worklet"
-  },
-  "panels/timeline/ThreadAppender.ts | workletServiceS": {
-    "message": "خدمة Auction Worklet: {PH1}"
   },
   "panels/timeline/TimelineController.ts | initializingTracing": {
     "message": "جارٍ بدء التتبُّع…"
@@ -16523,9 +15971,6 @@
   "panels/timeline/components/LiveMetricsView.ts | percentDevices": {
     "message": "‫%{PH1} على الأجهزة الجوّالة و%{PH2} على أجهزة الكمبيوتر المكتبي"
   },
-  "panels/timeline/components/LiveMetricsView.ts | phase": {
-    "message": "المرحلة"
-  },
   "panels/timeline/components/LiveMetricsView.ts | presentationDelay": {
     "message": "مهلة عرض النتيجة"
   },
@@ -16618,9 +16063,6 @@
   },
   "panels/timeline/components/MetricCard.ts | percentage": {
     "message": "%{PH1}"
-  },
-  "panels/timeline/components/MetricCard.ts | phase": {
-    "message": "المرحلة"
   },
   "panels/timeline/components/MetricCard.ts | poor": {
     "message": "غير جيد"
@@ -17636,9 +17078,6 @@
   "ui/legacy/TabbedPane.ts | moveTabRight": {
     "message": "نقل لليمين"
   },
-  "ui/legacy/TabbedPane.ts | panelContainsAnnotation": {
-    "message": "تتضمّن هذه اللوحة تعليقًا توضيحيًا واحدًا أو أكثر"
-  },
   "ui/legacy/TabbedPane.ts | previewFeature": {
     "message": "ميزة المعاينة"
   },
@@ -17819,6 +17258,9 @@
   "ui/legacy/components/cookie_table/CookiesTable.ts | editableCookies": {
     "message": "ملفات تعريف الارتباط القابلة للتعديل"
   },
+  "ui/legacy/components/cookie_table/CookiesTable.ts | httpOnlyCookiesCannotBeAdded": {
+    "message": "لا يمكن إضافة ملفات تعريف الارتباط HttpOnly كسياق"
+  },
   "ui/legacy/components/cookie_table/CookiesTable.ts | na": {
     "message": "غير متوفّر"
   },
@@ -17989,6 +17431,9 @@
   },
   "ui/legacy/components/object_ui/ObjectPropertiesSection.ts | showMoreS": {
     "message": "عرض المزيد ({PH1})"
+  },
+  "ui/legacy/components/object_ui/ObjectPropertiesSection.ts | sortPropertiesAlphabetically": {
+    "message": "ترتيب السمات أبجديًا"
   },
   "ui/legacy/components/object_ui/ObjectPropertiesSection.ts | stringIsTooLargeToEdit": {
     "message": "<السلاسل النصية كبيرة للغاية بحيث لا يمكن تعديلها>"
