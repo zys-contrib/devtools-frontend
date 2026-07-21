@@ -1,7 +1,6 @@
 // Copyright 2018 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-/* eslint-disable @devtools/no-imperative-dom-api */
 
 import '../../ui/kit/kit.js';
 
@@ -115,6 +114,28 @@ const UIStrings = {
 const str_ = i18n.i18n.registerUIStrings('panels/sensors/LocationsSettingsTab.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 
+function renderItemView(location: LocationDescription): LitTemplate {
+  // clang-format off
+  return html`
+    <div class="locations-list-item" role="row">
+      <div class="locations-list-text locations-list-title" role="cell">
+        <div class="locations-list-title-text" title=${location.title}>${location.title}</div>
+      </div>
+      <div class="locations-list-separator"></div>
+      <div class="locations-list-text" role="cell">${location.lat}</div>
+      <div class="locations-list-separator"></div>
+      <div class="locations-list-text" role="cell">${location.long}</div>
+      <div class="locations-list-separator"></div>
+      <div class="locations-list-text" role="cell">${location.timezoneId}</div>
+      <div class="locations-list-separator"></div>
+      <div class="locations-list-text" role="cell">${location.locale}</div>
+      <div class="locations-list-separator"></div>
+      <div class="locations-list-text" role="cell">${
+          location.accuracy ?? SDK.EmulationModel.Location.DEFAULT_ACCURACY}</div>
+    </div>`;
+  // clang-format on
+}
+
 interface EditorInputControls {
   titleInput: Element;
   latInput: Element;
@@ -155,31 +176,52 @@ function renderEditorView(controls: EditorInputControls): LitTemplate {
     </div>`;
   // clang-format on
 }
+
+interface LocationsViewInput {
+  onAddLocation: () => void;
+}
+
+export type ViewOutput = undefined;
+
+export const DEFAULT_VIEW = (input: LocationsViewInput, _output: ViewOutput, target: HTMLElement): void => {
+  // clang-format off
+  render(html`
+    <style>${locationsSettingsTabStyles}</style>
+    <div class="settings-card-container-wrapper">
+      <div class="settings-card-container">
+        <devtools-card .heading=${i18nString(UIStrings.locations)}>
+          <div class="list-container"></div>
+          <devtools-button
+            class="add-locations-button"
+            .variant=${Buttons.Button.Variant.OUTLINED}
+            .iconName=${'plus'}
+            .jslogContext=${'emulation.add-location'}
+            @click=${input.onAddLocation}>
+            ${i18nString(UIStrings.addLocation)}
+          </devtools-button>
+        </devtools-card>
+      </div>
+    </div>`, target);
+  // clang-format on
+};
+
+export type View = typeof DEFAULT_VIEW;
 export class LocationsSettingsTab extends UI.Widget.VBox implements UI.ListWidget.Delegate<LocationDescription> {
   private readonly list: UI.ListWidget.ListWidget<LocationDescription>;
   private readonly customSetting: Common.Settings.Setting<LocationDescription[]>;
   private editor?: UI.ListWidget.Editor<LocationDescription>;
+  #view: View;
 
-  constructor() {
-    super({
+  constructor(element?: HTMLElement, view: View = DEFAULT_VIEW) {
+    super(element, {
       jslog: `${VisualLogging.pane('emulation-locations')}`,
       useShadowDom: true,
     });
-    this.registerRequiredCSS(locationsSettingsTabStyles);
-
-    const settingsContent =
-        this.contentElement.createChild('div', 'settings-card-container-wrapper').createChild('div');
-    settingsContent.classList.add('settings-card-container');
-
-    const locationsCard = settingsContent.createChild('devtools-card');
-    locationsCard.heading = i18nString(UIStrings.locations);
-
-    const listContainer = locationsCard.createChild('div');
+    this.#view = view;
 
     this.list = new UI.ListWidget.ListWidget(this, undefined, true);
     this.list.element.classList.add('locations-list');
     this.list.registerRequiredCSS(locationsSettingsTabStyles);
-    this.list.show(listContainer);
     this.customSetting =
         Common.Settings.Settings.instance().moduleSetting<LocationDescription[]>('emulation.locations');
     const list =
@@ -206,17 +248,6 @@ export class LocationsSettingsTab extends UI.Widget.VBox implements UI.ListWidge
       return location;
     }
 
-    const addButton = new Buttons.Button.Button();
-    addButton.classList.add('add-locations-button');
-    addButton.data = {
-      variant: Buttons.Button.Variant.OUTLINED,
-      iconName: 'plus',
-      jslogContext: 'emulation.add-location',
-    };
-    addButton.textContent = i18nString(UIStrings.addLocation);
-    addButton.addEventListener('click', () => this.addButtonClicked());
-    locationsCard.append(addButton);
-
     this.customSetting.set(list);
     this.customSetting.addChangeListener(this.locationsUpdated, this);
   }
@@ -226,6 +257,17 @@ export class LocationsSettingsTab extends UI.Widget.VBox implements UI.ListWidge
     this.locationsUpdated();
   }
 
+  override performUpdate(): void {
+    const viewInput = {
+      onAddLocation: () => this.addButtonClicked(),
+    };
+    this.#view(viewInput, undefined, this.contentElement as HTMLElement);
+
+    const listContainer = this.contentElement.querySelector('.list-container');
+    if (listContainer) {
+      this.list.show(listContainer);
+    }
+  }
   private locationsUpdated(): void {
     this.list.clear();
 
@@ -235,6 +277,7 @@ export class LocationsSettingsTab extends UI.Widget.VBox implements UI.ListWidge
     }
 
     this.list.appendSeparator();
+    this.requestUpdate();
   }
 
   private addButtonClicked(): void {
@@ -249,34 +292,10 @@ export class LocationsSettingsTab extends UI.Widget.VBox implements UI.ListWidge
   }
 
   renderItem(location: LocationDescription, _editable: boolean): Element {
-    const element = document.createElement('div');
-    element.role = 'row';
-    element.classList.add('locations-list-item');
-    const title = element.createChild('div', 'locations-list-text locations-list-title');
-    title.role = 'cell';
-    const titleText = title.createChild('div', 'locations-list-title-text');
-    titleText.textContent = location.title;
-    UI.Tooltip.Tooltip.install(titleText, location.title);
-    element.createChild('div', 'locations-list-separator');
-    const lat = element.createChild('div', 'locations-list-text');
-    lat.textContent = String(location.lat);
-    lat.role = 'cell';
-    element.createChild('div', 'locations-list-separator');
-    const long = element.createChild('div', 'locations-list-text');
-    long.textContent = String(location.long);
-    long.role = 'cell';
-    element.createChild('div', 'locations-list-separator');
-    const timezoneId = element.createChild('div', 'locations-list-text');
-    timezoneId.textContent = location.timezoneId;
-    timezoneId.role = 'cell';
-    element.createChild('div', 'locations-list-separator');
-    const locale = element.createChild('div', 'locations-list-text');
-    locale.textContent = location.locale;
-    locale.role = 'cell';
-    element.createChild('div', 'locations-list-separator');
-    element.createChild('div', 'locations-list-text').textContent =
-        String(location.accuracy || SDK.EmulationModel.Location.DEFAULT_ACCURACY);
-    return element;
+    const fragment = document.createDocumentFragment();
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(renderItemView(location), fragment);
+    return fragment.firstElementChild as Element;
   }
 
   removeItemRequested(_item: LocationDescription, index: number): void {
@@ -312,7 +331,7 @@ export class LocationsSettingsTab extends UI.Widget.VBox implements UI.ListWidge
     editor.control('long').value = String(location.long);
     editor.control('timezone-id').value = location.timezoneId;
     editor.control('locale').value = location.locale;
-    editor.control('accuracy').value = String(location.accuracy || SDK.EmulationModel.Location.DEFAULT_ACCURACY);
+    editor.control('accuracy').value = String(location.accuracy ?? SDK.EmulationModel.Location.DEFAULT_ACCURACY);
     return editor;
   }
 
