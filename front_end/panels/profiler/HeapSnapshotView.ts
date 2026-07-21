@@ -108,11 +108,6 @@ const UIStrings = {
    */
   otherNonJSObjects: 'Other non-JS objects (such as HTML and CSS)',
   /**
-   * @description The reported total size used in the selected time frame of the allocation sampling profile
-   * @example {3 MB} PH1
-   */
-  selectedSizeS: 'Selected size: {PH1}',
-  /**
    * @description Text in Heap Snapshot View of a profiler tool
    */
   allObjects: 'All objects',
@@ -283,6 +278,12 @@ const UIStrings = {
    * This text is on a button to undo all previous "Ignore this retainer" actions.
    */
   restoreIgnoredRetainers: 'Restore ignored retainers',
+  /**
+   * @description Text in Heap Snapshot View showing summary stats (count of objects and total shallow size) for the selected filter
+   * @example {1,000} PH1
+   * @example {1.5 MB} PH2
+   */
+  filterSummarySObjectsS: '{PH1} objects ({PH2})',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/profiler/HeapSnapshotView.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -405,6 +406,8 @@ export class HeapSnapshotView extends UI.View.SimpleView implements DataDisplayD
 
     this.constructorsDataGrid = new HeapSnapshotConstructorsDataGrid(heapProfilerModel, this);
     this.constructorsDataGrid.addEventListener(DataGrid.DataGrid.Events.SELECTED_NODE, this.selectionChanged, this);
+    this.constructorsDataGrid.addEventListener(HeapSnapshotSortableDataGridEvents.AggregatesReceived,
+                                               this.#onAggregatesReceived, this);
     this.constructorsWidget = this.constructorsDataGrid.asWidget();
     this.constructorsWidget.setMinimumSize(50, 25);
     this.constructorsWidget.element.setAttribute(
@@ -702,11 +705,26 @@ export class HeapSnapshotView extends UI.View.SimpleView implements DataDisplayD
 
   onIdsRangeChanged(event: Common.EventTarget.EventTargetEvent<IdsRangeChangedEvent>): void {
     const {minId, maxId} = event.data;
-    this.selectedSizeText.setText(
-        i18nString(UIStrings.selectedSizeS, {PH1: i18n.ByteUtilities.bytesToString(event.data.size)}));
     if (this.constructorsDataGrid.snapshot) {
       this.constructorsDataGrid.setSelectionRange(minId, maxId);
     }
+  }
+
+  updateFilterSummaryText(totals?: {count: number, size: number}): void {
+    if (this.currentPerspective instanceof SummaryPerspective) {
+      const totalCount = totals?.count ?? this.constructorsDataGrid.filterTotalCount;
+      const totalSize = totals?.size ?? this.constructorsDataGrid.filterTotalSize;
+      if (totalCount !== undefined && totalSize !== undefined) {
+        this.selectedSizeText.setText(i18nString(UIStrings.filterSummarySObjectsS, {
+          PH1: totalCount.toLocaleString(),
+          PH2: i18n.ByteUtilities.bytesToString(totalSize),
+        }));
+      }
+    }
+  }
+
+  #onAggregatesReceived(event: Common.EventTarget.EventTargetEvent<{count: number, size: number}>): void {
+    this.updateFilterSummaryText(event.data);
   }
 
   override async toolbarItems(): Promise<UI.Toolbar.ToolbarItem[]> {
@@ -1216,6 +1234,7 @@ export class Perspective {
     heapSnapshotView.baseSelect.setVisible(false);
     heapSnapshotView.filterSelect.setVisible(false);
     heapSnapshotView.classNameFilter.setVisible(false);
+    heapSnapshotView.selectedSizeText.setText('');
     if (heapSnapshotView.trackingOverviewGrid) {
       heapSnapshotView.trackingOverviewGrid.detach();
     }
@@ -1254,6 +1273,7 @@ export class SummaryPerspective extends Perspective {
     heapSnapshotView.splitWidget.show(heapSnapshotView.searchableViewInternal.element);
     heapSnapshotView.filterSelect.setVisible(true);
     heapSnapshotView.classNameFilter.setVisible(true);
+    heapSnapshotView.updateFilterSummaryText();
     if (!heapSnapshotView.trackingOverviewGrid) {
       return;
     }
