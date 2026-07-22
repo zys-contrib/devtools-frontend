@@ -8,6 +8,7 @@ import sinon from 'sinon';
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
 import * as SDK from '../../core/sdk/sdk.js';
+import * as TextUtils from '../../core/text_utils/text_utils.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as ComputedStyle from '../../models/computed_style/computed_style.js';
 import {raf, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
@@ -22,6 +23,7 @@ import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {createStubbedDomNodeWithModels, getMatchedStyles, ruleMatch} from '../../testing/StyleHelpers.js';
 import * as TextEditor from '../../ui/components/text_editor/text_editor.js';
 import * as InlineEditor from '../../ui/legacy/components/inline_editor/inline_editor.js';
+import * as Components from '../../ui/legacy/components/utils/utils.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import {html} from '../../ui/lit/lit.js';
 import * as PanelsCommon from '../common/common.js';
@@ -100,6 +102,80 @@ describe('StylesSidebarPane', () => {
         stylesSidebarPane.setEditingStyle(true);
         stylesSidebarPane.onCSSModelChanged(event);
         sinon.assert.notCalled(requestUpdateSpy);
+      });
+    });
+
+    describe('createNewRuleInViaInspectorStyleSheet', () => {
+      it('creates a new rule in the via inspector stylesheet and starts editing the selector', async () => {
+        (node.frameId as sinon.SinonStub).returns('frame-id' as Protocol.Page.FrameId);
+        (node.nodeType as sinon.SinonStub).returns(Node.ELEMENT_NODE);
+        (node.nodeName as sinon.SinonStub).returns('div');
+        (node.simpleSelector as sinon.SinonStub).returns('div');
+        sinon.stub(Components.Linkifier.Linkifier.prototype, 'linkifyCSSLocation')
+            .returns(document.createElement('div'));
+
+        const inlineStyle: Protocol.CSS.CSSStyle = {
+          styleSheetId: '0' as Protocol.DOM.StyleSheetId,
+          cssProperties: [{name: 'color', value: 'blue'}],
+          shorthandEntries: [],
+        };
+
+        const computedStyleModel = new ComputedStyle.ComputedStyleModel.ComputedStyleModel();
+        computedStyleModel.node = node;
+
+        const cssModel = computedStyleModel.cssModel() as SDK.CSSModel.CSSModel;
+
+        const matchedStyles = await SDK.CSSMatchedStyles.CSSMatchedStyles.create({
+          cssModel,
+          node,
+          inlinePayload: inlineStyle,
+          attributesPayload: null,
+          matchedPayload: [],
+          pseudoPayload: [],
+          inheritedPayload: [],
+          inheritedPseudoPayload: [],
+          animationsPayload: [],
+          parentLayoutNodeId: undefined as unknown as Protocol.DOM.NodeId,
+          positionTryRules: [],
+          propertyRules: [],
+          functionRules: [],
+          cssPropertyRegistrations: [],
+          atRules: [],
+          activePositionFallbackIndex: -1,
+          animationStylesPayload: [],
+          inheritedAnimatedPayload: [],
+          transitionsStylePayload: null,
+        });
+
+        sinon.stub(cssModel, 'getMatchedStyles').resolves(matchedStyles);
+        const styleSheetHeader = sinon.createStubInstance(SDK.CSSStyleSheetHeader.CSSStyleSheetHeader);
+        styleSheetHeader.cssModel.returns(cssModel);
+        styleSheetHeader.lineNumberInSource.callsFake(line => line);
+        styleSheetHeader.columnNumberInSource.callsFake((line, column) => column);
+        (styleSheetHeader.id as string) = '0';
+        sinon.stub(cssModel, 'requestViaInspectorStylesheet').resolves(styleSheetHeader);
+        styleSheetHeader.requestContentData.resolves(new TextUtils.ContentData.ContentData('', false, 'text/css'));
+
+        const stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
+        renderElementIntoDOM(stylesSidebarPane);
+
+        stylesSidebarPane.forceUpdate();
+
+        await new Promise<void>(resolve => {
+          stylesSidebarPane.addEventListener(Elements.StylesSidebarPane.Events.INITIAL_UPDATE_COMPLETED,
+                                             () => resolve(), {once: true});
+        });
+
+        assert.isFalse(UI.UIUtils.isEditing());
+
+        await stylesSidebarPane.createNewRuleInViaInspectorStyleSheet();
+
+        assert.isTrue(UI.UIUtils.isEditing());
+
+        const allSections = stylesSidebarPane.allSections();
+        assert.instanceOf(allSections[1], Elements.StylePropertiesSection.BlankStylePropertiesSection);
+
+        stylesSidebarPane.detach();
       });
     });
 
