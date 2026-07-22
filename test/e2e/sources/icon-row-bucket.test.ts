@@ -119,7 +119,7 @@ describe('The row\'s icon bucket', function() {
     const issueMessages: string[] = [];
     const expectedIssueMessages = [
       'Trusted Type policy creation blocked by Content Security Policy',
-      'Trusted Type expected, but String received',
+      'Trusted Type expected, but got String',
     ];
     for (const issueIconComponent of issueIconComponents) {
       await devToolsPage.hoverElement(issueIconComponent);

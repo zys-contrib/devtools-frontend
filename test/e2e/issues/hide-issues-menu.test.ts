@@ -78,7 +78,7 @@ describe('Hide issues menu', () => {
       }
     });
     await navigateToIssuesTab(devToolsPage);
-    const issueTitle = 'Ensure credentialed requests are not sent to CORS resources with origin wildcards';
+    const issueTitle = 'Ensure credentialed requests aren’t sent to CORS resources with origin wildcards';
     const issueHeader = await getIssueHeaderByTitle(issueTitle, devToolsPage);
     await issueHeader!.hover();
     const hideIssuesMenu = await getHideIssuesMenu(undefined, devToolsPage);

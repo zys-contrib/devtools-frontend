@@ -81,7 +81,7 @@ describe('CORS issues', () => {
        await navigateToIssuesTab(devToolsPage);
        await expandIssue(devToolsPage);
        const issueElement = await getIssueByTitle(
-           'Ensure credentialed requests are not sent to CORS resources with origin wildcards', devToolsPage);
+           'Ensure credentialed requests aren’t sent to CORS resources with origin wildcards', devToolsPage);
        assert.isOk(issueElement);
        const section =
            await getResourcesElement('request', issueElement, '.cors-issue-affected-resource-label', devToolsPage);
@@ -183,7 +183,7 @@ describe('CORS issues', () => {
        await navigateToIssuesTab(devToolsPage);
        await expandIssue(devToolsPage);
        const issueElement =
-           await getIssueByTitle('Ensure CORS requesting origin matches resource\'s allowed origin', devToolsPage);
+           await getIssueByTitle('Ensure CORS requesting origin matches resource’s allowed origin', devToolsPage);
        assert.isOk(issueElement);
        const section =
            await getResourcesElement('requests', issueElement, '.cors-issue-affected-resource-label', devToolsPage);
@@ -368,7 +368,7 @@ describe('CORS issues', () => {
     await navigateToIssuesTab(devToolsPage);
     await expandIssue(devToolsPage);
     const issueElement =
-        await getIssueByTitle('Ensure CORS requests are not redirected to URLs containing credentials', devToolsPage);
+        await getIssueByTitle('Ensure CORS requests aren’t redirected to URLs containing credentials', devToolsPage);
     assert.isOk(issueElement);
     const section =
         await getResourcesElement('request', issueElement, '.cors-issue-affected-resource-label', devToolsPage);

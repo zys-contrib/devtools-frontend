@@ -32,7 +32,7 @@ describe('Partitioning Blob URL Issue', () => {
          // @ts-expect-error
          window.addIssueForTest(issue);
        });
-       const issueElement = await getAndExpandSpecificIssueByTitle('Fetching Partitioned Blob URL Issue', devToolsPage);
+       const issueElement = await getAndExpandSpecificIssueByTitle('Fetching partitioned blob URL issue', devToolsPage);
        assert.isOk(issueElement);
      });
 
@@ -56,7 +56,7 @@ describe('Partitioning Blob URL Issue', () => {
          window.addIssueForTest(issue);
        });
        const issueElement =
-           await getAndExpandSpecificIssueByTitle('Navigating Partitioned Blob URL Issue', devToolsPage);
+           await getAndExpandSpecificIssueByTitle('Navigating partitioned blob URL issue', devToolsPage);
        assert.isOk(issueElement);
      });
 
