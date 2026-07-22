@@ -247,4 +247,43 @@ describe('ConsoleMessage', () => {
     assert.strictEqual(consoleClearEventsMainFrameTarget, 0);
     assert.strictEqual(consoleClearEventsSubframeTarget, 0);
   });
+
+  it('revokes lazily handled promise rejections', async () => {
+    const target = universe.createTarget({type: SDK.Target.Type.FRAME});
+    const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+    assert.exists(runtimeModel);
+    const resourceTreeModel = target.model(SDK.ResourceTreeModel.ResourceTreeModel);
+    assert.exists(resourceTreeModel);
+    const consoleModel = target.model(SDK.ConsoleModel.ConsoleModel);
+    assert.exists(consoleModel);
+
+    // Initializing ConsoleModel on a frame target normally waits for CachedResourcesLoaded.
+    resourceTreeModel.dispatchEventToListeners(SDK.ResourceTreeModel.Events.CachedResourcesLoaded, resourceTreeModel);
+
+    const exceptionDetails = {
+      exceptionId: 1,
+      text: 'Uncaught (in promise)',
+      lineNumber: 0,
+      columnNumber: 0,
+    };
+
+    runtimeModel.dispatchEventToListeners(
+        SDK.RuntimeModel.Events.ExceptionThrown,
+        {timestamp: 0, details: exceptionDetails} as unknown as SDK.RuntimeModel.ExceptionWithTimestamp);
+
+    assert.lengthOf(consoleModel.messages(), 1);
+    assert.strictEqual(consoleModel.messages()[0].level, Protocol.Log.LogEntryLevel.Error);
+    assert.strictEqual(consoleModel.errors(), 1);
+
+    let messageUpdatedCalled = false;
+    consoleModel.addEventListener(SDK.ConsoleModel.Events.MessageUpdated, () => {
+      messageUpdatedCalled = true;
+    });
+
+    runtimeModel.dispatchEventToListeners(SDK.RuntimeModel.Events.ExceptionRevoked, 1);
+
+    assert.isTrue(messageUpdatedCalled);
+    assert.strictEqual(consoleModel.messages()[0].level, Protocol.Log.LogEntryLevel.Verbose);
+    assert.strictEqual(consoleModel.errors(), 0);
+  });
 });
