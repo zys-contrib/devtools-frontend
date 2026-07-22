@@ -68,6 +68,12 @@ class DevToolsTestHarness(unittest.TestCase):
     def _resolve_test_file(self, test_file):
         import os
         import re
+        if test_file.startswith("@"):
+            rsp_path = test_file[1:]
+            if os.path.isabs(rsp_path):
+                return "@" + rsp_path
+            return "@" + os.path.abspath(rsp_path)
+
         match = re.match(r'^(.*\.([tj]s))(.*)$', test_file)
         if match:
             path_part = match.group(1)
@@ -118,6 +124,35 @@ class DevToolsTestHarness(unittest.TestCase):
         )
         self.assertEqual(results[0].get('status'), 'PASS')
         self.assertTrue(results[0].get('expected'))
+
+    def test_unit_response_file(self):
+        import tempfile
+        import os
+        abs_test_file_1 = self._resolve_test_file(
+            "test/harness/unit/unit.test.ts")
+        abs_test_file_2 = self._resolve_test_file(
+            "test/harness/unit/unit_2.test.ts")
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.rsp',
+                                         delete=False) as f:
+            f.write(f"{abs_test_file_1}\n{abs_test_file_2}\n")
+            rsp_file = f.name
+        try:
+            results, exit_code = self.run_unit_test(f"@{rsp_file}")
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(
+                len(results), 2,
+                f"Expected exactly 2 test results, got {len(results)}")
+            test_ids = [r.get('testId') for r in results]
+            self.assertIn(
+                'test/harness/unit/unit.test.ts:unit:should_run_a_basic_unit_test_successfully',
+                test_ids)
+            self.assertIn(
+                'test/harness/unit/unit_2.test.ts:unit_2:should_run_a_second_basic_unit_test_successfully',
+                test_ids)
+            for r in results:
+                self.assertEqual(r.get('status'), 'PASS')
+        finally:
+            os.unlink(rsp_file)
 
     def test_e2e(self):
         results, exit_code = self.run_e2e_test("test/harness/e2e/e2e.test.ts")

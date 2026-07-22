@@ -9,7 +9,7 @@ import * as path from 'node:path';
 import yargs from 'yargs';
 import unparse from 'yargs-unparser';
 
-import {commandLineArgs} from './conductor/commandline.js';
+import {commandLineArgs, expandResponseFiles} from './conductor/commandline.js';
 import {
   BUILD_WITH_CHROMIUM,
   CHECKOUT_ROOT,
@@ -22,7 +22,7 @@ import {
 } from './conductor/paths.js';
 
 const options =
-    commandLineArgs(yargs(process.argv.slice(2)))
+    commandLineArgs(yargs(expandResponseFiles(process.argv.slice(2))))
         .parserConfiguration({'strip-aliased': true})
         .options('skip-ninja', {
           type: 'boolean',
@@ -160,27 +160,58 @@ class Tests {
         pathToCheck => isContainedInDirectory(path.pathPair.buildPath, pathToCheck.buildPath));
   }
 
+  protected readonly useResponseFile: boolean = true;
+
   protected run(tests: TestId[], args: string[]) {
-    const argumentsForNode = [
-      ...args,
-      ...(options['auto-watch'] ? ['--auto-watch', '--no-single-run'] : []),
-      '--',
-      ...tests.map(t => t.toBuildTestId()),
-      ...(options['verbose'] ? [`--verbose=${options['verbose']}`] : []),
-      ...forwardOptions(),
-    ];
-    if (options['debug-driver']) {
-      argumentsForNode.unshift('--inspect-brk');
-    } else if (options['debug'] && !argumentsForNode.includes('--inspect-brk')) {
-      argumentsForNode.unshift('--inspect');
+    const testList = tests.map(t => t.toBuildTestId());
+    let tmpDir: string|undefined;
+    let testArgs: string[];
+
+    if (this.useResponseFile) {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'devtools-test-runner-'));
+      const rspPath = path.join(tmpDir, 'tests.rsp');
+      fs.writeFileSync(rspPath, testList.join('\n'), 'utf-8');
+
+      if (logLevel !== 'error') {
+        // eslint-disable-next-line no-console
+        console.info(`Response file (${rspPath}) content (${testList.length} test(s)):\n${
+            testList.map(t => `  ${t}`).join('\n')}`);
+      }
+      testArgs = [`@${rspPath}`];
+    } else {
+      testArgs = testList;
     }
 
-    const result = runProcess(process.argv[0], argumentsForNode, {
-      encoding: 'utf-8',
-      stdio: 'inherit',
-      cwd: this.cwd,
-    });
-    return !result.error && (result.status ?? 1) === 0;
+    try {
+      const argumentsForNode = [
+        ...args,
+        ...(options['auto-watch'] ? ['--auto-watch', '--no-single-run'] : []),
+        '--',
+        ...testArgs,
+        ...(options['verbose'] ? [`--verbose=${options['verbose']}`] : []),
+        ...forwardOptions(),
+      ];
+      if (options['debug-driver']) {
+        argumentsForNode.unshift('--inspect-brk');
+      } else if (options['debug'] && !argumentsForNode.includes('--inspect-brk')) {
+        argumentsForNode.unshift('--inspect');
+      }
+
+      const result = runProcess(process.argv[0], argumentsForNode, {
+        encoding: 'utf-8',
+        stdio: 'inherit',
+        cwd: this.cwd,
+      });
+      return !result.error && (result.status ?? 1) === 0;
+    } finally {
+      if (tmpDir) {
+        try {
+          fs.rmSync(tmpDir, {recursive: true, force: true});
+        } catch {
+          // ignore cleanup errors
+        }
+      }
+    }
   }
 }
 
@@ -241,6 +272,7 @@ class ScriptTestId extends TestId {
 
 class ScriptsMochaTests extends Tests {
   override readonly cwd = SOURCE_ROOT;
+  override readonly useResponseFile = false;
 
   override run(tests: TestId[]) {
     return super.run(

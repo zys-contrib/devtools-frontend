@@ -9,11 +9,11 @@ import * as path from 'node:path';
 import yargs from 'yargs';
 import {hideBin} from 'yargs/helpers';
 
-import {asArray, commandLineArgs, DiffBehaviors} from './commandline.js';
+import {asArray, commandLineArgs, DiffBehaviors, expandResponseFiles} from './commandline.js';
 import {BUILD_ROOT, defaultChromePath, SOURCE_ROOT, TEST_ID_REGEX} from './paths.js';
 import {shardFilter} from './sharding.js';
 
-const argv = yargs(hideBin(process.argv)).parseSync()['_'] as string[];
+const argv = yargs(expandResponseFiles(hideBin(process.argv))).parseSync()['_'] as string[];
 
 const options = commandLineArgs(yargs(argv)).parseSync();
 

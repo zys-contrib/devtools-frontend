@@ -2,7 +2,30 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import * as fs from 'node:fs';
 import type * as Yargs from 'yargs';
+
+export function expandResponseFiles(args: string[]): string[] {
+  const expanded: string[] = [];
+  for (const arg of args) {
+    if (arg.startsWith('@') && arg.length > 1) {
+      const rspPath = arg.substring(1);
+      if (fs.existsSync(rspPath)) {
+        const content = fs.readFileSync(rspPath, 'utf-8');
+        const lines =
+            content.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0 && !line.startsWith('#'));
+        for (const line of expandResponseFiles(lines)) {
+          expanded.push(line);
+        }
+      } else {
+        expanded.push(arg);
+      }
+    } else {
+      expanded.push(arg);
+    }
+  }
+  return expanded;
+}
 
 export enum DiffBehaviors {
   UPDATE = 'update',
