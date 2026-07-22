@@ -3005,8 +3005,6 @@ export abstract class HeapSnapshot {
       return;
     }
 
-    console.time('propagateDOMState');
-
     const visited = new Uint8Array(this.nodeCount);
     const attached: number[] = [];
     const detached: number[] = [];
@@ -3097,8 +3095,6 @@ export abstract class HeapSnapshot {
       }
       propagateState(this, nodeOrdinal, HeapSnapshotModel.HeapSnapshotModel.DOMLinkState.DETACHED);
     }
-
-    console.timeEnd('propagateDOMState');
   }
 
   private buildSamples(): void {
