@@ -41,7 +41,7 @@ const UIStrings = {
    * @example {Main thread} PH2
    *
    */
-  eventSelectedFromGroup: 'Selected a {PH1} event within {PH2}. Press "enter" to focus this event.',
+  eventSelectedFromGroup: 'Selected a {PH1} event within {PH2}. Press enter to focus this event.',
   /**
    * @description Aria accessible name in Flame Chart of the Performance panel
    */

@@ -8,6 +8,7 @@ import {createRule} from './utils/ruleCreator.ts';
 const FULLY_LOCKED_PHRASE_REGEX = /^`[^`]*`$/;
 const SINGLE_PLACEHOLDER_REGEX = /^\{\w+\}$/;  // Matches the PH regex in `collect-strings.js`.
 const STRAIGHT_APOSTROPHE_REGEX = /[a-zA-Z]'[a-zA-Z]/;
+const CURLY_DOUBLE_QUOTE_REGEX = /[“”]/;
 const URL_REGEX = /\burl\b/gi;
 
 export default createRule({
@@ -16,7 +17,7 @@ export default createRule({
     type: 'problem',
     docs: {
       description:
-          'Enforces text style guidelines for UIStrings object literals (no fully locked phrases, no single placeholder phrases, use curly apostrophes, use all-uppercase URL).',
+          'Enforces text style guidelines for UIStrings object literals (no fully locked phrases, no single placeholder phrases, use curly apostrophes, use straight double quotes, use all-uppercase URL).',
       category: 'Possible Errors',
     },
     schema: [],  // no options
@@ -24,6 +25,7 @@ export default createRule({
       fullyLockedPhrase: 'Locking whole phrases is not allowed. Use i18n.i18n.lockedString instead.',
       singlePlaceholderPhrase: 'Single placeholder-only phrases are not allowed. Use i18n.i18n.lockedString instead.',
       useCurlyApostrophe: 'Use curly apostrophe (’) instead of straight apostrophe (\') in "{{PH1}}".',
+      useStraightDoubleQuote: 'Use straight double quote (") instead of curly double quote in "{{PH1}}".',
       useUppercaseUrl: 'Use all-uppercase "URL" instead of "{{PH1}}" in "{{PH2}}".',
     },
   },
@@ -70,6 +72,16 @@ export default createRule({
             context.report({
               node: property.value,
               messageId: 'useCurlyApostrophe',
+              data: {
+                PH1: propertyValue,
+              },
+            });
+          }
+
+          if (CURLY_DOUBLE_QUOTE_REGEX.test(propertyValue)) {
+            context.report({
+              node: property.value,
+              messageId: 'useStraightDoubleQuote',
               data: {
                 PH1: propertyValue,
               },

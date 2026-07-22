@@ -247,12 +247,11 @@ Learn more`,
 
     const icon = row.shadowRoot.querySelector('devtools-icon');
     assert.instanceOf(icon, HTMLElement);
-    assert.strictEqual(
-        icon.title,
-        'This attempt to set a cookie via a Set-Cookie header was blocked because it had the ' +
-            '"Secure" attribute but was not received over a secure connection.\nThis attempt to ' +
-            'set a cookie via a Set-Cookie header was blocked because it was not sent over a ' +
-            'secure connection and would have overwritten a cookie with the Secure attribute.');
+    assert.strictEqual(icon.title,
+                       'This attempt to set a cookie via a "Set-Cookie" header was blocked because it had the ' +
+                           '"Secure" attribute but was not received over a secure connection.\nThis attempt to ' +
+                           'set a cookie via a "Set-Cookie" header was blocked because it was not sent over a ' +
+                           'secure connection and would have overwritten a cookie with the "Secure" attribute.');
   });
 
   it('marks overridden headers', async () => {

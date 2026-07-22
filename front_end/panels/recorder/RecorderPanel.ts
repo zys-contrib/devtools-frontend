@@ -146,7 +146,7 @@ const UIStrings = {
    * @example {allow importing} PH1
    */
   doNotImport:
-      'Don’t import recordings you don’t understand or haven’t reviewed yourself into DevTools. This could allow attackers to steal your identity or take control of your computer. Type “{PH1}” below to allow importing.',
+      'Don’t import recordings you don’t understand or haven’t reviewed yourself into DevTools. This could allow attackers to steal your identity or take control of your computer. Type "{PH1}" below to allow importing.',
   /**
    * @description Text a user needs to type in order to confirm that they
    * are aware of the danger of importing code into the Recorder panel.
@@ -156,7 +156,7 @@ const UIStrings = {
    * @description Input box placeholder which instructs the user to type 'allow importing' into the input box. IMPORTANT: keep double quotes around PH1 and do not use single quotes.
    * @example {allow importing} PH1
    */
-  typeAllowImporting: 'Type “{PH1}”',
+  typeAllowImporting: 'Type "{PH1}"',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('panels/recorder/RecorderPanel.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);

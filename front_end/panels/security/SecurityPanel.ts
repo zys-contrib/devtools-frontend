@@ -236,7 +236,7 @@ const UIStrings = {
   /**
    * @description Description of the security explanation when the page includes a form with a non-secure action attribute.
    */
-  thisPageIncludesAFormWithA: 'This page includes a form with a non-secure “action” attribute.',
+  thisPageIncludesAFormWithA: 'This page includes a form with a non-secure `action` attribute.',
   /**
    * @description Summary phrase in the Security panel when active content with certificate errors was run on the site.
    */

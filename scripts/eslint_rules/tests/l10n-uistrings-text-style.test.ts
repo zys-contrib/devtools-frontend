@@ -102,5 +102,16 @@ new RuleTester().run('l10n-uistrings-text-style', rule, {
         },
       ],
     },
+    {
+      code: 'const UIStrings = { foo: \'Click “Add”\' } as const;',
+      errors: [
+        {
+          messageId: 'useStraightDoubleQuote',
+          data: {
+            PH1: 'Click “Add”',
+          },
+        },
+      ],
+    },
   ],
 });
