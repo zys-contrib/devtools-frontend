@@ -209,6 +209,13 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
       assert.deepEqual(children, ['red', 'shorter', 'hue']);
     });
 
+    it('does not break inspector for empty URL', () => {
+      const stylePropertyTreeElement = getTreeElement('background-image', 'url()');
+      stylePropertyTreeElement.updateTitle();
+      assert.exists(stylePropertyTreeElement.valueElement);
+      assert.strictEqual(stylePropertyTreeElement.valueElement.textContent, 'url()');
+    });
+
     describe('color-mix swatch', () => {
       it('should show color mix swatch when color-mix is used with a color', () => {
         const stylePropertyTreeElement = getTreeElement('color', 'color-mix(in srgb, red, blue)');
