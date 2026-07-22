@@ -218,8 +218,17 @@ export class Universe {
   get cpuThrottlingManager(): SDK.CPUThrottlingManager.CPUThrottlingManager {
     return this.context.get(SDK.CPUThrottlingManager.CPUThrottlingManager);
   }
+
   get cruxManager(): CrUXManager.CrUXManager {
     return this.context.get(CrUXManager.CrUXManager);
+  }
+
+  get cssWorkspaceBinding(): Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding {
+    return this.context.get(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding);
+  }
+
+  get debuggerWorkspaceBinding(): Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding {
+    return this.context.get(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding);
   }
 
   // The DeviceModeModel may not be present, as emulation is only present for the `devtools_app` entrypoint, but not for the others.

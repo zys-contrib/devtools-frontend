@@ -10,6 +10,7 @@ import * as Host from '../../../core/host/host.js';
 import * as Platform from '../../../core/platform/platform.js';
 import * as SDK from '../../../core/sdk/sdk.js';
 import * as Protocol from '../../../generated/protocol.js';
+import * as Bindings from '../../../models/bindings/bindings.js';
 import type * as Persistence from '../../../models/persistence/persistence.js';
 import * as Workspace from '../../../models/workspace/workspace.js';
 import {
@@ -22,6 +23,7 @@ import {
   createWorkspaceProject,
   setUpEnvironment,
 } from '../../../testing/OverridesHelpers.js';
+import {TestUniverse} from '../../../testing/TestUniverse.js';
 import {
   recordedMetricsContain,
   resetRecordedMetrics,
@@ -175,6 +177,10 @@ function isRowFocused(
 
 describeWithEnvironment('ResponseHeaderSection', () => {
   beforeEach(async () => {
+    const universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
     await setUpEnvironment();
     resetRecordedMetrics();
   });

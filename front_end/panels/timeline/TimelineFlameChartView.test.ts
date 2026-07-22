@@ -8,6 +8,7 @@ import sinon from 'sinon';
 import * as Common from '../../core/common/common.js';
 import * as Platform from '../../core/platform/platform.js';
 import * as AIAssistance from '../../models/ai_assistance/ai_assistance.js';
+import * as Bindings from '../../models/bindings/bindings.js';
 import * as Trace from '../../models/trace/trace.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import * as TraceBounds from '../../services/trace_bounds/trace_bounds.js';
@@ -17,6 +18,7 @@ import {
   deinitializeGlobalVars,
   initializeGlobalVars,
 } from '../../testing/EnvironmentHelpers.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 import {
   allThreadEntriesInTrace,
   microsecondsTraceWindow,
@@ -91,6 +93,10 @@ describe('TimelineFlameChartView', function() {
   });
 
   beforeEach(() => {
+    const universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
     setupIgnoreListManagerEnvironment();
     const actionRegistryInstance = UI.ActionRegistry.ActionRegistry.instance({forceNew: true});
     UI.ShortcutRegistry.ShortcutRegistry.instance({forceNew: true, actionRegistry: actionRegistryInstance});

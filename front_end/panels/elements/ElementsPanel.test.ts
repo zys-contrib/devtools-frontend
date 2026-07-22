@@ -8,6 +8,7 @@ import sinon from 'sinon';
 import * as Common from '../../core/common/common.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
+import * as Bindings from '../../models/bindings/bindings.js';
 import * as ComputedStyle from '../../models/computed_style/computed_style.js';
 import {raf, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {
@@ -19,6 +20,7 @@ import {
 import {expectCall, expectCalled} from '../../testing/ExpectStubCall.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {dispatchEvent} from '../../testing/MockConnection.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as UI from '../../ui/legacy/legacy.js';
 
 import * as Elements from './elements.js';
@@ -28,6 +30,10 @@ describeWithEnvironment('ElementsPanel', () => {
   let connection: MockCDPConnection;
 
   beforeEach(() => {
+    const universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
     stubNoopSettings();
     connection = new MockCDPConnection();
     target = createTarget({connection});

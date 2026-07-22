@@ -9,8 +9,8 @@ import * as TextUtils from '../../core/text_utils/text_utils.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as Workspace from '../workspace/workspace.js';
 
-import {CSSWorkspaceBinding} from './CSSWorkspaceBinding.js';
-import {DebuggerWorkspaceBinding} from './DebuggerWorkspaceBinding.js';
+import type {CSSWorkspaceBinding} from './CSSWorkspaceBinding.js';
+import type {DebuggerWorkspaceBinding} from './DebuggerWorkspaceBinding.js';
 import {type LiveLocation, LiveLocationPool, LiveLocationWithPool} from './LiveLocation.js';
 
 export interface MessageSource {
@@ -27,17 +27,23 @@ export class PresentationSourceFrameMessageManager implements
   #targetToMessageHelperMap = new WeakMap<SDK.Target.Target, PresentationSourceFrameMessageHelper>();
   #targetManager: SDK.TargetManager.TargetManager;
   readonly #workspace: Workspace.Workspace.WorkspaceImpl;
-  constructor(targetManager: SDK.TargetManager.TargetManager, workspace: Workspace.Workspace.WorkspaceImpl) {
+  readonly #debuggerWorkspaceBinding: DebuggerWorkspaceBinding;
+  readonly #cssWorkspaceBinding: CSSWorkspaceBinding;
+  constructor(targetManager: SDK.TargetManager.TargetManager, workspace: Workspace.Workspace.WorkspaceImpl,
+              debuggerWorkspaceBinding: DebuggerWorkspaceBinding, cssWorkspaceBinding: CSSWorkspaceBinding) {
     this.#workspace = workspace;
     this.#targetManager = targetManager;
+    this.#debuggerWorkspaceBinding = debuggerWorkspaceBinding;
+    this.#cssWorkspaceBinding = cssWorkspaceBinding;
     targetManager.observeModels(SDK.DebuggerModel.DebuggerModel, this);
     targetManager.observeModels(SDK.CSSModel.CSSModel, this);
   }
 
   modelAdded(model: SDK.DebuggerModel.DebuggerModel|SDK.CSSModel.CSSModel): void {
     const target = model.target();
-    const helper =
-        this.#targetToMessageHelperMap.get(target) ?? new PresentationSourceFrameMessageHelper(this.#workspace);
+    const helper = this.#targetToMessageHelperMap.get(target) ??
+        new PresentationSourceFrameMessageHelper(this.#workspace, this.#debuggerWorkspaceBinding,
+                                                 this.#cssWorkspaceBinding);
     if (model instanceof SDK.DebuggerModel.DebuggerModel) {
       helper.setDebuggerModel(model);
     } else {
@@ -68,8 +74,18 @@ export class PresentationSourceFrameMessageManager implements
 export class PresentationConsoleMessageManager {
   #sourceFrameMessageManager: PresentationSourceFrameMessageManager;
 
-  constructor(targetManager: SDK.TargetManager.TargetManager, workspace: Workspace.Workspace.WorkspaceImpl) {
-    this.#sourceFrameMessageManager = new PresentationSourceFrameMessageManager(targetManager, workspace);
+  constructor(
+      targetManager: SDK.TargetManager.TargetManager,
+      workspace: Workspace.Workspace.WorkspaceImpl,
+      debuggerWorkspaceBinding: DebuggerWorkspaceBinding,
+      cssWorkspaceBinding: CSSWorkspaceBinding,
+  ) {
+    this.#sourceFrameMessageManager = new PresentationSourceFrameMessageManager(
+        targetManager,
+        workspace,
+        debuggerWorkspaceBinding,
+        cssWorkspaceBinding,
+    );
     targetManager.addModelListener(SDK.ConsoleModel.ConsoleModel, SDK.ConsoleModel.Events.MessageAdded,
                                    event => this.consoleMessageAdded(event.data));
     SDK.ConsoleModel.ConsoleModel.allMessagesUnordered(targetManager).forEach(this.consoleMessageAdded, this);
@@ -86,8 +102,8 @@ export class PresentationConsoleMessageManager {
     const level = consoleMessage.level === Protocol.Log.LogEntryLevel.Error ?
         Workspace.UISourceCode.Message.Level.ERROR :
         Workspace.UISourceCode.Message.Level.WARNING;
-    this.#sourceFrameMessageManager.addMessage(
-        new Workspace.UISourceCode.Message(level, consoleMessage.messageText), consoleMessage, runtimeModel.target());
+    this.#sourceFrameMessageManager.addMessage(new Workspace.UISourceCode.Message(level, consoleMessage.messageText),
+                                               consoleMessage, runtimeModel.target());
   }
 }
 
@@ -100,9 +116,14 @@ export class PresentationSourceFrameMessageHelper {
                                   }>>();
   readonly #locationPool: LiveLocationPool;
   readonly #workspace: Workspace.Workspace.WorkspaceImpl;
+  readonly #debuggerWorkspaceBinding: DebuggerWorkspaceBinding;
+  readonly #cssWorkspaceBinding: CSSWorkspaceBinding;
 
-  constructor(workspace: Workspace.Workspace.WorkspaceImpl) {
+  constructor(workspace: Workspace.Workspace.WorkspaceImpl, debuggerWorkspaceBinding: DebuggerWorkspaceBinding,
+              cssWorkspaceBinding: CSSWorkspaceBinding) {
     this.#workspace = workspace;
+    this.#debuggerWorkspaceBinding = debuggerWorkspaceBinding;
+    this.#cssWorkspaceBinding = cssWorkspaceBinding;
     this.#locationPool = new LiveLocationPool();
 
     this.#workspace.addEventListener(Workspace.Workspace.Events.UISourceCodeAdded, this.#uiSourceCodeAdded.bind(this));
@@ -127,12 +148,13 @@ export class PresentationSourceFrameMessageHelper {
       throw new Error('Cannot set CSSModel twice');
     }
     this.#cssModel = cssModel;
-    cssModel.addEventListener(
-        SDK.CSSModel.Events.StyleSheetAdded, event => queueMicrotask(() => this.#styleSheetAdded(event)));
+    cssModel.addEventListener(SDK.CSSModel.Events.StyleSheetAdded,
+                              event => queueMicrotask(() => this.#styleSheetAdded(event)));
   }
 
   async addMessage(message: Workspace.UISourceCode.Message, source: MessageSource): Promise<void> {
-    const presentation = new PresentationSourceFrameMessage(message, this.#locationPool);
+    const presentation = new PresentationSourceFrameMessage(message, this.#locationPool, this.#debuggerWorkspaceBinding,
+                                                            this.#cssWorkspaceBinding);
     const location = this.#rawLocation(source) ?? this.#cssLocation(source) ?? this.#uiLocation(source);
     if (location) {
       await presentation.updateLocationSource(location);
@@ -176,8 +198,8 @@ export class PresentationSourceFrameMessageHelper {
     }
     const callFrame = source.stackTrace?.callFrames ? source.stackTrace.callFrames[0] : null;
     if (callFrame) {
-      return this.#debuggerModel.createRawLocationByScriptId(
-          callFrame.scriptId, callFrame.lineNumber, callFrame.columnNumber);
+      return this.#debuggerModel.createRawLocationByScriptId(callFrame.scriptId, callFrame.lineNumber,
+                                                             callFrame.columnNumber);
     }
     if (source.url) {
       return this.#debuggerModel.createRawLocationByURL(source.url, source.line, source.column);
@@ -252,9 +274,8 @@ export class PresentationSourceFrameMessageHelper {
 
 class FrozenLiveLocation extends LiveLocationWithPool {
   #uiLocation: Workspace.UISourceCode.UILocation;
-  constructor(
-      uiLocation: Workspace.UISourceCode.UILocation, updateDelegate: (arg0: LiveLocation) => Promise<void>,
-      locationPool: LiveLocationPool) {
+  constructor(uiLocation: Workspace.UISourceCode.UILocation, updateDelegate: (arg0: LiveLocation) => Promise<void>,
+              locationPool: LiveLocationPool) {
     super(updateDelegate, locationPool);
     this.#uiLocation = uiLocation;
   }
@@ -269,8 +290,17 @@ export class PresentationSourceFrameMessage {
   #liveLocation?: LiveLocation;
   readonly #locationPool: LiveLocationPool;
   readonly #message: Workspace.UISourceCode.Message;
+  readonly #debuggerWorkspaceBinding: DebuggerWorkspaceBinding;
+  readonly #cssWorkspaceBinding: CSSWorkspaceBinding;
 
-  constructor(message: Workspace.UISourceCode.Message, locationPool: LiveLocationPool) {
+  constructor(
+      message: Workspace.UISourceCode.Message,
+      locationPool: LiveLocationPool,
+      debuggerWorkspaceBinding: DebuggerWorkspaceBinding,
+      cssWorkspaceBinding: CSSWorkspaceBinding,
+  ) {
+    this.#debuggerWorkspaceBinding = debuggerWorkspaceBinding;
+    this.#cssWorkspaceBinding = cssWorkspaceBinding;
     this.#message = message;
     this.#locationPool = locationPool;
   }
@@ -278,11 +308,10 @@ export class PresentationSourceFrameMessage {
   async updateLocationSource(source: SDK.DebuggerModel.Location|Workspace.UISourceCode.UILocation|
                              SDK.CSSModel.CSSLocation): Promise<void> {
     if (source instanceof SDK.DebuggerModel.Location) {
-      await DebuggerWorkspaceBinding.instance().createLiveLocation(
-          source, this.#updateLocation.bind(this), this.#locationPool);
+      await this.#debuggerWorkspaceBinding.createLiveLocation(source, this.#updateLocation.bind(this),
+                                                              this.#locationPool);
     } else if (source instanceof SDK.CSSModel.CSSLocation) {
-      await CSSWorkspaceBinding.instance().createLiveLocation(
-          source, this.#updateLocation.bind(this), this.#locationPool);
+      await this.#cssWorkspaceBinding.createLiveLocation(source, this.#updateLocation.bind(this), this.#locationPool);
     } else if (source instanceof Workspace.UISourceCode.UILocation) {
       if (!this.#liveLocation) {  // Don't "downgrade" the location if a debugger or css mapping was already successful
         this.#liveLocation = new FrozenLiveLocation(source, this.#updateLocation.bind(this), this.#locationPool);

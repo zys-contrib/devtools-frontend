@@ -26,6 +26,7 @@ import {
 import {expectCall, expectCalled} from '../../testing/ExpectStubCall.js';
 import {stubFileManager} from '../../testing/FileManagerHelpers.js';
 import {dispatchEvent} from '../../testing/MockConnection.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as TextEditor from '../../ui/components/text_editor/text_editor.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import {AiCodeCompletionSummaryToolbar} from '../common/common.js';
@@ -38,6 +39,10 @@ describeWithEnvironment('ConsoleView', () => {
   let consoleView: Console.ConsoleView.ConsoleView;
 
   beforeEach(() => {
+    const universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
     registerNoopActions(['console.clear', 'console.clear.history', 'console.create-pin']);
     consoleView = Console.ConsoleView.ConsoleView.instance({forceNew: true, viewportThrottlerTimeout: 0});
   });

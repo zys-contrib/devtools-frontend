@@ -7,10 +7,12 @@ import sinon from 'sinon';
 
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
+import * as Bindings from '../../models/bindings/bindings.js';
 import * as IssuesManager from '../../models/issues_manager/issues_manager.js';
 import {doubleRaf, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {createTarget, describeWithEnvironment, expectConsoleLogs} from '../../testing/EnvironmentHelpers.js';
 import {MockIssuesModel} from '../../testing/MockIssuesModel.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as UI from '../../ui/legacy/legacy.js';
 
 import * as Elements from './elements.js';
@@ -21,6 +23,10 @@ describeWithEnvironment('ElementsTreeOutline', () => {
   let treeOutline: Elements.ElementsTreeOutline.ElementsTreeOutline;
 
   beforeEach(() => {
+    const universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
     target = createTarget();
 
     treeOutline =

@@ -460,8 +460,12 @@ export class MainImpl {
     targetManager.addEventListener(
         SDK.TargetManager.Events.SUSPEND_STATE_CHANGED, this.#onSuspendStateChanged.bind(this));
 
-    new Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager(targetManager,
-                                                                                    this.#universe.workspace);
+    new Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager(
+        targetManager,
+        this.#universe.workspace,
+        this.#universe.debuggerWorkspaceBinding,
+        this.#universe.cssWorkspaceBinding,
+    );
     targetManager.setScopeTarget(targetManager.primaryPageTarget());
     UI.Context.Context.instance().addFlavorChangeListener(SDK.Target.Target, ({data}) => {
       const outermostTarget = data?.outermostTarget();

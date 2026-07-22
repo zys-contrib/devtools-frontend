@@ -6,6 +6,7 @@ import * as Common from '../../core/common/common.js';
 import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
+import * as Bindings from '../bindings/bindings.js';
 import * as Workspace from '../workspace/workspace.js';
 
 import {BounceTrackingIssue} from './BounceTrackingIssue.js';
@@ -231,15 +232,21 @@ export class IssuesManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes
   #frameManager: SDK.FrameManager.FrameManager;
   #targetManager: SDK.TargetManager.TargetManager;
 
-  constructor(private readonly showThirdPartyIssuesSetting?: Common.Settings.Setting<boolean>,
-              private readonly hideIssueSetting?: Common.Settings.Setting<HideIssueMenuSetting>,
-              frameManager: SDK.FrameManager.FrameManager = SDK.FrameManager.FrameManager.instance(),
-              targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
-              workspace: Workspace.Workspace.WorkspaceImpl = Workspace.Workspace.WorkspaceImpl.instance()) {
+  constructor(
+      private readonly showThirdPartyIssuesSetting?: Common.Settings.Setting<boolean>,
+      private readonly hideIssueSetting?: Common.Settings.Setting<HideIssueMenuSetting>,
+      frameManager: SDK.FrameManager.FrameManager = SDK.FrameManager.FrameManager.instance(),
+      targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
+      workspace: Workspace.Workspace.WorkspaceImpl = Workspace.Workspace.WorkspaceImpl.instance(),
+      debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+          Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance(),
+      cssWorkspaceBinding: Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding =
+          Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding.instance(),
+  ) {
     super();
     this.#frameManager = frameManager;
     this.#targetManager = targetManager;
-    new SourceFrameIssuesManager(this, targetManager, workspace);
+    new SourceFrameIssuesManager(this, targetManager, workspace, debuggerWorkspaceBinding, cssWorkspaceBinding);
     this.#targetManager.observeModels(SDK.IssuesModel.IssuesModel, this);
     this.#targetManager.addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
                                          SDK.ResourceTreeModel.Events.PrimaryPageChanged, this.#onPrimaryPageChanged,

@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
 
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
@@ -14,6 +15,8 @@ import {
   StubIssue,
   ThirdPartyStubIssue,
 } from '../../testing/StubIssue.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
+import * as Bindings from '../bindings/bindings.js';
 import * as IssuesManager from '../issues_manager/issues_manager.js';
 
 describeWithEnvironment('IssuesManager', () => {
@@ -21,6 +24,10 @@ describeWithEnvironment('IssuesManager', () => {
   let model: SDK.IssuesModel.IssuesModel;
 
   beforeEach(() => {
+    const universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
     target = createTarget();
     const maybeModel = target.model(SDK.IssuesModel.IssuesModel);
     assert.exists(maybeModel);

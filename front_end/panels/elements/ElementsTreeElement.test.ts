@@ -16,6 +16,7 @@ import * as Workspace from '../../models/workspace/workspace.js';
 import {assertScreenshot, raf, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {createTarget, describeWithEnvironment, registerActions} from '../../testing/EnvironmentHelpers.js';
 import {dispatchEvent} from '../../testing/MockConnection.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
 import * as UI from '../../ui/legacy/legacy.js';
 import {html} from '../../ui/lit/lit.js';
@@ -155,7 +156,13 @@ describeWithEnvironment('ElementsTreeElement', () => {
     hasScroll: false,
   };
 
+  let universe: TestUniverse;
+
   beforeEach(() => {
+    universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
     registerActions([{
       actionId: 'freestyler.element-panel-context',
       title: () => 'Debug with AI' as Platform.UIString.LocalizedString,
@@ -167,18 +174,11 @@ describeWithEnvironment('ElementsTreeElement', () => {
     let target: SDK.Target.Target;
 
     beforeEach(() => {
-      const workspace = Workspace.Workspace.WorkspaceImpl.instance({forceNew: true});
-      const targetManager = SDK.TargetManager.TargetManager.instance();
-      const ignoreListManager = Workspace.IgnoreListManager.IgnoreListManager.instance({forceNew: true});
-      Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance({
-        forceNew: true,
-        resourceMapping: new Bindings.ResourceMapping.ResourceMapping(targetManager, workspace),
-        targetManager,
-        ignoreListManager,
-        workspace,
-      });
+      sinon.stub(Workspace.Workspace.WorkspaceImpl, 'instance').returns(universe.workspace);
+      sinon.stub(SDK.TargetManager.TargetManager, 'instance').returns(universe.targetManager);
+      sinon.stub(Workspace.IgnoreListManager.IgnoreListManager, 'instance').returns(universe.ignoreListManager);
 
-      target = createTarget();
+      target = universe.createTarget();
     });
 
     it('renders fallback tooltip when no provenance is available', () => {
@@ -919,7 +919,11 @@ describeWithEnvironment('ElementsTreeElement highlighting', () => {
   }
 
   beforeEach(async () => {
-    const target = createTarget();
+    const universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
+    const target = universe.createTarget();
     domModel = target.model(SDK.DOMModel.DOMModel)!;
 
     const containerPayload = createDOMNodePayload('div', {id: 'container'});
@@ -1249,7 +1253,11 @@ describeWithEnvironment('ElementsTreeElement in Snapshot Mode', () => {
   let treeElement: Elements.ElementsTreeElement.ElementsTreeElement;
 
   beforeEach(() => {
-    target = createTarget();
+    const universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
+    target = universe.createTarget();
     domModel = target.model(SDK.DOMModel.DOMModel)!;
     node = new SDK.DOMModel.DOMNode(domModel);
     node.id = 1 as Protocol.DOM.NodeId;

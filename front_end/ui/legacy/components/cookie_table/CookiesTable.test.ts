@@ -5,7 +5,9 @@
 import sinon from 'sinon';
 
 import * as SDK from '../../../../core/sdk/sdk.js';
+import * as Bindings from '../../../../models/bindings/bindings.js';
 import {setupLocaleHooks} from '../../../../testing/LocaleHelpers.js';
+import {TestUniverse} from '../../../../testing/TestUniverse.js';
 import {createViewFunctionStub} from '../../../../testing/ViewFunctionHelpers.js';
 import * as UI from '../../legacy.js';
 
@@ -17,6 +19,13 @@ type CookiesTableViewFunctionStub = sinon.SinonSpy<[CookieTable.CookiesTable.Vie
 
 describe('CookiesTable', () => {
   setupLocaleHooks();
+
+  beforeEach(() => {
+    const universe = new TestUniverse();
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(universe.debuggerWorkspaceBinding);
+    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
+  });
 
   it('clicking Ask AI button calls the onAiButtonClick delegate', () => {
     const viewFunction =
