@@ -1537,4 +1537,34 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       );
     });
   });
+
+  describe('ConsoleCommand', () => {
+    it('substitutes control characters with replacement characters', () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          'var\u001d i = 0;',
+          {
+            type: SDK.ConsoleModel.FrontendMessageType.Command,
+          },
+      );
+      const linkifier = sinon.createStubInstance(Components.Linkifier.Linkifier);
+      const requestResolver = sinon.createStubInstance(Logs.RequestResolver.RequestResolver);
+      const issuesResolver = sinon.createStubInstance(IssuesManager.IssueResolver.IssueResolver);
+      const commandMessage = new Console.ConsoleViewMessage.ConsoleCommand(
+          rawMessage,
+          linkifier,
+          requestResolver,
+          issuesResolver,
+          /* onResize */ () => {},
+      );
+      const messageElement = commandMessage.toMessageElement();
+      const formattedCommand = messageElement.querySelector('.source-code');
+      assert.exists(formattedCommand);
+      assert.strictEqual(formattedCommand.textContent, 'var\uFFFD i = 0;');
+    });
+  });
 });
