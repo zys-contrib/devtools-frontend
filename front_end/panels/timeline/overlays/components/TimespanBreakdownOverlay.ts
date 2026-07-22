@@ -30,13 +30,18 @@ const renderSection =
       const style = Directives.styleMap(
           {left: position ? `${position.left}px` : undefined, width: position ? `${position.width}px` : undefined});
 
+      const durationText =
+          section.showDuration ? i18n.TimeUtilities.formatMicroSecondsAsMillisFixed(section.bounds.range) : '';
+      const labelText = section.label instanceof HTMLElement ? (section.label.textContent || '') : section.label;
+      const tooltip = durationText ? `${durationText} ${labelText}` : labelText;
+
       // clang-format off
     return html`
-      <div class="timespan-breakdown-overlay-section" style=${style}>
+      <div class="timespan-breakdown-overlay-section" style=${style} title=${tooltip}>
         <div class="timespan-breakdown-overlay-label">
           ${
             section.showDuration ?
-                html`<span class="duration-text">${i18n.TimeUtilities.formatMicroSecondsAsMillisFixed(section.bounds.range)}</span> ` :
+                html`<span class="duration-text">${durationText}</span> ` :
                 nothing
           }
           <span class="section-label-text">${section.label}</span>
