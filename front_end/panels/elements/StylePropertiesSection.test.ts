@@ -541,6 +541,109 @@ describeWithEnvironment('StylesPropertySection', () => {
       sinon.assert.calledTwice(setSelectorSpy);
       assert.strictEqual(setSelectorSpy.secondCall.args[2], '#inspectedChanged');
     });
+
+    it('marks matching selectors properly after rule creation and selector change', async () => {
+      const cssModel = createTarget({connection}).model(SDK.CSSModel.CSSModel) as SDK.CSSModel.CSSModel;
+
+      const origin = Protocol.CSS.StyleSheetOrigin.Regular;
+      const styleSheetId = '0' as Protocol.DOM.StyleSheetId;
+      const range = {startLine: 0, endLine: 1, startColumn: 0, endColumn: 0};
+      const header: Partial<Protocol.CSS.CSSStyleSheetHeader> = {
+        sourceMapURL: '',
+        isMutable: true,
+        isConstructed: false,
+        length: 1,
+        ...range,
+      };
+
+      const initialSelectors = [
+        {text: 'foo', range},
+        {text: '#inspected', range},
+        {text: '.bar', range},
+        {text: '#inspected', range},
+      ];
+
+      const matchedPayload: Protocol.CSS.RuleMatch[] = [{
+        rule: {
+          selectorList: {selectors: initialSelectors, text: 'foo, #inspected, .bar, #inspected'},
+          origin,
+          styleSheetId,
+          style: {cssProperties: [{name: 'color', value: 'red'}], shorthandEntries: [], range},
+        },
+        matchingSelectors: [1, 3],
+      }];
+
+      const matchedStyles =
+          await getMatchedStylesWithStylesheet({cssModel, origin, styleSheetId, ...header, matchedPayload, connection});
+      const declaration = matchedStyles.nodeStyles()[0];
+
+      const section = new Elements.StylePropertiesSection.StylePropertiesSection(
+          new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel), matchedStyles, declaration, 0,
+          new Map(), new Map(), null);
+
+      const selectorElement = section.element.querySelector('.selector') as HTMLElement;
+      assert.exists(selectorElement);
+
+      let simpleSelectors = selectorElement.querySelectorAll('.simple-selector');
+      assert.lengthOf(simpleSelectors, 4);
+      assert.strictEqual(simpleSelectors[0].textContent, 'foo');
+      assert.isFalse(simpleSelectors[0].classList.contains('selector-matches'));
+      assert.strictEqual(simpleSelectors[1].textContent, '#inspected');
+      assert.isTrue(simpleSelectors[1].classList.contains('selector-matches'));
+      assert.strictEqual(simpleSelectors[2].textContent, '.bar');
+      assert.isFalse(simpleSelectors[2].classList.contains('selector-matches'));
+      assert.strictEqual(simpleSelectors[3].textContent, '#inspected');
+      assert.isTrue(simpleSelectors[3].classList.contains('selector-matches'));
+
+      const newSelectorList = {
+        selectors: [
+          {text: '#inspected', range},
+          {text: 'a', range},
+          {text: 'hr', range},
+        ],
+        text: '#inspected, a, hr',
+      };
+
+      const rule = declaration.parentRule as SDK.CSSRule.CSSStyleRule;
+      assert.exists(rule);
+
+      connection.setSuccessHandler('CSS.getStyleSheetText',
+                                   () => ({text: 'foo, #inspected, .bar, #inspected {\n  color: red;\n}'}));
+      connection.setSuccessHandler('CSS.setRuleSelector', () => {
+        rule.selectors = [
+          {text: '#inspected'},
+          {text: 'a'},
+          {text: 'hr'},
+        ] as typeof rule.selectors;
+        return {
+          selectorList: newSelectorList,
+        };
+      });
+
+      let commitHandler: (element: Element, newText: string, oldText: string, context: unknown,
+                          moveDirection: string) => void;
+      sinon.stub(UI.InplaceEditor.InplaceEditor, 'startEditing').callsFake((element, config) => {
+        commitHandler = config.commitHandler as typeof commitHandler;
+        return {cancel: () => {}, commit: () => {}};
+      });
+
+      const setSelectorSpy = sinon.spy(cssModel, 'setSelectorText');
+
+      section.startEditingSelector();
+      commitHandler!(selectorElement, '#inspected, a, hr', 'foo, #inspected, .bar, #inspected', undefined, 'forward');
+
+      await setSelectorSpy.returnValues[0];
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      simpleSelectors = selectorElement.querySelectorAll('.simple-selector');
+      assert.lengthOf(simpleSelectors, 3);
+      assert.strictEqual(simpleSelectors[0].textContent, '#inspected');
+      assert.isTrue(simpleSelectors[0].classList.contains('selector-matches'));
+      assert.strictEqual(simpleSelectors[1].textContent, 'a');
+      assert.isFalse(simpleSelectors[1].classList.contains('selector-matches'));
+      assert.strictEqual(simpleSelectors[2].textContent, 'hr');
+      assert.isFalse(simpleSelectors[2].classList.contains('selector-matches'));
+    });
   });
 
   it('renders ancestor rules with rich sub-selectors and specificity tooltips when parent rule is found', async () => {
