@@ -115,4 +115,44 @@ describeWithEnvironment('ServiceWorkerCacheView', function() {
 
     view.detach();
   });
+
+  it('updates when the cache is changed', async () => {
+    let resolveUpdate: () => void;
+    let updatedForTestPromise = new Promise<void>(resolve => {
+      resolveUpdate = resolve;
+    });
+
+    const loadStub =
+        sinon.stub(cacheStorageModel, 'loadAllCacheData').callsFake((_cache, _skipCount, callback) => callback([], 0));
+
+    const updateStub = sinon
+                           .stub(Application.ServiceWorkerCacheViews.ServiceWorkerCacheView.prototype as unknown as
+                                     {updatedForTest: () => void},
+                                 'updatedForTest')
+                           .callsFake(() => {
+                             resolveUpdate();
+                           });
+
+    const view = new Application.ServiceWorkerCacheViews.ServiceWorkerCacheView(cacheStorageModel, cache);
+    view.markAsRoot();
+    renderElementIntoDOM(view);
+
+    try {
+      await updatedForTestPromise;
+      sinon.assert.calledOnce(loadStub);
+
+      updatedForTestPromise = new Promise<void>(resolve => {
+        resolveUpdate = resolve;
+      });
+
+      cacheStorageModel.dispatchEventToListeners(SDK.ServiceWorkerCacheModel.Events.CACHE_STORAGE_CONTENT_UPDATED,
+                                                 {cacheName: cache.cacheName, storageBucket: cache.storageBucket});
+
+      await updatedForTestPromise;
+      sinon.assert.calledTwice(loadStub);
+    } finally {
+      view.detach();
+      updateStub.restore();
+    }
+  });
 });
