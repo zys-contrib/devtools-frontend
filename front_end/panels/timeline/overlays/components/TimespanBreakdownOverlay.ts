@@ -47,10 +47,10 @@ const renderSection =
 
 export const DEFAULT_VIEW = (input: Input, _output: undefined, target: HTMLElement): void => {
   const style = Directives.styleMap({
-    left: input.left ? `${input.left}px` : undefined,
-    width: input.width ? `${input.width}px` : undefined,
-    top: input.top ? `${input.top}px` : undefined,
-    maxHeight: input.maxHeight ? `${input.maxHeight}px` : undefined,
+    left: input.left !== null ? `${input.left}px` : undefined,
+    width: input.width !== null ? `${input.width}px` : undefined,
+    top: input.top !== null ? `${input.top}px` : undefined,
+    maxHeight: input.maxHeight !== null ? `${input.maxHeight}px` : undefined,
     position: 'relative'
   });
   // clang-format off
