@@ -1,1 +1,1 @@
-# compression dictionary is disabled by settings
+# Compression Dictionary is disabled by settings

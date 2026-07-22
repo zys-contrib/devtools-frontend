@@ -1,3 +1,3 @@
-# compression dictionary transport feature is disabled
+# Compression Dictionary Transport feature is disabled
 
-enable chrome://flags/#enable-compression-dictionary-transport
+Please enable chrome://flags/#enable-compression-dictionary-transport

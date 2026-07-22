@@ -1,6 +1,6 @@
-# A `signature-input` header’s component isn’t a string
+# A `signature-input` header's component is not a string.
 
-Responses’ [`signature-input`](signatureInputHeader) header’s members’ values
+Responses' [`signature-input`](signatureInputHeader) header's members' values
 are [Inner Lists](sfInnerList) whose contents are each strings. Perhaps you
 forgot double-quotes around a component?
 
