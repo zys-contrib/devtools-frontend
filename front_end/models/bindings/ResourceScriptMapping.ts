@@ -19,14 +19,12 @@ import {metadataForURL} from './ResourceUtils.js';
 
 const UIStrings = {
   /**
-   * @description Error text displayed in the console when editing a live script fails. LiveEdit is
-   *the name of the feature for editing code that is already running.
+   * @description Error text displayed in the Console panel when editing a live script fails. LiveEdit is the name of the feature for editing code that is already running.
    * @example {warning} PH1
    */
   liveEditFailed: '`LiveEdit` failed: {PH1}',
   /**
-   * @description Error text displayed in the console when compiling a live-edited script fails. LiveEdit is
-   *the name of the feature for editing code that is already running.
+   * @description Error text displayed in the Console panel when compiling a live-edited script fails. LiveEdit is the name of the feature for editing code that is already running.
    * @example {connection lost} PH1
    */
   liveEditCompileFailed: '`LiveEdit` compile failed: {PH1}',
@@ -422,11 +420,11 @@ export class ResourceScriptFile extends Common.ObjectWrapper.ObjectWrapper<Resou
     function getErrorText(status: Protocol.Debugger.SetScriptSourceResponseStatus): string {
       switch (status) {
         case Protocol.Debugger.SetScriptSourceResponseStatus.BlockedByActiveFunction:
-          return 'Functions that are on the stack (currently being executed) can not be edited';
+          return 'Functions that are on the stack (currently being executed) can’t be edited';
         case Protocol.Debugger.SetScriptSourceResponseStatus.BlockedByActiveGenerator:
-          return 'Async functions/generators that are active can not be edited';
+          return 'Async functions/generators that are active can’t be edited';
         case Protocol.Debugger.SetScriptSourceResponseStatus.BlockedByTopLevelEsModuleChange:
-          return 'The top-level of ES modules can not be edited';
+          return 'The top level of JavaScript modules can’t be edited';
         case Protocol.Debugger.SetScriptSourceResponseStatus.CompileError:
         case Protocol.Debugger.SetScriptSourceResponseStatus.Ok:
           throw new Error('Compile errors and Ok status must not be reported on the console');
