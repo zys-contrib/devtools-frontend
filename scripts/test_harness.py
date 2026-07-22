@@ -351,6 +351,60 @@ class DevToolsTestHarness(unittest.TestCase):
         finally:
             os.remove(expectations_file)
 
+    def test_unit_expectations_skip_file(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/unit/unit.test.ts [ Skip ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/unit/unit.test.ts")
+            abs_test_file_2 = self._resolve_test_file(
+                "test/harness/unit/unit_2.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "node_modules/karma/bin/karma", "start",
+                "out/Default/gen/test/unit/karma.conf.js", "--", abs_test_file,
+                abs_test_file_2, f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(len(results), 2)
+            results.sort(key=lambda r: r.get('testId'))
+            self.assertEqual(results[0].get('status'), 'SKIP')
+            self.assertEqual(results[1].get('status'), 'PASS')
+        finally:
+            os.remove(expectations_file)
+
+    def test_unit_expectations_skip_exact_id(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/unit/unit.test.ts:unit:should_run_a_basic_unit_test_successfully [ Skip ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/unit/unit.test.ts")
+            abs_test_file_2 = self._resolve_test_file(
+                "test/harness/unit/unit_2.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "node_modules/karma/bin/karma", "start",
+                "out/Default/gen/test/unit/karma.conf.js", "--", abs_test_file,
+                abs_test_file_2, f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(len(results), 2)
+            results.sort(key=lambda r: r.get('testId'))
+            self.assertEqual(results[0].get('status'), 'SKIP')
+            self.assertEqual(results[1].get('status'), 'PASS')
+        finally:
+            os.remove(expectations_file)
+
     def test_e2e_ids(self):
         results, exit_code = self.run_e2e_test(
             "test/harness/e2e/multiple.test.ts:multiple:run2")

@@ -51,7 +51,7 @@ function parseExpectationLine(line: string): Expectation {
     }
 
     const platformsStr = match[2] ? match[2].trim() : '';
-    const platforms = platformsStr ? platformsStr.split(/\\s+/) : [];
+    const platforms = platformsStr ? platformsStr.split(/\s+/) : [];
     const validPlatforms = new Set(['mac', 'linux', 'win32']);
     for (const p of platforms) {
       if (!validPlatforms.has(p)) {
@@ -60,7 +60,7 @@ function parseExpectationLine(line: string): Expectation {
     }
 
     const resultsStr = match[4] ? match[4].trim() : '';
-    const results = (resultsStr ? resultsStr.split(/\\s+/) : []) as ExpectationResult[];
+    const results = (resultsStr ? resultsStr.split(/\s+/) : []) as ExpectationResult[];
     const validResults = new Set(['Failure', 'Pass', 'Skip']);
     for (const r of results) {
       if (!validResults.has(r)) {
@@ -155,4 +155,35 @@ export function isExpectedResult(
     return expectedResults.includes('Pass');
   }
   return expectedResults.includes('Failure');
+}
+
+export function getSkippedTests(): string[] {
+  const expectationsPath = TestConfig.expectationsFile ? path.resolve(TestConfig.expectationsFile) :
+                                                         path.join(SOURCE_ROOT, 'test', 'TestExpectations');
+
+  if (!parsedExpectations.has(expectationsPath)) {
+    if (fs.existsSync(expectationsPath)) {
+      const content = fs.readFileSync(expectationsPath, 'utf8');
+      parsedExpectations.set(expectationsPath, parseExpectations(content).filter(e => !e.isCommentOrEmpty));
+    } else {
+      parsedExpectations.set(expectationsPath, []);
+    }
+  }
+
+  const expectations = parsedExpectations.get(expectationsPath)!;
+
+  return expectations
+      .filter(e => {
+        if (!e.testName) {
+          return false;
+        }
+        if (e.results && !e.results.includes('Skip')) {
+          return false;
+        }
+        if (e.platforms && e.platforms.length > 0 && !e.platforms.includes(platform)) {
+          return false;
+        }
+        return true;
+      })
+      .map(e => e.testName as string);
 }

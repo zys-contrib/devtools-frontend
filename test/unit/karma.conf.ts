@@ -15,7 +15,7 @@ import {formatAsPatch, ResultsDBReporter} from '../../test/conductor/karma-resul
 import {CHECKOUT_ROOT, GEN_DIR, SOURCE_ROOT, TEST_ID_REGEX} from '../../test/conductor/paths.js';
 import * as ResultsDb from '../../test/conductor/resultsdb.js';
 import {loadTests, TestConfig} from '../../test/conductor/test_config.js';
-import {isExpectedResult} from '../../test/conductor/test_expectations.js';
+import {getSkippedTests, isExpectedResult} from '../../test/conductor/test_expectations.js';
 import {ScreenshotError, ScreenshotErrorReporter} from '../conductor/screenshot-error.js';
 import {assertElementScreenshotUnchanged} from '../shared/screenshots.js';
 
@@ -403,6 +403,14 @@ module.exports = function(config: any) {
       pathSeparator: path.sep,
       testIds: TestConfig.tests.filter(t => TEST_ID_REGEX.test(t)),
       repetitions: TestConfig.repetitions,
+      skippedTests: getSkippedTests().map(skipped => {
+        const parts = skipped.split(':');
+        const file = parts[0];
+        const caseName = parts.slice(1).join(':');
+        const jsFile = file.replace(/\.ts$/, '.js');
+        const absoluteJsFile = path.join(GEN_DIR, jsFile);
+        return parts.length > 1 ? `${absoluteJsFile}:${caseName}` : absoluteJsFile;
+      }),
     },
 
     plugins: [

@@ -121,6 +121,7 @@ karma.start = () => {
   const reportedTests = new Set<TestExt>();
   const testIds = new Set(karma.config.testIds);
   const seenTestIds = new Set<string>();
+  const skippedTests = karma.config.skippedTests || [];
 
   function shouldIncludeTest(test: Mocha.Test) {
     if (!test.file) {
@@ -131,6 +132,15 @@ karma.start = () => {
       throw new Error(`Duplicate test ${testId}`);
     }
     seenTestIds.add(testId);
+
+    const isSkipped = skippedTests.some((skippedTest: string) => {
+      return testId === skippedTest || testId.startsWith(`${skippedTest}:`);
+    });
+
+    if (isSkipped) {
+      test.pending = true;
+    }
+
     if (testIds.size === 0) {
       return true;
     }
