@@ -393,6 +393,64 @@ describeWithEnvironment('ConsoleViewMessage', () => {
           'ƒ appendChild() { [native code] }',
       );
     });
+
+    it('formats performance getters (PerformanceTiming and MemoryInfo)', () => {
+      const target = createTarget();
+      const runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel);
+      assert.exists(runtimeModel);
+      const performanceTimingObject = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        className: 'PerformanceTiming',
+        description: 'PerformanceTiming',
+        objectId: '1' as Protocol.Runtime.RemoteObjectId,
+        preview: {
+          type: Protocol.Runtime.ObjectPreviewType.Object,
+          description: 'PerformanceTiming',
+          overflow: true,
+          properties: [
+            {name: 'navigationStart', type: Protocol.Runtime.PropertyPreviewType.Number, value: '1000'},
+            {name: 'unloadEventStart', type: Protocol.Runtime.PropertyPreviewType.Number, value: '0'},
+            {name: 'unloadEventEnd', type: Protocol.Runtime.PropertyPreviewType.Number, value: '0'},
+            {name: 'redirectStart', type: Protocol.Runtime.PropertyPreviewType.Number, value: '0'},
+            {name: 'redirectEnd', type: Protocol.Runtime.PropertyPreviewType.Number, value: '0'},
+          ],
+        },
+      });
+      const memoryInfoObject = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        className: 'MemoryInfo',
+        description: 'MemoryInfo',
+        objectId: '2' as Protocol.Runtime.RemoteObjectId,
+        preview: {
+          type: Protocol.Runtime.ObjectPreviewType.Object,
+          description: 'MemoryInfo',
+          overflow: false,
+          properties: [
+            {name: 'totalJSHeapSize', type: Protocol.Runtime.PropertyPreviewType.Number, value: '10000000'},
+            {name: 'usedJSHeapSize', type: Protocol.Runtime.PropertyPreviewType.Number, value: '1000000'},
+            {name: 'jsHeapSizeLimit', type: Protocol.Runtime.PropertyPreviewType.Number, value: '2000000000'},
+          ],
+        },
+      });
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          '',
+          {
+            type: Protocol.Runtime.ConsoleAPICalledEventType.Log,
+            parameters: [performanceTimingObject, memoryInfoObject],
+          },
+      );
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      const textContent = messageElement.deepTextContent();
+      assert.include(textContent, 'PerformanceTiming');
+      assert.include(textContent, 'navigationStart');
+      assert.include(textContent, 'MemoryInfo');
+      assert.include(textContent, 'totalJSHeapSize');
+    });
   });
   describe('console insights', () => {
     const createMessage = (
