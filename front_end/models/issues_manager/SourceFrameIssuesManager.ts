@@ -31,6 +31,7 @@ export class SourceFrameIssuesManager {
     this.#sourceFrameMessageManager =
         new Bindings.PresentationConsoleMessageHelper.PresentationSourceFrameMessageManager(
             targetManager, workspace, debuggerWorkspaceBinding, cssWorkspaceBinding);
+    this.#sourceFrameMessageManager.enable();
     this.issuesManager.addEventListener(Events.ISSUE_ADDED, this.#onIssueAdded, this);
     this.issuesManager.addEventListener(Events.FULL_UPDATE_REQUIRED, this.#onFullUpdateRequired, this);
   }

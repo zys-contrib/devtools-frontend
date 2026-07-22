@@ -357,6 +357,16 @@ export class TestUniverse implements Foundation.Universe.Universe {
     return this.#context.get(Persistence.Persistence.PersistenceImpl);
   }
 
+  get presentationConsoleMessageManager(): Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager {
+    if (!this.#context.has(Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager)) {
+      const manager = new Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager(
+          this.targetManager, this.workspace, this.debuggerWorkspaceBinding, this.cssWorkspaceBinding);
+      manager.enable();
+      this.#context.set(Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager, manager);
+    }
+    return this.#context.get(Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager);
+  }
+
   get projectSettingsModel(): ProjectSettings.ProjectSettingsModel.ProjectSettingsModel {
     if (!this.#context.has(ProjectSettings.ProjectSettingsModel.ProjectSettingsModel)) {
       this.#context.set(ProjectSettings.ProjectSettingsModel.ProjectSettingsModel,

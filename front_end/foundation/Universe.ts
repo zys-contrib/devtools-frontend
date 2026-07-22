@@ -148,6 +148,14 @@ export class Universe {
         resourceMapping, targetManager, ignoreListManager, workspace);
     context.set(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, debuggerWorkspaceBinding);
 
+    const presentationConsoleMessageManager =
+        new Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager(
+            targetManager, workspace, debuggerWorkspaceBinding, cssWorkspaceBinding);
+    context.set(
+        Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager,
+        presentationConsoleMessageManager,
+    );
+
     const networkProjectManager = new Bindings.NetworkProject.NetworkProjectManager();
     context.set(Bindings.NetworkProject.NetworkProjectManager, networkProjectManager);
 
@@ -294,6 +302,10 @@ export class Universe {
 
   get persistence(): Persistence.Persistence.PersistenceImpl {
     return this.context.get(Persistence.Persistence.PersistenceImpl);
+  }
+
+  get presentationConsoleMessageManager(): Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager {
+    return this.context.get(Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager);
   }
 
   get projectSettingsModel(): ProjectSettings.ProjectSettingsModel.ProjectSettingsModel {

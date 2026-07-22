@@ -44,7 +44,6 @@ import * as SDK from '../../core/sdk/sdk.js';
 import * as Foundation from '../../foundation/foundation.js';
 import * as AiAssistanceModel from '../../models/ai_assistance/ai_assistance.js';
 import * as Badges from '../../models/badges/badges.js';
-import * as Bindings from '../../models/bindings/bindings.js';
 import * as CrUXManager from '../../models/crux-manager/crux-manager.js';
 import * as IssuesManager from '../../models/issues_manager/issues_manager.js';
 import * as Persistence from '../../models/persistence/persistence.js';
@@ -460,12 +459,6 @@ export class MainImpl {
     targetManager.addEventListener(
         SDK.TargetManager.Events.SUSPEND_STATE_CHANGED, this.#onSuspendStateChanged.bind(this));
 
-    new Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager(
-        targetManager,
-        this.#universe.workspace,
-        this.#universe.debuggerWorkspaceBinding,
-        this.#universe.cssWorkspaceBinding,
-    );
     targetManager.setScopeTarget(targetManager.primaryPageTarget());
     UI.Context.Context.instance().addFlavorChangeListener(SDK.Target.Target, ({data}) => {
       const outermostTarget = data?.outermostTarget();
@@ -484,6 +477,7 @@ export class MainImpl {
 
     this.#universe.domDebuggerManager.initialize();
     this.#universe.cpuThrottlingManager.initialize();
+    this.#universe.presentationConsoleMessageManager.enable();
     void this.#universe.liveMetrics.enable();
     CrUXManager.CrUXManager.instance();
 

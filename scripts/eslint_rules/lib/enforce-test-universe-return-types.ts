@@ -26,6 +26,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding',
   'Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding',
   'Bindings.NetworkProject.NetworkProjectManager',
+  'Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager',
   'Bindings.ResourceMapping.ResourceMapping',
   'Breakpoints.BreakpointManager.BreakpointManager',
   'JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl',

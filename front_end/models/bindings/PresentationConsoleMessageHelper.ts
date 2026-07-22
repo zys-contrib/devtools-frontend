@@ -35,8 +35,11 @@ export class PresentationSourceFrameMessageManager implements
     this.#targetManager = targetManager;
     this.#debuggerWorkspaceBinding = debuggerWorkspaceBinding;
     this.#cssWorkspaceBinding = cssWorkspaceBinding;
-    targetManager.observeModels(SDK.DebuggerModel.DebuggerModel, this);
-    targetManager.observeModels(SDK.CSSModel.CSSModel, this);
+  }
+
+  enable(): void {
+    this.#targetManager.observeModels(SDK.DebuggerModel.DebuggerModel, this);
+    this.#targetManager.observeModels(SDK.CSSModel.CSSModel, this);
   }
 
   modelAdded(model: SDK.DebuggerModel.DebuggerModel|SDK.CSSModel.CSSModel): void {
@@ -91,6 +94,10 @@ export class PresentationConsoleMessageManager {
     SDK.ConsoleModel.ConsoleModel.allMessagesUnordered(targetManager).forEach(this.consoleMessageAdded, this);
     targetManager.addModelListener(SDK.ConsoleModel.ConsoleModel, SDK.ConsoleModel.Events.ConsoleCleared,
                                    () => this.#sourceFrameMessageManager.clear());
+  }
+
+  enable(): void {
+    this.#sourceFrameMessageManager.enable();
   }
 
   private consoleMessageAdded(consoleMessage: SDK.ConsoleModel.ConsoleMessage): void {
