@@ -7,46 +7,28 @@ function createSettingValue(category, settingName, defaultValue, settingType = "
     return { category, settingName, defaultValue, settingType };
 }
 export function stubNoopSettings() {
+    const createDummySetting = (name) => ({
+        name,
+        get: () => [],
+        set: () => { },
+        addChangeListener: () => { },
+        removeChangeListener: () => { },
+        setDisabled: () => { },
+        setTitle: () => { },
+        title: () => { },
+        asRegExp: () => { },
+        type: () => "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+        getAsArray: () => [],
+        descriptor: () => ({
+            name,
+            settingType: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+            defaultValue: false,
+        }),
+    });
     sinon.stub(Common.Settings.Settings, 'instance').returns({
-        createSetting: (name) => ({
-            name,
-            get: () => [],
-            set: () => { },
-            addChangeListener: () => { },
-            removeChangeListener: () => { },
-            setDisabled: () => { },
-            setTitle: () => { },
-            title: () => { },
-            asRegExp: () => { },
-            type: () => "boolean" /* Common.Settings.SettingType.BOOLEAN */,
-            getAsArray: () => [],
-        }),
-        moduleSetting: (name) => ({
-            name,
-            get: () => [],
-            set: () => { },
-            addChangeListener: () => { },
-            removeChangeListener: () => { },
-            setDisabled: () => { },
-            setTitle: () => { },
-            title: () => { },
-            asRegExp: () => { },
-            type: () => "boolean" /* Common.Settings.SettingType.BOOLEAN */,
-            getAsArray: () => [],
-        }),
-        createLocalSetting: (name) => ({
-            name,
-            get: () => [],
-            set: () => { },
-            addChangeListener: () => { },
-            removeChangeListener: () => { },
-            setDisabled: () => { },
-            setTitle: () => { },
-            title: () => { },
-            asRegExp: () => { },
-            type: () => "boolean" /* Common.Settings.SettingType.BOOLEAN */,
-            getAsArray: () => [],
-        }),
+        createSetting: createDummySetting,
+        moduleSetting: createDummySetting,
+        createLocalSetting: createDummySetting,
     });
 }
 export const DEFAULT_SETTING_REGISTRATIONS_FOR_TEST = [

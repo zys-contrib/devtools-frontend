@@ -126,7 +126,7 @@ const UIStrings = {
      * @example {http://site.com/lib.js.map} PH1
      * @example {HTTP error: status code 404, net::ERR_UNKNOWN_URL_SCHEME} PH2
      */
-    errorLoading: 'Error loading url {PH1}: {PH2}',
+    errorLoading: 'Error loading URL {PH1}: {PH2}',
     /**
      * @description Error message that is displayed in UI when a file needed for debugging information for a call frame is missing
      * @example {src/myapp.debug.wasm.dwp} PH1
@@ -580,7 +580,7 @@ export class DebuggerPlugin extends Plugin {
             show: async (popover) => {
                 let resolvedText = '';
                 if (selectedCallFrame.script.isJavaScript()) {
-                    const nameMap = await SourceMapScopes.NamesResolver.allVariablesInCallFrame(selectedCallFrame);
+                    const nameMap = await SourceMapScopes.NamesResolver.allVariablesInCallFrame(selectedCallFrame, Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance());
                     try {
                         resolvedText =
                             await Formatter.FormatterWorkerPool.formatterWorkerPool().javaScriptSubstitute(evaluationText, nameMap);
@@ -1844,7 +1844,9 @@ export async function computeScopeMappings(callFrame, rawLocationToEditorOffset)
         if (!scopeEnd) {
             break;
         }
-        const { properties } = await SourceMapScopes.NamesResolver.resolveScopeInObject(scope).getAllProperties(false, false);
+        const debuggerWorkspaceBinding = Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance();
+        const { properties } = await SourceMapScopes.NamesResolver.resolveScopeInObject(scope, debuggerWorkspaceBinding)
+            .getAllProperties(false, false);
         if (!properties || properties.length > MAX_PROPERTIES_IN_SCOPE_FOR_VALUE_DECORATIONS) {
             break;
         }

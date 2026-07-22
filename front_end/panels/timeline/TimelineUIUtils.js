@@ -71,7 +71,7 @@ const UIStrings = {
      * @description Text that only contain a placeholder
      * @example {100ms (at 200ms)} PH1
      */
-    emptyPlaceholder: '{PH1}', // eslint-disable-line @devtools/l10n-no-locked-or-placeholder-only-phrase
+    emptyPlaceholder: '{PH1}', // eslint-disable-line @devtools/l10n-uistrings-text-style
     /**
      * @description Text for timestamps of items
      */
@@ -187,7 +187,7 @@ const UIStrings = {
     /**
      * @description Text to refer to the URL associated with a given event.
      */
-    url: 'Url',
+    url: 'URL',
     /**
      * @description Text to indicate to the user the size of the cache (as a filesize - e.g. 5mb).
      */

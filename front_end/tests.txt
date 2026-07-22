@@ -354,6 +354,7 @@ panels/ai_assistance/components/ChatView.test.js
 panels/ai_assistance/components/DisabledWidget.test.js
 panels/ai_assistance/components/ExploreWidget.test.js
 panels/ai_assistance/components/ExportForAgentsDialog.test.js
+panels/ai_assistance/components/ImageResize.test.js
 panels/ai_assistance/components/MarkdownRendererWithCodeBlock.test.js
 panels/ai_assistance/components/OptInChangeDialog.test.js
 panels/ai_assistance/components/WalkthroughUtils.test.js
@@ -792,6 +793,7 @@ ui/legacy/components/object_ui/CustomPreviewComponent.test.js
 ui/legacy/components/object_ui/JavaScriptREPL.test.js
 ui/legacy/components/object_ui/ObjectPopoverHelper.test.js
 ui/legacy/components/object_ui/ObjectPropertiesSection.test.js
+ui/legacy/components/object_ui/RemoteObjectPreviewFormatter.test.js
 ui/legacy/components/perf_ui/ChartViewport.test.js
 ui/legacy/components/perf_ui/FilmStripView.test.js
 ui/legacy/components/perf_ui/FlameChart.test.js

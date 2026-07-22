@@ -17,7 +17,7 @@ export class WorkspaceDiffImpl extends Common.ObjectWrapper.ObjectWrapper {
     /** used in web tests */
     loadingUISourceCodes = new Map();
     #modified = new Set();
-    constructor(workspace, persistence = Persistence.Persistence.PersistenceImpl.instance(), networkPersistenceManager = Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance(), settings = Common.Settings.Settings.instance()) {
+    constructor(workspace, persistence, networkPersistenceManager, settings) {
         super();
         this.#persistence = persistence;
         this.#networkPersistenceManager = networkPersistenceManager;
@@ -155,7 +155,7 @@ export class UISourceCodeDiff extends Common.ObjectWrapper.ObjectWrapper {
     #requestDiffPromise = null;
     #pendingChanges = null;
     dispose = false;
-    constructor(uiSourceCode, networkPersistenceManager, settings = Common.Settings.Settings.instance()) {
+    constructor(uiSourceCode, networkPersistenceManager, settings) {
         super();
         this.#uiSourceCode = uiSourceCode;
         this.#networkPersistenceManager = networkPersistenceManager;
@@ -241,7 +241,7 @@ export class UISourceCodeDiff extends Common.ObjectWrapper.ObjectWrapper {
 }
 export function workspaceDiff({ forceNew } = {}) {
     if (!Root.DevToolsContext.globalInstance().has(WorkspaceDiffImpl) || forceNew) {
-        Root.DevToolsContext.globalInstance().set(WorkspaceDiffImpl, new WorkspaceDiffImpl(Workspace.Workspace.WorkspaceImpl.instance()));
+        Root.DevToolsContext.globalInstance().set(WorkspaceDiffImpl, new WorkspaceDiffImpl(Workspace.Workspace.WorkspaceImpl.instance(), Persistence.Persistence.PersistenceImpl.instance(), Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance(), Common.Settings.Settings.instance()));
     }
     return Root.DevToolsContext.globalInstance().get(WorkspaceDiffImpl);
 }

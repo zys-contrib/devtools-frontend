@@ -15988,6 +15988,75 @@ var CSSMatchedStyles = class _CSSMatchedStyles {
     Platform3.assertNotNullOrUndefined(this.#customHighlightPseudoDOMCascades);
     return new Set(this.#customHighlightPseudoDOMCascades.keys());
   }
+  /**
+   * Looks for a rule with the same selector chain as a specific parent rule of the current one.
+   * This finds a rule with the same guaranteed specificity, not necessarily THE parent rule,
+   * as the same selector string can be used on multiple rules in the same scope, in the same
+   * or different stylesheet.
+   *
+   * @param rule The (nested) rule whose parent rule selector should be matched
+   * @param nestingIndex Nesting depth of the parent selector to be matched, with 0 meaning direct parent, 1 grandparent rule and so on
+   * @returns A rule with the same selector chain and specificity as selected parent rule, if found. `null` otherwise
+   */
+  findParentRule(rule, nestingIndex) {
+    const selectorText = rule.nestingSelectors?.[nestingIndex];
+    if (!selectorText) {
+      return null;
+    }
+    const nestingSelectors = rule.nestingSelectors?.slice(nestingIndex + 1) ?? [];
+    const matchCascade = (cascade) => {
+      for (const style of cascade.styles()) {
+        if (this.isInherited(style)) {
+          continue;
+        }
+        const parentRule = style.parentRule;
+        if (!(parentRule instanceof CSSStyleRule)) {
+          continue;
+        }
+        if (parentRule.selectorText() !== selectorText) {
+          continue;
+        }
+        const ruleNestingSelectors = parentRule.nestingSelectors ?? [];
+        if (ruleNestingSelectors.length !== nestingSelectors.length) {
+          continue;
+        }
+        let matchesChain = true;
+        for (let i = 0; i < nestingSelectors.length; i++) {
+          if (ruleNestingSelectors[i] !== nestingSelectors[i]) {
+            matchesChain = false;
+            break;
+          }
+        }
+        if (matchesChain) {
+          return parentRule;
+        }
+      }
+      return null;
+    };
+    if (this.#mainDOMCascade) {
+      const match = matchCascade(this.#mainDOMCascade);
+      if (match) {
+        return match;
+      }
+    }
+    if (this.#pseudoDOMCascades) {
+      for (const cascade of this.#pseudoDOMCascades.values()) {
+        const match = matchCascade(cascade);
+        if (match) {
+          return match;
+        }
+      }
+    }
+    if (this.#customHighlightPseudoDOMCascades) {
+      for (const cascade of this.#customHighlightPseudoDOMCascades.values()) {
+        const match = matchCascade(cascade);
+        if (match) {
+          return match;
+        }
+      }
+    }
+    return null;
+  }
   nodeForStyle(style) {
     return this.#addedStyles.get(style) || this.#nodeForStyle.get(style) || null;
   }
@@ -31231,7 +31300,7 @@ var UIStrings9 = {
   /**
    * @description Tooltip to explain why a cookie was blocked
    */
-  notOnPath: "This cookie was blocked because its path was not an exact match for or a superdirectory of the request url\u2019s path.",
+  notOnPath: "This cookie was blocked because its path was not an exact match for or a superdirectory of the request URL\u2019s path.",
   /**
    * @description Tooltip to explain why a cookie was blocked
    */
@@ -31337,7 +31406,7 @@ var UIStrings9 = {
   /**
    * @description Tooltip to explain why an attempt to set a cookie via a `Set-Cookie` HTTP header on a request's response was blocked.
    */
-  blockedReasonInvalidDomain: "This attempt to set a cookie via a `Set-Cookie` header was blocked because its Domain attribute was invalid with regards to the current host url.",
+  blockedReasonInvalidDomain: "This attempt to set a cookie via a `Set-Cookie` header was blocked because its Domain attribute was invalid with regards to the current host URL.",
   /**
    * @description Tooltip to explain why an attempt to set a cookie via a `Set-Cookie` HTTP header on a request's response was blocked.
    */
@@ -31350,7 +31419,7 @@ var UIStrings9 = {
    * @description Text in Network Manager
    * @example {https://example.com} PH1
    */
-  setcookieHeaderIsIgnoredIn: "Set-Cookie header is ignored in response from url: {PH1}. The combined size of the name and value must be less than or equal to 4096 characters.",
+  setcookieHeaderIsIgnoredIn: "Set-Cookie header is ignored in response from URL: {PH1}. The combined size of the name and value must be less than or equal to 4096 characters.",
   /**
    * @description Tooltip to explain why the cookie should have been blocked by third-party cookie phaseout but is exempted.
    */
@@ -31370,7 +31439,7 @@ var UIStrings9 = {
   /**
    * @description Tooltip to explain why the cookie should have been blocked by third-party cookie phaseout but is exempted.
    */
-  exemptionReasonScheme: "This cookie is allowed by the top-level url scheme"
+  exemptionReasonScheme: "This cookie is allowed by the top-level URL scheme"
 };
 var str_9 = i18n21.i18n.registerUIStrings("core/sdk/NetworkRequest.ts", UIStrings9);
 var i18nString9 = i18n21.i18n.getLocalizedString.bind(void 0, str_9);
