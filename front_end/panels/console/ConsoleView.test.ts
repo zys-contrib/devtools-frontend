@@ -1123,4 +1123,52 @@ describeWithEnvironment('ConsoleView', () => {
     const link = row.querySelector('.link')?.textContent?.trim();
     assert.strictEqual(link, '(unknown)');
   });
+
+  it('shows timestamps when console-timestamps-enabled setting is toggled', async () => {
+    const target = createTarget();
+    SDK.TargetManager.TargetManager.instance().setScopeTarget(target);
+    consoleView.markAsRoot();
+    renderElementIntoDOM(consoleView);
+
+    const consoleModel = target.model(SDK.ConsoleModel.ConsoleModel);
+    assert.exists(consoleModel);
+
+    const timestampsSetting = Common.Settings.Settings.instance().moduleSetting('console-timestamps-enabled');
+    timestampsSetting.set(false);
+
+    const timestamp = 1400000000789;
+    const message = new SDK.ConsoleModel.ConsoleMessage(
+        target.model(SDK.RuntimeModel.RuntimeModel),
+        Protocol.Log.LogEntrySource.Other,
+        Protocol.Log.LogEntryLevel.Info,
+        'Message with timestamp',
+        {
+          type: Protocol.Runtime.ConsoleAPICalledEventType.Log,
+          timestamp,
+        },
+    );
+
+    consoleModel.addMessage(message);
+    await consoleView.getScheduledRefreshPromiseForTest();
+    await UI.Widget.Widget.allUpdatesComplete;
+
+    assert.strictEqual(consoleView.itemCount(), 1);
+    let itemElement = consoleView.itemElement(0) as Console.ConsoleViewMessage.ConsoleViewMessage;
+    assert.exists(itemElement);
+    assert.isNull(itemElement.contentElement().querySelector('.console-timestamp'));
+
+    timestampsSetting.set(true);
+
+    itemElement = consoleView.itemElement(0) as Console.ConsoleViewMessage.ConsoleViewMessage;
+    let timestampElement = itemElement.contentElement().querySelector('.console-timestamp');
+    assert.exists(timestampElement);
+    const expectedFormattedTimestamp = UI.UIUtils.formatTimestamp(timestamp, false) + ' ';
+    assert.strictEqual(timestampElement.textContent, expectedFormattedTimestamp);
+
+    timestampsSetting.set(false);
+
+    itemElement = consoleView.itemElement(0) as Console.ConsoleViewMessage.ConsoleViewMessage;
+    timestampElement = itemElement.contentElement().querySelector('.console-timestamp');
+    assert.isNull(timestampElement);
+  });
 });
