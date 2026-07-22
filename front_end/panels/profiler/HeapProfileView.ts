@@ -1,7 +1,6 @@
 // Copyright 2016 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-/* eslint-disable @devtools/no-imperative-dom-api */
 
 import '../../ui/components/icon_button/icon_button.js';
 
@@ -19,7 +18,7 @@ import * as PerfUI from '../../ui/legacy/components/perf_ui/perf_ui.js';
 import * as SettingsUI from '../../ui/legacy/components/settings_ui/settings_ui.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
 import * as UI from '../../ui/legacy/legacy.js';
-import {Directives, html, nothing, render, type TemplateResult} from '../../ui/lit/lit.js';
+import {Directives, html, type LitTemplate, nothing, render, type TemplateResult} from '../../ui/lit/lit.js';
 import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import {BottomUpProfileDataGridTree} from './BottomUpProfileDataGrid.js';
@@ -32,6 +31,7 @@ import {TopDownProfileDataGridTree} from './TopDownProfileDataGrid.js';
 import {WritableProfileHeader} from './WritableProfileHeader.js';
 
 const {repeat, ref} = Directives;
+const {widget, widgetRef} = UI.Widget;
 
 const UIStrings = {
   /**
@@ -187,94 +187,143 @@ export const enum ViewTypes {
   HEAVY = 'Heavy',
 }
 
-export class HeapProfileView extends UI.View.SimpleView implements UI.SearchableView.Searchable {
-  #renderDataGrid(): void {
-    if (!this.profileDataGridTree) {
-      return;
-    }
+export interface ViewInput {
+  timelineOverview: HeapTimelineOverview;
+  searchable: UI.SearchableView.Searchable;
+  hasTemporaryView: boolean;
+  viewType: ViewTypes|null;
+  profileDataGridTree: ProfileDataGridTree|undefined;
+  selectedNode: ProfileDataGridNode|null;
+  nodeFormatter: NodeFormatter;
+  columnHeader: (columnId: string) => Common.UIString.LocalizedString;
+  searchableView: UI.SearchableView.SearchableView|undefined;
+  dataProvider: ProfileFlameChartDataProvider|undefined;
+  onExpand: (node: ProfileDataGridNode) => void;
+  onCollapse: (node: ProfileDataGridNode) => void;
+  onSelect: (node: ProfileDataGridNode) => void;
+  onDeselect: () => void;
+  onContextMenu: (event: CustomEvent<UI.ContextMenu.ContextMenu>, node: ProfileDataGridNode) => void;
+  onSearchableViewMount: (widget: UI.SearchableView.SearchableView) => void;
+  onFlameChartEntryInvoked: (entryIndex: number) => void;
+  range?: {left: number, right: number};
+}
 
-    const onDeselect = (): void => {
-      this.#selectedNode = null;
-      this.nodeSelected(false);
-    };
+export interface ViewOutput {
+  performSearch?: (searchConfig: UI.SearchableView.SearchConfig, shouldJump: boolean, jumpBackwards?: boolean) => void;
+  jumpToNextSearchResult?: () => void;
+  jumpToPreviousSearchResult?: () => void;
+  onSearchCanceled?: () => void;
+}
 
-    let highlightIndex = -1;
-    if (this.profileDataGridTree && this.profileDataGridTree.searchResults) {
-      highlightIndex = this.profileDataGridTree.searchResultIndex + 1;
-    }
+export type View = (input: ViewInput, output: ViewOutput, target: HTMLElement|DocumentFragment) => void;
 
-    // clang-format off
-    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
-    render(html`
+export const DEFAULT_VIEW: View = (input, output, target) => {
+  const {searchableView, dataProvider} = input;
+  // clang-format off
+  render(html`
+    ${input.hasTemporaryView ? html`
+      <devtools-widget ${widget(() => input.timelineOverview)}></devtools-widget>` : nothing}
+    <devtools-widget ${widget(element => {
+        const searchableViewWidget = new UI.SearchableView.SearchableView(input.searchable, null, undefined, element);
+        searchableViewWidget.setPlaceholder(i18nString(UIStrings.findByCostMsNameOrFile));
+        return searchableViewWidget;
+      })}
+      ${widgetRef(UI.SearchableView.SearchableView, input.onSearchableViewMount)}>
+      ${input.viewType === ViewTypes.FLAME && searchableView && dataProvider ?  html`
+          <devtools-widget
+            autofocus
+            ${widget((e: HTMLElement) => new ProfileFlameChart(searchableView, dataProvider, e), {range: input.range})}
+            @EntryInvoked=${(e: CustomEvent<number>) => input.onFlameChartEntryInvoked(e.detail)}
+            ${widgetRef(ProfileFlameChart, widget => {
+              output.performSearch = widget.performSearch.bind(widget);
+              output.jumpToNextSearchResult = widget.jumpToNextSearchResult.bind(widget);
+              output.jumpToPreviousSearchResult = widget.jumpToPreviousSearchResult.bind(widget);
+              output.onSearchCanceled = widget.onSearchCanceled.bind(widget);
+            })}>
+          </devtools-widget>`
+        : input.profileDataGridTree ?  html`
+          <div class="data-grid-target vbox flex-auto">${renderDataGrid(input)}</div>`
+        : nothing}
+    </devtools-widget>`, target);
+  // clang-format on
+};
+
+function renderDataGrid(input: ViewInput): LitTemplate {
+  if (!input.profileDataGridTree) {
+    return nothing;
+  }
+
+  let highlightIndex = -1;
+  if (input.profileDataGridTree && input.profileDataGridTree.searchResults) {
+    highlightIndex = input.profileDataGridTree.searchResultIndex + 1;
+  }
+  // clang-format off
+  return html`
     <style>${profilesPanelStyles}</style>
     <devtools-data-grid class="flex-auto" name=${i18nString(UIStrings.profiler)} striped autofocus resize="last"
                         highlight=${highlightIndex >= 1 ? highlightIndex : nothing}
-                        @deselect=${onDeselect} .template=${html`
+                        @deselect=${input.onDeselect} .template=${html`
       <style>${profilesPanelStyles}</style>
       <table>
         <tr>
           <th id="self" width="120px" fixed weight="1" sortable sort="descending">
-            ${this.columnHeader('self')}
+            ${input.columnHeader('self')}
           </th>
           <th id="total" width="120px" fixed weight="1" sortable>
-            ${this.columnHeader('total')}
+            ${input.columnHeader('total')}
           </th>
           <th id="function" weight="3" sortable disclosure>
             ${i18nString(UIStrings.function)}
           </th>
         </tr>
-        ${repeat(this.profileDataGridTree.children,
-                  (node: ProfileDataGridNode) => node.callUID,
-                  (node: ProfileDataGridNode) => this.#renderNode(node))}
+        ${repeat(input.profileDataGridTree.children,
+                (node: ProfileDataGridNode) => node.callUID,
+                (node: ProfileDataGridNode) => renderNode(node, input))}
       </table>`}>
-    </devtools-data-grid>
-    `, this.dataGrid.element);
-    // clang-format on
+    </devtools-data-grid>`;
+  // clang-format on
+}
+
+function renderNode(node: ProfileDataGridNode, input: ViewInput): LitTemplate {
+  const onSelect = (): void => {
+    input.onSelect(node);
+  };
+  const onContextMenu = (event: CustomEvent<UI.ContextMenu.ContextMenu>): void => {
+    input.onContextMenu(event, node);
+  };
+  const onExpand = (): void => {
+    input.onExpand(node);
+  };
+  const onCollapse = (): void => {
+    input.onCollapse(node);
+  };
+
+  if (node.profileNode.scriptId !== '0' && !node.linkElement) {
+    node.linkElement = input.nodeFormatter.linkifyNode(node);
+    if (node.linkElement) {
+      (node.linkElement as HTMLElement).style.maxWidth = '75%';
+    }
   }
 
-  #renderNode(node: ProfileDataGridNode): TemplateResult {
-    const onSelect = (): void => {
-      this.#selectedNode = node;
-      this.nodeSelected(true);
-    };
-    const onContextMenu = (event: CustomEvent<UI.ContextMenu.ContextMenu>): void => {
-      this.populateContextMenu(event.detail, node);
-    };
-    const onExpand = (): void => {
-      node.expanded = true;
-      node.populate();
-      this.refresh();
-    };
-    const onCollapse = (): void => {
-      node.expanded = false;
-      this.refresh();
-    };
-
-    if (node.profileNode.scriptId !== '0' && !node.linkElement) {
-      node.linkElement = this.nodeFormatter.linkifyNode(node);
-      if (node.linkElement) {
-        (node.linkElement as HTMLElement).style.maxWidth = '75%';
-      }
-    }
-
-    // clang-format off
-    return html`
-  <tr data-uid=${node.callUID} ?selected=${this.#selectedNode === node} ?expanded=${node.expanded}
+  // clang-format off
+  return html`
+  <tr data-uid=${node.callUID} ?selected=${input.selectedNode === node} ?expanded=${node.expanded}
       ?highlighted=${node.searchMatchedSelfColumn || node.searchMatchedTotalColumn || node.searchMatchedFunctionColumn}
       @select=${onSelect}
-      @contextmenu=${onContextMenu} @expand=${onExpand} @collapse=${onCollapse}>
+      @contextmenu=${onContextMenu}
+      @expand=${onExpand} @collapse=${onCollapse}>
     <td data-value=${node.self} class="numeric-column ${node.searchMatchedSelfColumn ? 'highlight' : ''}"
-        aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.self)}, ${this.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
+        aria-label=${`${input.nodeFormatter.formatValueAccessibleText(node.self)}, ${input.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
       <div class="profile-multiple-values">
-        <span>${this.nodeFormatter.formatValue(node.self)}</span>
-        <span class="percent-column">${this.nodeFormatter.formatPercent(node.selfPercent, node)}</span>
+        <span>${input.nodeFormatter.formatValue(node.self)}</span>
+        <span class="percent-column">${input.nodeFormatter.formatPercent(node.selfPercent, node)}</span>
       </div>
     </td>
     <td data-value=${node.total} class="numeric-column ${node.searchMatchedTotalColumn ? 'highlight' : ''}"
-        aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.total)}, ${this.nodeFormatter.formatPercent(node.totalPercent, node)}`}>
+        aria-label=${`${input.nodeFormatter.formatValueAccessibleText(node.total)}, ${input.nodeFormatter.formatPercent(node.totalPercent, node)}`}>
       <div class="profile-multiple-values">
-        <span>${this.nodeFormatter.formatValue(node.total)}</span>
-        <span class="percent-column">${this.nodeFormatter.formatPercent(node.totalPercent, node)}</span>
+        <span>${input.nodeFormatter.formatValue(node.total)}</span>
+        <span class="percent-column">${input.nodeFormatter.formatPercent(node.totalPercent, node)}</span>
       </div>
     </td>
     <td data-value=${node.functionName} class="${node.searchMatchedFunctionColumn ? 'highlight' : ''} ${node.deoptReason ? 'not-optimized' : ''}">
@@ -290,12 +339,13 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
         ${node.expanded ? html`${repeat(
             node.children as ProfileDataGridNode[],
             child => child.callUID,
-            child => this.#renderNode(child))}` : nothing}
+            child => renderNode(child, input))}` : nothing}
       </table></td>` : nothing}
   </tr>`;
-    // clang-format on
-  }
+  // clang-format on
+}
 
+export class HeapProfileView extends UI.View.SimpleView implements UI.SearchableView.Searchable {
   profileHeader: SamplingHeapProfileHeader;
   readonly profileType: SamplingHeapProfileTypeBase;
   adjustedTotal: number;
@@ -309,7 +359,6 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   readonly timelineOverview: HeapTimelineOverview = new HeapTimelineOverview();
   profileInternal: CPUProfile.ProfileTreeModel.ProfileTreeModel|null = null;
   searchableViewInternal!: UI.SearchableView.SearchableView;
-  dataGrid: UI.Widget.Widget;
   viewSelectComboBox: HTMLSelectElement|undefined;
   focusButton: Buttons.Button.Button|undefined;
   excludeButton: Buttons.Button.Button|undefined;
@@ -324,28 +373,26 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   topDownProfileDataGridTree?: TopDownProfileDataGridTree|null;
   currentSearchResultIndex?: number;
   dataProvider?: ProfileFlameChartDataProvider;
-  flameChart?: ProfileFlameChart;
-  visibleView?: UI.Widget.Widget;
-  searchableElement?: ProfileDataGridTree|ProfileFlameChart;
   profileDataGridTree?: ProfileDataGridTree;
 
   #isNodeSelected = false;
+  #view: View;
+  #viewOutput: ViewOutput = {};
+
   #isResetEnabled = false;
   #selectedSize: number|null = null;
   #minId: number|null = null;
   #maxId: number|null = null;
+  #range?: {left: number, right: number};
   #lastAppliedRange: {minId: number, maxId: number}|null = null;
   #lastAppliedViewType: ViewTypes|null = null;
 
-  constructor(profileHeader: SamplingHeapProfileHeader) {
+  constructor(profileHeader: SamplingHeapProfileHeader, view: View = DEFAULT_VIEW) {
     super({
       title: i18nString(UIStrings.profile),
       viewId: 'profile',
     });
-
-    this.#setupSearchableView();
-
-    this.dataGrid = new UI.Widget.VBox();
+    this.#view = view;
 
     this.profileHeader = profileHeader;
     this.profileType = profileHeader.profileType();
@@ -360,7 +407,6 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   #setupTimelineOverview(): void {
     if (this.profileType.hasTemporaryView()) {
       this.timelineOverview.addEventListener(Events.IDS_RANGE_CHANGED, this.onIdsRangeChanged.bind(this));
-      this.timelineOverview.show(this.element, this.element.firstChild);
       this.timelineOverview.start();
 
       this.profileType.addEventListener(SamplingHeapProfileType.Events.STATS_UPDATE, this.onStatsUpdate, this);
@@ -370,12 +416,6 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
         this.timelineOverview.updateGrid();
       });
     }
-  }
-
-  #setupSearchableView(): void {
-    this.searchableViewInternal = new UI.SearchableView.SearchableView(this, null);
-    this.searchableViewInternal.setPlaceholder(i18nString(UIStrings.findByCostMsNameOrFile));
-    this.searchableViewInternal.show(this.element);
   }
 
   override async toolbarItems(): Promise<TemplateResult> {
@@ -534,27 +574,17 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     this.viewType = Common.Settings.Settings.instance().createSetting('profile-view', ViewTypes.HEAVY);
 
     this.changeView();
-    if (this.flameChart) {
-      this.flameChart.update();
-    }
-  }
-
-  override focus(): void {
-    if (this.flameChart) {
-      this.flameChart.focus();
-    } else {
-      super.focus();
-    }
   }
 
   selectRange(timeLeft: number, timeRight: number): void {
-    if (!this.flameChart) {
-      return;
-    }
-    this.flameChart.range = {left: timeLeft, right: timeRight};
+    this.#range = {left: timeLeft, right: timeRight};
+    this.performUpdate();
   }
 
-  getBottomUpProfileDataGridTree(): ProfileDataGridTree {
+  getBottomUpProfileDataGridTree(): ProfileDataGridTree|undefined {
+    if (!this.searchableViewInternal) {
+      return undefined;
+    }
     if (!this.bottomUpProfileDataGridTree) {
       this.bottomUpProfileDataGridTree = new BottomUpProfileDataGridTree(
           this.nodeFormatter, this.searchableViewInternal,
@@ -563,7 +593,10 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     return this.bottomUpProfileDataGridTree;
   }
 
-  getTopDownProfileDataGridTree(): ProfileDataGridTree {
+  getTopDownProfileDataGridTree(): ProfileDataGridTree|undefined {
+    if (!this.searchableViewInternal) {
+      return undefined;
+    }
     if (!this.topDownProfileDataGridTree) {
       this.topDownProfileDataGridTree = new TopDownProfileDataGridTree(
           this.nodeFormatter, this.searchableViewInternal,
@@ -589,15 +622,15 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     if (!this.profileDataGridTree) {
       return;
     }
-    this.#renderDataGrid();
+    this.performUpdate();
   }
 
   refreshVisibleData(): void {
-    this.#renderDataGrid();
+    this.performUpdate();
   }
 
-  searchableView(): UI.SearchableView.SearchableView {
-    return this.searchableViewInternal;
+  searchableView(): UI.SearchableView.SearchableView|null {
+    return this.searchableViewInternal || null;
   }
 
   supportsCaseSensitiveSearch(): boolean {
@@ -613,14 +646,16 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   }
 
   onSearchCanceled(): void {
-    if (this.searchableElement) {
-      this.searchableElement.onSearchCanceled();
-      this.refresh();
+    if (this.viewType.get() === ViewTypes.FLAME) {
+      this.#viewOutput.onSearchCanceled?.();
+    } else if (this.profileDataGridTree) {
+      this.profileDataGridTree.onSearchCanceled();
     }
+    this.refresh();
   }
 
   performSearch(searchConfig: UI.SearchableView.SearchConfig, shouldJump: boolean, jumpBackwards?: boolean): void {
-    if (this.searchableElement === this.profileDataGridTree && this.profileDataGridTree) {
+    if (this.viewType.get() !== ViewTypes.FLAME && this.profileDataGridTree) {
       // 1. Delegate to model to find ALL matches (including virtualized ones) using complex query logic
       this.profileDataGridTree.performSearch(searchConfig, shouldJump, jumpBackwards);
 
@@ -635,14 +670,14 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
         }
       }
       this.refresh();
-    } else if (this.searchableElement) {
-      this.searchableElement.performSearch(searchConfig, shouldJump, jumpBackwards);
+    } else if (this.viewType.get() === ViewTypes.FLAME) {
+      this.#viewOutput.performSearch?.(searchConfig, shouldJump, jumpBackwards);
       this.refresh();
     }
   }
 
   jumpToNextSearchResult(): void {
-    if (this.searchableElement === this.profileDataGridTree && this.profileDataGridTree) {
+    if (this.viewType.get() !== ViewTypes.FLAME && this.profileDataGridTree) {
       if (!this.profileDataGridTree.searchResults?.length) {
         return;
       }
@@ -650,14 +685,13 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
           (this.profileDataGridTree.searchResultIndex + 1) % this.profileDataGridTree.searchResults.length;
       this.searchableViewInternal.updateCurrentMatchIndex(this.profileDataGridTree.searchResultIndex);
       this.refresh();
-    } else if (this.searchableElement) {
-      this.searchableElement.jumpToNextSearchResult();
-      this.#syncSearchSelection();
+    } else if (this.viewType.get() === ViewTypes.FLAME) {
+      this.#viewOutput.jumpToNextSearchResult?.();
     }
   }
 
   jumpToPreviousSearchResult(): void {
-    if (this.searchableElement === this.profileDataGridTree && this.profileDataGridTree) {
+    if (this.viewType.get() !== ViewTypes.FLAME && this.profileDataGridTree) {
       if (!this.profileDataGridTree.searchResults?.length) {
         return;
       }
@@ -666,25 +700,8 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
           this.profileDataGridTree.searchResults.length;
       this.searchableViewInternal.updateCurrentMatchIndex(this.profileDataGridTree.searchResultIndex);
       this.refresh();
-    } else if (this.searchableElement) {
-      this.searchableElement.jumpToPreviousSearchResult();
-      this.#syncSearchSelection();
-    }
-  }
-
-  #syncSearchSelection(): void {
-    if (this.searchableElement === this.profileDataGridTree && this.profileDataGridTree) {
-      const searchResult = this.profileDataGridTree.searchResults[this.profileDataGridTree.searchResultIndex];
-      this.#selectedNode = searchResult?.profileNode || null;
-
-      let node = this.#selectedNode;
-      while (node?.parent) {
-        node.parent.expanded = true;
-        node = node.parent as ProfileDataGridNode;
-      }
-
-      this.nodeSelected(!!this.#selectedNode);
-      this.refresh();
+    } else if (this.viewType.get() === ViewTypes.FLAME) {
+      this.#viewOutput.jumpToPreviousSearchResult?.();
     }
   }
 
@@ -693,21 +710,16 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   }
 
   ensureFlameChartCreated(): void {
-    if (this.flameChart) {
+    if (this.dataProvider || !this.searchableViewInternal) {
       return;
     }
     this.dataProvider = this.createFlameChartDataProvider();
-    this.flameChart = new ProfileFlameChart(this.searchableViewInternal, this.dataProvider);
-    this.flameChart.addEventListener(PerfUI.FlameChart.Events.ENTRY_INVOKED, event => {
-      void this.onEntryInvoked(event);
-    });
   }
 
-  async onEntryInvoked(event: Common.EventTarget.EventTargetEvent<number>): Promise<void> {
+  async onEntryInvoked(entryIndex: number): Promise<void> {
     if (!this.dataProvider) {
       return;
     }
-    const entryIndex = event.data;
     const node = this.dataProvider.entryNodes[entryIndex];
     const debuggerModel = this.profileHeader.debuggerModel;
     if (!node || !node.scriptId || !debuggerModel) {
@@ -797,35 +809,24 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   override performUpdate(): void {
     const currentViewType = this.viewType ? this.viewType.get() : null;
     if (currentViewType && currentViewType !== this.#lastAppliedViewType) {
-      this.searchableViewInternal.closeSearch();
-
-      if (this.visibleView) {
-        this.visibleView.detach();
-      }
+      this.searchableViewInternal?.closeSearch();
 
       switch (currentViewType) {
         case ViewTypes.FLAME:
           this.ensureFlameChartCreated();
-          this.visibleView = this.flameChart;
-          this.searchableElement = this.flameChart;
           break;
         case ViewTypes.TREE:
           this.profileDataGridTree = this.getTopDownProfileDataGridTree();
-          this.visibleView = this.dataGrid;
-          this.searchableElement = this.profileDataGridTree;
           break;
         case ViewTypes.HEAVY:
           this.profileDataGridTree = this.getBottomUpProfileDataGridTree();
-          this.visibleView = this.dataGrid;
-          this.searchableElement = this.profileDataGridTree;
           break;
       }
 
-      if (this.visibleView) {
-        this.visibleView.show(this.searchableViewInternal.element);
+      const initialized = currentViewType === ViewTypes.FLAME ? !!this.dataProvider : !!this.profileDataGridTree;
+      if (initialized) {
+        this.#lastAppliedViewType = currentViewType;
       }
-
-      this.#lastAppliedViewType = currentViewType;
     }
 
     const isFlame = currentViewType === ViewTypes.FLAME;
@@ -869,6 +870,51 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
 
       this.timelineOverview.setSamples(samples);
     }
+
+    const input: ViewInput = {
+      timelineOverview: this.timelineOverview,
+      searchable: this,
+      hasTemporaryView: this.profileType.hasTemporaryView(),
+      viewType: currentViewType,
+      range: this.#range,
+      profileDataGridTree: this.profileDataGridTree,
+      selectedNode: this.#selectedNode,
+      nodeFormatter: this.nodeFormatter,
+      columnHeader: this.columnHeader.bind(this),
+      searchableView: this.searchableViewInternal,
+      dataProvider: this.dataProvider,
+      onExpand: (node: ProfileDataGridNode) => {
+        node.expanded = true;
+        node.populate();
+        this.refresh();
+      },
+      onCollapse: (node: ProfileDataGridNode) => {
+        node.expanded = false;
+        this.refresh();
+      },
+      onSelect: (node: ProfileDataGridNode) => {
+        this.#selectedNode = node;
+        this.nodeSelected(true);
+      },
+      onDeselect: () => {
+        this.#selectedNode = null;
+        this.nodeSelected(false);
+      },
+      onContextMenu: (event: CustomEvent<UI.ContextMenu.ContextMenu>, node: ProfileDataGridNode) => {
+        this.populateContextMenu(event.detail, node);
+      },
+      onSearchableViewMount: (widget: UI.SearchableView.SearchableView) => {
+        if (this.searchableViewInternal !== widget) {
+          this.searchableViewInternal = widget;
+          this.requestUpdate();
+        }
+      },
+      onFlameChartEntryInvoked: (entryIndex: number) => {
+        void this.onEntryInvoked(entryIndex);
+      },
+    };
+
+    this.#view(input, this.#viewOutput, this.contentElement);
   }
 }
 

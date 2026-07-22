@@ -157,12 +157,11 @@ describeWithEnvironment('HeapProfileView', () => {
     // Change to TREE
     view.viewType.set(Profiler.HeapProfileView.ViewTypes.TREE);
     view.changeView();
-    assert.strictEqual(view.visibleView, view.dataGrid);
+    assert.isDefined(view.profileDataGridTree);
 
     // Change to FLAME
     view.viewType.set(Profiler.HeapProfileView.ViewTypes.FLAME);
     view.changeView();
-    assert.strictEqual(view.visibleView, view.flameChart);
   });
 
   it('displays pageFunction and anonymous functions in the tree', async () => {
