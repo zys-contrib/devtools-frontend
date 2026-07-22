@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import '../../ui/components/icon_button/icon_button.js';
+import '../../ui/legacy/components/data_grid/data_grid.js';
 
 import * as Common from '../../core/common/common.js';
 import * as Host from '../../core/host/host.js';
@@ -13,7 +14,6 @@ import type * as Protocol from '../../generated/protocol.js';
 import * as Bindings from '../../models/bindings/bindings.js';
 import * as CPUProfile from '../../models/cpu_profile/cpu_profile.js';
 import * as Buttons from '../../ui/components/buttons/buttons.js';
-import type * as DataGrid from '../../ui/legacy/components/data_grid/data_grid.js';
 import * as PerfUI from '../../ui/legacy/components/perf_ui/perf_ui.js';
 import * as SettingsUI from '../../ui/legacy/components/settings_ui/settings_ui.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
@@ -23,7 +23,7 @@ import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 
 import {BottomUpProfileDataGridTree} from './BottomUpProfileDataGrid.js';
 import {Events, HeapTimelineOverview, type IdsRangeChangedEvent, type Samples} from './HeapTimelineOverview.js';
-import type {Formatter, ProfileDataGridNode, ProfileDataGridTree} from './ProfileDataGrid.js';
+import {type Formatter, ProfileDataGridTree, type ProfileEntry} from './ProfileDataGrid.js';
 import {ProfileFlameChart, ProfileFlameChartDataProvider} from './ProfileFlameChartDataProvider.js';
 import {ProfileEvents, type ProfileHeader, ProfileType} from './ProfileHeader.js';
 import profilesPanelStyles from './profilesPanel.css.js';
@@ -193,16 +193,17 @@ export interface ViewInput {
   hasTemporaryView: boolean;
   viewType: ViewTypes|null;
   profileDataGridTree: ProfileDataGridTree|undefined;
-  selectedNode: ProfileDataGridNode|null;
-  nodeFormatter: NodeFormatter;
+  selectedNode: ProfileEntry|null;
+  nodeFormatter: Formatter;
   columnHeader: (columnId: string) => Common.UIString.LocalizedString;
   searchableView: UI.SearchableView.SearchableView|undefined;
   dataProvider: ProfileFlameChartDataProvider|undefined;
-  onExpand: (node: ProfileDataGridNode) => void;
-  onCollapse: (node: ProfileDataGridNode) => void;
-  onSelect: (node: ProfileDataGridNode) => void;
+  target: SDK.Target.Target|null;
+  onExpand: (node: ProfileEntry) => void;
+  onCollapse: (node: ProfileEntry) => void;
+  onSelect: (node: ProfileEntry) => void;
   onDeselect: () => void;
-  onContextMenu: (event: CustomEvent<UI.ContextMenu.ContextMenu>, node: ProfileDataGridNode) => void;
+  onContextMenu: (event: CustomEvent<UI.ContextMenu.ContextMenu>, node: ProfileEntry) => void;
   onSearchableViewMount: (widget: UI.SearchableView.SearchableView) => void;
   onFlameChartEntryInvoked: (entryIndex: number) => void;
   range?: {left: number, right: number};
@@ -277,14 +278,14 @@ function renderDataGrid(input: ViewInput): LitTemplate {
           </th>
         </tr>
         ${repeat(input.profileDataGridTree.children,
-                (node: ProfileDataGridNode) => node.callUID,
-                (node: ProfileDataGridNode) => renderNode(node, input))}
+                (node: ProfileEntry) => node.callUID,
+                (node: ProfileEntry) => renderNode(node, input))}
       </table>`}>
     </devtools-data-grid>`;
   // clang-format on
 }
 
-function renderNode(node: ProfileDataGridNode, input: ViewInput): LitTemplate {
+function renderNode(node: ProfileEntry, input: ViewInput): LitTemplate {
   const onSelect = (): void => {
     input.onSelect(node);
   };
@@ -298,13 +299,6 @@ function renderNode(node: ProfileDataGridNode, input: ViewInput): LitTemplate {
     input.onCollapse(node);
   };
 
-  if (node.profileNode.scriptId !== '0' && !node.linkElement) {
-    node.linkElement = input.nodeFormatter.linkifyNode(node);
-    if (node.linkElement) {
-      (node.linkElement as HTMLElement).style.maxWidth = '75%';
-    }
-  }
-
   // clang-format off
   return html`
   <tr data-uid=${node.callUID} ?selected=${input.selectedNode === node} ?expanded=${node.expanded}
@@ -313,16 +307,16 @@ function renderNode(node: ProfileDataGridNode, input: ViewInput): LitTemplate {
       @contextmenu=${onContextMenu}
       @expand=${onExpand} @collapse=${onCollapse}>
     <td data-value=${node.self} class="numeric-column ${node.searchMatchedSelfColumn ? 'highlight' : ''}"
-        aria-label=${`${input.nodeFormatter.formatValueAccessibleText(node.self)}, ${input.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
+        aria-label=${`${input.nodeFormatter.formatValueAccessibleText(node.self, node)}, ${input.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
       <div class="profile-multiple-values">
-        <span>${input.nodeFormatter.formatValue(node.self)}</span>
+        <span>${input.nodeFormatter.formatValue(node.self, node)}</span>
         <span class="percent-column">${input.nodeFormatter.formatPercent(node.selfPercent, node)}</span>
       </div>
     </td>
     <td data-value=${node.total} class="numeric-column ${node.searchMatchedTotalColumn ? 'highlight' : ''}"
-        aria-label=${`${input.nodeFormatter.formatValueAccessibleText(node.total)}, ${input.nodeFormatter.formatPercent(node.totalPercent, node)}`}>
+        aria-label=${`${input.nodeFormatter.formatValueAccessibleText(node.total, node)}, ${input.nodeFormatter.formatPercent(node.totalPercent, node)}`}>
       <div class="profile-multiple-values">
-        <span>${input.nodeFormatter.formatValue(node.total)}</span>
+        <span>${input.nodeFormatter.formatValue(node.total, node)}</span>
         <span class="percent-column">${input.nodeFormatter.formatPercent(node.totalPercent, node)}</span>
       </div>
     </td>
@@ -332,12 +326,22 @@ function renderNode(node: ProfileDataGridNode, input: ViewInput): LitTemplate {
                         title=${i18nString(UIStrings.notOptimizedS, {PH1: node.deoptReason})}>
         </devtools-icon>` : nothing}
       ${node.functionName}
-      ${node.linkElement ? node.linkElement : nothing}
+      ${node.profileNode.scriptId !== '0' && node.profileNode.callFrame ? widget(Components.Linkifier.ScriptLocationLink, {
+        target: input.target ?? undefined,
+        scriptId: node.profileNode.callFrame.scriptId,
+        sourceURL: node.profileNode.callFrame.url as Platform.DevToolsPath.UrlString,
+        lineNumber: node.profileNode.callFrame.lineNumber,
+        options: {
+          columnNumber: node.profileNode.callFrame.columnNumber,
+          maxLength: maxLinkLength,
+          className: 'profile-node-file',
+        },
+      }) : nothing}
     </td>
     ${node.hasChildren() ? html`
       <td><table>
         ${node.expanded ? html`${repeat(
-            node.children as ProfileDataGridNode[],
+            node.children,
             child => child.callUID,
             child => renderNode(child, input))}` : nothing}
       </table></td>` : nothing}
@@ -364,10 +368,10 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   excludeButton: Buttons.Button.Button|undefined;
   resetButton: Buttons.Button.Button|undefined;
 
-  #selectedNode: ProfileDataGridNode|null = null;
+  #selectedNode: ProfileEntry|null = null;
 
   readonly linkifierInternal: Components.Linkifier.Linkifier = new Components.Linkifier.Linkifier(maxLinkLength);
-  nodeFormatter!: NodeFormatter;
+
   viewType!: Common.Settings.Setting<ViewTypes>;
   bottomUpProfileDataGridTree?: BottomUpProfileDataGridTree|null;
   topDownProfileDataGridTree?: TopDownProfileDataGridTree|null;
@@ -396,7 +400,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
 
     this.profileHeader = profileHeader;
     this.profileType = profileHeader.profileType();
-    this.initialize(new NodeFormatter(this));
+    this.initialize();
     const profile = new SamplingHeapProfileModel(convertToSamplingHeapProfile(profileHeader));
     this.adjustedTotal = profile.total;
     this.setProfile(profile);
@@ -568,9 +572,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     return this.profileInternal;
   }
 
-  initialize(nodeFormatter: NodeFormatter): void {
-    this.nodeFormatter = nodeFormatter;
-
+  initialize(): void {
     this.viewType = Common.Settings.Settings.instance().createSetting('profile-view', ViewTypes.HEAVY);
 
     this.changeView();
@@ -587,7 +589,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     }
     if (!this.bottomUpProfileDataGridTree) {
       this.bottomUpProfileDataGridTree = new BottomUpProfileDataGridTree(
-          this.nodeFormatter, this.searchableViewInternal,
+          nodeFormatter, this.searchableViewInternal,
           (this.profileInternal as CPUProfile.ProfileTreeModel.ProfileTreeModel).root, this.adjustedTotal);
     }
     return this.bottomUpProfileDataGridTree;
@@ -599,18 +601,21 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     }
     if (!this.topDownProfileDataGridTree) {
       this.topDownProfileDataGridTree = new TopDownProfileDataGridTree(
-          this.nodeFormatter, this.searchableViewInternal,
+          nodeFormatter, this.searchableViewInternal,
           (this.profileInternal as CPUProfile.ProfileTreeModel.ProfileTreeModel).root, this.adjustedTotal);
     }
     return this.topDownProfileDataGridTree;
   }
 
-  populateContextMenu(contextMenu: UI.ContextMenu.ContextMenu,
-                      gridNode: DataGrid.DataGrid.DataGridNode<unknown>): void {
-    const node = (gridNode as ProfileDataGridNode);
-    if (node.linkElement) {
-      contextMenu.appendApplicableItems(node.linkElement);
+  populateContextMenu(contextMenu: UI.ContextMenu.ContextMenu, node: ProfileEntry): void {
+    const heapProfilerModel = this.profileHeader.heapProfilerModel();
+    const target = heapProfilerModel ? heapProfilerModel.target() : null;
+    const tempLinkifier = new Components.Linkifier.Linkifier();
+    const linkElement = tempLinkifier.maybeLinkifyConsoleCallFrame(target, node.profileNode.callFrame);
+    if (linkElement) {
+      contextMenu.appendApplicableItems(linkElement);
     }
+    tempLinkifier.dispose();
   }
 
   override willHide(): void {
@@ -663,7 +668,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
       if (this.profileDataGridTree.deepSearch) {
         for (const match of this.profileDataGridTree.searchResults) {
           let parent = match.profileNode.parent;
-          while (parent && !parent.isRoot) {
+          while (parent && !(parent instanceof ProfileDataGridTree)) {
             parent.expanded = true;
             parent = parent.parent;
           }
@@ -879,20 +884,21 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
       range: this.#range,
       profileDataGridTree: this.profileDataGridTree,
       selectedNode: this.#selectedNode,
-      nodeFormatter: this.nodeFormatter,
+      nodeFormatter,
       columnHeader: this.columnHeader.bind(this),
       searchableView: this.searchableViewInternal,
       dataProvider: this.dataProvider,
-      onExpand: (node: ProfileDataGridNode) => {
+      target: this.profileHeader.heapProfilerModel()?.target() ?? null,
+      onExpand: (node: ProfileEntry) => {
         node.expanded = true;
         node.populate();
         this.refresh();
       },
-      onCollapse: (node: ProfileDataGridNode) => {
+      onCollapse: (node: ProfileEntry) => {
         node.expanded = false;
         this.refresh();
       },
-      onSelect: (node: ProfileDataGridNode) => {
+      onSelect: (node: ProfileEntry) => {
         this.#selectedNode = node;
         this.nodeSelected(true);
       },
@@ -900,7 +906,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
         this.#selectedNode = null;
         this.nodeSelected(false);
       },
-      onContextMenu: (event: CustomEvent<UI.ContextMenu.ContextMenu>, node: ProfileDataGridNode) => {
+      onContextMenu: (event: CustomEvent<UI.ContextMenu.ContextMenu>, node: ProfileEntry) => {
         this.populateContextMenu(event.detail, node);
       },
       onSearchableViewMount: (widget: UI.SearchableView.SearchableView) => {
@@ -1286,14 +1292,9 @@ export class SamplingHeapProfileModel extends CPUProfile.ProfileTreeModel.Profil
 }
 
 export class NodeFormatter implements Formatter {
-  readonly profileView: HeapProfileView;
   readonly #formattedValueCache = new Map<number, string>();
   readonly #formattedValueAccessibleTextCache = new Map<number, string>();
   readonly #formattedPercentCache = new Map<number, string>();
-
-  constructor(profileView: HeapProfileView) {
-    this.profileView = profileView;
-  }
 
   formatValue(value: number): string {
     let result = this.#formattedValueCache.get(value);
@@ -1313,7 +1314,7 @@ export class NodeFormatter implements Formatter {
     return result;
   }
 
-  formatPercent(value: number, _node: ProfileDataGridNode): string {
+  formatPercent(value: number, _node: ProfileEntry): string {
     let result = this.#formattedPercentCache.get(value);
     if (!result) {
       result = i18nString(UIStrings.formatPercent, {PH1: value.toFixed(2)});
@@ -1321,16 +1322,9 @@ export class NodeFormatter implements Formatter {
     }
     return result;
   }
-
-  linkifyNode(node: ProfileDataGridNode): Element|null {
-    const heapProfilerModel = this.profileView.profileHeader.heapProfilerModel();
-    const target = heapProfilerModel ? heapProfilerModel.target() : null;
-    const options = {
-      className: 'profile-node-file',
-    };
-    return this.profileView.linkifier().maybeLinkifyConsoleCallFrame(target, node.profileNode.callFrame, options);
-  }
 }
+
+export const nodeFormatter = new NodeFormatter();
 
 export class HeapFlameChartDataProvider extends ProfileFlameChartDataProvider {
   readonly profile: CPUProfile.ProfileTreeModel.ProfileTreeModel;

@@ -223,14 +223,14 @@ describeWithEnvironment('HeapProfileView', () => {
     let tree = view.profileDataGridTree;
     assert.isNotNull(tree);
 
-    let children = tree!.children as Profiler.ProfileDataGrid.ProfileDataGridNode[];
+    let children = tree!.children as Profiler.ProfileDataGrid.ProfileEntry[];
     assert.lengthOf(children, 1);
     const pageFunctionNode = children[0];
     assert.strictEqual(pageFunctionNode.functionName, 'pageFunction');
     assert.strictEqual(pageFunctionNode.url, 'test.js');
 
     pageFunctionNode.populate();
-    const pageFunctionChildren = pageFunctionNode.children as Profiler.ProfileDataGrid.ProfileDataGridNode[];
+    const pageFunctionChildren = pageFunctionNode.children as Profiler.ProfileDataGrid.ProfileEntry[];
     assert.lengthOf(pageFunctionChildren, 1);
     const anonymousNode = pageFunctionChildren[0];
     assert.strictEqual(anonymousNode.functionName, '(anonymous)');
@@ -243,13 +243,13 @@ describeWithEnvironment('HeapProfileView', () => {
     tree = view.profileDataGridTree;
     assert.isNotNull(tree);
 
-    children = tree!.children as Profiler.ProfileDataGrid.ProfileDataGridNode[];
+    children = tree!.children as Profiler.ProfileDataGrid.ProfileEntry[];
     const anonymousNodeHeavy = children.find(node => node.functionName === '(anonymous)');
     assert.isDefined(anonymousNodeHeavy);
     assert.strictEqual(anonymousNodeHeavy!.url, 'test.js');
 
     anonymousNodeHeavy!.populate();
-    const anonymousChildrenHeavy = anonymousNodeHeavy!.children as Profiler.ProfileDataGrid.ProfileDataGridNode[];
+    const anonymousChildrenHeavy = anonymousNodeHeavy!.children as Profiler.ProfileDataGrid.ProfileEntry[];
     const pageFunctionNodeHeavy = anonymousChildrenHeavy.find(node => node.functionName === 'pageFunction');
     assert.isDefined(pageFunctionNodeHeavy);
   });
