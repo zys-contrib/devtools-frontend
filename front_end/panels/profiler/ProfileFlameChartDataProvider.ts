@@ -142,8 +142,9 @@ export class ProfileFlameChart extends
   searchResults: number[];
   searchResultIndex = -1;
 
-  constructor(searchableView: UI.SearchableView.SearchableView, dataProvider: ProfileFlameChartDataProvider) {
-    super();
+  constructor(searchableView: UI.SearchableView.SearchableView, dataProvider: ProfileFlameChartDataProvider,
+              element?: HTMLElement) {
+    super(element);
     this.element.id = 'cpu-flame-chart';
 
     this.searchableView = searchableView;
@@ -173,8 +174,18 @@ export class ProfileFlameChart extends
     this.mainPane.setWindowTimes(windowLeft, windowRight, /* animate */ true);
   }
 
-  selectRange(timeLeft: number, timeRight: number): void {
-    this.overviewPane.selectRange(timeLeft, timeRight);
+  get range(): {left: number, right: number}|undefined {
+    return {
+      left: this.overviewPane.windowTimeLeft ?? 0,
+      right: this.overviewPane.windowTimeRight ?? 0,
+    };
+  }
+
+  set range(limits: {left: number, right: number}|undefined) {
+    if (!limits) {
+      return;
+    }
+    this.overviewPane.selectRange(limits.left, limits.right);
   }
 
   onEntrySelected(event: Common.EventTarget.EventTargetEvent<void|number>): void {

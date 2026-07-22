@@ -188,6 +188,114 @@ export const enum ViewTypes {
 }
 
 export class HeapProfileView extends UI.View.SimpleView implements UI.SearchableView.Searchable {
+  #renderDataGrid(): void {
+    if (!this.profileDataGridTree) {
+      return;
+    }
+
+    const onDeselect = (): void => {
+      this.#selectedNode = null;
+      this.nodeSelected(false);
+    };
+
+    let highlightIndex = -1;
+    if (this.profileDataGridTree && this.profileDataGridTree.searchResults) {
+      highlightIndex = this.profileDataGridTree.searchResultIndex + 1;
+    }
+
+    // clang-format off
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`
+    <style>${profilesPanelStyles}</style>
+    <devtools-data-grid class="flex-auto" name=${i18nString(UIStrings.profiler)} striped autofocus resize="last"
+                        highlight=${highlightIndex >= 1 ? highlightIndex : nothing}
+                        @deselect=${onDeselect} .template=${html`
+      <style>${profilesPanelStyles}</style>
+      <table>
+        <tr>
+          <th id="self" width="120px" fixed weight="1" sortable sort="descending">
+            ${this.columnHeader('self')}
+          </th>
+          <th id="total" width="120px" fixed weight="1" sortable>
+            ${this.columnHeader('total')}
+          </th>
+          <th id="function" weight="3" sortable disclosure>
+            ${i18nString(UIStrings.function)}
+          </th>
+        </tr>
+        ${repeat(this.profileDataGridTree.children,
+                  (node: ProfileDataGridNode) => node.callUID,
+                  (node: ProfileDataGridNode) => this.#renderNode(node))}
+      </table>`}>
+    </devtools-data-grid>
+    `, this.dataGrid.element);
+    // clang-format on
+  }
+
+  #renderNode(node: ProfileDataGridNode): TemplateResult {
+    const onSelect = (): void => {
+      this.#selectedNode = node;
+      this.nodeSelected(true);
+    };
+    const onContextMenu = (event: CustomEvent<UI.ContextMenu.ContextMenu>): void => {
+      this.populateContextMenu(event.detail, node);
+    };
+    const onExpand = (): void => {
+      node.expanded = true;
+      node.populate();
+      this.refresh();
+    };
+    const onCollapse = (): void => {
+      node.expanded = false;
+      this.refresh();
+    };
+
+    if (node.profileNode.scriptId !== '0' && !node.linkElement) {
+      node.linkElement = this.nodeFormatter.linkifyNode(node);
+      if (node.linkElement) {
+        (node.linkElement as HTMLElement).style.maxWidth = '75%';
+      }
+    }
+
+    // clang-format off
+    return html`
+  <tr data-uid=${node.callUID} ?selected=${this.#selectedNode === node} ?expanded=${node.expanded}
+      ?highlighted=${node.searchMatchedSelfColumn || node.searchMatchedTotalColumn || node.searchMatchedFunctionColumn}
+      @select=${onSelect}
+      @contextmenu=${onContextMenu} @expand=${onExpand} @collapse=${onCollapse}>
+    <td data-value=${node.self} class="numeric-column ${node.searchMatchedSelfColumn ? 'highlight' : ''}"
+        aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.self)}, ${this.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
+      <div class="profile-multiple-values">
+        <span>${this.nodeFormatter.formatValue(node.self)}</span>
+        <span class="percent-column">${this.nodeFormatter.formatPercent(node.selfPercent, node)}</span>
+      </div>
+    </td>
+    <td data-value=${node.total} class="numeric-column ${node.searchMatchedTotalColumn ? 'highlight' : ''}"
+        aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.total)}, ${this.nodeFormatter.formatPercent(node.totalPercent, node)}`}>
+      <div class="profile-multiple-values">
+        <span>${this.nodeFormatter.formatValue(node.total)}</span>
+        <span class="percent-column">${this.nodeFormatter.formatPercent(node.totalPercent, node)}</span>
+      </div>
+    </td>
+    <td data-value=${node.functionName} class="${node.searchMatchedFunctionColumn ? 'highlight' : ''} ${node.deoptReason ? 'not-optimized' : ''}">
+      ${node.deoptReason ? html`
+        <devtools-icon name="warning-filled" class="profile-warn-marker small"
+                        title=${i18nString(UIStrings.notOptimizedS, {PH1: node.deoptReason})}>
+        </devtools-icon>` : nothing}
+      ${node.functionName}
+      ${node.linkElement ? node.linkElement : nothing}
+    </td>
+    ${node.hasChildren() ? html`
+      <td><table>
+        ${node.expanded ? html`${repeat(
+            node.children as ProfileDataGridNode[],
+            child => child.callUID,
+            child => this.#renderNode(child))}` : nothing}
+      </table></td>` : nothing}
+  </tr>`;
+    // clang-format on
+  }
+
   profileHeader: SamplingHeapProfileHeader;
   readonly profileType: SamplingHeapProfileTypeBase;
   adjustedTotal: number;
@@ -268,114 +376,6 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     this.searchableViewInternal = new UI.SearchableView.SearchableView(this, null);
     this.searchableViewInternal.setPlaceholder(i18nString(UIStrings.findByCostMsNameOrFile));
     this.searchableViewInternal.show(this.element);
-  }
-
-  #renderDataGrid(): void {
-    if (!this.profileDataGridTree) {
-      return;
-    }
-
-    const onDeselect = (): void => {
-      this.#selectedNode = null;
-      this.nodeSelected(false);
-    };
-
-    // clang-format off
-    let highlightIndex = -1;
-    if (this.profileDataGridTree && this.profileDataGridTree.searchResults) {
-      highlightIndex = this.profileDataGridTree.searchResultIndex + 1;
-    }
-
-    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
-    render(html`
-      <style>${profilesPanelStyles}</style>
-      <devtools-data-grid class="flex-auto" name=${i18nString(UIStrings.profiler)} striped autofocus resize="last"
-                          highlight=${highlightIndex >= 1 ? highlightIndex : nothing}
-                          @deselect=${onDeselect} .template=${html`
-        <style>${profilesPanelStyles}</style>
-        <table>
-          <tr>
-            <th id="self" width="120px" fixed weight="1" sortable sort="descending">
-              ${this.columnHeader('self')}
-            </th>
-            <th id="total" width="120px" fixed weight="1" sortable>
-              ${this.columnHeader('total')}
-            </th>
-            <th id="function" weight="3" sortable disclosure>
-              ${i18nString(UIStrings.function)}
-            </th>
-          </tr>
-          ${repeat(this.profileDataGridTree.children,
-                   (node: ProfileDataGridNode) => node.callUID,
-                   (node: ProfileDataGridNode) => this.#renderNode(node))}
-        </table>`}>
-      </devtools-data-grid>
-    `, this.dataGrid.element);
-    // clang-format on
-  }
-
-  #renderNode(node: ProfileDataGridNode): TemplateResult {
-    const onSelect = (): void => {
-      this.#selectedNode = node;
-      this.nodeSelected(true);
-    };
-    const onContextMenu = (event: CustomEvent<UI.ContextMenu.ContextMenu>): void => {
-      this.populateContextMenu(event.detail, node);
-    };
-    const onExpand = (): void => {
-      node.expanded = true;
-      node.populate();
-      this.refresh();
-    };
-    const onCollapse = (): void => {
-      node.expanded = false;
-      this.refresh();
-    };
-
-    if (node.profileNode.scriptId !== '0' && !node.linkElement) {
-      node.linkElement = this.nodeFormatter.linkifyNode(node);
-      if (node.linkElement) {
-        (node.linkElement as HTMLElement).style.maxWidth = '75%';
-      }
-    }
-
-    // clang-format off
-    return html`
-      <tr data-uid=${node.callUID} ?selected=${this.#selectedNode === node} ?expanded=${node.expanded}
-          ?highlighted=${node.searchMatchedSelfColumn || node.searchMatchedTotalColumn || node.searchMatchedFunctionColumn}
-          @select=${onSelect}
-          @contextmenu=${onContextMenu} @expand=${onExpand} @collapse=${onCollapse}>
-        <td data-value=${node.self} class="numeric-column ${node.searchMatchedSelfColumn ? 'highlight' : ''}"
-            aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.self)}, ${this.nodeFormatter.formatPercent(node.selfPercent, node)}`}>
-          <div class="profile-multiple-values">
-            <span>${this.nodeFormatter.formatValue(node.self)}</span>
-            <span class="percent-column">${this.nodeFormatter.formatPercent(node.selfPercent, node)}</span>
-          </div>
-        </td>
-        <td data-value=${node.total} class="numeric-column ${node.searchMatchedTotalColumn ? 'highlight' : ''}"
-            aria-label=${`${this.nodeFormatter.formatValueAccessibleText(node.total)}, ${this.nodeFormatter.formatPercent(node.totalPercent, node)}`}>
-          <div class="profile-multiple-values">
-            <span>${this.nodeFormatter.formatValue(node.total)}</span>
-            <span class="percent-column">${this.nodeFormatter.formatPercent(node.totalPercent, node)}</span>
-          </div>
-        </td>
-        <td data-value=${node.functionName} class="${node.searchMatchedFunctionColumn ? 'highlight' : ''} ${node.deoptReason ? 'not-optimized' : ''}">
-          ${node.deoptReason ? html`
-            <devtools-icon name="warning-filled" class="profile-warn-marker small"
-                           title=${i18nString(UIStrings.notOptimizedS, {PH1: node.deoptReason})}>
-            </devtools-icon>` : nothing}
-          ${node.functionName}
-          ${node.linkElement ? node.linkElement : nothing}
-        </td>
-        ${node.hasChildren() ? html`
-          <td><table>
-            ${node.expanded ? html`${repeat(
-                node.children as ProfileDataGridNode[],
-                child => child.callUID,
-                child => this.#renderNode(child))}` : nothing}
-          </table></td>` : nothing}
-      </tr>`;
-    // clang-format on
   }
 
   override async toolbarItems(): Promise<TemplateResult> {
@@ -551,7 +551,7 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
     if (!this.flameChart) {
       return;
     }
-    this.flameChart.selectRange(timeLeft, timeRight);
+    this.flameChart.range = {left: timeLeft, right: timeRight};
   }
 
   getBottomUpProfileDataGridTree(): ProfileDataGridTree {
