@@ -39,6 +39,10 @@ describe('ServiceWorkerCacheTreeElement', () => {
     panel = sinon.createStubInstance(Application.ResourcesPanel.ResourcesPanel);
   });
 
+  afterEach(() => {
+    sinon.restore();
+  });
+
   it('does not duplicate cache tree elements on re-initialization', () => {
     const cacheTreeElement = new Application.ServiceWorkerCacheTreeElement.ServiceWorkerCacheTreeElement(panel);
 
@@ -59,5 +63,33 @@ describe('ServiceWorkerCacheTreeElement', () => {
     // Re-initialize (simulating target reload/BFCache navigation).
     cacheTreeElement.initialize();
     assert.strictEqual(cacheTreeElement.childCount(), 1);
+  });
+
+  it('updates live when caches are added and removed', async () => {
+    const cacheTreeElement = new Application.ServiceWorkerCacheTreeElement.ServiceWorkerCacheTreeElement(panel);
+    assert.strictEqual(cacheTreeElement.childCount(), 0);
+
+    const testStorageBucket: Protocol.Storage.StorageBucket = {
+      storageKey: 'test-storage-key',
+    };
+
+    const cache1 = new SDK.ServiceWorkerCacheModel.Cache(model, testStorageBucket, 'testCache1',
+                                                         'id1' as Protocol.CacheStorage.CacheId);
+
+    const cache2 = new SDK.ServiceWorkerCacheModel.Cache(model, testStorageBucket, 'testCache2',
+                                                         'id2' as Protocol.CacheStorage.CacheId);
+
+    model.dispatchEventToListeners(SDK.ServiceWorkerCacheModel.Events.CACHE_ADDED, {model, cache: cache1});
+    assert.strictEqual(cacheTreeElement.childCount(), 1);
+    assert.strictEqual(cacheTreeElement.childAt(0)?.title, 'testCache1 - test-storage-key');
+
+    model.dispatchEventToListeners(SDK.ServiceWorkerCacheModel.Events.CACHE_ADDED, {model, cache: cache2});
+    assert.strictEqual(cacheTreeElement.childCount(), 2);
+    assert.strictEqual(cacheTreeElement.childAt(0)?.title, 'testCache1 - test-storage-key');
+    assert.strictEqual(cacheTreeElement.childAt(1)?.title, 'testCache2 - test-storage-key');
+
+    model.dispatchEventToListeners(SDK.ServiceWorkerCacheModel.Events.CACHE_REMOVED, {model, cache: cache1});
+    assert.strictEqual(cacheTreeElement.childCount(), 1);
+    assert.strictEqual(cacheTreeElement.childAt(0)?.title, 'testCache2 - test-storage-key');
   });
 });
