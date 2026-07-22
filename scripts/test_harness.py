@@ -285,6 +285,32 @@ class DevToolsTestHarness(unittest.TestCase):
         )
         self.assertEqual(results[1].get('status'), 'PASS')
 
+    def test_unit_screenshot_retry(self):
+        abs_test_file = self._resolve_test_file(
+            "test/harness/unit/screenshot_retry.test.ts")
+        results, exit_code = self.run_test_with_rdb([
+            "node_modules/karma/bin/karma", "start",
+            "out/Default/gen/test/unit/karma.conf.js", "--", abs_test_file,
+            "--retries=2"
+        ])
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            len(results), 2,
+            f"Expected exactly 2 test results, got {len(results)}")
+
+        results.sort(key=lambda r: r.get('testId'))
+
+        self.assertEqual(
+            results[0].get('testId'),
+            'test/harness/unit/screenshot_retry.test.ts:screenshot_test_with_retries:should_fail_with_another_screenshot_error'
+        )
+        self.assertEqual(results[0].get('status'), 'FAIL')
+        self.assertEqual(
+            results[1].get('testId'),
+            'test/harness/unit/screenshot_retry.test.ts:screenshot_test_with_retries:should_fail_with_screenshot_error'
+        )
+        self.assertEqual(results[1].get('status'), 'FAIL')
+
     def test_unit_repeat(self):
         abs_test_file = self._resolve_test_file(
             "test/harness/unit/unit.test.ts")

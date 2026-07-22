@@ -123,6 +123,12 @@ export const ResultsDBReporter = function(
         }
       }
     }
+
+    // Clear any leftover screenshot errors from retries of this test.
+    // Mocha retries cause multiple ScreenshotErrors to be pushed, but specComplete
+    // only shifts the first one. We must clear the rest so they don't bleed into the next test.
+    ScreenshotError.errors.length = 0;
+
     ResultsDb.sendTestResult(testResult);
   };
   this.specSuccess = specComplete;

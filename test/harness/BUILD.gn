@@ -32,7 +32,7 @@ ts_e2e_library("e2e_fixtures") {
   ]
 }
 
-devtools_foundation_module("unit_fixtures") {
+devtools_ui_module("unit_fixtures") {
   testonly = true
   sources = [
     "unit/after_each_hook_fail.test.ts",
@@ -41,6 +41,7 @@ devtools_foundation_module("unit_fixtures") {
     "unit/global_after_hook_fail.test.ts",
     "unit/global_before_hook_fail.test.ts",
     "unit/hooks.test.ts",
+    "unit/screenshot_retry.test.ts",
     "unit/unit.test.ts",
   ]
   deps = [ "../../front_end/testing" ]
