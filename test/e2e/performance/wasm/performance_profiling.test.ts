@@ -59,7 +59,8 @@ async function expandAndCheckActivityTree(expectedActivities: string[], devtools
   } while (index < expectedActivities.length);
 }
 
-describe('The Performance panel', function() {
+// Flaky
+describe.skip('[crbug.com/537672763]: The Performance panel', function() {
   setup({dockingMode: 'undocked'});
   increaseTimeoutForPerfPanel(this);
 
