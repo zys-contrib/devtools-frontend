@@ -14,6 +14,8 @@ clean `UI.Widget` classes that use native update rendering delegates.
 
 ## 1. Widget Promotion Guidelines
 
+*   **Widget Framework Rules**: Follow the rules defined in [`devtools-ui-widgets`](../ui-widgets/SKILL.md).
+
 1.  **Change Class Inheritance**:
 
     *   Rewrite class declarations to extend `UI.Widget` (or specialized

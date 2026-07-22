@@ -70,6 +70,7 @@ existing element containers.
     *   Do not attempt to rewrite complex historical subsystems (like Linkifiers
         or specialized UI utilities) to be "pure Lit" during this pass.
     *   Capitalize on Lit's ability to interpolate standard `HTMLElement` or `Element` instances directly. Treat unmigrated utilities as "black boxes" that generate DOM, and embed their output in standard template expressions: `html`<div>${this.legacyElement}</div>``.
+    *   **CRITICAL:** Before treating any component as "unmigrated," you MUST follow steps in Section 4. You are only allowed to use this escape hatch if no declarative migration instructions exist.
 
 8.  **Handle Asynchronous DOM Updates**:
 
@@ -87,9 +88,10 @@ existing element containers.
         functions inside the class scope returning `LitTemplate`. This avoids
         monoliths, preserves readability, and reuses template cache strategies.
 
-10. **Visual Parity and Accessibility**:
+10. **Visual Parity, CSS Adaptation, and Accessibility**:
 
     *   **Zero-Tolerance Regression**: Screenshot tests are the ground truth for this phase. Any visual diff (above 0%) in the generated screenshots is unacceptable and must be resolved before proceeding.
+    *   **CSS Selector Migration**: When replacing legacy imperative components/widgets with modern web components (e.g., replacing legacy `DataGrid` with `<devtools-data-grid>`), inspect and update the associated `.css` file. Replace legacy class selectors (`.data-grid`) with tag selectors (`devtools-data-grid`).
     *   **Strict Tag/Class Parity**: Do not change tag types (e.g., `span` to
         `div`) or drop class names during template translation, as CSS may
         depend on them.
