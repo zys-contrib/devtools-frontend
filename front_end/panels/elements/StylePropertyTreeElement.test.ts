@@ -2617,6 +2617,13 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
       sinon.assert.calledOnceWithExactly(applyStyleTextStub, 'color: blue;', true);
       sinon.assert.calledOnce(editingEndedSpy);
     });
+
+    it('formats grid area defining property value into multiline text when editing value', () => {
+      const stylePropertyTreeElement = getTreeElement('grid-template-areas', '\'a a\' \'b b\'');
+      stylePropertyTreeElement.updateTitle();
+      stylePropertyTreeElement.startEditingValue();
+      assert.strictEqual(stylePropertyTreeElement.valueElement?.textContent, '\'a a\'\n\'b b\'');
+    });
   });
 
   it('re-enables a disabled property when edited', async () => {

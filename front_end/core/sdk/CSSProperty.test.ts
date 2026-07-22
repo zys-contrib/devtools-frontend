@@ -50,6 +50,11 @@ describe('CSSProperty', () => {
           await formatStyle('grid: [first-row-start] "a a" 10px [first-row-end] [second-row-start] "b b" 20px / 100px'),
           '\n grid: [first-row-start] "a a" 10px [first-row-end] [second-row-start] "b b" 20px / 100px\n');
     });
+    it('formats grid area defining properties with multiline values correctly', async () => {
+      assert.strictEqual(await formatStyle('grid: "a a" "b b"'), '\n grid:\n  "a a"\n  "b b"\n');
+      assert.strictEqual(await formatStyle('grid-template-areas: \'a a\' \'b b\''),
+                         '\n grid-template-areas:\n  \'a a\'\n  \'b b\'\n');
+    });
     it('formats shorthand declaration with a variable correctly', async () => {
       assert.strictEqual(
           await formatStyle('border: 1px solid var(--border-color);;', '', ''),
