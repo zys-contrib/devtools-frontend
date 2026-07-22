@@ -710,4 +710,147 @@ describeWithEnvironment('StylesPropertySection', () => {
     assert.exists(tooltip);
     assert.include(tooltip.textContent ?? '', 'Specificity: (0,1,0)');
   });
+
+  it('highlights matching text in ancestor nesting headers when filter is active', async () => {
+    const cssModel = createTarget({connection}).model(SDK.CSSModel.CSSModel);
+    assert.exists(cssModel);
+    const stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
+    sinon.stub(stylesSidebarPane, 'filterRegex').returns(new RegExp('header', 'i'));
+    const origin = Protocol.CSS.StyleSheetOrigin.Regular;
+    const styleSheetId = '0' as Protocol.DOM.StyleSheetId;
+
+    const parentRule: Protocol.CSS.RuleMatch = {
+      rule: {
+        selectorList: {
+          selectors: [
+            {text: '.header', specificity: {a: 0, b: 1, c: 0}},
+            {text: '.sidebar', specificity: {a: 0, b: 1, c: 0}},
+          ],
+          text: '.header, .sidebar',
+        },
+        origin,
+        style: {cssProperties: [{name: 'display', value: 'flex'}], shorthandEntries: []},
+      },
+      matchingSelectors: [0],
+    };
+
+    const childRule: Protocol.CSS.RuleMatch = {
+      rule: {
+        nestingSelectors: ['.header, .sidebar'],
+        ruleTypes: [Protocol.CSS.CSSRuleType.StyleRule],
+        selectorList: {selectors: [{text: '& .title', specificity: {a: 0, b: 2, c: 0}}], text: '& .title'},
+        origin,
+        style: {cssProperties: [{name: 'color', value: 'blue'}], shorthandEntries: []},
+      },
+      matchingSelectors: [0],
+    };
+
+    const matchedStyles = await getMatchedStylesWithStylesheet({
+      cssModel,
+      origin,
+      styleSheetId,
+      matchedPayload: [parentRule, childRule],
+      connection,
+    });
+
+    const declaration = matchedStyles.nodeStyles()[0];
+    assert.exists(declaration);
+    const section = new Elements.StylePropertiesSection.StylePropertiesSection(stylesSidebarPane, matchedStyles,
+                                                                               declaration, 0, null, null, null);
+
+    section.markSelectorHighlights();
+
+    const ancestorList = section.element.querySelector('.ancestor-rule-list');
+    assert.exists(ancestorList);
+    const simpleSelectors = ancestorList.querySelectorAll('.simple-selector');
+    assert.lengthOf(simpleSelectors, 2);
+    assert.isTrue(simpleSelectors[0].classList.contains('filter-match'));
+    assert.isFalse(simpleSelectors[1].classList.contains('filter-match'));
+  });
+
+  it('triggers node overlay highlight when hovering over ancestor nesting header selector', async () => {
+    const target = createTarget({connection});
+    const cssModel = target.model(SDK.CSSModel.CSSModel);
+    assert.exists(cssModel);
+    const domModel = target.model(SDK.DOMModel.DOMModel);
+    assert.exists(domModel);
+    const overlayModel = domModel.overlayModel();
+
+    const node = SDK.DOMModel.DOMNode.create(domModel, null, false, {
+      nodeId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+    });
+
+    const stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
+    sinon.stub(stylesSidebarPane, 'node').returns(node);
+    const setTimeoutStub = sinon.stub(window, 'setTimeout').callsFake((handler: TimerHandler) => {
+      if (typeof handler === 'function') {
+        handler();
+      }
+      return 1 as unknown as number;
+    });
+
+    const origin = Protocol.CSS.StyleSheetOrigin.Regular;
+    const styleSheetId = '0' as Protocol.DOM.StyleSheetId;
+
+    const parentRule: Protocol.CSS.RuleMatch = {
+      rule: {
+        selectorList: {
+          selectors: [
+            {text: '.header', specificity: {a: 0, b: 1, c: 0}},
+            {text: '.sidebar', specificity: {a: 0, b: 1, c: 0}},
+          ],
+          text: '.header, .sidebar',
+        },
+        origin,
+        style: {cssProperties: [{name: 'display', value: 'flex'}], shorthandEntries: []},
+      },
+      matchingSelectors: [0],
+    };
+
+    const childRule: Protocol.CSS.RuleMatch = {
+      rule: {
+        nestingSelectors: ['.header, .sidebar'],
+        ruleTypes: [Protocol.CSS.CSSRuleType.StyleRule],
+        selectorList: {selectors: [{text: '& .title', specificity: {a: 0, b: 2, c: 0}}], text: '& .title'},
+        origin,
+        style: {cssProperties: [{name: 'color', value: 'blue'}], shorthandEntries: []},
+      },
+      matchingSelectors: [0],
+    };
+
+    const matchedStyles = await getMatchedStylesWithStylesheet({
+      cssModel,
+      node,
+      origin,
+      styleSheetId,
+      matchedPayload: [parentRule, childRule],
+      connection,
+    });
+
+    const highlightSpy = sinon.spy(overlayModel, 'highlightInOverlay');
+    const hideStub = sinon.stub(SDK.OverlayModel.OverlayModel, 'hideDOMNodeHighlight');
+
+    const declaration = matchedStyles.nodeStyles()[0];
+    assert.exists(declaration);
+    const section = new Elements.StylePropertiesSection.StylePropertiesSection(stylesSidebarPane, matchedStyles,
+                                                                               declaration, 0, null, null, null);
+
+    const ancestorList = section.element.querySelector('.ancestor-rule-list');
+    assert.exists(ancestorList);
+    const selectorHeader = ancestorList.querySelector('.selector');
+    assert.exists(selectorHeader);
+
+    selectorHeader.dispatchEvent(new MouseEvent('mouseenter'));
+
+    sinon.assert.calledOnceWithExactly(highlightSpy, {node, selectorList: '.header, .sidebar'}, 'all');
+
+    selectorHeader.dispatchEvent(new MouseEvent('mouseleave'));
+    sinon.assert.called(hideStub);
+    setTimeoutStub.restore();
+  });
 });
