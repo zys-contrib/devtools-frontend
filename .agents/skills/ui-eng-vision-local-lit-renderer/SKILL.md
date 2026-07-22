@@ -47,6 +47,10 @@ existing element containers.
     *   Refer to [ui_engineering.md](../../../docs/ui_engineering.md) for
         specific migration examples.
     *   If unsure, also consult the [automatic migration code](../../../scripts/eslint_rules/lib/no-imperative-dom-api.ts)
+    *   **Prefer Component Built-Ins Over Legacy Boilerplate**: Before porting
+        legacy event handlers, comparators, or state variables, check if the
+        modern component handles them natively. Drop host-level workarounds in
+        favor of declarative component attributes.
 
 5.  **Local Modular Renders**:
 
