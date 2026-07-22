@@ -1472,4 +1472,33 @@ describeWithEnvironment('DOMModel', () => {
     assert.strictEqual(iframeDocument.documentURL, iframeDocumentURL);
     assert.strictEqual(iframeDocument.parentNode, iframeNode);
   });
+
+  describe('DOMModelUndoStack', () => {
+    it('allows calling undo multiple times with non-empty history', async () => {
+      const parentTarget = createTarget();
+      const target = createTarget({parentTarget});
+      const domModel = target.model(SDK.DOMModel.DOMModel);
+      assert.exists(domModel);
+
+      const markUndoableSpy = sinon.stub(domModel.agent, 'invoke_markUndoableState').resolves({
+        getError: () => undefined,
+      });
+      const undoSpy = sinon.stub(domModel.agent, 'invoke_undo').resolves({
+        getError: () => undefined,
+      });
+
+      const undoStack = new SDK.DOMModel.DOMModelUndoStack();
+
+      await undoStack.markUndoableState(domModel, false);
+      sinon.assert.calledOnce(markUndoableSpy);
+
+      await undoStack.undo();
+      sinon.assert.calledOnce(undoSpy);
+
+      // Perform second undo when history stack is empty.
+      await undoStack.undo();
+      // Should not call invoke_undo again because stack index is 0.
+      sinon.assert.calledOnce(undoSpy);
+    });
+  });
 });
