@@ -8,7 +8,7 @@ import sinon from 'sinon';
 import type * as Platform from '../../core/platform/platform.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
-import {renderElementIntoDOM} from '../../testing/DOMHelpers.js';
+import {assertScreenshot, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {createTarget, describeWithEnvironment, stubNoopSettings} from '../../testing/EnvironmentHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import * as UI from '../../ui/legacy/legacy.js';
@@ -95,4 +95,10 @@ describeWithEnvironment('AccessibilitySidebarView', () => {
      updatesUiOnEvent(SDK.DOMModel.Events.ChildNodeCountUpdated, true));
   it('does not update UI on out of scope child node count updated event',
      updatesUiOnEvent(SDK.DOMModel.Events.ChildNodeCountUpdated, false));
+
+  it('renders the view', async () => {
+    view = Accessibility.AccessibilitySidebarView.AccessibilitySidebarView.instance({forceNew: true});
+    renderElementIntoDOM(view, {includeCommonStyles: true});
+    await assertScreenshot('accessibility/accessibility_sidebar_view.png');
+  });
 });
