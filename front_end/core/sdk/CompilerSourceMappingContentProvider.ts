@@ -11,7 +11,7 @@ import type {PageResourceLoader, PageResourceLoadInitiator} from './PageResource
 
 const UIStrings = {
   /**
-   * @description Error message when failing to fetch a resource referenced in a source map
+   * @description Error message when failing to fetch a resource referenced in a source map.
    * @example {https://example.com/sourcemap.map} PH1
    * @example {An error occurred} PH2
    */

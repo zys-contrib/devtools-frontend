@@ -45,11 +45,11 @@ const UIStrings = {
    */
   noContentForPreflight: 'No content available for preflight request',
   /**
-   * @description Text to indicate that network throttling is disabled
+   * @description Text to indicate that network throttling is disabled.
    */
   noThrottling: 'No throttling',
   /**
-   * @description Text to indicate the network connectivity is offline
+   * @description Text to indicate the network connectivity is offline.
    */
   offline: 'Offline',
   /**
@@ -60,53 +60,53 @@ const UIStrings = {
                 // change it we break their stored throttling settings.
                 // (See crrev.com/c/2947255)
   /**
-   * @description Text in Network Manager representing the "Slow 4G" throttling preset
+   * @description Text in Network Manager representing the "Slow 4G" throttling preset.
    */
   fastG: 'Slow 4G',  // Named `fastG` for legacy reasons and because this value
                      // is serialized locally on the user's machine: if we
                      // change it we break their stored throttling settings.
                      // (See crrev.com/c/2947255)
   /**
-   * @description Text in Network Manager representing the "Fast 4G" throttling preset
+   * @description Text in Network Manager representing the "Fast 4G" throttling preset.
    */
   fast4G: 'Fast 4G',
   /**
-   * @description Text in Network Manager representing the "Blocking" throttling preset
+   * @description Text in Network Manager representing the "Blocking" throttling preset.
    */
   block: 'Block',
   /**
-   * @description Text in Network Manager
+   * @description Message in Network Manager indicating that a request was blocked by DevTools.
    * @example {https://example.com} PH1
    */
   requestWasBlockedByDevtoolsS: 'Request was blocked by DevTools: "{PH1}"',
   /**
-   * @description Message in Network Manager
+   * @description Console message when a request failed loading.
    * @example {XHR} PH1
    * @example {GET} PH2
    * @example {https://example.com} PH3
    */
   sFailedLoadingSS: '{PH1} failed loading: {PH2} "{PH3}".',
   /**
-   * @description Message in Network Manager
+   * @description Console message when a request finished loading.
    * @example {XHR} PH1
    * @example {GET} PH2
    * @example {https://example.com} PH3
    */
   sFinishedLoadingSS: '{PH1} finished loading: {PH2} "{PH3}".',
   /**
-   * @description One of direct socket connection statuses
+   * @description One of direct socket connection statuses.
    */
   directSocketStatusOpening: 'Opening',
   /**
-   * @description One of direct socket connection statuses
+   * @description One of direct socket connection statuses.
    */
   directSocketStatusOpen: 'Open',
   /**
-   * @description One of direct socket connection statuses
+   * @description One of direct socket connection statuses.
    */
   directSocketStatusClosed: 'Closed',
   /**
-   * @description One of direct socket connection statuses
+   * @description One of direct socket connection statuses.
    */
   directSocketStatusAborted: 'Aborted',
 } as const;
