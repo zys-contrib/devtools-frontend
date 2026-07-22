@@ -126,7 +126,9 @@ with open(GENERATED_LOCATION, "w+", newline='\n') as f:
     )
     f.write('// found in the LICENSE file.\n')
     f.write('\n')
-    f.write('/* eslint-disable @stylistic/quotes, @stylistic/quote-props */\n')
+    f.write(
+        '/* eslint-disable @stylistic/quotes, @stylistic/quote-props, @stylistic/comma-dangle */\n'
+    )
     f.write("export const generatedProperties = %s;\n" %
             json.dumps(properties, sort_keys=True, indent=1))
     # sort keys to ensure entries are generated in a deterministic way to avoid inconsistencies across different OS

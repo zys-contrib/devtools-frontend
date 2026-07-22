@@ -126,7 +126,7 @@ describeWithEnvironment('ScreenCaptureModel', () => {
           quality: 1,
           maxWidth: 2,
           maxHeight: 3,
-          everyNthFrame: 4
+          everyNthFrame: 4,
         });
       });
 

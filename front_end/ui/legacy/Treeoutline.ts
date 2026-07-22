@@ -1692,7 +1692,7 @@ function getTreeNodes(nodeList: NodeList|Node[]): Array<HTMLLIElement|TreeElemen
           return [
             node,
             ...node.querySelectorAll<HTMLLIElement|TreeElementWrapper>(
-                'ul[role="group"] li[role="treeitem"],ul[role="group"] devtools-tree-wrapper')
+                'ul[role="group"] li[role="treeitem"],ul[role="group"] devtools-tree-wrapper'),
           ];
         }
         if (node instanceof HTMLElement) {

@@ -125,7 +125,7 @@ describeWithEnvironment('ChatInput', () => {
         isLoading: false,
         data: 'screenshot-data',
         mimeType: 'image/jpeg',
-        inputType: AiAssistanceModel.AiAgent.MultimodalInputType.SCREENSHOT
+        inputType: AiAssistanceModel.AiAgent.MultimodalInputType.SCREENSHOT,
       });
     });
 

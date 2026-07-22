@@ -78,16 +78,14 @@ interface ViewInput {
 
 export type View = (input: ViewInput, output: object, target: HTMLElement|DocumentFragment) => void;
 export const DEFAULT_VIEW: View = (input, output, target) => {
-  render(
-      html`<devtools-tree
+  render(html`<devtools-tree
         navigation-variant
         hide-overflow
         .template=${
-          html`
+             html`
           <ul role="tree">
             ${
-              input.groups.map(
-                  group => html`
+                 input.groups.map(group => html`
               <li
                 role="treeitem"
                 @select=${() => input.onSelectionChanged(group.filter)}
@@ -95,11 +93,11 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                   <style>${consoleSidebarStyles}</style>
                   <devtools-icon name=${GROUP_ICONS[group.name].icon}></devtools-icon>
                   ${
-                      /* eslint-disable-next-line @devtools/l10n-i18nString-call-only-with-uistrings */
-                      i18nString(GROUP_ICONS[group.name].label, {
+                                      /* eslint-disable-next-line @devtools/l10n-i18nString-call-only-with-uistrings */
+                                      i18nString(GROUP_ICONS[group.name].label, {
 
-                        n: group.messageCount
-                      })}
+                                        n: group.messageCount,
+                                      })}
                   ${group.messageCount === 0 ? nothing : html`
                   <ul role="group">
                     ${group.urlGroups.values().map(urlGroup => html`
@@ -115,7 +113,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
               </li>`)}
         </ul>`}
         ></devtools-tree>`,
-      target, {container: {attributes: {jslog: `${VisualLogging.pane('sidebar').track({resize: true})}`}}});
+         target, {container: {attributes: {jslog: `${VisualLogging.pane('sidebar').track({resize: true})}`}}});
 };
 
 export class ConsoleFilterGroup {

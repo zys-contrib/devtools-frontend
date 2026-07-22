@@ -503,7 +503,7 @@ export const DEFAULT_VIEW = (input: ViewInput, _output: ViewOutput, target: HTML
     >
       ${renderRelevantDataDisclaimer(RELEVANT_DATA_LINK_FOOTER_ID)}
     </footer>
-  `, target,);
+  `, target);
   // clang-format on
 };
 
@@ -617,7 +617,7 @@ export class ChatInput extends UI.Widget.Widget implements SDK.TargetManager.Obs
         isLoading: false,
         data: bytes,
         mimeType: JPEG_MIME_TYPE,
-        inputType: AiAssistanceModel.AiAgent.MultimodalInputType.SCREENSHOT
+        inputType: AiAssistanceModel.AiAgent.MultimodalInputType.SCREENSHOT,
       };
       this.performUpdate();
       void this.updateComplete.then(() => {

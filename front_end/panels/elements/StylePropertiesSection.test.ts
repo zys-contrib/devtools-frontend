@@ -409,7 +409,9 @@ describeWithEnvironment('StylesPropertySection', () => {
       const activeAiSuggestion = {
         text: 'background-color: white; color: red; font-size: 10px;',
         properties: [
-          {name: 'background-color', value: 'white'}, {name: 'color', value: 'red'}, {name: 'font-size', value: '10px'}
+          {name: 'background-color', value: 'white'},
+          {name: 'color', value: 'red'},
+          {name: 'font-size', value: '10px'},
         ],
         cssProperty,
         cursorPosition: 0,
@@ -462,7 +464,9 @@ describeWithEnvironment('StylesPropertySection', () => {
       const activeAiSuggestion = {
         text: 'background-color: white; color: red; font-size: 10px;',
         properties: [
-          {name: 'background-color', value: 'white'}, {name: 'color', value: 'red'}, {name: 'font-size', value: '10px'}
+          {name: 'background-color', value: 'white'},
+          {name: 'color', value: 'red'},
+          {name: 'font-size', value: '10px'},
         ],
         cssProperty,
         cursorPosition: 0,

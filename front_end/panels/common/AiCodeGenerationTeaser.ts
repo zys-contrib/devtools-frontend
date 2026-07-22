@@ -314,7 +314,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
           <div class="ai-code-generation-teaser">
             &nbsp;${teaserLabel}
           </div>
-        `, target
+        `, target,
       );
   // clang-format on
 };

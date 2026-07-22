@@ -198,7 +198,7 @@ export async function toggleRegExButtonBottomUp(devToolsPage: DevToolsPage) {
   await expectVeEvents(
       [
         veClick(
-            'Panel: timeline > Section: timeline.flame-chart-view > Pane: bottom-up > Toolbar > Toggle: regular-expression')
+            'Panel: timeline > Section: timeline.flame-chart-view > Pane: bottom-up > Toolbar > Toggle: regular-expression'),
       ],
       undefined, devToolsPage);
 }

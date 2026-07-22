@@ -172,7 +172,7 @@ describeWithEnvironment('LiveMetricsView', () => {
         actionId: 'timeline.record-reload',
         category: UI.ActionRegistration.ActionCategory.PERFORMANCE,
         loadActionDelegate: async () => ({handleAction: mockHandleAction}),
-      }
+      },
     ]);
 
     const dummyStorage = new Common.Settings.SettingsStorage({});

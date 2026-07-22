@@ -42,7 +42,8 @@ describe('FunctionCodeResolver', function() {
       `"use strict";function fibonacci(e){return e<=1?1:fibonacci(e-1)+fibonacci(e-2)}const btn=document.querySelector("button"),params=new URLSearchParams(location.search);btn.addEventListener("click",()=>{console.log(fibonacci(Number(params.get("x")))),btn.style.backgroundColor="red"});const input=document.querySelector('input[type="text"]');input.addEventListener("input",()=>{console.log(fibonacci(Number(params.get("x"))))});\n//# sourceMappingURL=file:///tmp/example.js.min.map`;
   const exampleRawPerformanceData = new Map([
     [
-      1, new Map([
+      1,
+      new Map([
         [1, 1],       // "use strict"
         [35, 67],     // starting } of fibonacci
         [43, 23],     // e<=1
@@ -51,18 +52,18 @@ describe('FunctionCodeResolver', function() {
         [79, 13],     // ending } of fibonacci
         [213, 5000],  // fibonacci(Number(params.get("x")))
         [274, 333],   // btn.style.backgroundColor="red"
-      ])
+      ]),
     ],
   ]);
   const exampleSourceMap = {
     version: 3,
     sources: ['index.js'],
     sourcesContent: [
-      'function fibonacci(num) {\n  if (num <= 1) return 1;\n\n  return fibonacci(num - 1) + fibonacci(num - 2);\n}\n\nconst btn = document.querySelector(\'button\');\nconst params = new URLSearchParams(location.search);\n\nbtn.addEventListener(\'click\', () => {\n  console.log(fibonacci(Number(params.get(\'x\'))));\n  btn.style.backgroundColor = \'red\';\n});\n\nconst input = document.querySelector(\'input[type="text"]\');\ninput.addEventListener(\'input\', () => {\n  console.log(fibonacci(Number(params.get(\'x\'))));\n});\n'
+      'function fibonacci(num) {\n  if (num <= 1) return 1;\n\n  return fibonacci(num - 1) + fibonacci(num - 2);\n}\n\nconst btn = document.querySelector(\'button\');\nconst params = new URLSearchParams(location.search);\n\nbtn.addEventListener(\'click\', () => {\n  console.log(fibonacci(Number(params.get(\'x\'))));\n  btn.style.backgroundColor = \'red\';\n});\n\nconst input = document.querySelector(\'input[type="text"]\');\ninput.addEventListener(\'input\', () => {\n  console.log(fibonacci(Number(params.get(\'x\'))));\n});\n',
     ],
     mappings:
         'aAAA,SAAS,UAAUA,EAAK,CACtB,OAAIA,GAAO,EAAU,EAEd,UAAUA,EAAM,CAAC,EAAI,UAAUA,EAAM,CAAC,CAC/C,CAEA,MAAM,IAAM,SAAS,cAAc,QAAQ,EACrC,OAAS,IAAI,gBAAgB,SAAS,MAAM,EAElD,IAAI,iBAAiB,QAAS,IAAM,CAClC,QAAQ,IAAI,UAAU,OAAO,OAAO,IAAI,GAAG,CAAC,CAAC,CAAC,EAC9C,IAAI,MAAM,gBAAkB,KAC9B,CAAC,EAED,MAAM,MAAQ,SAAS,cAAc,oBAAoB,EACzD,MAAM,iBAAiB,QAAS,IAAM,CACpC,QAAQ,IAAI,UAAU,OAAO,OAAO,IAAI,GAAG,CAAC,CAAC,CAAC,CAChD,CAAC',
-    names: ['num']
+    names: ['num'],
   };
 
   describe('getFunctionCodeFromLocation', () => {
@@ -78,7 +79,7 @@ describe('FunctionCodeResolver', function() {
         line: 0,
         column: 35,
         sourceMap: null,
-        expectedCode: `(e) {\n\treturn e <= 1 ? 1 : fibonacci(e - 1) + fibonacci(e - 2)\n}\n`
+        expectedCode: `(e) {\n\treturn e <= 1 ? 1 : fibonacci(e - 1) + fibonacci(e - 2)\n}\n`,
       },
       {
         name: '[no source maps] lookup anonymous function',
@@ -87,7 +88,7 @@ describe('FunctionCodeResolver', function() {
         column: 201,
         sourceMap: null,
         expectedCode:
-            `() => {\n\tconsole.log(fibonacci(Number(params.get(\"x\")))),\n\tbtn.style.backgroundColor = \"red\"\n}\n`
+            `() => {\n\tconsole.log(fibonacci(Number(params.get(\"x\")))),\n\tbtn.style.backgroundColor = \"red\"\n}\n`,
       },
 
       {
@@ -97,7 +98,7 @@ describe('FunctionCodeResolver', function() {
         column: 35,
         sourceMap: {url: sourceMapUrl, content: sourceMapContent},
         expectedCode:
-            `fibonacci(num) {\n  if (num <= 1) return 1;\n\n  return fibonacci(num - 1) + fibonacci(num - 2);\n}\n\n`
+            `fibonacci(num) {\n  if (num <= 1) return 1;\n\n  return fibonacci(num - 1) + fibonacci(num - 2);\n}\n\n`,
       },
       {
         name: '[source maps] lookup named function with original location',
@@ -106,7 +107,7 @@ describe('FunctionCodeResolver', function() {
         column: 5,
         sourceMap: {url: sourceMapUrl, content: sourceMapContent},
         expectedCode:
-            `fibonacci(num) {\n  if (num <= 1) return 1;\n\n  return fibonacci(num - 1) + fibonacci(num - 2);\n}\n\n`
+            `fibonacci(num) {\n  if (num <= 1) return 1;\n\n  return fibonacci(num - 1) + fibonacci(num - 2);\n}\n\n`,
       },
 
       {
@@ -116,7 +117,7 @@ describe('FunctionCodeResolver', function() {
         column: 35,
         sourceMap: {url: sourceMapUrl, content: sourceMapContentButNoSources},
         // TODO: createFromAst does not include function identifiers in the created scope start position.
-        expectedCode: `(e) {\n\treturn e <= 1 ? 1 : fibonacci(e - 1) + fibonacci(e - 2)\n}\n`
+        expectedCode: `(e) {\n\treturn e <= 1 ? 1 : fibonacci(e - 1) + fibonacci(e - 2)\n}\n`,
       },
       {
         name: '[source maps, no source contents] lookup named function with original location',
@@ -124,7 +125,7 @@ describe('FunctionCodeResolver', function() {
         line: 1,
         column: 5,
         sourceMap: {url: sourceMapUrl, content: sourceMapContentButNoSources},
-        expectedCode: `(e) {\n\treturn e <= 1 ? 1 : fibonacci(e - 1) + fibonacci(e - 2)\n}\n`
+        expectedCode: `(e) {\n\treturn e <= 1 ? 1 : fibonacci(e - 1) + fibonacci(e - 2)\n}\n`,
       },
 
       {
@@ -134,7 +135,7 @@ describe('FunctionCodeResolver', function() {
         column: 201,
         sourceMap: {url: sourceMapUrl, content: sourceMapContent},
         expectedCode:
-            `() => {\n  console.log(fibonacci(Number(params.get('x'))));\n  btn.style.backgroundColor = 'red';\n}`
+            `() => {\n  console.log(fibonacci(Number(params.get('x'))));\n  btn.style.backgroundColor = 'red';\n}`,
       },
       {
         name: '[source maps] lookup anonymous function with original location',
@@ -143,7 +144,7 @@ describe('FunctionCodeResolver', function() {
         column: 3,
         sourceMap: {url: sourceMapUrl, content: sourceMapContent},
         expectedCode:
-            `() => {\n  console.log(fibonacci(Number(params.get('x'))));\n  btn.style.backgroundColor = 'red';\n}`
+            `() => {\n  console.log(fibonacci(Number(params.get('x'))));\n  btn.style.backgroundColor = 'red';\n}`,
       },
 
       {
@@ -153,7 +154,7 @@ describe('FunctionCodeResolver', function() {
         column: 201,
         sourceMap: {url: sourceMapUrl, content: sourceMapContentButNoSources},
         expectedCode:
-            `() => {\n\tconsole.log(fibonacci(Number(params.get(\"x\")))),\n\tbtn.style.backgroundColor = \"red\"\n}\n`
+            `() => {\n\tconsole.log(fibonacci(Number(params.get(\"x\")))),\n\tbtn.style.backgroundColor = \"red\"\n}\n`,
       },
       {
         name: '[source maps, no source contents] lookup anonymous function with original location',
@@ -162,7 +163,7 @@ describe('FunctionCodeResolver', function() {
         column: 3,
         sourceMap: {url: sourceMapUrl, content: sourceMapContentButNoSources},
         expectedCode:
-            `() => {\n\tconsole.log(fibonacci(Number(params.get(\"x\")))),\n\tbtn.style.backgroundColor = \"red\"\n}\n`
+            `() => {\n\tconsole.log(fibonacci(Number(params.get(\"x\")))),\n\tbtn.style.backgroundColor = \"red\"\n}\n`,
       },
     ];
 

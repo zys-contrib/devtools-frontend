@@ -670,7 +670,7 @@ export class PerformanceTraceFormatter {
       mimeType,
       responseHeaders,
       syntheticData,
-      protocol
+      protocol,
     } = request.args.data;
     const parsedTrace = this.#parsedTrace;
 
@@ -949,7 +949,7 @@ The order of headers corresponds to an internal fixed list. If a header is not p
       startLine: contextStartLine,
       startColumn: contextStartColumn,
       endLine: contextEndLine,
-      endColumn: contextEndColumn
+      endColumn: contextEndColumn,
     } = code.rangeWithContext;
     const name = code.functionBounds.name || '(anonymous)';
     const url = code.functionBounds.uiSourceCode.url();

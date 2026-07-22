@@ -626,7 +626,7 @@ function renderTitle(
       });
       return html`"<span class="webkit-html-text-node" jslog=${VisualLogging.value('text-node').track({
         change: true,
-        dblclick: true
+        dblclick: true,
       })} ${animateOn(Boolean(updateRecord?.isCharDataModified()), DOM_UPDATE_ANIMATION_CLASS_NAME)} ${
           renderTextNode}></span>"`;
     }
@@ -752,7 +752,7 @@ function renderLinkifiedValue(value: string, node: SDK.DOMModel.DOMNode): Lit.Te
     showColumnNumber: false,
     onRef: link => {
       ImagePreviewPopover.setImageUrl(link, rewrittenHref);
-    }
+    },
   });
 }
 
@@ -1293,7 +1293,7 @@ export class ElementsTreeElement extends UI.TreeOutline.TreeElement {
 
     if (this.nodeInternal.retained && !this.isClosingTag()) {
       this.setLeadingIcons([
-        html`<devtools-icon class="extra-small" name="small-status-dot" style="color:var(--icon-error); vertical-align:middle"></devtools-icon>`
+        html`<devtools-icon class="extra-small" name="small-status-dot" style="color:var(--icon-error); vertical-align:middle"></devtools-icon>`,
       ]);
       this.listItemNode.classList.add('detached-elements-detached-node');
       this.listItemNode.style.setProperty('display', '-webkit-box');

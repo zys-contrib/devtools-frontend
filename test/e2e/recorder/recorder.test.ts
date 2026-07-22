@@ -57,9 +57,9 @@ describe('Recorder', function() {
                 ['xpath///*[@id="test"]'],
                 ['pierce/#test'],
                 ['text/Test Button'],
-              ]
-            }
-          ]
+              ],
+            },
+          ],
         },
     );
   });
@@ -124,7 +124,7 @@ describe('Recorder', function() {
             ['pierce/#mouse-button'],
             ['text/Mouse click button'],
           ],
-          button: 'auxiliary'
+          button: 'auxiliary',
         },
         {
           type: 'click',
@@ -136,7 +136,7 @@ describe('Recorder', function() {
             ['pierce/#mouse-button'],
             ['text/Mouse click button'],
           ],
-          button: 'secondary'
+          button: 'secondary',
         },
         {
           type: 'click',
@@ -148,7 +148,7 @@ describe('Recorder', function() {
             ['pierce/#mouse-button'],
             ['text/Mouse click button'],
           ],
-          button: 'forward'
+          button: 'forward',
         },
         {
           type: 'click',
@@ -160,7 +160,7 @@ describe('Recorder', function() {
             ['pierce/#mouse-button'],
             ['text/Mouse click button'],
           ],
-          button: 'back'
+          button: 'back',
         },
         {
           type: 'doubleClick',
@@ -171,9 +171,9 @@ describe('Recorder', function() {
             ['xpath///*[@id="mouse-button"]'],
             ['pierce/#mouse-button'],
             ['text/Mouse click button'],
-          ]
-        }
-      ]
+          ],
+        },
+      ],
     });
   });
 
@@ -200,7 +200,7 @@ describe('Recorder', function() {
                 ['#reset'],
                 ['xpath///*[@id="reset"]'],
                 ['pierce/#reset'],
-              ]
+              ],
             },
             {
               type: 'click',
@@ -219,8 +219,8 @@ describe('Recorder', function() {
                 ['xpath///*[@id="button"]'],
                 ['pierce/#button'],
               ],
-            }
-          ]
+            },
+          ],
         },
     );
   });
@@ -252,8 +252,8 @@ describe('Recorder', function() {
               ['pierce/[data-devtools-test=\'selector-attribute\']'],
               ['aria/Custom selector attribute'],
               ['text/Custom selector'],
-            ]
-          }]
+            ],
+          }],
         },
 
     );
@@ -285,8 +285,8 @@ describe('Recorder', function() {
               type: 'keyUp',
               key: 'Enter',
               target: 'main',
-            }
-          ]
+            },
+          ],
         },
     );
   });
@@ -310,8 +310,8 @@ describe('Recorder', function() {
               ['xpath///*[@id="synthetic"]'],
               ['pierce/#synthetic'],
               ['text/Trigger Synthetic'],
-            ]
-          }]
+            ],
+          }],
         },
     );
   });
@@ -343,7 +343,7 @@ describe('Recorder', function() {
                 ['#name'],
                 ['xpath///*[@id="name"]'],
                 ['pierce/#name'],
-              ]
+              ],
             },
             {
               type: 'change',
@@ -354,7 +354,7 @@ describe('Recorder', function() {
                 ['xpath///*[@id="name"]'],
                 ['pierce/#name'],
               ],
-              target: 'main'
+              target: 'main',
             },
             {
               type: 'keyDown',
@@ -363,15 +363,15 @@ describe('Recorder', function() {
               assertedEvents: [{
                 type: 'navigation',
                 url: 'https://localhost:<test-port>/test/e2e/resources/recorder/form.html?name=test',
-                title: ''
-              }]
+                title: '',
+              }],
             },
             {
               type: 'keyUp',
               key: 'Enter',
               target: 'main',
-            }
-          ]
+            },
+          ],
         },
     );
   });
@@ -401,8 +401,8 @@ describe('Recorder', function() {
                  ['xpath///*[@id="form-button"]'],
                  ['pierce/#form-button'],
                  ['text/Form Button'],
-               ]
-             }]
+               ],
+             }],
            },
        );
      });
@@ -429,8 +429,8 @@ describe('Recorder', function() {
              ['#span'],
              ['xpath///*[@id="span"]'],
              ['pierce/#span'],
-           ]
-         }]
+           ],
+         }],
        });
      });
 
@@ -458,7 +458,7 @@ describe('Recorder', function() {
                  ['xpath///*[@id="span2"]'],
                  ['pierce/#span2'],
                ],
-             }]
+             }],
            },
        );
      });
@@ -481,7 +481,7 @@ describe('Recorder', function() {
                  ['#shadow-root > span', '#inner-span'],
                  ['pierce/#inner-span'],
                ],
-             }]
+             }],
            },
        );
      });
@@ -506,8 +506,8 @@ describe('Recorder', function() {
                  ['custom-button'],
                  ['xpath//html/body/custom-button'],
                  ['pierce/custom-button'],
-               ]
-             }]
+               ],
+             }],
            },
        );
      });
@@ -534,7 +534,7 @@ describe('Recorder', function() {
                 ['pierce/#in-iframe'],
                 ['text/iframe button'],
               ],
-              frame: [0]
+              frame: [0],
             },
             {
               type: 'click',
@@ -546,9 +546,9 @@ describe('Recorder', function() {
                 ['pierce/#inner-iframe'],
                 ['text/Inner iframe'],
               ],
-              frame: [0, 0]
-            }
-          ]
+              frame: [0, 0],
+            },
+          ],
         },
     );
   });
@@ -588,8 +588,8 @@ describe('Recorder', function() {
           assertedEvents: [{
             type: 'navigation',
             url: 'https://localhost:<test-port>/test/e2e/resources/recorder/recorder2.html',
-            title: ''
-          }]
+            title: '',
+          }],
         },
         {
           type: 'click',
@@ -604,10 +604,10 @@ describe('Recorder', function() {
           assertedEvents: [{
             type: 'navigation',
             url: 'https://localhost:<test-port>/test/e2e/resources/recorder/recorder.html',
-            title: ''
-          }]
-        }
-      ]
+            title: '',
+          }],
+        },
+      ],
     });
   });
 
@@ -651,7 +651,7 @@ describe('Recorder', function() {
               deviceScaleFactor: 1,
               isMobile: false,
               hasTouch: false,
-              isLandscape: false
+              isLandscape: false,
             },
             {
               type: 'navigate',
@@ -659,8 +659,8 @@ describe('Recorder', function() {
               assertedEvents: [{
                 type: 'navigation',
                 url: 'https://localhost:<test-port>/test/e2e/resources/recorder/recorder.html',
-                title: ''
-              }]
+                title: '',
+              }],
             },
             {
               type: 'click',
@@ -688,9 +688,9 @@ describe('Recorder', function() {
                 ['xpath///*[@id="test"]'],
                 ['pierce/#test'],
                 ['text/Test Button'],
-              ]
-            }
-          ]
+              ],
+            },
+          ],
         },
     );
   });
@@ -732,7 +732,7 @@ describe('Recorder', function() {
                 ['xpath///*[@id="one"]'],
                 ['pierce/#one'],
               ],
-              target: 'main'
+              target: 'main',
             },
             {
               type: 'keyDown',
@@ -752,9 +752,9 @@ describe('Recorder', function() {
                 ['xpath///*[@id="two"]'],
                 ['pierce/#two'],
               ],
-              target: 'main'
-            }
-          ]
+              target: 'main',
+            },
+          ],
         },
     );
   });
@@ -788,7 +788,7 @@ describe('Recorder', function() {
                 ['xpath///*[@id="color"]'],
                 ['pierce/#color'],
                 ['text/#000000'],
-              ]
+              ],
             },
             {
               type: 'change',
@@ -799,9 +799,9 @@ describe('Recorder', function() {
                 ['pierce/#color'],
                 ['text/#000000'],
               ],
-              target: 'main'
-            }
-          ]
+              target: 'main',
+            },
+          ],
         },
     );
   });
@@ -849,8 +849,8 @@ describe('Recorder', function() {
               type: 'keyUp',
               key: 'Shift',
               target: 'main',
-            }
-          ]
+            },
+          ],
         },
     );
   });
@@ -896,7 +896,7 @@ describe('Recorder', function() {
                 ['xpath//html/body/input'],
                 ['pierce/input'],
               ],
-              target: 'main'
+              target: 'main',
             },
             {
               type: 'keyDown',
@@ -905,15 +905,15 @@ describe('Recorder', function() {
               assertedEvents: [{
                 type: 'navigation',
                 url: 'https://localhost:<test-port>/test/e2e/resources/recorder/input.html',
-                title: ''
-              }]
+                title: '',
+              }],
             },
             {
               type: 'keyUp',
               key: 'Enter',
               target: 'main',
-            }
-          ]
+            },
+          ],
         },
     );
   });
@@ -946,9 +946,9 @@ describe('Recorder', function() {
             assertedEvents: [{
               type: 'navigation',
               url: 'https://localhost:<test-port>/test/e2e/resources/recorder/input.html',
-              title: ''
-            }]
-          }]
+              title: '',
+            }],
+          }],
         },
     );
   });
@@ -975,7 +975,7 @@ describe('Recorder', function() {
                 ['#select'],
                 ['xpath///*[@id="select"]'],
                 ['pierce/#select'],
-              ]
+              ],
             },
             {
               type: 'change',
@@ -986,9 +986,9 @@ describe('Recorder', function() {
                 ['xpath///*[@id="select"]'],
                 ['pierce/#select'],
               ],
-              target: 'main'
-            }
-          ]
+              target: 'main',
+            },
+          ],
         },
     );
   });
@@ -1013,8 +1013,8 @@ describe('Recorder', function() {
               ['#checkbox'],
               ['xpath///*[@id="checkbox"]'],
               ['pierce/#checkbox'],
-            ]
-          }]
+            ],
+          }],
         },
     );
   });
@@ -1038,8 +1038,8 @@ describe('Recorder', function() {
               ['#to-be-modified'],
               ['xpath///*[@id="to-be-modified"]'],
               ['pierce/#to-be-modified'],
-            ]
-          }]
+            ],
+          }],
         },
     );
   });
@@ -1072,9 +1072,9 @@ describe('Recorder', function() {
         assertedEvents: [{
           type: 'navigation',
           url: 'https://devtools.oopif.test:<test-port>/test/e2e/resources/recorder/iframe2.html',
-          title: ''
-        }]
-      }]
+          title: '',
+        }],
+      }],
     });
   });
 
@@ -1151,7 +1151,7 @@ describe('Recorder', function() {
                 ['xpath///*[@id="popup"]'],
                 ['pierce/#popup'],
                 ['text/Open Popup'],
-              ]
+              ],
             },
             {
               type: 'click',
@@ -1162,9 +1162,9 @@ describe('Recorder', function() {
                 ['xpath//html/body/button'],
                 ['pierce/button'],
                 ['text/Button in Popup'],
-              ]
-            }
-          ]
+              ],
+            },
+          ],
         },
     );
   });
@@ -1179,54 +1179,53 @@ describe('Recorder', function() {
     await inspectedPage.page.keyboard.type('d');
 
     const recording = await stopRecording(devToolsPage);
-    assert.deepEqual(
-        processAndVerifyBaseRecording(recording, {
-          resource: 'recorder/input.html',
-        }),
-        {
-          steps: [
-            {
-              type: 'keyDown',
-              target: 'main',
-              key: 'Tab',
-            },
-            {
-              type: 'keyUp',
-              key: 'Tab',
-              target: 'main',
-            },
-            {
-              type: 'change',
-              value: '1',
-              selectors: [
-                ['#one'],
-                ['xpath///*[@id="one"]'],
-                ['pierce/#one'],
-              ],
-              target: 'main'
-            },
-            {
-              type: 'keyDown',
-              target: 'main',
-              key: 'Shift',
-            },
-            {
-              type: 'keyUp',
-              key: 'Shift',
-              target: 'main',
-            },
-            {
-              type: 'change',
-              value: '1d',
-              selectors: [
-                ['#one'],
-                ['xpath///*[@id="one"]'],
-                ['pierce/#one'],
-              ],
-              target: 'main'
-            }
-          ]
-        });
+    assert.deepEqual(processAndVerifyBaseRecording(recording, {
+                       resource: 'recorder/input.html',
+                     }),
+                     {
+                       steps: [
+                         {
+                           type: 'keyDown',
+                           target: 'main',
+                           key: 'Tab',
+                         },
+                         {
+                           type: 'keyUp',
+                           key: 'Tab',
+                           target: 'main',
+                         },
+                         {
+                           type: 'change',
+                           value: '1',
+                           selectors: [
+                             ['#one'],
+                             ['xpath///*[@id="one"]'],
+                             ['pierce/#one'],
+                           ],
+                           target: 'main',
+                         },
+                         {
+                           type: 'keyDown',
+                           target: 'main',
+                           key: 'Shift',
+                         },
+                         {
+                           type: 'keyUp',
+                           key: 'Shift',
+                           target: 'main',
+                         },
+                         {
+                           type: 'change',
+                           value: '1d',
+                           selectors: [
+                             ['#one'],
+                             ['xpath///*[@id="one"]'],
+                             ['pierce/#one'],
+                           ],
+                           target: 'main',
+                         },
+                       ],
+                     });
   });
 
   it('should work with contiguous inputs', async ({inspectedPage, devToolsPage}) => {
@@ -1257,7 +1256,7 @@ describe('Recorder', function() {
                 ['xpath///*[@id="contiguous-field-1"]'],
                 ['pierce/#contiguous-field-1'],
               ],
-              target: 'main'
+              target: 'main',
             },
             {
               type: 'change',
@@ -1267,9 +1266,9 @@ describe('Recorder', function() {
                 ['xpath///*[@id="contiguous-field-2"]'],
                 ['pierce/#contiguous-field-2'],
               ],
-              target: 'main'
-            }
-          ]
+              target: 'main',
+            },
+          ],
         },
     );
   });
@@ -1282,31 +1281,30 @@ describe('Recorder', function() {
     await inspectedPage.page.keyboard.type('works');
 
     const recording = await stopRecording(devToolsPage);
-    assert.deepEqual(
-        processAndVerifyBaseRecording(recording, {
-          resource: 'recorder/shadow-input.html',
-        }),
-        {
-          steps: [
-            {
-              type: 'click',
-              target: 'main',
-              selectors: [
-                ['custom-input', 'input'],
-                ['pierce/input'],
-              ],
-            },
-            {
-              type: 'change',
-              value: 'works',
-              selectors: [
-                ['custom-input', 'input'],
-                ['pierce/input'],
-              ],
-              target: 'main'
-            }
-          ]
-        });
+    assert.deepEqual(processAndVerifyBaseRecording(recording, {
+                       resource: 'recorder/shadow-input.html',
+                     }),
+                     {
+                       steps: [
+                         {
+                           type: 'click',
+                           target: 'main',
+                           selectors: [
+                             ['custom-input', 'input'],
+                             ['pierce/input'],
+                           ],
+                         },
+                         {
+                           type: 'change',
+                           value: 'works',
+                           selectors: [
+                             ['custom-input', 'input'],
+                             ['pierce/input'],
+                           ],
+                           target: 'main',
+                         },
+                       ],
+                     });
   });
 
   it('should edit while recording', async ({inspectedPage, devToolsPage}) => {
@@ -1345,7 +1343,7 @@ describe('Recorder', function() {
               deviceScaleFactor: 1,
               isMobile: false,
               hasTouch: false,
-              isLandscape: false
+              isLandscape: false,
             },
             {
               type: 'click',
@@ -1356,9 +1354,9 @@ describe('Recorder', function() {
                 ['xpath///*[@id="test"]'],
                 ['pierce/#test'],
                 ['text/Test Button'],
-              ]
-            }
-          ]
+              ],
+            },
+          ],
         },
     );
   });
@@ -1417,7 +1415,7 @@ describe('Recorder', function() {
         download: 1000,
         latency: 25,
         upload: 1000,
-      }]
+      }],
     });
   });
 
@@ -1452,7 +1450,7 @@ describe('Recorder', function() {
         selectors: [
           ['.cls'],
         ],
-      }]
+      }],
     });
   });
 
@@ -1528,8 +1526,8 @@ describe('Recorder', function() {
             type: 'keyUp',
             key: 'e',
             target: 'main',
-          }
-        ]
+          },
+        ],
       });
     });
   });

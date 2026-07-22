@@ -23,7 +23,7 @@ import {
   allThreadEntriesInTrace,
   microsecondsTraceWindow,
   renderWidgetInVbox,
-  setupIgnoreListManagerEnvironment
+  setupIgnoreListManagerEnvironment,
 } from '../../testing/TraceHelpers.js';
 import {TraceLoader} from '../../testing/TraceLoader.js';
 import * as PerfUI from '../../ui/legacy/components/perf_ui/perf_ui.js';
@@ -320,22 +320,24 @@ describe('TimelineFlameChartView', function() {
         [{expanded: true, hidden: false, originalIndex: 0, visualIndex: 0, trackName: 'Network'}]);
 
     assert.deepEqual(visualMetadata.main, [
-      {expanded: false, hidden: true, originalIndex: 0, visualIndex: 0, trackName: 'Frames'}, {
+      {expanded: false, hidden: true, originalIndex: 0, visualIndex: 0, trackName: 'Frames'},
+      {
         expanded: false,
         hidden: false,
         originalIndex: 1,
         visualIndex: 1,
         // screenshots but it has no visible title
-        trackName: ''
+        trackName: '',
       },
       {expanded: false, hidden: false, originalIndex: 2, visualIndex: 3, trackName: 'Animations'},
-      {expanded: true, hidden: false, originalIndex: 3, visualIndex: 2, trackName: 'Main — https://web.dev/'}, {
+      {expanded: true, hidden: false, originalIndex: 3, visualIndex: 2, trackName: 'Main — https://web.dev/'},
+      {
         expanded: false,
         hidden: false,
         originalIndex: 4,
         visualIndex: 4,
         trackName:
-            'Frame — https://shared-storage-demo-content-producer.web.app/paa/scripts/private-aggregation-test.html'
+            'Frame — https://shared-storage-demo-content-producer.web.app/paa/scripts/private-aggregation-test.html',
       },
       {expanded: false, hidden: false, originalIndex: 5, visualIndex: 5, trackName: 'Thread pool'},
       {expanded: false, hidden: false, originalIndex: 6, visualIndex: 6, trackName: 'Thread pool worker 1'},
@@ -344,7 +346,7 @@ describe('TimelineFlameChartView', function() {
       {expanded: false, hidden: false, originalIndex: 9, visualIndex: 9, trackName: 'Thread pool worker 4'},
       {expanded: false, hidden: false, originalIndex: 10, visualIndex: 10, trackName: 'Thread pool worker 5'},
       {expanded: false, hidden: false, originalIndex: 11, visualIndex: 11, trackName: 'StackSamplingProfiler'},
-      {expanded: false, hidden: false, originalIndex: 12, visualIndex: 12, trackName: 'GPU'}
+      {expanded: false, hidden: false, originalIndex: 12, visualIndex: 12, trackName: 'GPU'},
     ]);
   });
 
@@ -370,7 +372,7 @@ describe('TimelineFlameChartView', function() {
       visualTrackConfig: {
         main: null,
         network: FROM_FILE_VISUAL_CONFIG_NETWORK,
-      }
+      },
     };
     const mockViewDelegate = new MockViewDelegate();
     const flameChartView = new Timeline.TimelineFlameChartView.TimelineFlameChartView(mockViewDelegate);

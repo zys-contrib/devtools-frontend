@@ -32,7 +32,7 @@ describeWithEnvironment('AISettingsTab', () => {
       },
       devToolsAiCodeCompletion: {
         enabled: true,
-      }
+      },
     });
     aidaAccessStub = sinon.stub(Host.AidaClient.AidaClient, 'checkAccessPreconditions');
     aidaAccessStub.returns(Promise.resolve(Host.AidaClient.AidaAccessPreconditions.AVAILABLE));

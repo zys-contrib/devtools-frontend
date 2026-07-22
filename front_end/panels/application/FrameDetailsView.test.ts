@@ -152,7 +152,7 @@ describeWithEnvironment('FrameDetailsView', () => {
           {
             scriptId: '456' as Protocol.Runtime.ScriptId,
             debuggerId: '' as Protocol.Runtime.UniqueDebuggerId,
-          }
+          },
         ],
         rootScriptFilterlistRule: '/ad-script2.$script',
       }),

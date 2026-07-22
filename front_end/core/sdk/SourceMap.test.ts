@@ -1419,7 +1419,7 @@ describeWithEnvironment('SourceMap', () => {
                               .returns(Promise.resolve({start: 0, end: 38, variables: [], kind: 1, children: []}));
     const script = sinon.createStubInstance(SDK.Script.Script, {
       requestContentData: Promise.resolve(
-          new TextUtils.ContentData.ContentData('function f() { console.log("hello"); }', false, 'text/javascript'))
+          new TextUtils.ContentData.ContentData('function f() { console.log("hello"); }', false, 'text/javascript')),
     });
     const sourceMap = new SDK.SourceMap.SourceMap(compiledUrl, sourceMapJsonUrl, {
       version: 3,

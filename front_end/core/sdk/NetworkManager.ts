@@ -1117,7 +1117,7 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
     clientSecurityState,
     connectTiming,
     siteHasCookieInOtherPartition,
-    appliedNetworkConditionsId
+    appliedNetworkConditionsId,
   }: Protocol.Network.RequestWillBeSentExtraInfoEvent): void {
     const blockedRequestCookies: BlockedCookieWithReason[] = [];
     const includedRequestCookies: IncludedCookieWithReason[] = [];
@@ -1394,7 +1394,7 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
         sendBufferSize: event.options.sendBufferSize,
         receiveBufferSize: event.options.receiveBufferSize,
         dnsQueryType: event.options.dnsQueryType,
-      }
+      },
     };
     networkRequest.setResourceType(Common.ResourceType.resourceTypes.DirectSocket);
     networkRequest.setIssueTime(event.timestamp, event.timestamp);
@@ -1589,7 +1589,7 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
       type: DirectSocketChunkType.SEND,
       timestamp: event.timestamp,
       remoteAddress: event.message.remoteAddr,
-      remotePort: event.message.remotePort
+      remotePort: event.message.remotePort,
     });
     networkRequest.responseReceivedTime = event.timestamp;
 
@@ -1607,7 +1607,7 @@ export class NetworkDispatcher implements ProtocolProxyApi.NetworkDispatcher {
       type: DirectSocketChunkType.RECEIVE,
       timestamp: event.timestamp,
       remoteAddress: event.message.remoteAddr,
-      remotePort: event.message.remotePort
+      remotePort: event.message.remotePort,
     });
     networkRequest.responseReceivedTime = event.timestamp;
 
@@ -1776,7 +1776,7 @@ export class RequestCondition extends Common.ObjectWrapper.ObjectWrapper<Request
 
     const pattern = {
       wildcardURL: setting.url,
-      upgradedPattern: RequestURLPattern.upgradeFromWildcard(setting.url) ?? undefined
+      upgradedPattern: RequestURLPattern.upgradeFromWildcard(setting.url) ?? undefined,
     };
     return new this(pattern, setting.enabled, BlockingConditions);
   }
@@ -2020,7 +2020,7 @@ export class RequestConditions extends Common.ObjectWrapper.ObjectWrapper<Reques
                                 packetReordering: conditions.packetReordering,
                                 connectionType: NetworkManager.connectionType(conditions),
                                 offline,
-                              }))
+                              })),
                         })
                         .then(response => {
                           if (!response.getError()) {
@@ -2757,7 +2757,7 @@ export const THROTTLING_CONDITIONS_LOOKUP: ReadonlyMap<PredefinedThrottlingCondi
   [PredefinedThrottlingConditionKey.OFFLINE, OfflineConditions],
   [PredefinedThrottlingConditionKey.SPEED_3G, Slow3GConditions],
   [PredefinedThrottlingConditionKey.SPEED_SLOW_4G, Slow4GConditions],
-  [PredefinedThrottlingConditionKey.SPEED_FAST_4G, Fast4GConditions]
+  [PredefinedThrottlingConditionKey.SPEED_FAST_4G, Fast4GConditions],
 ]);
 
 function keyIsPredefined(key: ThrottlingConditionKey): key is PredefinedThrottlingConditionKey {

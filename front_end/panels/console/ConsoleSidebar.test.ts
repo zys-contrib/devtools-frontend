@@ -41,11 +41,11 @@ function addMessage(
 async function getGroups(view: ViewFunctionStub<typeof Console.ConsoleSidebar.ConsoleSidebar>):
     Promise<Record<string, {count: number, urls?: Record<string, number>}>> {
   const input = await view.nextInput;
-  return Object.fromEntries(
-      input.groups.map(group => [group.name, {
-                         count: group.messageCount,
-                         urls: Object.fromEntries(group.urlGroups.entries().map(([title, {count}]) => ([title, count])))
-                       }]));
+  return Object.fromEntries(input.groups.map(
+      group => [group.name, {
+        count: group.messageCount,
+        urls: Object.fromEntries(group.urlGroups.entries().map(([title, {count}]) => ([title, count]))),
+      }]));
 }
 
 describe('ConsoleSidebar', () => {
@@ -70,14 +70,14 @@ describe('ConsoleSidebar', () => {
         urls: {
           'https://www.example.com/a.html': 2,
           'https://www.example.com/b.html': 1,
-        }
+        },
       },
       message: {
         count: 3,
         urls: {
           'https://www.example.com/a.html': 2,
           'https://www.example.com/b.html': 1,
-        }
+        },
       },
       'user message': {count: 0, urls: {}},
       verbose: {count: 0, urls: {}},
@@ -97,7 +97,7 @@ describe('ConsoleSidebar', () => {
       message: {count: 3, urls: {'https://www.example.com/a.html': 2, 'https://www.example.com/b.html': 1}},
       'user message': {count: 0, urls: {}},
       verbose: {count: 1, urls: {'https://www.example.com/a.html': 1}},
-      warning: {count: 0, urls: {}}
+      warning: {count: 0, urls: {}},
     });
   });
 
@@ -177,7 +177,7 @@ describe('ConsoleSidebar', () => {
       message: {count: 1, urls: {'https://www.example.com/a.html': 1}},
       'user message': {count: 0, urls: {}},
       verbose: {count: 1, urls: {'https://www.example.com/a.html': 1}},
-      warning: {count: 0, urls: {}}
+      warning: {count: 0, urls: {}},
     });
 
     sidebar.clear();
@@ -187,7 +187,7 @@ describe('ConsoleSidebar', () => {
       message: {count: 0, urls: {}},
       'user message': {count: 0, urls: {}},
       verbose: {count: 0, urls: {}},
-      warning: {count: 0, urls: {}}
+      warning: {count: 0, urls: {}},
     });
   });
 });

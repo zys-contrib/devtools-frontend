@@ -54,7 +54,7 @@ let releaseNote: ReleaseNote = {
     {
       key: 'css-specificity',
       link: 'https://developer.chrome.com/blog/new-in-devtools-151/#css-specificity',
-    }
+    },
   ],
   videoLinks: [
     {

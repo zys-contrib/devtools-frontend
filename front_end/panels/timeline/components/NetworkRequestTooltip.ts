@@ -179,7 +179,7 @@ export class NetworkRequestTooltip extends UI.Widget.Widget {
             sdkNetworkRequest.networkRequest);
     const throttledTitle = wasThrottled ? i18nString(UIStrings.wasThrottled, {
       PH1: typeof wasThrottled.conditions.title === 'string' ? wasThrottled.conditions.title :
-                                                               wasThrottled.conditions.title()
+                                                               wasThrottled.conditions.title(),
     }) :
                                           undefined;
 

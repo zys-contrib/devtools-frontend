@@ -125,7 +125,7 @@ export const renderControlForSetting = function(
         }
       };
       return html`<setting-checkbox .data=${{
-        setting: setting as Common.Settings.Setting<boolean>
+        setting: setting as Common.Settings.Setting<boolean>,
       } as Settings.SettingCheckbox.SettingCheckboxData} @change=${onchange}></setting-checkbox>`;
     }
     case Common.Settings.SettingType.ENUM: {

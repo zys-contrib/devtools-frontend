@@ -237,7 +237,7 @@ export async function createAiAssistancePanel(options?: {
 }
 
 export const setupAutomaticFileSystem = (options: {hasFileSystem: boolean} = {
-  hasFileSystem: false
+  hasFileSystem: false,
 }): void => {
   const root = '/path/to/my-automatic-file-system';
   const uuid = '549bbf9b-48b2-4af7-aebd-d3ba68993094';

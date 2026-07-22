@@ -52,7 +52,7 @@ describeWithEnvironment('AiCodeCompletionProvider', () => {
         enabled: true,
         blockedByAge: false,
         blockedByGeo: false,
-      }
+      },
     });
 
     checkAccessPreconditionsStub = sinon.stub(Host.AidaClient.AidaClient, 'checkAccessPreconditions');
@@ -352,7 +352,7 @@ describeWithEnvironment('AiCodeCompletionProvider', () => {
                                          attributionMetadata: {
                                            attributionAction: Host.AidaClient.RecitationAction.BLOCK,
                                            citations: [{uri: 'https://www.example.com'}],
-                                         }
+                                         },
                                        }],
                                        metadata: {},
                                      },

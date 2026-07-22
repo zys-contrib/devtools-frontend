@@ -103,6 +103,7 @@ export default defineConfig([
       '@stylistic/semi': 'error',
       '@stylistic/no-extra-semi': 'error',
       '@stylistic/comma-style': ['error', 'last'],
+      '@stylistic/comma-dangle': ['error', 'always-multiline'],
       '@stylistic/wrap-iife': ['error', 'inside'],
 
       '@stylistic/spaced-comment': [

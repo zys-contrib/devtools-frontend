@@ -521,7 +521,7 @@ after
       onReminderSettingsLink: () => {},
       onEnableInsightsInSettingsLink: () => {},
       onReferencesOpen: () => {},
-    }
+    },
   };
 
   const createViewOutput = (): Explain.ViewOutput => ({
@@ -569,92 +569,95 @@ after
 
   const rendersInsight = (noLogging: boolean, golden: string) => async () => {
     const target = createTarget('574px', '530px');
-    Explain.DEFAULT_VIEW(
-        {
-          ...DEFAULT_INPUT,
-          noLogging,
-          state: {
-            type: Explain.State.INSIGHT,
+    Explain.DEFAULT_VIEW({
+      ...DEFAULT_INPUT,
+      noLogging,
+      state: {
+        type: Explain.State.INSIGHT,
+        tokens: [
+          {
+            type: 'heading',
+            raw: '## Result\n\n',
+            depth: 2,
+            text: 'Result',
+            tokens: [{type: 'text', raw: 'Result', text: 'Result'}],
+          },
+          {
+            type: 'paragraph',
+            raw: 'Some text with `code`. Some code:\n',
+            text: 'Some text with `code`. Some code:',
             tokens: [
-              {
-                type: 'heading',
-                raw: '## Result\n\n',
-                depth: 2,
-                text: 'Result',
-                tokens: [{type: 'text', raw: 'Result', text: 'Result'}]
-              },
-              {
-                type: 'paragraph',
-                raw: 'Some text with `code`. Some code:\n',
-                text: 'Some text with `code`. Some code:',
-                tokens: [
-                  {type: 'text', raw: 'Some text with ', text: 'Some text with '},
-                  {type: 'codespan', raw: '`code`', text: 'code'},
-                  {type: 'text', raw: '. Some code:', text: '. Some code:'}
-                ]
-              },
-              {
-                type: 'code',
-                raw: '```ts\nconsole.log(\'test\');\ndocument.querySelector(\'test\').style = \'black\';\n```',
-                lang: 'ts',
-                text: 'console.log(\'test\');\ndocument.querySelector(\'test\').style = \'black\';'
-              },
-              {type: 'space', raw: '\n\n'}, {
-                type: 'code',
-                raw:
-                    '```\n<!DOCTYPE html>\n<div>Hello world</div>\n<script>\n  console.log(\'Hello World\');\n</script>\n```',
-                lang: '',
-                text: '<!DOCTYPE html>\n<div>Hello world</div>\n<script>\n  console.log(\'Hello World\');\n</script>'
-              },
-              {type: 'space', raw: '\n\n'}, {
-                type: 'paragraph',
-                raw:
-                    'Links: [https://example.com](https://example.com)\nImages: ![https://example.com](https://example.com)\n',
-                text:
-                    'Links: [https://example.com](https://example.com)\nImages: ![https://example.com](https://example.com)',
-                tokens: [
-                  {type: 'text', raw: 'Links: ', text: 'Links: '}, {
-                    type: 'link',
-                    raw: '[https://example.com](https://example.com)',
-                    href: 'https://example.com',
-                    title: null,
-                    text: 'https://example.com',
-                    tokens: [{type: 'text', raw: 'https://example.com', text: 'https://example.com'}]
-                  },
-                  {type: 'text', raw: '\nImages: ', text: '\nImages: '}, {
-                    type: 'image',
-                    raw: '![https://example.com](https://example.com)',
-                    href: 'https://example.com',
-                    title: null,
-                    text: 'https://example.com'
-                  }
-                ]
-              }
+              {type: 'text', raw: 'Some text with ', text: 'Some text with '},
+              {type: 'codespan', raw: '`code`', text: 'code'},
+              {type: 'text', raw: '. Some code:', text: '. Some code:'},
             ],
-            validMarkdown: true,
-            explanation:
-                '## Result\n\nSome text with `code`. Some code:\n```ts\nconsole.log(\'test\');\ndocument.querySelector(\'test\').style = \'black\';\n```\n\n```\n<!DOCTYPE html>\n<div>Hello world</div>\n<script>\n  console.log(\'Hello World\');\n</script>\n```\n\nLinks: [https://example.com](https://example.com)\nImages: ![https://example.com](https://example.com)\n',
-            sources:
-                [
-                  {
-                    type: Console.PromptBuilder.SourceType.MESSAGE,
-                    value: 'Something went wrong\n\nSomething went wrong'
-                  },
-                  {type: Console.PromptBuilder.SourceType.STACKTRACE, value: 'Stacktrace line1\nStacketrace line2'},
-                  {type: Console.PromptBuilder.SourceType.RELATED_CODE, value: 'RelatedCode'}, {
-                    type: Console.PromptBuilder.SourceType.NETWORK_REQUEST,
-                    value:
-                        'Request: https://example.com/data.html\n\nRequest headers:\n:authority: example.com\nuser-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\n\nResponse headers:\nResponse status: 404'
-                  }
-                ],
-            metadata: {},
-            isPageReloadRecommended: false,
-            completed: true,
-            directCitationUrls: [],
-            relatedUrls: []
-          }
-        },
-        createViewOutput(), target);
+          },
+          {
+            type: 'code',
+            raw: '```ts\nconsole.log(\'test\');\ndocument.querySelector(\'test\').style = \'black\';\n```',
+            lang: 'ts',
+            text: 'console.log(\'test\');\ndocument.querySelector(\'test\').style = \'black\';',
+          },
+          {type: 'space', raw: '\n\n'},
+          {
+            type: 'code',
+            raw:
+                '```\n<!DOCTYPE html>\n<div>Hello world</div>\n<script>\n  console.log(\'Hello World\');\n</script>\n```',
+            lang: '',
+            text: '<!DOCTYPE html>\n<div>Hello world</div>\n<script>\n  console.log(\'Hello World\');\n</script>',
+          },
+          {type: 'space', raw: '\n\n'},
+          {
+            type: 'paragraph',
+            raw:
+                'Links: [https://example.com](https://example.com)\nImages: ![https://example.com](https://example.com)\n',
+            text:
+                'Links: [https://example.com](https://example.com)\nImages: ![https://example.com](https://example.com)',
+            tokens: [
+              {type: 'text', raw: 'Links: ', text: 'Links: '},
+              {
+                type: 'link',
+                raw: '[https://example.com](https://example.com)',
+                href: 'https://example.com',
+                title: null,
+                text: 'https://example.com',
+                tokens: [{type: 'text', raw: 'https://example.com', text: 'https://example.com'}],
+              },
+              {type: 'text', raw: '\nImages: ', text: '\nImages: '},
+              {
+                type: 'image',
+                raw: '![https://example.com](https://example.com)',
+                href: 'https://example.com',
+                title: null,
+                text: 'https://example.com',
+              },
+            ],
+          },
+        ],
+        validMarkdown: true,
+        explanation:
+            '## Result\n\nSome text with `code`. Some code:\n```ts\nconsole.log(\'test\');\ndocument.querySelector(\'test\').style = \'black\';\n```\n\n```\n<!DOCTYPE html>\n<div>Hello world</div>\n<script>\n  console.log(\'Hello World\');\n</script>\n```\n\nLinks: [https://example.com](https://example.com)\nImages: ![https://example.com](https://example.com)\n',
+        sources: [
+          {
+            type: Console.PromptBuilder.SourceType.MESSAGE,
+            value: 'Something went wrong\n\nSomething went wrong',
+          },
+          {type: Console.PromptBuilder.SourceType.STACKTRACE, value: 'Stacktrace line1\nStacketrace line2'},
+          {type: Console.PromptBuilder.SourceType.RELATED_CODE, value: 'RelatedCode'},
+          {
+            type: Console.PromptBuilder.SourceType.NETWORK_REQUEST,
+            value:
+                'Request: https://example.com/data.html\n\nRequest headers:\n:authority: example.com\nuser-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\n\nResponse headers:\nResponse status: 404',
+          },
+        ],
+        metadata: {},
+        isPageReloadRecommended: false,
+        completed: true,
+        directCitationUrls: [],
+        relatedUrls: [],
+      },
+    },
+                         createViewOutput(), target);
 
     await assertScreenshot(golden);
   };
@@ -674,109 +677,114 @@ after
 
   it('renders insights with references', async () => {
     const target = createTarget('576px', '463px');
-    Explain.DEFAULT_VIEW(
-        {
-          ...DEFAULT_INPUT,
-          areReferenceDetailsOpen: true,
-          state: {
-            type: Explain.State.INSIGHT,
+    Explain.DEFAULT_VIEW({
+      ...DEFAULT_INPUT,
+      areReferenceDetailsOpen: true,
+      state: {
+        type: Explain.State.INSIGHT,
+        tokens: [
+          {
+            type: 'heading',
+            raw: '## Result\n\n',
+            depth: 2,
+            text: 'Result',
+            tokens: [{type: 'text', raw: 'Result', text: 'Result'}],
+          },
+          {
+            type: 'paragraph',
+            raw: 'Here is a text which contains both direct[^1] and indirect citations.',
+            text: 'Here is a text which contains both direct[^1] and indirect citations.',
             tokens: [
               {
-                type: 'heading',
-                raw: '## Result\n\n',
-                depth: 2,
-                text: 'Result',
-                tokens: [{type: 'text', raw: 'Result', text: 'Result'}]
+                type: 'text',
+                raw: 'Here is a text which contains both direct',
+                text: 'Here is a text which contains both direct',
+              },
+              {type: 'citation', raw: '[^1]', linkText: 1},
+              {type: 'text', raw: ' and indirect citations.', text: ' and indirect citations.'},
+            ],
+          },
+          {type: 'space', raw: '\n\n'},
+          {
+            type: 'paragraph',
+            raw: 'An indirect citation is a link to a reference which applies to the whole response.',
+            text: 'An indirect citation is a link to a reference which applies to the whole response.',
+            tokens: [{
+              type: 'text',
+              raw: 'An indirect citation is a link to a reference which applies to the whole response.',
+              text: 'An indirect citation is a link to a reference which applies to the whole response.',
+            }],
+          },
+          {type: 'space', raw: '\n\n'},
+          {
+            type: 'paragraph',
+            raw:
+                'A direct citation[^2] is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.\n',
+            text:
+                'A direct citation[^2] is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.',
+            tokens: [
+              {type: 'text', raw: 'A direct citation', text: 'A direct citation'},
+              {type: 'citation', raw: '[^2]', linkText: 2},
+              {
+                type: 'text',
+                raw:
+                    ' is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.',
+                text:
+                    ' is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.',
+              },
+            ],
+          },
+        ],
+        validMarkdown: true,
+        explanation:
+            '## Result\n\nHere is a text which contains both direct and indirect citations.\n\nAn indirect citation is a link to a reference which applies to the whole response.\n\nA direct citation is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.\n',
+        sources: [
+          {type: Console.PromptBuilder.SourceType.MESSAGE, value: 'Something went wrong\n\nSomething went wrong'},
+          {type: Console.PromptBuilder.SourceType.STACKTRACE, value: 'Stacktrace line1\nStacketrace line2'},
+          {type: Console.PromptBuilder.SourceType.RELATED_CODE, value: 'RelatedCode'},
+          {
+            type: Console.PromptBuilder.SourceType.NETWORK_REQUEST,
+            value:
+                'Request: https://example.com/data.html\n\nRequest headers:\n:authority: example.com\nuser-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\n\nResponse headers:\nResponse status: 404',
+          },
+        ],
+        metadata: {
+          attributionMetadata: {
+            attributionAction: Host.AidaClient.RecitationAction.CITE,
+            citations: [
+              {
+                startIndex: 20,
+                endIndex: 50,
+                uri: 'https://www.direct-citation.dev',
+                sourceType: Host.AidaClient.CitationSourceType.WORLD_FACTS,
               },
               {
-                type: 'paragraph',
-                raw: 'Here is a text which contains both direct[^1] and indirect citations.',
-                text: 'Here is a text which contains both direct[^1] and indirect citations.',
-                tokens: [
-                  {
-                    type: 'text',
-                    raw: 'Here is a text which contains both direct',
-                    text: 'Here is a text which contains both direct'
-                  },
-                  {type: 'citation', raw: '[^1]', linkText: 1},
-                  {type: 'text', raw: ' and indirect citations.', text: ' and indirect citations.'}
-                ]
+                startIndex: 170,
+                endIndex: 176,
+                uri: 'https://www.another-direct-citation.dev',
+                sourceType: Host.AidaClient.CitationSourceType.WORLD_FACTS,
               },
-              {type: 'space', raw: '\n\n'}, {
-                type: 'paragraph',
-                raw: 'An indirect citation is a link to a reference which applies to the whole response.',
-                text: 'An indirect citation is a link to a reference which applies to the whole response.',
-                tokens: [{
-                  type: 'text',
-                  raw: 'An indirect citation is a link to a reference which applies to the whole response.',
-                  text: 'An indirect citation is a link to a reference which applies to the whole response.'
-                }]
-              },
-              {type: 'space', raw: '\n\n'}, {
-                type: 'paragraph',
-                raw:
-                    'A direct citation[^2] is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.\n',
-                text:
-                    'A direct citation[^2] is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.',
-                tokens: [
-                  {type: 'text', raw: 'A direct citation', text: 'A direct citation'},
-                  {type: 'citation', raw: '[^2]', linkText: 2}, {
-                    type: 'text',
-                    raw:
-                        ' is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.',
-                    text:
-                        ' is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.'
-                  }
-                ]
-              }
             ],
-            validMarkdown: true,
-            explanation:
-                '## Result\n\nHere is a text which contains both direct and indirect citations.\n\nAn indirect citation is a link to a reference which applies to the whole response.\n\nA direct citation is a link to a reference, but it only applies to a specific part of the response. Direct citations are numbered and are shown as a number within square brackets in the response text.\n',
-            sources: [
-              {type: Console.PromptBuilder.SourceType.MESSAGE, value: 'Something went wrong\n\nSomething went wrong'},
-              {type: Console.PromptBuilder.SourceType.STACKTRACE, value: 'Stacktrace line1\nStacketrace line2'},
-              {type: Console.PromptBuilder.SourceType.RELATED_CODE, value: 'RelatedCode'}, {
-                type: Console.PromptBuilder.SourceType.NETWORK_REQUEST,
-                value:
-                    'Request: https://example.com/data.html\n\nRequest headers:\n:authority: example.com\nuser-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\n\nResponse headers:\nResponse status: 404'
-              }
+          },
+          factualityMetadata: {
+            facts: [
+              {sourceUri: 'https://www.indirect-citation.dev'},
+              {sourceUri: 'https://www.the-whole-world.dev'},
+              {sourceUri: 'https://www.even-more-content.dev'},
             ],
-            metadata: {
-              attributionMetadata: {
-                attributionAction: Host.AidaClient.RecitationAction.CITE,
-                citations: [
-                  {
-                    startIndex: 20,
-                    endIndex: 50,
-                    uri: 'https://www.direct-citation.dev',
-                    sourceType: Host.AidaClient.CitationSourceType.WORLD_FACTS,
-                  },
-                  {
-                    startIndex: 170,
-                    endIndex: 176,
-                    uri: 'https://www.another-direct-citation.dev',
-                    sourceType: Host.AidaClient.CitationSourceType.WORLD_FACTS,
-                  }
-                ]
-              },
-              factualityMetadata: {
-                facts: [
-                  {sourceUri: 'https://www.indirect-citation.dev'}, {sourceUri: 'https://www.the-whole-world.dev'},
-                  {sourceUri: 'https://www.even-more-content.dev'}
-                ]
-              }
-            },
-            isPageReloadRecommended: false,
-            completed: true,
-            directCitationUrls: ['https://www.direct-citation.dev', 'https://www.another-direct-citation.dev'],
-            relatedUrls: [
-              'https://www.indirect-citation.dev', 'https://www.the-whole-world.dev',
-              'https://www.even-more-content.dev'
-            ]
-          }
+          },
         },
-        createViewOutput(), target);
+        isPageReloadRecommended: false,
+        completed: true,
+        directCitationUrls: ['https://www.direct-citation.dev', 'https://www.another-direct-citation.dev'],
+        relatedUrls: [
+          'https://www.indirect-citation.dev',
+          'https://www.the-whole-world.dev',
+          'https://www.even-more-content.dev',
+        ],
+      },
+    },
+                         createViewOutput(), target);
 
     await assertScreenshot('explain/console_insight_references.png');
   });

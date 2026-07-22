@@ -97,7 +97,7 @@ const DEFAULT_VIEW: View = (input, _output, target) => {
       })}
       </div>
     `,
-    target
+    target,
   );
   // clang-format on
 };

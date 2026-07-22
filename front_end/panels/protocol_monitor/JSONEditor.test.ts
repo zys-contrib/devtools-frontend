@@ -11,7 +11,7 @@ import {
   dispatchKeyDownEvent,
   dispatchMouseMoveEvent,
   raf,
-  renderElementIntoDOM
+  renderElementIntoDOM,
 } from '../../testing/DOMHelpers.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {expectCall} from '../../testing/ExpectStubCall.js';
@@ -1379,7 +1379,8 @@ describeWithEnvironment('JSONEditor', () => {
       const jsonEditor = renderJSONEditor();
       jsonEditor.metadataByCommand = new Map([
         [
-          'Test.test', {
+          'Test.test',
+          {
             parameters: [{
               name: 'test',
               type: ProtocolMonitor.JSONEditor.ParameterType.UNKNOWN,
@@ -1389,7 +1390,7 @@ describeWithEnvironment('JSONEditor', () => {
             }],
             description: 'Description',
             replyArgs: [],
-          }
+          },
         ],
       ]);
       jsonEditor.commandToDisplay = {command: 'Test.test'};
@@ -1406,7 +1407,8 @@ describeWithEnvironment('JSONEditor', () => {
       const jsonEditor = renderJSONEditor();
       jsonEditor.metadataByCommand = new Map([
         [
-          'Test.test', {
+          'Test.test',
+          {
             parameters: [{
               name: 'test',
               type: ProtocolMonitor.JSONEditor.ParameterType.STRING,
@@ -1416,7 +1418,7 @@ describeWithEnvironment('JSONEditor', () => {
             }],
             description: 'Description',
             replyArgs: [],
-          }
+          },
         ],
       ]);
       jsonEditor.commandToDisplay = {command: 'Test.test'};
@@ -1435,7 +1437,8 @@ describeWithEnvironment('JSONEditor', () => {
          const jsonEditor = renderJSONEditor();
          jsonEditor.metadataByCommand = new Map([
            [
-             'Test.test', {
+             'Test.test',
+             {
                parameters: [{
                  name: 'test',
                  type: ProtocolMonitor.JSONEditor.ParameterType.STRING,
@@ -1445,7 +1448,7 @@ describeWithEnvironment('JSONEditor', () => {
                }],
                description: 'Description',
                replyArgs: [],
-             }
+             },
            ],
          ]);
          jsonEditor.commandToDisplay = {command: 'Test.test'};

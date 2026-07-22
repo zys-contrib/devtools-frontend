@@ -428,8 +428,16 @@ describeWithEnvironment('ElementsTreeOutline', () => {
           /* expandRoot */ true);
 
       const eventsToCheck = [
-        'dragstart', 'dragover', 'dragleave', 'drop', 'dragend', 'contextmenu', 'clipboard-beforecopy',
-        'clipboard-copy', 'clipboard-cut', 'clipboard-paste'
+        'dragstart',
+        'dragover',
+        'dragleave',
+        'drop',
+        'dragend',
+        'contextmenu',
+        'clipboard-beforecopy',
+        'clipboard-copy',
+        'clipboard-cut',
+        'clipboard-paste',
       ];
       for (const event of eventsToCheck) {
         assert.isFalse(

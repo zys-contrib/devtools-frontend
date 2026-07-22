@@ -74,7 +74,7 @@ const mockScript1: RehydratingScript = {
     isDefault: true,
     type: 'type',
   },
-  buildId: ''
+  buildId: '',
 };
 
 const mockScript2: RehydratingScript = {
@@ -98,7 +98,7 @@ const mockScript2: RehydratingScript = {
     isDefault: true,
     type: 'type',
   },
-  buildId: ''
+  buildId: '',
 };
 
 const mockResource: RehydratingResource = {

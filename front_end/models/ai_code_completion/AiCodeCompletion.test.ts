@@ -29,7 +29,7 @@ function createCallbacks(editor: TextEditor.TextEditor.TextEditor): AiCodeComple
       rpcGlobalId?: Host.AidaClient.RpcGlobalId,
       sampleId?: number,
     }|null) => editor.dispatch({
-      effects: TextEditor.Config.setAiAutoCompleteSuggestion.of(args as unknown as TextEditor.Config.ActiveSuggestion)
+      effects: TextEditor.Config.setAiAutoCompleteSuggestion.of(args as unknown as TextEditor.Config.ActiveSuggestion),
     }),
   };
 }
@@ -187,7 +187,7 @@ describeWithEnvironment('AiCodeCompletion', () => {
         sampleId: 1,
         score: 1,
       }],
-      metadata: {}
+      metadata: {},
     };
     mockAidaClient.completeCode.onSecondCall().resolves(nonEmptyResponse);
 

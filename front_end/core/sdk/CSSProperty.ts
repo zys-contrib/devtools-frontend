@@ -16,7 +16,7 @@ import {
   type Match,
   matchDeclaration,
   type Matcher,
-  stripComments
+  stripComments,
 } from './CSSPropertyParser.js';
 import {CSSWideKeywordMatcher} from './CSSPropertyParserMatchers.js';
 import type {CSSStyleDeclaration} from './CSSStyleDeclaration.js';

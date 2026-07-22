@@ -24,7 +24,7 @@ async function expandNodeRecursively(rootActivity: puppeteer.ElementHandle, devT
 
   await devToolsPage.clickElement(rootActivity, {
     clickOptions: {offset: {x: -DISTANCE_BETWEEN_DISCLOSURE_TRIANGLE_AND_ACTIVITY_NAME_PX, y: 0}},
-    modifiers: {alt: true}
+    modifiers: {alt: true},
   });
 }
 

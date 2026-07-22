@@ -12,7 +12,7 @@ import {
   createTarget,
   describeWithEnvironment,
   expectConsoleLogs,
-  stubNoopSettings
+  stubNoopSettings,
 } from '../../testing/EnvironmentHelpers.js';
 import * as UI from '../../ui/legacy/legacy.js';
 

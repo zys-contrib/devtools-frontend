@@ -219,7 +219,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
       displayInfoFromArgs: params => {
         return {
           title: i18n.i18n.lockedString(`Getting Lighthouse audits for ${params.categoryId}`),
-          action: `getLighthouseAudits('${params.categoryId}')`
+          action: `getLighthouseAudits('${params.categoryId}')`,
         };
       },
       handler: async params => {
@@ -233,7 +233,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
           result: {audits},
           widgets: [{name: 'LIGHTHOUSE_REPORT', data: {report}}],
         };
-      }
+      },
     });
 
     const executeJsTool = ToolRegistry.get(ToolName.EXECUTE_JAVASCRIPT);
@@ -284,7 +284,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
         return {
           title: i18n.i18n.lockedString('Running accessibility audits'),
           thought: params.explanation,
-          action: 'runAccessibilityAudits()'
+          action: 'runAccessibilityAudits()',
         };
       },
       handler: async params => {
@@ -310,7 +310,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
           result: {audits},
           widgets: [{name: 'LIGHTHOUSE_REPORT', data: {report, snapshotReport: true}}],
         };
-      }
+      },
     });
 
     this.declareFunction<{
@@ -343,11 +343,11 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
             nullable: false,
             items: {
               type: Host.AidaClient.ParametersTypes.STRING,
-              description: 'A CSS style property name to retrieve. For example, \'background-color\'.'
-            }
+              description: 'A CSS style property name to retrieve. For example, \'background-color\'.',
+            },
           },
         },
-        required: ['explanation', 'path', 'styleProperties']
+        required: ['explanation', 'path', 'styleProperties'],
       },
       displayInfoFromArgs: params => {
         return {
@@ -388,7 +388,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
               backendNodeId: node.backendNodeId(),
               matchedCascade: matchedStyles,
               properties: params.styleProperties,
-            }
+            },
           });
         }
 
@@ -422,7 +422,7 @@ export class AccessibilityAgent extends AiAgent<LHModel.ReporterTypes.ReportJSON
             nullable: false,
           },
         },
-        required: ['explanation', 'path']
+        required: ['explanation', 'path'],
       },
       displayInfoFromArgs: params => {
         return {

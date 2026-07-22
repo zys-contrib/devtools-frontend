@@ -221,7 +221,7 @@ describeWithEnvironment('IndexedDBModel', () => {
     sinon.assert.calledWithExactly(
         dispatcherSpy, Resources.IndexedDBModel.Events.DatabaseAdded as unknown as sinon.SinonMatcher, {
           model: indexedDBModel,
-          databaseId: sinon.match({name: 'testDatabase1'}) as unknown as Resources.IndexedDBModel.DatabaseId
+          databaseId: sinon.match({name: 'testDatabase1'}) as unknown as Resources.IndexedDBModel.DatabaseId,
         });
     dispatcherSpy.resetHistory();
 
@@ -234,7 +234,7 @@ describeWithEnvironment('IndexedDBModel', () => {
     sinon.assert.calledWithExactly(
         dispatcherSpy, Resources.IndexedDBModel.Events.DatabaseAdded as unknown as sinon.SinonMatcher, {
           model: indexedDBModel,
-          databaseId: sinon.match({name: 'testDatabase2'}) as unknown as Resources.IndexedDBModel.DatabaseId
+          databaseId: sinon.match({name: 'testDatabase2'}) as unknown as Resources.IndexedDBModel.DatabaseId,
         });
     dispatcherSpy.resetHistory();
 
@@ -246,7 +246,7 @@ describeWithEnvironment('IndexedDBModel', () => {
     sinon.assert.calledWithExactly(
         dispatcherSpy, Resources.IndexedDBModel.Events.DatabaseRemoved as unknown as sinon.SinonMatcher, {
           model: indexedDBModel,
-          databaseId: sinon.match({name: 'testDatabase2'}) as unknown as Resources.IndexedDBModel.DatabaseId
+          databaseId: sinon.match({name: 'testDatabase2'}) as unknown as Resources.IndexedDBModel.DatabaseId,
         });
     dispatcherSpy.resetHistory();
 
@@ -258,7 +258,7 @@ describeWithEnvironment('IndexedDBModel', () => {
     sinon.assert.calledWithExactly(
         dispatcherSpy, Resources.IndexedDBModel.Events.DatabaseRemoved as unknown as sinon.SinonMatcher, {
           model: indexedDBModel,
-          databaseId: sinon.match({name: 'testDatabase1'}) as unknown as Resources.IndexedDBModel.DatabaseId
+          databaseId: sinon.match({name: 'testDatabase1'}) as unknown as Resources.IndexedDBModel.DatabaseId,
         });
   });
 

@@ -179,7 +179,7 @@ export const DEFAULT_VIEW: View = (input, _output, target) => {
           </div>`}
       </div>
     `,
-    target
+    target,
   );
           // clang-format on
 };

@@ -118,7 +118,7 @@ describeWithEnvironment('ChangeManager', () => {
     assert.deepEqual(cssModel.setStyleSheetText.lastCall.args, [
       '1',
       '.ai-style-change-1 {\n  div& {\n    color: blue;\n  }\n}\n.ai-style-change-2 {\n  div& {\n    color: green;\n  }\n}',
-      true
+      true,
     ]);
   });
 

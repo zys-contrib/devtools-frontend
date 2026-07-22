@@ -470,7 +470,7 @@ export class AnimationTimeline extends UI.Widget.VBox implements
           },
           onSetPlaybackRateClick: (playbackRate: number) => {
             this.setPlaybackRate(playbackRate);
-          }
+          },
         },
         undefined, this.#toolbarViewContainer);
   }
@@ -698,7 +698,7 @@ export class AnimationTimeline extends UI.Widget.VBox implements
       },
       onFocusPreviousGroup: () => {
         this.focusNextGroup(group, /* focusPrevious */ true);
-      }
+      },
     });
 
     const previewUiContainer = document.createElement('div');
@@ -1216,7 +1216,7 @@ export class NodeUI {
     const link = PanelsCommon.DOMLinkifier.Linkifier.instance().linkify(node, {
       onClick: () => {
         Host.userMetrics.actionTaken(Host.UserMetrics.Action.AnimatedNodeDescriptionClicked);
-      }
+      },
     });
     render(link, this.#description, {host: this});
     if (!node.ownerDocument) {

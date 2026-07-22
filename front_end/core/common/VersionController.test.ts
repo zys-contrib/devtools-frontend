@@ -524,7 +524,7 @@ describe('updateVersionFrom38To39', () => {
         },
         {
           key: 'USER_CUSTOM_SETTING_2',
-        }
+        },
       ]);
     });
 
@@ -713,7 +713,7 @@ describe('updateVersionFrom41To42', () => {
 
   it('trims title', () => {
     recordingsSetting.set([
-      {storageName: '1', flow: {title: 'a'.repeat(350), steps: []}}
+      {storageName: '1', flow: {title: 'a'.repeat(350), steps: []}},
     ]);  // User had "Hide chrome frame" changed from default value to ON
     const versionController = new Common.VersionController.VersionController(settings);
     versionController.updateVersionFrom41To42();
@@ -723,7 +723,7 @@ describe('updateVersionFrom41To42', () => {
 
   it('trims steps', async () => {
     recordingsSetting.set([
-      {storageName: '1', flow: {title: 'a', steps: Array(5000).fill({})}}
+      {storageName: '1', flow: {title: 'a', steps: Array(5000).fill({})}},
     ]);  // User had "Hide chrome frame" changed from default value to ON
     const versionController = new Common.VersionController.VersionController(settings);
     versionController.updateVersionFrom41To42();

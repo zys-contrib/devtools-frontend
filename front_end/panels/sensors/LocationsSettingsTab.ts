@@ -287,7 +287,7 @@ export class LocationsSettingsTab extends UI.Widget.VBox implements UI.ListWidge
       long: 0,
       timezoneId: '',
       locale: '',
-      accuracy: SDK.EmulationModel.Location.DEFAULT_ACCURACY
+      accuracy: SDK.EmulationModel.Location.DEFAULT_ACCURACY,
     });
   }
 

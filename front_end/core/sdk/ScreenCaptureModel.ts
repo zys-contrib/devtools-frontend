@@ -90,7 +90,7 @@ export class ScreenCaptureModel extends SDKModel<void> implements ProtocolProxyA
       callbacks: {
         onScreencastFrame: onFrame,
         onScreencastVisibilityChanged: onVisibilityChanged,
-      }
+      },
     };
     this.#screencastOperations.push(operation);
     void this.#agent.invoke_startScreencast({format, quality, maxWidth, maxHeight, everyNthFrame});

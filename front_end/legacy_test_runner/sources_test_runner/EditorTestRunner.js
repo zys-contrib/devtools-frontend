@@ -108,7 +108,7 @@ const eventCodes = {
   ArrowLeft: 37,
   ArrowUp: 38,
   ArrowRight: 39,
-  ArrowDown: 40
+  ArrowDown: 40,
 };
 
 function createCodeMirrorFakeEvent(editor, eventType, code, charCode, modifiers) {
@@ -123,7 +123,7 @@ function createCodeMirrorFakeEvent(editor, eventType, code, charCode, modifiers)
     charCode,
     preventDefault: eventPreventDefault,
     stopPropagation: function() {},
-    target: editor.codeMirror().display.input.textarea
+    target: editor.codeMirror().display.input.textarea,
   };
 
   if (modifiers) {

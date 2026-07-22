@@ -199,7 +199,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
              onCancel: input.onCancel,
              onBeginEdit: input.onBeginEdit,
              validator: val => input.validator(condition, val),
-             lookUpRequestCount: input.lookUpRequestCount
+             lookUpRequestCount: input.lookUpRequestCount,
           })}
         </div>
       `)}
@@ -223,7 +223,7 @@ function renderItem({
   onCancel,
   onBeginEdit,
   validator,
-  lookUpRequestCount
+  lookUpRequestCount,
 }: {
   condition: SDK.NetworkManager.RequestCondition,
   editing: boolean,

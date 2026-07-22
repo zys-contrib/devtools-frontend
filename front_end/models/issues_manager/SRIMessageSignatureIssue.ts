@@ -69,9 +69,9 @@ export class SRIMessageSignatureIssue extends Issue<Protocol.Audits.SRIMessageSi
         {
           link: 'https://wicg.github.io/signature-based-sri/',
           linkTitle: i18nLazyString(UIStrings.signatureBasedIntegrity),
-        }
+        },
       ],
-      substitutions: new Map()
+      substitutions: new Map(),
     };
     if (details.error === Protocol.Audits.SRIMessageSignatureError.ValidationFailedSignatureMismatch) {
       description.substitutions?.set('PLACEHOLDER_signatureBase', () => details.signatureBase);

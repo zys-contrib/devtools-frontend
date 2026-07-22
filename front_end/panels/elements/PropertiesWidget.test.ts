@@ -288,17 +288,16 @@ describeWithEnvironment('PropertiesWidget DEFAULT_VIEW', () => {
   it('creates a read-only tree outline', async () => {
     const {container, objectTree} = await setUpView();
 
-    Elements.PropertiesWidget.DEFAULT_VIEW(
-        {
-          onFilterChanged: () => {},
-          objectTree,
-          allChildrenFiltered: false,
-          onRegexToggled: function(): void {
-            throw new Error('Function not implemented.');
-          },
-          isRegex: false
-        },
-        {}, container);
+    Elements.PropertiesWidget.DEFAULT_VIEW({
+      onFilterChanged: () => {},
+      objectTree,
+      allChildrenFiltered: false,
+      onRegexToggled: function(): void {
+        throw new Error('Function not implemented.');
+      },
+      isRegex: false,
+    },
+                                           {}, container);
 
     await UI.Widget.Widget.allUpdatesComplete;
     const tree = container.querySelector('devtools-tree') as UI.TreeOutline.TreeViewElement;
@@ -312,34 +311,32 @@ describeWithEnvironment('PropertiesWidget DEFAULT_VIEW', () => {
   it('renders the view without filter', async () => {
     const {container, objectTree} = await setUpView();
 
-    Elements.PropertiesWidget.DEFAULT_VIEW(
-        {
-          onFilterChanged: () => {},
-          objectTree,
-          allChildrenFiltered: false,
-          onRegexToggled: function(): void {
-            throw new Error('Function not implemented.');
-          },
-          isRegex: false
-        },
-        {}, container);
+    Elements.PropertiesWidget.DEFAULT_VIEW({
+      onFilterChanged: () => {},
+      objectTree,
+      allChildrenFiltered: false,
+      onRegexToggled: function(): void {
+        throw new Error('Function not implemented.');
+      },
+      isRegex: false,
+    },
+                                           {}, container);
     await assertScreenshot('elements/properties_widget_no_filter.png');
   });
 
   it('renders a selected element', async () => {
     const {container, objectTree} = await setUpView();
 
-    Elements.PropertiesWidget.DEFAULT_VIEW(
-        {
-          onFilterChanged: () => {},
-          objectTree,
-          allChildrenFiltered: false,
-          onRegexToggled: function(): void {
-            throw new Error('Function not implemented.');
-          },
-          isRegex: false
-        },
-        {}, container);
+    Elements.PropertiesWidget.DEFAULT_VIEW({
+      onFilterChanged: () => {},
+      objectTree,
+      allChildrenFiltered: false,
+      onRegexToggled: function(): void {
+        throw new Error('Function not implemented.');
+      },
+      isRegex: false,
+    },
+                                           {}, container);
     await UI.Widget.Widget.allUpdatesComplete;
 
     const tree = container.querySelector('devtools-tree') as UI.TreeOutline.TreeViewElement;
@@ -355,34 +352,32 @@ describeWithEnvironment('PropertiesWidget DEFAULT_VIEW', () => {
   it('renders the view with a partial filter match', async () => {
     const {container, objectTree} = await setUpView('first');
 
-    Elements.PropertiesWidget.DEFAULT_VIEW(
-        {
-          onFilterChanged: () => {},
-          objectTree,
-          allChildrenFiltered: false,
-          onRegexToggled: function(): void {
-            throw new Error('Function not implemented.');
-          },
-          isRegex: false
-        },
-        {}, container);
+    Elements.PropertiesWidget.DEFAULT_VIEW({
+      onFilterChanged: () => {},
+      objectTree,
+      allChildrenFiltered: false,
+      onRegexToggled: function(): void {
+        throw new Error('Function not implemented.');
+      },
+      isRegex: false,
+    },
+                                           {}, container);
     await assertScreenshot('elements/properties_widget_partial_filter.png');
   });
 
   it('renders the view with no filter matches', async () => {
     const {container, objectTree} = await setUpView('third');
 
-    Elements.PropertiesWidget.DEFAULT_VIEW(
-        {
-          onFilterChanged: () => {},
-          objectTree,
-          allChildrenFiltered: true,
-          onRegexToggled: function(): void {
-            throw new Error('Function not implemented.');
-          },
-          isRegex: false
-        },
-        {}, container);
+    Elements.PropertiesWidget.DEFAULT_VIEW({
+      onFilterChanged: () => {},
+      objectTree,
+      allChildrenFiltered: true,
+      onRegexToggled: function(): void {
+        throw new Error('Function not implemented.');
+      },
+      isRegex: false,
+    },
+                                           {}, container);
     await assertScreenshot('elements/properties_widget_no_matches.png');
   });
 });

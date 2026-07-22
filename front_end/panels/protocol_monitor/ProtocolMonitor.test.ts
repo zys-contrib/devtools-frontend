@@ -479,7 +479,7 @@ describe('ProtocolMonitor', () => {
             result: {test: 'Test'},
             requestTime: 1,
             elapsedTime: 2,
-          }
+          },
         ],
         selectedMessage: undefined,
         sidebarVisible: false,
@@ -531,7 +531,7 @@ describe('ProtocolMonitor', () => {
           result: {test: 'Test'},
           requestTime: 1,
           elapsedTime: 2,
-        }
+        },
       ];
 
       const viewInput = {
@@ -557,7 +557,7 @@ describe('ProtocolMonitor', () => {
         onEditorSubmit: () => {},
         targets: [
           {id: () => 'main', name: () => 'Main', inspectedURL: () => 'www.example.com'},
-          {id: () => 'prerender', name: () => 'Prerender', inspectedURL: () => 'www.example.com/prerender'}
+          {id: () => 'prerender', name: () => 'Prerender', inspectedURL: () => 'www.example.com/prerender'},
         ] as SDK.Target.Target[],
         selectedTargetId: 'prerender',
       };

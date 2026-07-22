@@ -327,7 +327,7 @@ describe('TreeViewElement', () => {
             element => element.listItemElement.getAttribute('jslog')),
         [
           'TreeItem; parent: parentTreeItem; context: first; track: click, resize, keydown: ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Space|Home|End',
-          'TreeItem; parent: parentTreeItem; context: second; track: click, resize, keydown: ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Space|Home|End'
+          'TreeItem; parent: parentTreeItem; context: second; track: click, resize, keydown: ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Space|Home|End',
         ]);
   });
 
@@ -359,7 +359,7 @@ describe('TreeViewElement', () => {
       {
         'aria-modal': 'true',
         role: 'treeitem',
-      }
+      },
     ]);
   });
 

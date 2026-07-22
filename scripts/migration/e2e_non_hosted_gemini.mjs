@@ -88,7 +88,7 @@ try {
       stdio: 'inherit',
       cwd: worktreePath,
       env: process.env,
-    }
+    },
   );
 
   console.log('Migration successful.');

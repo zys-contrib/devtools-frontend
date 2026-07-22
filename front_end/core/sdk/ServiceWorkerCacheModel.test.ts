@@ -219,7 +219,7 @@ describeWithEnvironment('ServiceWorkerCacheModel', () => {
                                        cacheId: cache.cacheId,
                                        storageKey: testKey,
                                        storageBucket: testStorageBucket,
-                                       cacheName: cache.cacheName
+                                       cacheName: cache.cacheName,
                                      }],
                                    } as Protocol.CacheStorage.RequestCacheNamesResponse));
       cacheStorageModel.enable();

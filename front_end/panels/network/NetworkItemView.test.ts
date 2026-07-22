@@ -154,7 +154,7 @@ describeWithEnvironment('NetworkItemView', () => {
         sendBufferSize: 1002,
         receiveBufferSize: 1003,
         dnsQueryType: undefined,
-      }
+      },
     };
 
     const networkItemView = renderNetworkItemView(request);

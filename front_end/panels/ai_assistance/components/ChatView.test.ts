@@ -11,7 +11,7 @@ import * as AiAssistanceModel from '../../../models/ai_assistance/ai_assistance.
 import {
   cleanup,
   initializePersistenceImplForTests,
-  setupAutomaticFileSystem
+  setupAutomaticFileSystem,
 } from '../../../testing/AiAssistanceHelpers.js';
 import {renderElementIntoDOM} from '../../../testing/DOMHelpers.js';
 import {describeWithEnvironment} from '../../../testing/EnvironmentHelpers.js';

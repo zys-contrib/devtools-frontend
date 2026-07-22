@@ -8,7 +8,7 @@ import {
   increaseTimeoutForPerfPanel,
   navigateToPerformanceTab,
   startRecording,
-  stopRecording
+  stopRecording,
 } from '../helpers/performance-helpers.js';
 import {openFileWithQuickOpen} from '../helpers/quick_open-helpers.js';
 import {openSourcesPanel} from '../helpers/sources-helpers.js';

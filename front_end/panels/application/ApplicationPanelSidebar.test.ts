@@ -16,7 +16,7 @@ import {
   describeWithEnvironment,
   expectConsoleLogs,
   stubNoopSettings,
-  updateHostConfig
+  updateHostConfig,
 } from '../../testing/EnvironmentHelpers.js';
 import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';

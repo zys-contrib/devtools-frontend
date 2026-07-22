@@ -822,9 +822,9 @@ describeWithEnvironment('UsedPreloadingView', () => {
           mismatchedHeaders: null,
           ruleSetIds: ['ruleSetId:1'] as Protocol.Preload.RuleSetId[],
           nodeIds: [1] as Protocol.DOM.BackendNodeId[],
-        }
+        },
       ],
-      currentAttempts: []
+      currentAttempts: [],
     };
 
     const component = await renderUsedPreloadingView(data);

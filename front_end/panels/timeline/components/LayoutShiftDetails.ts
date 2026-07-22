@@ -144,15 +144,14 @@ export class LayoutShiftDetails extends UI.Widget.Widget {
   }
 
   override performUpdate(): Promise<void>|void {
-    this.#view(
-        {
-          event: this.#event,
-          parsedTrace: this.#parsedTrace,
-          isFreshRecording: this.#isFreshRecording,
-          togglePopover: e => this.#togglePopover(e),
-          onEventClick: e => this.#handleTraceEventClick(e)
-        },
-        {}, this.contentElement);
+    this.#view({
+      event: this.#event,
+      parsedTrace: this.#parsedTrace,
+      isFreshRecording: this.#isFreshRecording,
+      togglePopover: e => this.#togglePopover(e),
+      onEventClick: e => this.#handleTraceEventClick(e),
+    },
+               {}, this.contentElement);
   }
 }
 

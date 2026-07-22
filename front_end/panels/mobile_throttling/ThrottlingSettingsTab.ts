@@ -562,7 +562,7 @@ export class ThrottlingSettingsTab extends UI.Widget.VBox implements
       upload: -1,
       latency: 0,
       packetLoss: 0,
-      packetReordering: false
+      packetReordering: false,
     });
   }
 

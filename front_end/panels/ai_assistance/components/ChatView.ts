@@ -148,7 +148,7 @@ const DEFAULT_VIEW: View = (input, output, target) => {
                   onExportClick: input.exportForAgentsClick,
                   walkthrough: {
                     ...input.walkthrough,
-                  }
+                  },
                 });
               })}
             </div>

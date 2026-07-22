@@ -17,7 +17,7 @@ import {
   type ConversationContext,
   MultimodalInputType,
   type RequestOptions,
-  ResponseType
+  ResponseType,
 } from './AiAgent.js';
 import {
   type CreateExtensionScopeFunction,

@@ -38,10 +38,9 @@ function createGcaRequest(
     contents: [{role: 'user', parts: [{text: 'Hello'}]}],
     ...otherOverrides,
     labels: {...DEFAULT_LABELS, ...labels},
-    aicode: aicode ||
-        {
-          experience
-        }
+    aicode: aicode || {
+      experience,
+    },
   };
 }
 
@@ -386,35 +385,35 @@ describe('AidaGcaTranslation', () => {
     describeCommonRequestFields(createAidaCompletionRequest, AidaGcaTranslation.aidaCompletionRequestToGcaRequest);
 
     it('translates a basic completion request', () => {
-      assert.deepEqual(
-          AidaGcaTranslation.aidaCompletionRequestToGcaRequest(createAidaCompletionRequest({
-            additional_files: [{
-              path: 'fake-path.js',
-              content: 'description/instructions',
-              included_reason: AidaClient.Reason.RELATED_FILE,
-            }]
-          })),
-          createGcaRequest('complete_code', {
-            contents: [],
-            aicode: {
-              experience: 'complete_code',
-              files: [
-                {
-                  fileUri: 'devtools-code-completion',
-                  inclusionReason: [GcaTypes.InclusionReason.ACTIVE],
-                  segments: [
-                    {content: 'function foo() {', isSelected: false}, {content: '', isSelected: true},
-                    {content: '}', isSelected: false}
-                  ],
-                },
-                {
-                  fileUri: 'fake-path.js',
-                  inclusionReason: [GcaTypes.InclusionReason.RELATED],
-                  segments: [{content: 'description/instructions', isSelected: false}]
-                }
-              ]
-            }
-          }));
+      assert.deepEqual(AidaGcaTranslation.aidaCompletionRequestToGcaRequest(createAidaCompletionRequest({
+        additional_files: [{
+          path: 'fake-path.js',
+          content: 'description/instructions',
+          included_reason: AidaClient.Reason.RELATED_FILE,
+        }],
+      })),
+                       createGcaRequest('complete_code', {
+                         contents: [],
+                         aicode: {
+                           experience: 'complete_code',
+                           files: [
+                             {
+                               fileUri: 'devtools-code-completion',
+                               inclusionReason: [GcaTypes.InclusionReason.ACTIVE],
+                               segments: [
+                                 {content: 'function foo() {', isSelected: false},
+                                 {content: '', isSelected: true},
+                                 {content: '}', isSelected: false},
+                               ],
+                             },
+                             {
+                               fileUri: 'fake-path.js',
+                               inclusionReason: [GcaTypes.InclusionReason.RELATED],
+                               segments: [{content: 'description/instructions', isSelected: false}],
+                             },
+                           ],
+                         },
+                       }));
     });
 
     it('translates a completion request with options and additional files', () => {
@@ -430,7 +429,7 @@ describe('AidaGcaTranslation', () => {
         metadata: {...DEFAULT_METADATA, string_session_id: 'session-456'},
         last_user_action: AidaClient.EditType.ADD,
         additional_files: [
-          {path: 'utils.js', content: 'export const log = () => {}', included_reason: AidaClient.Reason.CURRENTLY_OPEN}
+          {path: 'utils.js', content: 'export const log = () => {}', included_reason: AidaClient.Reason.CURRENTLY_OPEN},
         ],
       });
 
@@ -451,13 +450,13 @@ describe('AidaGcaTranslation', () => {
             {
               fileUri: 'devtools-code-completion',
               inclusionReason: [1],
-              segments: [{content: 'console.log(', isSelected: false}, {content: '', isSelected: true}]
+              segments: [{content: 'console.log(', isSelected: false}, {content: '', isSelected: true}],
             },
             {
               fileUri: 'utils.js',
               inclusionReason: [GcaTypes.InclusionReason.OPEN],
-              segments: [{content: 'export const log = () => {}', isSelected: false}]
-            }
+              segments: [{content: 'export const log = () => {}', isSelected: false}],
+            },
           ],
         },
       });
@@ -487,7 +486,7 @@ describe('AidaGcaTranslation', () => {
           generationString: '"hello")',
           score: 0,
           sampleId: 0,
-          attributionMetadata: {attributionAction: AidaClient.RecitationAction.CITE, citations: []}
+          attributionMetadata: {attributionAction: AidaClient.RecitationAction.CITE, citations: []},
         }],
         metadata: {rpcGlobalId: 'response-456'},
       });
@@ -534,7 +533,7 @@ describe('AidaGcaTranslation', () => {
         context_files: [{
           path: 'app.ts',
           full_content: 'console.log("bug")',
-          programming_language: AidaClient.AidaInferenceLanguage.TYPESCRIPT
+          programming_language: AidaClient.AidaInferenceLanguage.TYPESCRIPT,
         }],
       });
 
@@ -628,7 +627,7 @@ describe('AidaGcaTranslation', () => {
         index: 0,
         content: {
           role: 'model',
-          parts: [{functionCall: {name: 'getStyles', args: {uid: 1}}, thoughtSignature: 'thought-sig-abc'}]
+          parts: [{functionCall: {name: 'getStyles', args: {uid: 1}}, thoughtSignature: 'thought-sig-abc'}],
         },
         finishReason: GcaTypes.FinishReason.STOP,
         safetyRatings: [],
@@ -649,8 +648,8 @@ describe('AidaGcaTranslation', () => {
         metadata: {
           rpcGlobalId: 'response-789',
           inferenceOptionMetadata: {modelId: 'gen-model'},
-          attributionMetadata: {attributionAction: AidaClient.RecitationAction.CITE, citations: []}
-        }
+          attributionMetadata: {attributionAction: AidaClient.RecitationAction.CITE, citations: []},
+        },
       },
     ]);
   });

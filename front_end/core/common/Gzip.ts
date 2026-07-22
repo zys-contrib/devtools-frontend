@@ -78,7 +78,7 @@ async function gzipCodec(
     start(controller) {
       controller.enqueue(buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer);
       controller.close();
-    }
+    },
   });
   const codecReadable = readable.pipeThrough(codecStream);
   // A response is a convenient way to get an ArrayBuffer from a ReadableStream.
@@ -104,7 +104,7 @@ export function createMonitoredStream(stream: ReadableStream, onProgress: (bytes
       bytesRead += chunk.byteLength;
       onProgress(bytesRead);
       controller.enqueue(chunk);
-    }
+    },
   });
 
   return stream.pipeThrough(progressTransformer);

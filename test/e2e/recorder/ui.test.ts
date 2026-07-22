@@ -189,7 +189,7 @@ describe('Recorder', function() {
               assertedEvents: [{
                 type: 'navigation',
                 url: 'https://localhost:<test-port>/test/e2e/resources/recorder/recorder2.html',
-                title: ''
+                title: '',
               }],
               target: 'main',
               selectors: [
@@ -198,8 +198,8 @@ describe('Recorder', function() {
                 'xpath///*[@id="test-button"]',
                 'pierce/#test-button',
                 'text/Test button',
-              ]
-            }]
+              ],
+            }],
           });
         });
 
@@ -226,7 +226,7 @@ describe('Recorder', function() {
               assertedEvents: [{
                 type: 'navigation',
                 url: 'https://localhost:<test-port>/test/e2e/resources/recorder/recorder2.html',
-                title: ''
+                title: '',
               }],
               target: 'main',
               selectors: [
@@ -235,8 +235,8 @@ describe('Recorder', function() {
                 'xpath///*[@id="test-button"]',
                 'pierce/#test-button',
                 'text/Test button',
-              ]
-            }]
+              ],
+            }],
           });
 
           await pickSelectorsForQuery(
@@ -252,7 +252,7 @@ describe('Recorder', function() {
               assertedEvents: [{
                 type: 'navigation',
                 url: 'https://localhost:<test-port>/test/e2e/resources/recorder/recorder2.html',
-                title: ''
+                title: '',
               }],
               target: 'main',
               selectors: [
@@ -261,8 +261,8 @@ describe('Recorder', function() {
                 'xpath//html/body/a',
                 'pierce/a',
                 'text/Back to Page',
-              ]
-            }]
+              ],
+            }],
           });
         });
 
@@ -291,7 +291,7 @@ describe('Recorder', function() {
                   assertedEvents: [{
                     type: 'navigation',
                     url: 'https://localhost:<test-port>/test/e2e/resources/recorder/recorder2.html',
-                    title: ''
+                    title: '',
                   }],
                   target: 'main',
                   selectors: [
@@ -300,8 +300,8 @@ describe('Recorder', function() {
                     'xpath///*[@id="test-button"]',
                     'pierce/#test-button',
                     'text/Test button',
-                  ]
-                }]
+                  ],
+                }],
               },
           );
         });
@@ -347,7 +347,7 @@ describe('Recorder', function() {
               deviceScaleFactor: 1,
               isMobile: false,
               hasTouch: false,
-              isLandscape: false
+              isLandscape: false,
             },
             {
               type: 'navigate',
@@ -355,8 +355,8 @@ describe('Recorder', function() {
               assertedEvents: [{
                 type: 'navigation',
                 url: 'https://localhost:<test-port>/test/e2e/resources/recorder/recorder.html',
-                title: ''
-              }]
+                title: '',
+              }],
             },
             {
               type: 'click',
@@ -367,9 +367,9 @@ describe('Recorder', function() {
                 ['xpath///*[@id="test"]'],
                 ['pierce/#test'],
                 ['text/Test Button'],
-              ]
-            }
-          ]
+              ],
+            },
+          ],
         });
       });
 

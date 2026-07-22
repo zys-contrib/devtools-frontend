@@ -116,7 +116,7 @@ describe('ObjectPropertiesSection', () => {
       const object = SDK.RemoteObject.RemoteObject.fromLocalObject(value);
       const tree = new ObjectUI.ObjectPropertiesSection.ObjectTree(object, {
         readOnly: true,
-        propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+        propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
       });
       if (options?.sortPropertiesAlphabetically !== undefined) {
         tree.sortPropertiesAlphabetically = options.sortPropertiesAlphabetically;
@@ -297,14 +297,14 @@ describeWithEnvironment('ObjectPropertyTreeElement', () => {
     const parentProperty = new SDK.RemoteObject.RemoteObjectProperty('parentNode', parentObject);
     const parentNode = new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(parentProperty, undefined, {
       readOnly: false,
-      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
     });
 
     const childObject = SDK.RemoteObject.RemoteObject.fromLocalObject('bar');
     const childProperty = new SDK.RemoteObject.RemoteObjectProperty('foo', childObject);
     const childNode = new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(childProperty, parentNode, {
       readOnly: false,
-      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
     });
 
     const treeElement = new ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement(childNode);
@@ -326,7 +326,7 @@ describeWithEnvironment('ObjectPropertyTreeElement', () => {
         'name', SDK.RemoteObject.RemoteObject.fromLocalObject({foo: 'bar'}), true, true);
     const node = new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(property, undefined, {
       readOnly: false,
-      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
     });
 
     const treeElement = new ObjectUI.ObjectPropertiesSection.ObjectPropertyTreeElement(node);
@@ -356,7 +356,7 @@ describeWithEnvironment('ObjectPropertyTreeElement', () => {
       editingCommitted: sinon.spy(),
       node: new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(property, undefined, {
         readOnly: false,
-        propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+        propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
       }),
     };
     const output = {valueElement: undefined, nameElement: undefined};
@@ -389,7 +389,7 @@ describeWithEnvironment('ObjectPropertyTreeElement', () => {
       editingCommitted: sinon.spy(),
       node: new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(property, undefined, {
         readOnly: false,
-        propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+        propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
       }),
     };
     const output = {valueElement: undefined, nameElement: undefined};
@@ -407,7 +407,7 @@ describeWithEnvironment('ObjectPropertyTreeElement', () => {
     const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertyWidget(undefined, viewFunction);
     section.property = new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(property, undefined, {
       readOnly: false,
-      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
     });
 
     renderElementIntoDOM(section);
@@ -529,7 +529,7 @@ describeWithEnvironment('ObjectPropertyTreeElement', () => {
       editingCommitted: sinon.spy(),
       node: new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(property, undefined, {
         readOnly: false,
-        propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+        propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
       }),
     };
     const output = {valueElement: undefined, nameElement: undefined};
@@ -648,7 +648,7 @@ describeWithEnvironment('ObjectTreeNode', () => {
         '[[Prototype]]', SDK.RemoteObject.RemoteObject.fromLocalObject({}), true, true);
     const node = new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(property, undefined, {
       readOnly: false,
-      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
     });
 
     assert.isFalse(node.canExpandRecursively);
@@ -659,7 +659,7 @@ describeWithEnvironment('ObjectTreeNode', () => {
         new SDK.RemoteObject.RemoteObjectProperty('foo', SDK.RemoteObject.RemoteObject.fromLocalObject({}), true, true);
     const node = new ObjectUI.ObjectPropertiesSection.ObjectTreeNode(property, undefined, {
       readOnly: false,
-      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED
+      propertiesMode: ObjectUI.ObjectPropertiesSection.ObjectPropertiesMode.OWN_AND_INTERNAL_AND_INHERITED,
     });
 
     assert.isTrue(node.canExpandRecursively);
@@ -886,7 +886,7 @@ describeWithEnvironment('ObjectTreeExpansionTracker', () => {
           myArray: [
             {foo: {bar: 'baz'}},
           ],
-        }
+        },
       });
 
       const root = new ObjectUI.ObjectPropertiesSection.ObjectTree(rootObj, {

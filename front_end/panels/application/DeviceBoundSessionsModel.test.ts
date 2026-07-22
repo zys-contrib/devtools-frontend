@@ -116,14 +116,14 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       eventId: 'event_1' as Protocol.Network.DeviceBoundSessionEventId,
       site,
       succeeded: false,
-      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.InvalidConfigJson}
+      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.InvalidConfigJson},
     };
     const event2: Protocol.Network.DeviceBoundSessionEventOccurredEvent = {
       eventId: 'event_2' as Protocol.Network.DeviceBoundSessionEventId,
       sessionId: 'sessionId',
       site,
       succeeded: false,
-      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.InvalidConfigJson}
+      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.InvalidConfigJson},
     };
     const event3: Protocol.Network.DeviceBoundSessionEventOccurredEvent = {
       eventId: 'event_3' as Protocol.Network.DeviceBoundSessionEventId,
@@ -132,8 +132,8 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       succeeded: true,
       creationEventDetails: {
         newSession: makeSession(site, 'otherSessionId'),
-        fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success
-      }
+        fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success,
+      },
 
     };
     const event4: Protocol.Network.DeviceBoundSessionEventOccurredEvent = {
@@ -141,7 +141,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       sessionId: undefined,
       site: 'otherSite.com',
       succeeded: false,
-      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.InvalidConfigJson}
+      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.InvalidConfigJson},
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, event1);
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, event2);
@@ -210,7 +210,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       sessionId: sessionId1,
       succeeded: true,
       creationEventDetails:
-          {newSession: creationSession, fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success}
+          {newSession: creationSession, fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success},
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, event1);
     // Verify event 1 has created the session.
@@ -233,8 +233,8 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       refreshEventDetails: {
         refreshResult: Protocol.Network.RefreshEventDetailsRefreshResult.Refreshed,
         wasFullyProactiveRefresh: false,
-        newSession: refreshSession
-      }
+        newSession: refreshSession,
+      },
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, event2);
     // Verify event 2 has updated the session.
@@ -252,7 +252,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       site,
       sessionId: sessionId2,
       succeeded: true,
-      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success, newSession: session2}
+      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success, newSession: session2},
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, event3);
     // Verify event 3 has created the new session.
@@ -271,7 +271,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       sessionId: sessionId2,
       succeeded: true,
       challengeEventDetails:
-          {challenge: challengeString, challengeResult: Protocol.Network.ChallengeEventDetailsChallengeResult.Success}
+          {challenge: challengeString, challengeResult: Protocol.Network.ChallengeEventDetailsChallengeResult.Success},
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, event4);
     // Verify event 4 has set the session's cached challenge.
@@ -285,7 +285,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       site,
       succeeded: false,
       challengeEventDetails:
-          {challenge: challengeString, challengeResult: Protocol.Network.ChallengeEventDetailsChallengeResult.Success}
+          {challenge: challengeString, challengeResult: Protocol.Network.ChallengeEventDetailsChallengeResult.Success},
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, event5);
     // Verify event 2 has updated the session.
@@ -321,7 +321,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       sessionId,
       succeeded: true,
       creationEventDetails:
-          {newSession: creationSession, fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success}
+          {newSession: creationSession, fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success},
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, createEvent);
 
@@ -335,7 +335,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       site,
       sessionId,
       succeeded: true,
-      terminationEventDetails: {deletionReason: Protocol.Network.TerminationEventDetailsDeletionReason.Expired}
+      terminationEventDetails: {deletionReason: Protocol.Network.TerminationEventDetailsDeletionReason.Expired},
     };
     networkManager.dispatchEventToListeners(
         SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, terminationEvent);
@@ -350,7 +350,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       sessionId,
       succeeded: false,
       creationEventDetails:
-          {newSession: creationSession, fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success}
+          {newSession: creationSession, fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success},
     };
     networkManager.dispatchEventToListeners(
         SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, failedRecreateEvent);
@@ -365,7 +365,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       sessionId,
       succeeded: true,
       creationEventDetails:
-          {newSession: creationSession, fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success}
+          {newSession: creationSession, fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success},
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, recreateEvent);
 
@@ -385,8 +385,8 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       succeeded: true,
       creationEventDetails: {
         newSession: makeSession(site, sessionId),
-        fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success
-      }
+        fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.Success,
+      },
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, createEvent);
 
@@ -400,7 +400,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       site,
       sessionId,
       succeeded: false,
-      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.InvalidConfigJson}
+      creationEventDetails: {fetchResult: Protocol.Network.DeviceBoundSessionFetchResult.InvalidConfigJson},
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, failedEvent);
 
@@ -414,7 +414,7 @@ describeWithEnvironment('DeviceBoundSessionsModel', () => {
       sessionId,
       succeeded: true,
       challengeEventDetails:
-          {challenge: 'challenge', challengeResult: Protocol.Network.ChallengeEventDetailsChallengeResult.Success}
+          {challenge: 'challenge', challengeResult: Protocol.Network.ChallengeEventDetailsChallengeResult.Success},
     };
     networkManager.dispatchEventToListeners(SDK.NetworkManager.Events.DeviceBoundSessionEventOccurred, successEvent);
 

@@ -195,7 +195,7 @@ function renderSettings({
   isRecording,
   replayState,
   onReplaySettingsKeydown,
-  onToggleReplaySettings
+  onToggleReplaySettings,
 }: ViewInput): Lit.LitTemplate {
   if (!settings) {
     return Lit.nothing;

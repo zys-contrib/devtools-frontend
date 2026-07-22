@@ -327,7 +327,7 @@ export const AI_SETTINGS_TAB_DEFAULT_VIEW: View = (input, _output, target): void
       <div class="disclaimer-list">
         ${input.sharedDisclaimerBulletPoints.map(item =>
           html`<div><devtools-icon .name=${item.icon} class="medium"></devtools-icon>
-              </div><div>${item.text}</div>`
+              </div><div>${item.text}</div>`,
         )}
       </div>
     </div>
@@ -537,12 +537,12 @@ export class AISettingsTab extends UI.Widget.VBox {
         enableSettingText: i18nString(UIStrings.enableConsoleInsights),
         settingItems: [
           {iconName: 'lightbulb', text: i18nString(UIStrings.explainConsole)},
-          {iconName: 'code', text: i18nString(UIStrings.receiveSuggestions)}
+          {iconName: 'code', text: i18nString(UIStrings.receiveSuggestions)},
         ],
         toConsiderSettingItems: [{
           iconName: 'google',
           text: noLogging ? i18nString(UIStrings.consoleInsightsSendsDataNoLogging) :
-                            i18nString(UIStrings.consoleInsightsSendsData)
+                            i18nString(UIStrings.consoleInsightsSendsData),
         }],
         learnMoreLink: {
           url: 'https://developer.chrome.com/docs/devtools/console/understand-messages',
@@ -605,11 +605,11 @@ export class AISettingsTab extends UI.Widget.VBox {
         toConsiderSettingItems: [{
           iconName: 'google',
           text: noLogging ? i18nString(UIStrings.generatedAiAnnotationsSendDataNoLogging) :
-                            i18nString(UIStrings.generatedAiAnnotationsSendData)
+                            i18nString(UIStrings.generatedAiAnnotationsSendData),
         }],
         learnMoreLink: {
           url: 'https://developer.chrome.com/docs/devtools/performance/annotations#auto-annotations',
-          linkJSLogContext: 'learn-more.auto-annotations'
+          linkJSLogContext: 'learn-more.auto-annotations',
         },
         settingExpandState: {
           isSettingExpanded: false,
@@ -623,11 +623,12 @@ export class AISettingsTab extends UI.Widget.VBox {
     if (this.#aiCodeCompletionSetting) {
       const settingItems = Root.Runtime.hostConfig.devToolsAiCodeGeneration?.enabled ?
           [
-            {iconName: 'code', text: i18nString(UIStrings.asYouTypeRelevantDataIsBeingSentToGoogle)}, {
+            {iconName: 'code', text: i18nString(UIStrings.asYouTypeRelevantDataIsBeingSentToGoogle)},
+            {
               iconName: 'text-analysis',
               text: Host.Platform.isMac() ? i18nString(UIStrings.describeCodeInCommentForMacOs) :
-                                            i18nString(UIStrings.describeCodeInComment)
-            }
+                                            i18nString(UIStrings.describeCodeInComment),
+            },
           ] :
           [{iconName: 'code', text: i18nString(UIStrings.asYouTypeCodeSuggestions)}];
 
@@ -640,11 +641,11 @@ export class AISettingsTab extends UI.Widget.VBox {
         toConsiderSettingItems: [{
           iconName: 'google',
           text: noLogging ? i18nString(UIStrings.codeSuggestionsSendDataNoLogging) :
-                            i18nString(UIStrings.codeSuggestionsSendData)
+                            i18nString(UIStrings.codeSuggestionsSendData),
         }],
         learnMoreLink: {
           url: ' https://developers.chrome.com/docs/devtools/ai-assistance/code-completion',
-          linkJSLogContext: 'learn-more.code-completion'
+          linkJSLogContext: 'learn-more.code-completion',
         },
         settingExpandState: {
           isSettingExpanded: false,

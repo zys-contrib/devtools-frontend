@@ -10,7 +10,7 @@ import {GEN_DIR} from '../../conductor/paths.js';
 import {
   loadTraceAndWaitToFullyRender,
   navigateToPerformanceTab,
-  searchForComponent
+  searchForComponent,
 } from '../helpers/performance-helpers.js';
 import {DevToolsPage} from '../shared/frontend-helper.js';
 import type {InspectedPage} from '../shared/target-helper.js';

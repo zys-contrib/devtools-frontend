@@ -247,7 +247,7 @@ const DEFAULT_VIEW: View = (input, output, target) => {
             <devtools-node-text .data=${{
                 nodeId: element.domId,
                 nodeTitle: element.name,
-                nodeClasses: element.domClasses
+                nodeClasses: element.domClasses,
               }}>
             </devtools-node-text>
           </span>
@@ -260,7 +260,7 @@ const DEFAULT_VIEW: View = (input, output, target) => {
             jslog=${
       VisualLogging.showStyleEditor('color')
           .track({
-            click: true
+            click: true,
           })}>
           <input
               @change=${(e: Event) => input.onColorChange(element, e)}
@@ -360,8 +360,8 @@ const DEFAULT_VIEW: View = (input, output, target) => {
           </details>`
         : ''}
       </div>`,
-      // clang-format on
-      target);
+                  // clang-format on
+                  target);
 };
 
 type View = (input: ViewInput, output: object, element: HTMLElement) => void;

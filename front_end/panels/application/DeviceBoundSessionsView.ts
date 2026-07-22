@@ -16,7 +16,7 @@ import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 import {
   DeviceBoundSessionModelEvents,
   type DeviceBoundSessionsModel,
-  type SessionAndEvents
+  type SessionAndEvents,
 } from './DeviceBoundSessionsModel.js';
 import deviceBoundSessionsViewStyles from './deviceBoundSessionsView.css.js';
 const {widget} = UI.Widget;

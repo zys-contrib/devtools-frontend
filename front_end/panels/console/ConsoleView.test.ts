@@ -21,7 +21,7 @@ import {
   createTarget,
   describeWithEnvironment,
   registerNoopActions,
-  updateHostConfig
+  updateHostConfig,
 } from '../../testing/EnvironmentHelpers.js';
 import {expectCall, expectCalled} from '../../testing/ExpectStubCall.js';
 import {stubFileManager} from '../../testing/FileManagerHelpers.js';

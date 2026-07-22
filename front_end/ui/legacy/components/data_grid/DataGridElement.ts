@@ -17,7 +17,7 @@ import {
   DataType,
   Events as DataGridEvents,
   Order,
-  type ResizeMethod
+  type ResizeMethod,
 } from './DataGrid.js';
 import {SortableDataGrid, SortableDataGridNode} from './SortableDataGrid.js';
 
@@ -116,7 +116,7 @@ export class DataGridElement extends UI.UIUtils.HTMLElementWithLightDOMTemplate 
         DataGridEvents.COLLAPSED_NODE,
         e => (e.data as DataGridElementNode).configElement.dispatchEvent(new CustomEvent('collapse')));
     this.#dataGrid.addEventListener(DataGridEvents.SORTING_CHANGED, () => this.dispatchEvent(new CustomEvent('sort', {
-      detail: {columnId: this.#dataGrid.sortColumnId(), ascending: this.#dataGrid.isSortOrderAscending()}
+      detail: {columnId: this.#dataGrid.sortColumnId(), ascending: this.#dataGrid.isSortOrderAscending()},
     })));
     this.#dataGrid.setRowContextMenuCallback((menu, node) => {
       (node as DataGridElementNode).configElement.dispatchEvent(new CustomEvent('contextmenu', {detail: menu}));
@@ -727,7 +727,7 @@ export interface DataGridInternalToken {
 }
 
 const INTERNAL_TOKEN: DataGridInternalToken = {
-  token: 'DataGridInternalToken'
+  token: 'DataGridInternalToken',
 };
 
 class IfExpandedDirective extends Lit.Directive.Directive {

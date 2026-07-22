@@ -241,7 +241,7 @@ const issueDescriptions = new Map<Protocol.Audits.GenericIssueErrorType, LazyMar
   [Protocol.Audits.GenericIssueErrorType.FormDuplicateIdForInputError, genericFormDuplicateIdForInputError],
   [
     Protocol.Audits.GenericIssueErrorType.FormAriaLabelledByToNonExistingIdError,
-    genericFormAriaLabelledByToNonExistingIdError
+    genericFormAriaLabelledByToNonExistingIdError,
   ],
   [
     Protocol.Audits.GenericIssueErrorType.FormEmptyIdAndNameAttributesForInputError,

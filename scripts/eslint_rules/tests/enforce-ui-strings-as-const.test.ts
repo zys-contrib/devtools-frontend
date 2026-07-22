@@ -14,7 +14,7 @@ new RuleTester().run('enforce-ui-strings-as-const', rule, {
     {
       code: 'const UIStringsNotTranslate = {} as const;',
     },
-    {code: 'const NotAUIStrings = {}'}
+    {code: 'const NotAUIStrings = {}'},
   ],
   invalid: [
     {
@@ -29,7 +29,7 @@ new RuleTester().run('enforce-ui-strings-as-const', rule, {
       errors: [
         {messageId: 'invalidUIStringsObject'},
       ],
-      output: 'const UIStringsNotTranslate = {} as const;'
+      output: 'const UIStringsNotTranslate = {} as const;',
     },
   ],
 });

@@ -151,9 +151,9 @@ export const DEFAULT_VIEW: ViewFunction = (input, output, target) => {
           attributes: {
             disabled: input.disabled,
             'aria-label': input.title,
-            jslog: `${VisualLogging.dropDown(input.jslogContext).track({change: true})}`
-          }
-        }
+            jslog: `${VisualLogging.dropDown(input.jslogContext).track({change: true})}`,
+          },
+        },
       });
 };
 
@@ -321,7 +321,7 @@ export class NetworkThrottlingSelect extends Common.ObjectWrapper.eventMixin<Eve
                 SDK.NetworkManager.Slow4GConditions,
                 SDK.NetworkManager.Slow3GConditions,
                 SDK.NetworkManager.OfflineConditions,
-              ]
+              ],
             });
         break;
       case NetworkThrottlingSelect.Variant.INDIVIDUAL_REQUEST_CONDITIONS:
@@ -333,7 +333,7 @@ export class NetworkThrottlingSelect extends Common.ObjectWrapper.eventMixin<Eve
                 SDK.NetworkManager.Fast4GConditions,
                 SDK.NetworkManager.Slow4GConditions,
                 SDK.NetworkManager.Slow3GConditions,
-              ]
+              ],
             },
         );
         break;

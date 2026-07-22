@@ -133,5 +133,5 @@ AutomappingTest.prototype = {
       delete this.stabilizedCallback;
       callback.call(null);
     }
-  }
+  },
 };

@@ -34,7 +34,7 @@ import {
   type PlayRecordingEvent as ViewPlayRecordingEvent,
   RecordingView,
   type ReplayState,
-  TargetPanel
+  TargetPanel,
 } from './RecordingView.js';
 import {
   AddStepPosition,
@@ -1016,7 +1016,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
                   {
                     ...step,
                     title: preset.i18nTitleKey || '',
-                    key: `step_${i}_recorder_key` as SDK.NetworkManager.UserDefinedThrottlingConditionKey
+                    key: `step_${i}_recorder_key` as SDK.NetworkManager.UserDefinedThrottlingConditionKey,
                   })) {
             settings.networkConditionsSettings.title = preset.title instanceof Function ? preset.title() : preset.title;
             settings.networkConditionsSettings.i18nTitleKey = preset.i18nTitleKey;
@@ -1805,7 +1805,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
       },
       {
         title: i18nString(UIStrings.copyShortcut),
-        rows: Host.Platform.isMac() ? [[{key: '⌘'}, {key: 'C'}]] : [[{key: 'Ctrl'}, {key: 'C'}]]
+        rows: Host.Platform.isMac() ? [[{key: '⌘'}, {key: 'C'}]] : [[{key: 'Ctrl'}, {key: 'C'}]],
       },
       {
         title: i18nString(UIStrings.toggleCode),
@@ -1843,7 +1843,7 @@ export class RecorderPanel extends UI.Widget.VBox<DocumentFragment> {
       },
       set createRecordingView(widget: CreateRecordingView) {
         that.#createRecordingView = widget;
-      }
+      },
     };
     this.#view({
       recordings,

@@ -416,7 +416,7 @@ export const DEFAULT_VIEW = (input: ViewInput, _output: ViewOutput, target: HTML
       </devtools-widget>
     </div>
   `,
-    target, {container: {classes: ['step-view-widget']}}
+    target, {container: {classes: ['step-view-widget']}},
   );
   // clang-format on
 };

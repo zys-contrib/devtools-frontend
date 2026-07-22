@@ -173,7 +173,7 @@ describe('AI Assistance', function() {
       iframeId,
       shadowRoot,
       waitForSideEffect,
-      throwOnSideEffect
+      throwOnSideEffect,
     } = options;
 
     try {
@@ -247,17 +247,17 @@ describe('AI Assistance', function() {
                 title: 'changing the property',
                 code: `const data = {
   color: window.getComputedStyle($0).color
-}`
-              }
-            }
-          }
+}`,
+              },
+            },
+          },
         },
         {textChunk: {text: 'changed styles'}},
       ],
     });
     assert.deepEqual(result.at(-1)!.request.current_message, {
       role: 0,
-      parts: [{functionResponse: {name: 'executeJavaScript', response: {result: '{"color":"rgb(0, 0, 0)"}'}}}]
+      parts: [{functionResponse: {name: 'executeJavaScript', response: {result: '{"color":"rgb(0, 0, 0)"}'}}}],
     });
   });
 
@@ -290,7 +290,7 @@ describe('AI Assistance', function() {
                 },
               },
             },
-            {textChunk: {text: 'changed styles'}}
+            {textChunk: {text: 'changed styles'}},
           ],
         },
     );
@@ -326,7 +326,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'changed styles'}}
+        {textChunk: {text: 'changed styles'}},
       ],
     });
     assert.deepEqual(result.at(-1)!.request.current_message, {
@@ -353,7 +353,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'changed styles'}}
+        {textChunk: {text: 'changed styles'}},
       ],
     });
 
@@ -384,7 +384,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'changed styles'}}
+        {textChunk: {text: 'changed styles'}},
       ],
       node: 'div',
     });
@@ -412,7 +412,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'changed styles'}}
+        {textChunk: {text: 'changed styles'}},
       ],
       node: 'button',
     });
@@ -442,7 +442,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'changed styles'}}
+        {textChunk: {text: 'changed styles'}},
       ],
       resource: '../resources/recorder/shadow-open.html',
       node: 'button',
@@ -472,7 +472,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'changed styles'}}
+        {textChunk: {text: 'changed styles'}},
       ],
       node: 'button',
       shadowRoot: 'login-element',
@@ -512,7 +512,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'Title collected'}}
+        {textChunk: {text: 'Title collected'}},
       ],
       resource: '../resources/ai_assistance/index.html',
       node: 'div',
@@ -527,7 +527,7 @@ describe('AI Assistance', function() {
 
   it('aborts ongoing conversation if new input is submitted by pressing enter', async ({
                                                                                   devToolsPage,
-                                                                                  inspectedPage
+                                                                                  inspectedPage,
                                                                                 }) => {
     await runAiAssistance(devToolsPage, inspectedPage, {
       query: 'Change the background color for this element to blue',
@@ -567,7 +567,7 @@ describe('AI Assistance', function() {
           },
         },
       },
-      {textChunk: {text: 'changed styles'}}
+      {textChunk: {text: 'changed styles'}},
     ];
     await resetMockMessages(devToolsPage, messages);
     await inspectNode(devToolsPage, 'div');
@@ -608,7 +608,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'changed styles'}}
+        {textChunk: {text: 'changed styles'}},
       ],
       node: 'div',
     });
@@ -657,7 +657,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'changed styles'}}
+        {textChunk: {text: 'changed styles'}},
       ],
       resource: '../resources/ai_assistance/high-specificity.html',
       node: 'h1',
@@ -687,7 +687,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'Unable to make the change'}}
+        {textChunk: {text: 'Unable to make the change'}},
       ],
     });
 
@@ -701,7 +701,7 @@ describe('AI Assistance', function() {
                 `Error: None of the suggested CSS properties or their values for selector were considered valid by the browser's CSS engine. Please ensure property names are correct and values match the expected format for those properties.`,
           },
         },
-      }]
+      }],
     });
   });
 
@@ -721,7 +721,7 @@ describe('AI Assistance', function() {
             },
           },
         },
-        {textChunk: {text: 'Unable to make the change'}}
+        {textChunk: {text: 'Unable to make the change'}},
       ],
     });
 
@@ -749,7 +749,7 @@ describe('AI Assistance', function() {
               },
             },
           },
-          {textChunk: {text: 'done'}}
+          {textChunk: {text: 'done'}},
         ],
       });
     });

@@ -53,7 +53,7 @@ describe('StorageAgent', function() {
         functionCalls: [{name: 'listStorageKeys', args: {type: 'localStorage', origin: 'https://example.com'}}],
         explanation: '',
       }],
-      [{explanation: 'Here are the keys.'}]
+      [{explanation: 'Here are the keys.'}],
     ]);
 
     const agent = new AiAssistance.StorageAgent.StorageAgent({
@@ -79,7 +79,7 @@ describe('StorageAgent', function() {
             [{name: 'getStorageValues', args: {type: 'localStorage', keys: ['key1'], origin: 'https://example.com'}}],
         explanation: '',
       }],
-      [{explanation: 'Here is the value.'}]
+      [{explanation: 'Here is the value.'}],
     ]);
 
     const sideEffectPromise = Promise.withResolvers<boolean>();
@@ -139,7 +139,7 @@ describe('StorageAgent', function() {
         functionCalls: [{name: 'listStorageKeys', args: {type: 'localStorage', origin: 'https://example.com'}}],
         explanation: '',
       }],
-      [{explanation: 'Here are the keys.'}]
+      [{explanation: 'Here are the keys.'}],
     ]);
 
     const agent = new AiAssistance.StorageAgent.StorageAgent({
@@ -175,7 +175,7 @@ describe('StorageAgent', function() {
         functionCalls: [{name: 'listCookies', args: {origin: 'https://example.com'}}],
         explanation: '',
       }],
-      [{explanation: 'Here are the cookies.'}]
+      [{explanation: 'Here are the cookies.'}],
     ]);
 
     const agent = new AiAssistance.StorageAgent.StorageAgent({
@@ -202,7 +202,8 @@ describe('StorageAgent', function() {
     httpOnlyCookie.addAttribute(SDK.Cookie.Attribute.HTTP_ONLY);
 
     const getCookiesStub = sinon.stub(cookieModel, 'getCookiesForDomain').withArgs('https://example.com').resolves([
-      mockCookie, httpOnlyCookie
+      mockCookie,
+      httpOnlyCookie,
     ]);
 
     const responses = await Array.fromAsync(agent.run('list cookies', {selected: context}));
@@ -223,7 +224,7 @@ describe('StorageAgent', function() {
         functionCalls: [{name: 'getCookieValues', args: {cookieNames: [cookieName], origin: 'https://example.com'}}],
         explanation: '',
       }],
-      [{explanation: 'Here is the value.'}]
+      [{explanation: 'Here is the value.'}],
     ]);
 
     const sideEffectPromise = Promise.withResolvers<boolean>();
@@ -271,7 +272,7 @@ describe('StorageAgent', function() {
         functionCalls: [{name: 'getCookieValues', args: {cookieNames: [cookieName], origin: 'https://example.com'}}],
         explanation: '',
       }],
-      [{explanation: 'Here are the values.'}]
+      [{explanation: 'Here are the values.'}],
     ]);
 
     const sideEffectPromise = Promise.withResolvers<boolean>();
@@ -319,11 +320,11 @@ describe('StorageAgent', function() {
       [{
         functionCalls: [{
           name: 'getCookieValues',
-          args: {cookieNames: ['secret-cookie', 'public-cookie'], origin: 'https://example.com'}
+          args: {cookieNames: ['secret-cookie', 'public-cookie'], origin: 'https://example.com'},
         }],
         explanation: '',
       }],
-      [{explanation: 'Here is the value.'}]
+      [{explanation: 'Here is the value.'}],
     ]);
 
     const sideEffectPromise = Promise.withResolvers<boolean>();
@@ -353,7 +354,8 @@ describe('StorageAgent', function() {
     secretCookie.addAttribute(SDK.Cookie.Attribute.HTTP_ONLY);
 
     sinon.stub(cookieModel, 'getCookiesForDomain').withArgs('https://example.com').resolves([
-      publicCookie, secretCookie
+      publicCookie,
+      secretCookie,
     ]);
 
     sideEffectPromise.resolve(true);
@@ -375,11 +377,11 @@ describe('StorageAgent', function() {
     const aidaClient = mockAidaClient([
       [{
         functionCalls: [
-          {name: 'getStorageValues', args: {type: 'localStorage', keys: ['hugeKey'], origin: 'https://example.com'}}
+          {name: 'getStorageValues', args: {type: 'localStorage', keys: ['hugeKey'], origin: 'https://example.com'}},
         ],
         explanation: '',
       }],
-      [{explanation: 'Here is the value.'}]
+      [{explanation: 'Here is the value.'}],
     ]);
 
     const sideEffectPromise = Promise.withResolvers<boolean>();
@@ -425,7 +427,7 @@ describe('StorageAgent', function() {
         functionCalls: [{name: 'listPageOrigins', args: {}}],
         explanation: '',
       }],
-      [{explanation: 'Here are the active origins.'}]
+      [{explanation: 'Here are the active origins.'}],
     ]);
 
     const agent = new AiAssistance.StorageAgent.StorageAgent({
@@ -469,7 +471,7 @@ describe('StorageAgent', function() {
         functionCalls: [{name: 'getStorageBreakdown', args: {}}],
         explanation: '',
       }],
-      [{explanation: 'Here is the breakdown.'}]
+      [{explanation: 'Here is the breakdown.'}],
     ]);
     const agent = new AiAssistance.StorageAgent.StorageAgent({
       aidaClient,
@@ -613,7 +615,8 @@ describe('StorageAgent', function() {
       secretCookie.addAttribute(SDK.Cookie.Attribute.HTTP_ONLY);
 
       sinon.stub(cookieModel, 'getCookiesForDomain').withArgs('https://example.com').resolves([
-        publicCookie, secretCookie
+        publicCookie,
+        secretCookie,
       ]);
 
       const cookies = await AiAssistance.StorageAgent.getCookiesForDomain(target, 'https://example.com');

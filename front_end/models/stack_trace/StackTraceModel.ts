@@ -17,7 +17,7 @@ import {
   FragmentImpl,
   FrameImpl,
   ParsedErrorStackFragmentImpl,
-  StackTraceImpl
+  StackTraceImpl,
 } from './StackTraceImpl.js';
 import {EvalOrigin, type FrameNode, type RawFrame, Trie} from './Trie.js';
 

@@ -17,7 +17,7 @@ const UIStrings = {
   /**
    * @description Title for Chrome Status entry URL link.
    */
-  chromeStatusEntry: 'Chrome Status entry'
+  chromeStatusEntry: 'Chrome Status entry',
 } as const;
 
 const str_ = i18n.i18n.registerUIStrings('models/issues_manager/PartitioningBlobURLIssue.ts', UIStrings);

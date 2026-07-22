@@ -133,7 +133,7 @@ async function foo3() {
          'then',
          'bar1',
          'then',
-         'function'
+         'function',
        ]);
 
        assert.deepEqual(

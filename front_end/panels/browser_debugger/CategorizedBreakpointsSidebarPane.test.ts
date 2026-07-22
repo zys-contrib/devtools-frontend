@@ -139,18 +139,20 @@ describeWithEnvironment('CategorizedBreakpointsSidebarPane', () => {
       [
         SDK.CategorizedBreakpoint.Category.ANIMATION,
         [
-          new SDK.CategorizedBreakpoint.CategorizedBreakpoint(
-              SDK.CategorizedBreakpoint.Category.ANIMATION, 'animation'),
-          new SDK.CategorizedBreakpoint.CategorizedBreakpoint(SDK.CategorizedBreakpoint.Category.ANIMATION, 'bnimation')
-        ]
+          new SDK.CategorizedBreakpoint.CategorizedBreakpoint(SDK.CategorizedBreakpoint.Category.ANIMATION,
+                                                              'animation'),
+          new SDK.CategorizedBreakpoint.CategorizedBreakpoint(SDK.CategorizedBreakpoint.Category.ANIMATION,
+                                                              'bnimation'),
+        ],
       ],
       [
-        SDK.CategorizedBreakpoint.Category.CANVAS, [new SDK.CategorizedBreakpoint.CategorizedBreakpoint(
-                                                       SDK.CategorizedBreakpoint.Category.CANVAS, 'also_animation')]
+        SDK.CategorizedBreakpoint.Category.CANVAS,
+        [new SDK.CategorizedBreakpoint.CategorizedBreakpoint(SDK.CategorizedBreakpoint.Category.CANVAS,
+                                                             'also_animation')],
       ],
       [
         SDK.CategorizedBreakpoint.Category.LOAD,
-        [new SDK.CategorizedBreakpoint.CategorizedBreakpoint(SDK.CategorizedBreakpoint.Category.LOAD, 'different')]
+        [new SDK.CategorizedBreakpoint.CategorizedBreakpoint(SDK.CategorizedBreakpoint.Category.LOAD, 'different')],
       ],
     ]);
 

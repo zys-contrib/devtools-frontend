@@ -341,7 +341,7 @@ function renderNewAuthenticatorSection(
               Protocol.WebAuthn.AuthenticatorTransport.Usb,
               Protocol.WebAuthn.AuthenticatorTransport.Ble,
               Protocol.WebAuthn.AuthenticatorTransport.Nfc,
-                ...(isCtap2 ? [Protocol.WebAuthn.AuthenticatorTransport.Internal] : [])
+                ...(isCtap2 ? [Protocol.WebAuthn.AuthenticatorTransport.Internal] : []),
             ].map(option => html`
                 <option value=${option} jslog=${VisualLogging.item(option).track({click: true})}
                         .selected=${options.transport === option}

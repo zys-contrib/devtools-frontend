@@ -146,7 +146,7 @@ describeWithEnvironment('BackgroundServiceView', () => {
       ...BACKGROUND_SERVICE_EVENT,
       eventMetadata: [{key: 'key', value: 'value'}],
       instanceId: 'Instance2',
-      eventName: 'Event2'
+      eventName: 'Event2',
     };
     backgroundServiceModel?.backgroundServiceEventReceived({backgroundServiceEvent: eventWithMetadata});
     manager?.updateStorageKeys(new Set([testKey]));

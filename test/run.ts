@@ -42,11 +42,10 @@ const options =
         .options('auto-watch', {
           type: 'boolean',
           default: false,
-          desc: 'watch changes to files and run tests automatically on file change (only for unit tests)'
+          desc: 'watch changes to files and run tests automatically on file change (only for unit tests)',
         })
-        .options(
-            'node-unit-tests',
-            {type: 'boolean', default: false, desc: 'whether to run unit tests in node (experimental)'})
+        .options('node-unit-tests',
+                 {type: 'boolean', default: false, desc: 'whether to run unit tests in node (experimental)'})
         .positional('tests', {
           type: 'string',
           desc: 'Path to the test suite, starting from out/Target/gen directory.',

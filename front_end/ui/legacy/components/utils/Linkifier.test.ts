@@ -506,7 +506,7 @@ describeWithEnvironment('Linkifier', () => {
         lineNumber: null,
         columnNumber: null,
         revealable: null,
-        fallback: null
+        fallback: null,
       });
       const openUsingActions = actions.filter(action => action.title.startsWith('Open using'));
       assert.isEmpty(openUsingActions);
@@ -534,7 +534,7 @@ describeWithEnvironment('Linkifier', () => {
         lineNumber: null,
         columnNumber: null,
         revealable: null,
-        fallback: null
+        fallback: null,
       });
       const openUsingAction = actions.find(action => action.title === 'Open using Handler for foo-extension');
       assert.exists(openUsingAction);
@@ -576,7 +576,7 @@ describeWithEnvironment('Linkifier', () => {
           lineNumber: null,
           columnNumber: null,
           revealable: null,
-          fallback: null
+          fallback: null,
         });
         assert.lengthOf(actions, 3);  // Two fallback actions are always added.
 
@@ -596,7 +596,7 @@ describeWithEnvironment('Linkifier', () => {
           lineNumber: null,
           columnNumber: null,
           revealable: null,
-          fallback: null
+          fallback: null,
         });
         assert.lengthOf(actions, 3);  // One for our handler + 'Open in New Tab' and 'Copy link'.
 
@@ -616,7 +616,7 @@ describeWithEnvironment('Linkifier', () => {
           lineNumber: null,
           columnNumber: null,
           revealable: null,
-          fallback: null
+          fallback: null,
         });
         assert.lengthOf(actions, 3);  // One for our handler + 'Open in New Tab' and 'Copy link'.
 

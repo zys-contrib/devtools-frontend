@@ -191,8 +191,8 @@ describe('CSSMatchedStyles', () => {
                                 [
                                   {name: '--color', value: 'blue'},
                                 ])],
-          }]
-        }]
+          }],
+        }],
       });
 
       // Compute the variable value as it is visible to `startingCascade` and compare with the expectation
@@ -307,7 +307,7 @@ describe('CSSMatchedStyles', () => {
         connection,
         matchedPayload: [ruleMatch('div', [{name: '--color', value: 'inherit'}])],
         inheritedPayload: [{matchedCSSRules: [ruleMatch('div', [{name: '--color', value: 'inherited-color'}])]}],
-        node
+        node,
       });
       assert.strictEqual(
           matchedStyles.computeCSSVariable(matchedStyles.nodeStyles()[0], '--color')?.value, 'inherited-color');
@@ -634,7 +634,7 @@ describe('CSSMatchedStyles', () => {
         matchedPayload: [ruleMatch('div', properties)],
         inheritedPayload,
         cssPropertyRegistrations,
-        node
+        node,
       });
       checkResolution(matchedStyles, properties);
     });
@@ -673,7 +673,7 @@ describe('CSSMatchedStyles', () => {
         matchedPayload: [ruleMatch('div', properties)],
         inheritedPayload,
         cssPropertyRegistrations,
-        node
+        node,
       });
       checkResolution(matchedStyles, properties);
     });
@@ -712,7 +712,7 @@ describe('CSSMatchedStyles', () => {
         matchedPayload: [ruleMatch('div', properties)],
         inheritedPayload,
         cssPropertyRegistrations,
-        node
+        node,
       });
       checkResolution(matchedStyles, properties);
     });
@@ -757,7 +757,7 @@ describe('CSSMatchedStyles', () => {
         matchedPayload: [uaRule, userRule, ruleMatch('div', properties)],
         inheritedPayload,
         cssPropertyRegistrations,
-        node
+        node,
       });
       checkResolution(matchedStyles, properties);
     });
@@ -889,7 +889,7 @@ describe('CSSMatchedStyles', () => {
         ruleMatch('div', {'--f': 'F'}),
         ruleMatch('div', {'background-color': 'x'}),
         ruleMatch('div', {color: 'y'}),
-      ]
+      ],
     }];
     const matchedStyles = await getMatchedStyles({connection, node, matchedPayload, inheritedPayload});
 
@@ -970,7 +970,7 @@ describe('CSSMatchedStyles', () => {
       {name: '--test-number-to-length', value: 'attr(data-test-number in)'},
       {
         name: '--test-number-as-length',
-        value: 'attr(data-test-number type(<length>), var(--test-self-loop-fallback-2))'
+        value: 'attr(data-test-number type(<length>), var(--test-self-loop-fallback-2))',
       },
       {name: '--test-length', value: 'attr(data-test-length type(<length>))'},
       {name: '--test-bad-unit-indirect', value: 'attr(data-test-bad-unit type(*), 4px)'},
@@ -1023,7 +1023,7 @@ describe('CSSMatchedStyles', () => {
           style: {
             cssProperties: [{name: 'color', value: 'red'}],
             shorthandEntries: [],
-          }
+          },
         }],
         origin: Protocol.CSS.StyleSheetOrigin.Regular,
         styleSheetId: '0' as Protocol.DOM.StyleSheetId,
@@ -1308,13 +1308,13 @@ describe('CSSMatchedStyles', () => {
             {
               matchedCSSRules: [
                 ruleMatch('.myelement', [{name: '--another-div-variable', value: 'grey'}]),
-                ruleMatch('div', [{name: '--div-variable', value: 'blue'}])
+                ruleMatch('div', [{name: '--div-variable', value: 'blue'}]),
               ],
             },
             {
               matchedCSSRules: [ruleMatch('body', [{name: '--body-variable', value: 'red'}])],
-            }
-          ]
+            },
+          ],
         });
 
         const styles = matchedStyles.nodeStyles();
@@ -1457,10 +1457,11 @@ describe('CSSMatchedStyles', () => {
       const parentRule = ruleMatch(
           {
             selectors: [
-              {text: 'div', specificity: {a: 0, b: 0, c: 1}}, {text: '#foo', specificity: {a: 1, b: 0, c: 0}},
-              {text: '.bar', specificity: {a: 0, b: 1, c: 0}}
+              {text: 'div', specificity: {a: 0, b: 0, c: 1}},
+              {text: '#foo', specificity: {a: 1, b: 0, c: 0}},
+              {text: '.bar', specificity: {a: 0, b: 1, c: 0}},
             ],
-            text: 'div, #foo, .bar'
+            text: 'div, #foo, .bar',
           },
           {color: 'red'},
       );

@@ -87,7 +87,7 @@ describeWithEnvironment('HeapProfileView', () => {
             scriptId: '0' as Protocol.Runtime.ScriptId,
             url: '',
             lineNumber: 0,
-            columnNumber: 0
+            columnNumber: 0,
           },
           children: [],
           selfSize: 0,
@@ -179,7 +179,7 @@ describeWithEnvironment('HeapProfileView', () => {
             scriptId: '0' as Protocol.Runtime.ScriptId,
             url: '',
             lineNumber: 0,
-            columnNumber: 0
+            columnNumber: 0,
           },
           selfSize: 0,
           id: 0,
@@ -189,7 +189,7 @@ describeWithEnvironment('HeapProfileView', () => {
               scriptId: '1' as Protocol.Runtime.ScriptId,
               url: 'test.js',
               lineNumber: 1,
-              columnNumber: 1
+              columnNumber: 1,
             },
             selfSize: 0,
             id: 1,
@@ -199,13 +199,13 @@ describeWithEnvironment('HeapProfileView', () => {
                 scriptId: '1' as Protocol.Runtime.ScriptId,
                 url: 'test.js',
                 lineNumber: 2,
-                columnNumber: 1
+                columnNumber: 1,
               },
               selfSize: 1000000,
               id: 2,
-              children: []
-            }]
-          }]
+              children: [],
+            }],
+          }],
         },
         samples: [],
         startTime: 0,

@@ -233,7 +233,7 @@ export const DEFAULT_VIEW = (input: TimelinePaintImageViewInput, output: undefin
       <img src=${input.imageURL} display=${input.imageContainerHidden ? 'none' : 'block'} ${ref(imageElementRef)}>
       <div style=${Lit.Directives.styleMap({
         display: input.maskElementHidden ? 'none' : 'block',
-        ...input.maskElementStyle,})}>
+        ...input.maskElementStyle})}>
       </div>
     </div>
   </div>`,

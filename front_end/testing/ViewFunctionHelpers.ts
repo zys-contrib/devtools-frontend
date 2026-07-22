@@ -61,7 +61,7 @@ export function createViewFunctionStub<WidgetConstructorT extends WidgetConstruc
       return new Promise<ViewInput<WidgetConstructorT>>(resolve => {
         result.invoked = resolve;
       });
-    }
+    },
   });
   return result as ViewFunctionStub<WidgetConstructorT>;
 }

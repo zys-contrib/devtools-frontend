@@ -13,11 +13,11 @@ import * as Workspace from '../workspace/workspace.js';
 import {
   type AutomaticFileSystem,
   type AutomaticFileSystemManager,
-  Events as AutomaticFileSystemManagerEvents
+  Events as AutomaticFileSystemManagerEvents,
 } from './AutomaticFileSystemManager.js';
 import {
   Events as IsolatedFileSystemManagerEvents,
-  type IsolatedFileSystemManager
+  type IsolatedFileSystemManager,
 } from './IsolatedFileSystemManager.js';
 
 /**

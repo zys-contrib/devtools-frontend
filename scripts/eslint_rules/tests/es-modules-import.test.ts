@@ -355,6 +355,6 @@ new RuleTester().run('es-modules-import', rule, {
           messageId: 'incorrectSameNamespaceTestImport',
         },
       ],
-    }
+    },
   ],
 });

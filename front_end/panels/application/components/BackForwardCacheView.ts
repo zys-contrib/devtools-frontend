@@ -362,7 +362,7 @@ function renderFramesPerReason(frames: string[]|undefined): LitTemplate {
     title: i18nString(UIStrings.framesPerIssue, {n: frames.length}),
   } as ExpandableList.ExpandableList.ExpandableListData}
         jslog=${VisualLogging.treeItem().track({
-    resize: true
+    resize: true,
   })}></devtools-expandable-list>
       </div>
     `;
@@ -394,7 +394,7 @@ function maybeRenderJavaScriptDetails(details: Protocol.Page.BackForwardCacheBlo
                                columnNumber: detail.columnNumber,
                                showColumnNumber: true,
                                maxLength: maxLengthForDisplayedURLs,
-                             }
+                             },
                            })}`));
   return html`
       <div class="details-list">

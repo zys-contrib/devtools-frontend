@@ -1383,7 +1383,7 @@ Invoke-WebRequest -UseBasicParsing -Uri "https://url-header-and-content-overridd
       pushStart: 0,
       pushEnd: 0,
       receiveHeadersStart: 0,
-      receiveHeadersEnd: 0
+      receiveHeadersEnd: 0,
     };
     request.endTime = 100;
     request.addExtraRequestInfo({
@@ -1463,7 +1463,7 @@ describeWithEnvironment('NetworkLogView placeholder', () => {
         category: UI.ActionRegistration.ActionCategory.NETWORK,
         title: () => 'mock' as Platform.UIString.LocalizedString,
         toggleable: true,
-      }
+      },
     ]);
     sinon.stub(UI.ShortcutRegistry.ShortcutRegistry, 'instance').returns({
       shortcutTitleForAction: () => 'Ctrl',

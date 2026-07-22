@@ -287,7 +287,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
             {name: i18nString(UIStrings.colors), id: 'colors'},
             {name: i18nString(UIStrings.fontInfo), id: 'font-info'},
             {name: i18nString(UIStrings.unusedDeclarations), id: 'unused-declarations'},
-            {name: i18nString(UIStrings.mediaQueries), id: 'media-queries'}
+            {name: i18nString(UIStrings.mediaQueries), id: 'media-queries'},
           ],
           selectedId: input.selectedSection,
           onItemSelected: input.onSectionSelected,
@@ -575,7 +575,7 @@ export class CSSOverviewCompletedView extends UI.Widget.VBox {
   #viewOutput: ViewOutput = {
     revealSection: new Map(),
     closeAllTabs: () => {},
-    addTab: (_id, _tabTitle, _view, _jslogContext) => {}
+    addTab: (_id, _tabTitle, _view, _jslogContext) => {},
   };
 
   constructor(element?: HTMLElement, view = DEFAULT_VIEW) {
@@ -852,7 +852,7 @@ export class CSSOverviewCompletedView extends UI.Widget.VBox {
         font,
         fontMetrics: fontMetricInfo.map(([label, values]) => {
           return {label, values: this.#sortGroupBySize(values)};
-        })
+        }),
       };
     });
   }

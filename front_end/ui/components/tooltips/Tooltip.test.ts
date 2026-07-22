@@ -460,7 +460,7 @@ describe('Tooltip', () => {
         inspectorViewRect,
         anchorRect,
         currentPopoverRect,
-        preferredPositions: [Tooltips.Tooltip.PositionOption.BOTTOM_SPAN_LEFT]
+        preferredPositions: [Tooltips.Tooltip.PositionOption.BOTTOM_SPAN_LEFT],
       });
       assert.strictEqual(proposedRect.top, 200);
       assert.strictEqual(proposedRect.left, 240);
@@ -509,7 +509,7 @@ describe('Tooltip', () => {
         anchorRect,
         currentPopoverRect,
         preferredPositions:
-            [Tooltips.Tooltip.PositionOption.BOTTOM_SPAN_LEFT, Tooltips.Tooltip.PositionOption.TOP_SPAN_LEFT]
+            [Tooltips.Tooltip.PositionOption.BOTTOM_SPAN_LEFT, Tooltips.Tooltip.PositionOption.TOP_SPAN_LEFT],
       });
       assert.strictEqual(proposedRect.top, 5);
       assert.strictEqual(proposedRect.left, 50);

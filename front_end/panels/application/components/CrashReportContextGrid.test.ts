@@ -27,7 +27,7 @@ describeWithEnvironment('CrashReportContextGrid', () => {
       entries: [
         {key: 'key1', value: 'value1'},
         {key: 'key2', value: 'value2'},
-      ]
+      ],
     };
 
     const input = await inputPromise;

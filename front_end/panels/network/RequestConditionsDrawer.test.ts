@@ -15,7 +15,7 @@ import {
   createTarget,
   describeWithEnvironment,
   registerNoopActions,
-  stubNoopSettings
+  stubNoopSettings,
 } from '../../testing/EnvironmentHelpers.js';
 import {expectCall} from '../../testing/ExpectStubCall.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';

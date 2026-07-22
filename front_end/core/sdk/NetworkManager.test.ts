@@ -90,7 +90,7 @@ describe('NetworkManager', () => {
                                                             result: {
                                                               postData: encodedPostData,
                                                               base64Encoded: true,
-                                                            }
+                                                            },
                                                           }));
 
       const request = await createPostRequestWithHeaders({
@@ -120,7 +120,7 @@ describe('NetworkManager', () => {
                                                             result: {
                                                               postData: plainPostData,
                                                               base64Encoded: false,
-                                                            }
+                                                            },
                                                           }));
 
       const request = await createPostRequestWithHeaders({'Content-Type': 'application/x-www-form-urlencoded'},
@@ -145,7 +145,7 @@ describe('NetworkManager', () => {
                                                             result: {
                                                               postData: encodedPostData,
                                                               base64Encoded: true,
-                                                            }
+                                                            },
                                                           }));
 
       const request = await createPostRequestWithHeaders({
@@ -208,7 +208,7 @@ describe('NetworkManager', () => {
           sendBufferSize: 1003,
           receiveBufferSize: 1004,
           dnsQueryType: Protocol.Network.DirectSocketDnsQueryType.Ipv4,
-        }
+        },
       });
       assert.strictEqual(req.resourceType(), Common.ResourceType.resourceTypes.DirectSocket);
       assert.strictEqual(req.issueTime(), 1000);
@@ -306,7 +306,7 @@ describe('NetworkManager', () => {
             remotePort: 1010,
             localAddr: '127.0.0.1',
             localPort: 8000,
-          }
+          },
         });
       });
     });
@@ -531,7 +531,7 @@ describe('NetworkManager', () => {
             type: SDK.NetworkRequest.DirectSocketChunkType.SEND,
             data: 'c2VudCBkYXRh',
             timestamp: 3000,
-          }
+          },
         },
         {
           description: 'adds RECEIVED chunk to request successfully',
@@ -540,7 +540,7 @@ describe('NetworkManager', () => {
             type: SDK.NetworkRequest.DirectSocketChunkType.RECEIVE,
             data: 'cmVjZWl2ZWQgZGF0YQ==',
             timestamp: 4000,
-          }
+          },
         },
       ];
 
@@ -604,8 +604,8 @@ describe('NetworkManager', () => {
         wallTime: 1000,
         request: {
           headers:
-              {Connection: 'Upgrade', Upgrade: 'websocket', 'Sec-WebSocket-Key': 'key', 'Sec-WebSocket-Version': '13'}
-        } as Protocol.Network.WebSocketRequest
+              {Connection: 'Upgrade', Upgrade: 'websocket', 'Sec-WebSocket-Key': 'key', 'Sec-WebSocket-Version': '13'},
+        } as Protocol.Network.WebSocketRequest,
       });
 
       assert.lengthOf(updatedRequests, 1);
@@ -625,8 +625,8 @@ describe('NetworkManager', () => {
           status: 101,
           statusText: 'Switching Protocols',
           headers: {Connection: 'Upgrade', Upgrade: 'websocket', 'Sec-WebSocket-Accept': 'accept'},
-          headersText: 'HTTP/1.1 101 Switching Protocols'
-        } as Protocol.Network.WebSocketResponse
+          headersText: 'HTTP/1.1 101 Switching Protocols',
+        } as Protocol.Network.WebSocketResponse,
       });
 
       assert.lengthOf(updatedRequests, 2);
@@ -1075,15 +1075,15 @@ describe('NetworkManager', () => {
           eventPayload: {
             // No remoteAddr/Port for connected.
             message: {data: 'c2VudCBkYXRh=='},
-            timestamp: 3100
+            timestamp: 3100,
           },
           expectedChunk: {
             type: SDK.NetworkRequest.DirectSocketChunkType.SEND,
             data: 'c2VudCBkYXRh==',
             timestamp: 3100,
             remoteAddress: undefined,
-            remotePort: undefined
-          }
+            remotePort: undefined,
+          },
         },
         {
           description: 'adds SENT chunk to request successfully (bound with address)',
@@ -1094,8 +1094,8 @@ describe('NetworkManager', () => {
             data: 'Ym91bmQgc2VudA==',
             timestamp: 3150,
             remoteAddress: '10.0.0.1',
-            remotePort: 4000
-          }
+            remotePort: 4000,
+          },
         },
         {
           description: 'adds SENT chunk to request successfully (bound with address, no port)',
@@ -1105,8 +1105,8 @@ describe('NetworkManager', () => {
             data: 'Ym91bmQgc2VudCBwbA==',
             timestamp: 3160,
             remoteAddress: '10.0.0.2',
-            remotePort: undefined
-          }
+            remotePort: undefined,
+          },
         },
         {
           description: 'adds RECEIVED chunk to request successfully (connected)',
@@ -1116,8 +1116,8 @@ describe('NetworkManager', () => {
             data: 'cmVjZWl2ZWQgZGF0YQ==',
             timestamp: 3200,
             remoteAddress: undefined,
-            remotePort: undefined
-          }
+            remotePort: undefined,
+          },
         },
         {
           description: 'adds RECEIVED chunk to request successfully (bound with address)',
@@ -1128,8 +1128,8 @@ describe('NetworkManager', () => {
             data: 'Ym91bmQgcmVjZWl2ZWQ=',
             timestamp: 3250,
             remoteAddress: '10.0.0.3',
-            remotePort: 4001
-          }
+            remotePort: 4001,
+          },
         },
       ];
 
@@ -1724,7 +1724,7 @@ describe('RequestConditions', () => {
 
   it('loads settings with url', () => {
     universe.settings.createSetting<SDK.NetworkManager.RequestConditionsSetting[]>('network-blocked-patterns', []).set([
-      {enabled: true, url: 'foo'}
+      {enabled: true, url: 'foo'},
     ]);
     const conditions = new SDK.NetworkManager.RequestConditions(universe.settings);
     const condition = conditions.conditions.next().value as SDK.NetworkManager.RequestCondition;
@@ -1757,7 +1757,7 @@ describe('RequestConditions', () => {
     assert.deepEqual(setting.get()[0], {
       enabled: true,
       urlPattern: '*://example.com' as SDK.NetworkManager.URLPatternConstructorString,
-      conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING
+      conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING,
     });
     assert.deepEqual(setting.get()[1], {enabled: true, url: 'foo'});
   });
@@ -1808,37 +1808,37 @@ describe('RequestConditions', () => {
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://nothrottle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: true,
-        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING
+        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING,
       },
                                                                            universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://block:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: true,
-        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.BLOCKING
+        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.BLOCKING,
       },
                                                                            universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://throttle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: true,
-        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G
+        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G,
       },
                                                                            universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://disabled_nothrottle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: false,
-        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING
+        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.NO_THROTTLING,
       },
                                                                            universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://disabled_block:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: false,
-        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.BLOCKING
+        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.BLOCKING,
       },
                                                                            universe.settings));
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://disabled_throttle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: false,
-        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G
+        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G,
       },
                                                                            universe.settings));
 
@@ -1858,14 +1858,14 @@ describe('RequestConditions', () => {
           packetReordering: undefined,
           connectionType: Protocol.Network.ConnectionType.Cellular3g,
           offline: false,
-        }]
+        }],
       });
       sinon.assert.calledOnceWithExactly(setBlockedURLs, {
         urlPatterns: [
           {urlPattern: '*://foo*', block: true},
           {urlPattern: '*://block:*', block: true},
           {urlPattern: '*://throttle:*', block: false},
-        ]
+        ],
       });
 
       setBlockedURLs.resetHistory();
@@ -1900,15 +1900,15 @@ describe('RequestConditions', () => {
             packetReordering: undefined,
             connectionType: Protocol.Network.ConnectionType.Cellular4g,
             offline: true,
-          }
-        ]
+          },
+        ],
       });
       sinon.assert.calledOnceWithExactly(setBlockedURLs, {
         urlPatterns: [
           {urlPattern: '*://foo*', block: true},
           {urlPattern: '*://block:*', block: true},
           {urlPattern: '*://throttle:*', block: false},
-        ]
+        ],
       });
     });
 
@@ -1922,7 +1922,7 @@ describe('RequestConditions', () => {
       conditions.add(SDK.NetworkManager.RequestCondition.createFromSetting({
         urlPattern: '*://throttle:*' as SDK.NetworkManager.URLPatternConstructorString,
         enabled: true,
-        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G
+        conditions: SDK.NetworkManager.PredefinedThrottlingConditionKey.SPEED_3G,
       },
                                                                            universe.settings));
 
@@ -1956,13 +1956,13 @@ describe('RequestConditions', () => {
           packetReordering: undefined,
           connectionType: Protocol.Network.ConnectionType.Cellular3g,
           offline: false,
-        }]
+        }],
       });
       sinon.assert.calledOnceWithExactly(setBlockedURLs, {
         urlPatterns: [
           {urlPattern: '*://foo*', block: true},
           {urlPattern: '*://throttle:*', block: false},
-        ]
+        ],
       });
     });
 
@@ -2101,7 +2101,7 @@ describe('NetworkDispatcher', () => {
         headers: {},
         resourceIPAddressSpace: Protocol.Network.IPAddressSpace.Public,
         statusCode: 200,
-        headersText: 'HTTP/1.1 200 OK\r\n'
+        headersText: 'HTTP/1.1 200 OK\r\n',
       } as Protocol.Network.ResponseReceivedExtraInfoEvent;
 
       networkDispatcher.requestWillBeSent(hop1RequestWillBeSent);
@@ -2131,7 +2131,7 @@ describe('NetworkDispatcher', () => {
         headers: {},
         resourceIPAddressSpace: Protocol.Network.IPAddressSpace.Public,
         statusCode: 200,
-        headersText: 'HTTP/1.1 200 OK\r\n'
+        headersText: 'HTTP/1.1 200 OK\r\n',
       } as Protocol.Network.ResponseReceivedExtraInfoEvent;
       networkDispatcher.responseReceivedExtraInfo(responseExtraInfo);
 

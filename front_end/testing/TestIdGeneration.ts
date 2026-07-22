@@ -8,7 +8,7 @@ const replacements: Record<string, string|undefined> = {
   '\t': '_tab_',
   '\x00': '_null_',
   '\x07': '_bell_',
-  '"': '_dblquote_'
+  '"': '_dblquote_',
 };
 
 const nonPrintRegex = /\p{C}|"/gu;

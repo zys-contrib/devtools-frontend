@@ -11,7 +11,7 @@ import {
   debugLog,
   type DoConversationRequest,
   type GenerateCodeRequest,
-  type GenerateCodeResponse
+  type GenerateCodeResponse,
 } from './AidaClientTypes.js';
 import {
   aidaCompletionRequestToGcaRequest,
@@ -19,7 +19,7 @@ import {
   aidaEventToGcaTelemetryRequest,
   aidaGenerateCodeRequestToGcaRequest,
   gcaResponseToAidaCompletionResponse,
-  gcaResponseToAidaGenerateCodeResponse
+  gcaResponseToAidaGenerateCodeResponse,
 } from './AidaGcaTranslation.js';
 import * as DispatchHttpRequestClient from './DispatchHttpRequestClient.js';
 import type {GenerateContentRequest, GenerateContentResponse} from './GcaTypes.js';

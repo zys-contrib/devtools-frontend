@@ -62,7 +62,7 @@ describeWithEnvironment('AiCodeGenerationProvider', () => {
         enabled: true,
         blockedByAge: false,
         blockedByGeo: false,
-      }
+      },
     });
     checkAccessPreconditionsStub = sinon.stub(Host.AidaClient.AidaClient, 'checkAccessPreconditions');
     checkAccessPreconditionsStub.resolves(Host.AidaClient.AidaAccessPreconditions.AVAILABLE);
@@ -159,7 +159,7 @@ describeWithEnvironment('AiCodeGenerationProvider', () => {
 
       editor.dispatch({
         effects: AiCodeGenerationProvider.setAiCodeGenerationTeaserMode.of(
-            AiCodeGenerationProvider.AiCodeGenerationTeaserMode.DISMISSED)
+            AiCodeGenerationProvider.AiCodeGenerationTeaserMode.DISMISSED),
       });
       await clock.tickAsync(0);
       assert.isNull(editor.editor.dom.querySelector('.cm-placeholder'));
@@ -174,7 +174,7 @@ describeWithEnvironment('AiCodeGenerationProvider', () => {
 
       editor.dispatch({
         effects: AiCodeGenerationProvider.setAiCodeGenerationTeaserMode.of(
-            AiCodeGenerationProvider.AiCodeGenerationTeaserMode.DISMISSED)
+            AiCodeGenerationProvider.AiCodeGenerationTeaserMode.DISMISSED),
       });
       await clock.tickAsync(0);
       assert.isNull(editor.editor.dom.querySelector('.cm-placeholder'));
@@ -261,7 +261,7 @@ describeWithEnvironment('AiCodeGenerationProvider', () => {
           AiCodeGenerationProvider.setAiCodeGenerationTeaserMode.of(
               AiCodeGenerationProvider.AiCodeGenerationTeaserMode.DISMISSED),
           Config.setAiAutoCompleteSuggestion.of(null),
-        ]
+        ],
       });
       assert.deepEqual(
           loadingSetter.set.lastCall.args[0],
@@ -418,7 +418,7 @@ describeWithEnvironment('AiCodeGenerationProvider', () => {
           attributionMetadata: {
             attributionAction: Host.AidaClient.RecitationAction.BLOCK,
             citations: [{uri: 'https://www.example.com'}],
-          }
+          },
         }],
         metadata: {},
       }));
@@ -466,7 +466,7 @@ describeWithEnvironment('AiCodeGenerationProvider', () => {
         AiCodeGenerationProvider.setAiCodeGenerationTeaserMode.of(
             AiCodeGenerationProvider.AiCodeGenerationTeaserMode.DISMISSED),
         Config.setAiAutoCompleteSuggestion.of(null),
-      ]
+      ],
     });
     provider.dispose();
   });

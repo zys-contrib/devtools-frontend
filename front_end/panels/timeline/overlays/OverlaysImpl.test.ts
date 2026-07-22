@@ -615,8 +615,8 @@ describeWithEnvironment('Overlays', () => {
           explanation: 'This is an interesting entry',
           metadata: {
             rpcGlobalId: 123,
-          }
-        }]])
+          },
+        }]]),
       });
       component.overridePerformanceAnnotationsForTest(performanceAnnotations);
 

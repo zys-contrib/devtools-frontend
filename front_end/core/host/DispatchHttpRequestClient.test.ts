@@ -9,7 +9,7 @@ import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
 
 import * as Host from './host.js';
-import type {DispatchHttpRequestRequest, DispatchHttpRequestResult,} from './InspectorFrontendHostAPI.js';
+import type {DispatchHttpRequestRequest, DispatchHttpRequestResult} from './InspectorFrontendHostAPI.js';
 
 describe('DispatchHttpRequestClient', () => {
   setupLocaleHooks();

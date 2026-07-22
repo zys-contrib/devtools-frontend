@@ -40,7 +40,7 @@ describe('LinearMemoryInspector', () => {
     const valueTypes = new Set([
       LinearMemoryInspectorComponents.ValueInterpreterDisplayUtils.ValueType.FLOAT32,
       LinearMemoryInspectorComponents.ValueInterpreterDisplayUtils.ValueType.INT32,
-      LinearMemoryInspectorComponents.ValueInterpreterDisplayUtils.ValueType.POINTER32
+      LinearMemoryInspectorComponents.ValueInterpreterDisplayUtils.ValueType.POINTER32,
     ]);
     const valueTypeModes = new Map();
 

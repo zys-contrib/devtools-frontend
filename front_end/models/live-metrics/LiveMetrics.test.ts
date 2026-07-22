@@ -42,14 +42,14 @@ describe('LiveMetrics', () => {
             timeToFirstByte: 0 as Milli,
             resourceLoadDelay: 0 as Milli,
             resourceLoadTime: 0 as Milli,
-            elementRenderDelay: 0 as Milli
-          }
+            elementRenderDelay: 0 as Milli,
+          },
         },
         cls: {value: 0.1, clusterShiftIds: []},
         inp: {
           value: 50 as Milli,
           subparts: {inputDelay: 0 as Milli, processingDuration: 0 as Milli, presentationDelay: 0 as Milli},
-          interactionId: 'interaction-1-1'
+          interactionId: 'interaction-1-1',
         },
         interactions:
             new Map([['interaction-1-1', {interactionId: 'interaction-1-1'} as unknown as LiveMetrics.Interaction]]),

@@ -689,7 +689,7 @@ export function makeTimingEventWithConsoleExtensionData(
         track,
         trackGroup,
         color,
-      }
+      },
     },
     ts: Trace.Types.Timing.Micro(ts),
     ph: Trace.Types.Events.Phase.INSTANT,

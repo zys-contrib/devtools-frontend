@@ -360,7 +360,7 @@ describe('StylesSidebarPane', () => {
                 {
                   text: '(orientation: landscape)',
                   source: Protocol.CSS.CSSMediaSource.ImportRule,
-                }
+                },
               ],
               ruleTypes: [Protocol.CSS.CSSRuleType.MediaRule, Protocol.CSS.CSSRuleType.MediaRule],
             },
@@ -1227,7 +1227,7 @@ describe('StylesSidebarPane', () => {
                                 style: {
                                   cssProperties: [{name: 'result', value: 'var(--y)'}],
                                   shorthandEntries: [],
-                                }
+                                },
                               },
                             ],
                           },
@@ -1242,7 +1242,7 @@ describe('StylesSidebarPane', () => {
               style: {
                 cssProperties: [{name: 'result', value: 'var(--x)'}],
                 shorthandEntries: [],
-              }
+              },
             },
           ],
         }],
@@ -1293,7 +1293,7 @@ describe('StylesSidebarPane', () => {
               style: {
                 cssProperties: [{name: 'result', value: 'red'}],
                 shorthandEntries: [],
-              }
+              },
             }],
             originTreeScopeNodeId: 2 as Protocol.DOM.BackendNodeId,
           },
@@ -1305,10 +1305,10 @@ describe('StylesSidebarPane', () => {
               style: {
                 cssProperties: [{name: 'result', value: 'blue'}],
                 shorthandEntries: [],
-              }
+              },
             }],
             originTreeScopeNodeId: 3 as Protocol.DOM.BackendNodeId,
-          }
+          },
         ],
       });
 
@@ -2101,7 +2101,7 @@ describe('StylesSidebarPane', () => {
               sinon.createStubInstance(Elements.StylesAiCodeCompletionProvider.StylesAiCodeCompletionProvider);
           pane.aiCodeCompletionProvider = aiCodeCompletionProvider;
           return pane;
-        }
+        },
       } as unknown as Elements.StylePropertyTreeElement.StylePropertyTreeElement;
     });
 
@@ -2196,7 +2196,7 @@ describe('StylesSidebarPane', () => {
             enabled: true,
             blockedByAge: false,
             blockedByGeo: false,
-          }
+          },
         });
 
         attachedElement = document.createElement('div');
@@ -2315,7 +2315,8 @@ color: pink !important;`;
           {name: 'background-image', value: 'url("https://example.com/image;v=1?query:part=true")'},
           {name: 'content', value: '"This is a semicolon; and this is a colon: inside a string"'},
           {name: '--custom-property', value: 'var(--other, "fallback;value")'},
-          {name: 'width', value: 'calc(100% - 20px)'}, {name: 'color', value: 'pink !important'}
+          {name: 'width', value: 'calc(100% - 20px)'},
+          {name: 'color', value: 'pink !important'},
         ]);
       });
 

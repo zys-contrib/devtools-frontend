@@ -119,7 +119,7 @@ describeWithEnvironment('CombinedDiffView', () => {
            content: ORIGINAL_CONTENT,
            autoMapping: true,
            mimeType: 'text/javascript',
-           fileSystemPath: 'file:///workspace'
+           fileSystemPath: 'file:///workspace',
          });
          const {uiSourceCode: contentProviderUiSourceCode} = createContentProviderUISourceCode({
            url: URL,
@@ -156,7 +156,7 @@ describeWithEnvironment('CombinedDiffView', () => {
         content: ORIGINAL_CONTENT,
         autoMapping: true,
         mimeType: 'text/css',
-        fileSystemPath: ''
+        fileSystemPath: '',
       });
       const {widget, view} = await createCombinedDiffView({workspaceDiff});
       widget.ignoredUrls = ['inspector://'];

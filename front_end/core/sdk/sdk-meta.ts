@@ -1388,7 +1388,7 @@ Common.Settings.registerSettingExtension({
   defaultValue: false,
   learnMore: {
     tooltip: i18nLazyString(UIStrings.remoteFileLoadingInfo),
-  }
+  },
 });
 
 Common.Settings.registerSettingExtension({

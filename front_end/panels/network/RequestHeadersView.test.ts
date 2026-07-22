@@ -207,19 +207,18 @@ describeWithEnvironment('RequestHeadersView', () => {
   it('can switch between source and parsed view', async () => {
     const container = document.createElement('div');
     renderElementIntoDOM(container);
-    Network.RequestHeadersView.DEFAULT_VIEW(
-        {
-          showRequestHeadersText: false,
-          showResponseHeadersText: true,
-          request: defaultRequest,
-          toggleShowRawResponseHeaders: function(): void {
-            throw new Error('Function not implemented.');
-          },
-          toggleShowRawRequestHeaders: function(): void {
-            throw new Error('Function not implemented.');
-          }
-        },
-        {}, container);
+    Network.RequestHeadersView.DEFAULT_VIEW({
+      showRequestHeadersText: false,
+      showResponseHeadersText: true,
+      request: defaultRequest,
+      toggleShowRawResponseHeaders: function(): void {
+        throw new Error('Function not implemented.');
+      },
+      toggleShowRawRequestHeaders: function(): void {
+        throw new Error('Function not implemented.');
+      },
+    },
+                                            {}, container);
     await UI.Widget.Widget.allUpdatesComplete;
     await RenderCoordinator.done();
 
@@ -230,19 +229,18 @@ describeWithEnvironment('RequestHeadersView', () => {
         rawTextContent,
         'HTTP/1.1 200 OK\nage: 0\ncache-control: max-age=600\ncontent-encoding: gzip\ncontent-length: 661\n');
 
-    Network.RequestHeadersView.DEFAULT_VIEW(
-        {
-          showRequestHeadersText: false,
-          showResponseHeadersText: false,
-          request: defaultRequest,
-          toggleShowRawResponseHeaders: function(): void {
-            throw new Error('Function not implemented.');
-          },
-          toggleShowRawRequestHeaders: function(): void {
-            throw new Error('Function not implemented.');
-          }
-        },
-        {}, container);
+    Network.RequestHeadersView.DEFAULT_VIEW({
+      showRequestHeadersText: false,
+      showResponseHeadersText: false,
+      request: defaultRequest,
+      toggleShowRawResponseHeaders: function(): void {
+        throw new Error('Function not implemented.');
+      },
+      toggleShowRawRequestHeaders: function(): void {
+        throw new Error('Function not implemented.');
+      },
+    },
+                                            {}, container);
     await UI.Widget.Widget.allUpdatesComplete;
     await RenderCoordinator.done();
 
@@ -263,19 +261,18 @@ describeWithEnvironment('RequestHeadersView', () => {
     defaultRequest.responseHeadersText = loremIpsum;
     const container = document.createElement('div');
     renderElementIntoDOM(container);
-    Network.RequestHeadersView.DEFAULT_VIEW(
-        {
-          showRequestHeadersText: false,
-          showResponseHeadersText: true,
-          request: defaultRequest,
-          toggleShowRawResponseHeaders: function(): void {
-            throw new Error('Function not implemented.');
-          },
-          toggleShowRawRequestHeaders: function(): void {
-            throw new Error('Function not implemented.');
-          }
-        },
-        {}, container);
+    Network.RequestHeadersView.DEFAULT_VIEW({
+      showRequestHeadersText: false,
+      showResponseHeadersText: true,
+      request: defaultRequest,
+      toggleShowRawResponseHeaders: function(): void {
+        throw new Error('Function not implemented.');
+      },
+      toggleShowRawRequestHeaders: function(): void {
+        throw new Error('Function not implemented.');
+      },
+    },
+                                            {}, container);
     await UI.Widget.Widget.allUpdatesComplete;
     await RenderCoordinator.done();
 

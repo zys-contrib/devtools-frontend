@@ -209,7 +209,7 @@ const DEFAULT_VIEW: View = (input: ViewInput, _output: ViewOutput, target: HTMLE
                             Lit.nothing}
                   </td>
                   <td>"${field.value}"</td>
-                </tr>`
+                </tr>`,
             )}
           </table>
         </devtools-data-grid>

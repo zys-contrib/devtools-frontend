@@ -85,7 +85,7 @@ export function expandWindowByPercentOrToOneMillisecond(
   return expandedWindow;
 }
 
-export interface EventTimingsData<ValueType extends Types.Timing.Micro|Types.Timing.Milli|Types.Timing.Seconds, > {
+export interface EventTimingsData<ValueType extends Types.Timing.Micro|Types.Timing.Milli|Types.Timing.Seconds> {
   startTime: ValueType;
   endTime: ValueType;
   duration: ValueType;

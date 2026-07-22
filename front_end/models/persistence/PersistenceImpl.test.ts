@@ -114,7 +114,7 @@ describe('PersistenceImpl', () => {
         {
           fileSystemPath,
           fileSystemFileUrl,
-          type: Persistence.PlatformFileSystem.PlatformFileSystemType.WORKSPACE_PROJECT
+          type: Persistence.PlatformFileSystem.PlatformFileSystemType.WORKSPACE_PROJECT,
         },
         SCRIPT_DESCRIPTION.url, SCRIPT_DESCRIPTION.content, target, backend.universe);
     const breakpointLine = 0;
@@ -144,7 +144,7 @@ describe('PersistenceImpl', () => {
            {
              fileSystemPath,
              fileSystemFileUrl,
-             type: Persistence.PlatformFileSystem.PlatformFileSystemType.WORKSPACE_PROJECT
+             type: Persistence.PlatformFileSystem.PlatformFileSystemType.WORKSPACE_PROJECT,
            },
            SCRIPT_DESCRIPTION.url, SCRIPT_DESCRIPTION.content, target, backend.universe);
        const breakpointLine = 0;

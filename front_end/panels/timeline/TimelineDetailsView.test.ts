@@ -155,7 +155,7 @@ describe('TimelineDetailsView', function() {
       // (without the set of events we can't generate the range stats)
       selectedEvents: allThreadEntriesInTrace(parsedTrace),
       eventToRelatedInsightsMap: null,
-      entityMapper: null
+      entityMapper: null,
     });
     const bounds = Trace.Helpers.Timing.traceWindowMilliSeconds(parsedTrace.data.Meta.traceBounds);
     const selection = Timeline.TimelineSelection.selectionFromRangeMilliSeconds(

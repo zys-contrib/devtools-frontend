@@ -293,7 +293,7 @@ const renderDataGrid = (input: IndexedDBDataViewInput): LitTemplate => {
           <td>${widget(ObjectPropertiesSectionWidget, {value: entry.key})}</td>
           ${input.isIndex ? html`<td>${widget(ObjectPropertiesSectionWidget, {value: entry.primaryKey})}</td>` : nothing}
           <td class="value-column">${widget(ObjectPropertiesSectionWidget, {value: entry.value})}</td>
-        </tr>`
+        </tr>`,
       )}
     </table>`}>
   </devtools-data-grid>`;

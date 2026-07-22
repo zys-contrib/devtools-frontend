@@ -291,7 +291,7 @@ UI.ActionRegistration.registerActionExtension({
       shortcut: 'Shift+Esc',
     },
   ],
-  condition: config => Boolean(config?.devToolsFlexibleLayout?.verticalDrawerEnabled)
+  condition: config => Boolean(config?.devToolsFlexibleLayout?.verticalDrawerEnabled),
 });
 
 UI.ActionRegistration.registerActionExtension({

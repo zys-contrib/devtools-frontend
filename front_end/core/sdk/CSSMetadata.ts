@@ -564,25 +564,28 @@ const valuePresets = new Map([
     ]),
   ],
   [
-    'clip-path', new Map([
+    'clip-path',
+    new Map([
       ['inset', 'inset(|10px|)'],
       ['circle', 'circle(|100px|)'],
       ['ellipse', 'ellipse(|100px 100px|)'],
       ['polygon', 'polygon(|50px 0px, 100px 100px, 0px 100px|)'],
       ['url', 'url(||)'],
-    ])
+    ]),
   ],
   [
-    'transition-timing-function', new Map([
+    'transition-timing-function',
+    new Map([
       ['steps', 'steps(|5, end|)'],
       ['cubic-bezier', 'cubic-bezier(|0.25, 0.1, 0.25, 1|)'],
-    ])
+    ]),
   ],
   [
-    'animation-timing-function', new Map([
+    'animation-timing-function',
+    new Map([
       ['steps', 'steps(|5, end|)'],
       ['cubic-bezier', 'cubic-bezier(|0.25, 0.1, 0.25, 1|)'],
-    ])
+    ]),
   ],
   [
     'box-shadow',
@@ -608,11 +611,12 @@ const valuePresets = new Map([
     ]),
   ],
   [
-    'text-box-edge', new Map([
+    'text-box-edge',
+    new Map([
       ['cap', 'cap alphabetic'],
       ['ex', 'ex alphabetic'],
-    ])
-  ]
+    ]),
+  ],
 ]);
 
 const partialValueKeywordsNoPresets = new Map<string, Set<string>>([
@@ -621,7 +625,8 @@ const partialValueKeywordsNoPresets = new Map<string, Set<string>>([
   ['animation-timing-function', new Set(['jump-both', 'jump-end', 'jump-none', 'jump-start'])],
   ['transition-timing-function', new Set(['jump-both', 'jump-end', 'jump-none', 'jump-start'])],
   [
-    'animation-trigger', new Set([
+    'animation-trigger',
+    new Set([
       'play',
       'pause',
       'play-once',
@@ -630,7 +635,7 @@ const partialValueKeywordsNoPresets = new Map<string, Set<string>>([
       'play-backwards',
       'play-pause',
       'replay',
-    ])
+    ]),
   ],
 ]);
 
@@ -1006,7 +1011,7 @@ const extraPropertyValues = new Map<string, Set<string>>([
   ],
   [
     'font-variant-alternates',
-    new Set(['historical-forms', 'stylistic', 'styleset', 'character-variant', 'swash', 'ornaments', 'annotation'])
+    new Set(['historical-forms', 'stylistic', 'styleset', 'character-variant', 'swash', 'ornaments', 'annotation']),
   ],
   ['vertical-align', new Set(['top', 'bottom', '-webkit-baseline-middle'])],
   ['page-break-after', new Set(['left', 'right', 'always', 'avoid'])],

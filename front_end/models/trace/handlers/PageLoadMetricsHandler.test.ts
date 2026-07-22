@@ -290,10 +290,15 @@ describeWithEnvironment('PageLoadMetricsHandler', function() {
       const {data} = await TraceLoader.traceEngine(this, 'soft-navs.json.gz');
       const {PageLoadMetrics} = data;
       assert.deepEqual(PageLoadMetrics.allMarkerEvents.map(e => e.name), [
-        'SoftNavigationStart', 'SyntheticSoftFirstContentfulPaint',
-        'largestContentfulPaint::CandidateForSoftNavigation', 'SoftNavigationStart',
-        'SyntheticSoftFirstContentfulPaint', 'largestContentfulPaint::CandidateForSoftNavigation',
-        'SoftNavigationStart', 'SyntheticSoftFirstContentfulPaint', 'largestContentfulPaint::CandidateForSoftNavigation'
+        'SoftNavigationStart',
+        'SyntheticSoftFirstContentfulPaint',
+        'largestContentfulPaint::CandidateForSoftNavigation',
+        'SoftNavigationStart',
+        'SyntheticSoftFirstContentfulPaint',
+        'largestContentfulPaint::CandidateForSoftNavigation',
+        'SoftNavigationStart',
+        'SyntheticSoftFirstContentfulPaint',
+        'largestContentfulPaint::CandidateForSoftNavigation',
       ]);
     });
 

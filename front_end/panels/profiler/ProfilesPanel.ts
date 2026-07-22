@@ -43,7 +43,7 @@ import * as VisualLogging from '../../ui/visual_logging/visual_logging.js';
 import {
   DetachedElementsProfileHeader,
   DetachedElementsProfileType,
-  DetachedElementsProfileView
+  DetachedElementsProfileView,
 } from './HeapDetachedElementsView.js';
 import heapProfilerStyles from './heapProfiler.css.js';
 import {HeapProfileView, SamplingHeapProfileHeader, SamplingHeapProfileType} from './HeapProfileView.js';
@@ -51,7 +51,7 @@ import {
   HeapProfileHeader,
   HeapSnapshotProfileType,
   HeapSnapshotView,
-  TrackingHeapSnapshotProfileType
+  TrackingHeapSnapshotProfileType,
 } from './HeapSnapshotView.js';
 import {
   type DataDisplayDelegate,

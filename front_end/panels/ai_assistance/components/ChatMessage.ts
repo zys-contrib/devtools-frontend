@@ -580,7 +580,7 @@ export const DEFAULT_VIEW = (input: ChatMessageViewInput, output: ViewOutput, ta
     const userQueryWrapperClasses = Lit.Directives.classMap({
       // Don't need to style at all unless we are on the V2 flag.
       // Once we ship this can be removed entirely.
-      'user-query-wrapper': hasAiV2
+      'user-query-wrapper': hasAiV2,
     });
     // clang-format off
     Lit.render(html`
@@ -897,7 +897,7 @@ function renderSideEffectStepsUI(input: ChatMessageViewInput, steps: Step[]): Li
            step,
            isLoading: input.isLoading,
            markdownRenderer: input.markdownRenderer,
-           isLast: true
+           isLast: true,
         })}
       </div> `)}
   `;

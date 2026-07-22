@@ -30,7 +30,7 @@ import {
   describeWithEnvironment,
   initializeGlobalVars,
   registerNoopActions,
-  updateHostConfig
+  updateHostConfig,
 } from '../../testing/EnvironmentHelpers.js';
 import {expectCall} from '../../testing/ExpectStubCall.js';
 import {stubFileManager} from '../../testing/FileManagerHelpers.js';

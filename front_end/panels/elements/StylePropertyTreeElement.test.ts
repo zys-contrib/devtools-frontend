@@ -38,8 +38,9 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
   let mockVariableMap: Record<string, string|SDK.CSSProperty.CSSProperty>;
   let matchedStyles: SDK.CSSMatchedStyles.CSSMatchedStyles;
   let fakeComputeCSSVariable: SinonStub<[
-    style: SDK.CSSStyleDeclaration.CSSStyleDeclaration, variableName: string,
-    containerNode?: SDK.DOMModel.DOMNode|undefined
+    style: SDK.CSSStyleDeclaration.CSSStyleDeclaration,
+    variableName: string,
+    containerNode?: SDK.DOMModel.DOMNode|undefined,
   ],
                                         SDK.CSSMatchedStyles.CSSVariableValue|null>;
   let cssModel: SDK.CSSModel.CSSModel;
@@ -115,7 +116,7 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
     const matchedStyles = await getMatchedStyles({
       connection,
       functionRules:
-          [{name: {text: functionName}, origin: Protocol.CSS.StyleSheetOrigin.Regular, parameters: [], children: []}]
+          [{name: {text: functionName}, origin: Protocol.CSS.StyleSheetOrigin.Regular, parameters: [], children: []}],
     });
 
     const property = new SDK.CSSProperty.CSSProperty(
@@ -1067,7 +1068,12 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
       const {evaluations} = view.args[0][0];
 
       assert.deepEqual(evaluations.flat().map(args => args?.textContent).flat(), [
-        '', 'rgb(from #ff0c0c calc(1.000 / 2) 0.047 0.047)', '', 'rgb(from #ff0c0c 0.5 0.047 0.047)', '', '#800c0c'
+        '',
+        'rgb(from #ff0c0c calc(1.000 / 2) 0.047 0.047)',
+        '',
+        'rgb(from #ff0c0c 0.5 0.047 0.047)',
+        '',
+        '#800c0c',
       ]);
     });
   });
@@ -2064,7 +2070,7 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
           fakeFn: (name, nodeIds, ...values) => {
             resolvedValues.push(name);
             return Promise.resolve(values.slice(0));
-          }
+          },
         });
         const tooltips = stylePropertyTreeElement.valueElement?.querySelectorAll('devtools-tooltip');
         assert.exists(tooltips);
@@ -2126,7 +2132,7 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
             // We strip calc() to simulate the mock browser resolving the inner unit values to px.
             const innerValue = stripCalc(value.trim());
             return innerValue.replaceAll(/(em|pt)$/g, 'px');
-          })
+          }),
         };
       });
       const strikeOutSpy =
@@ -2167,7 +2173,7 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
               return '0px';
             }
             return '';
-          })
+          }),
         };
       });
       const strikeOutSpy =
@@ -2324,7 +2330,16 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
       stylePropertyTreeElement.startEditingValue();
       const autocompletions = await suggestions();
       assert.deepEqual(autocompletions.map(({text}) => text), [
-        'row-name', 'row-name-2', 'auto', 'none', 'inherit', 'initial', 'revert', 'revert-layer', 'revert-rule', 'unset'
+        'row-name',
+        'row-name-2',
+        'auto',
+        'none',
+        'inherit',
+        'initial',
+        'revert',
+        'revert-layer',
+        'revert-rule',
+        'unset',
       ]);
     });
 
@@ -2336,7 +2351,16 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
       stylePropertyTreeElement.startEditingValue();
       const autocompletions = await suggestions();
       assert.deepEqual(autocompletions.map(({text}) => text), [
-        'col-name', 'col-name-2', 'auto', 'none', 'inherit', 'initial', 'revert', 'revert-layer', 'revert-rule', 'unset'
+        'col-name',
+        'col-name-2',
+        'auto',
+        'none',
+        'inherit',
+        'initial',
+        'revert',
+        'revert-layer',
+        'revert-rule',
+        'unset',
       ]);
     });
 
@@ -2654,7 +2678,7 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
         name: 'font-weight',
         value: 'normal',
         disabled: false,
-        range: {startLine: 0, startColumn: 0, endLine: 0, endColumn: 21}
+        range: {startLine: 0, startColumn: 0, endLine: 0, endColumn: 21},
       }],
       shorthandEntries: [],
       range: {startLine: 0, startColumn: 0, endLine: 0, endColumn: 21},

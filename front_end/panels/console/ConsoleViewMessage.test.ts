@@ -1427,7 +1427,7 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         parameters: [{
           type: Protocol.Runtime.RemoteObjectType.Object,
           objectId: '1' as Protocol.Runtime.RemoteObjectId,
-          description: 'Boolean'
+          description: 'Boolean',
         } as Protocol.Runtime.RemoteObject],
       };
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
@@ -1461,7 +1461,7 @@ describeWithEnvironment('ConsoleViewMessage', () => {
         parameters: [{
           type: Protocol.Runtime.RemoteObjectType.Object,
           objectId: '2' as Protocol.Runtime.RemoteObjectId,
-          description: 'String'
+          description: 'String',
         } as Protocol.Runtime.RemoteObject],
       };
       const rawMessage = new SDK.ConsoleModel.ConsoleMessage(

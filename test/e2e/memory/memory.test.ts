@@ -96,10 +96,15 @@ describe('The Memory Panel', function() {
     await findSearchResult('leaking()', undefined, devToolsPage);
     await waitForRetainerChain(
         [
-          'Detached V8EventListener', 'Detached EventListener', 'Detached InternalNode', 'Detached InternalNode',
-          'Detached InternalNode', 'Detached <div>', 'Retainer',
+          'Detached V8EventListener',
+          'Detached EventListener',
+          'Detached InternalNode',
+          'Detached InternalNode',
+          'Detached InternalNode',
+          'Detached <div>',
+          'Retainer',
           `Window [JSGlobalObject] / localhost:${inspectedPage.serverPort}`,
-          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`
+          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`,
         ],
         devToolsPage);
   });
@@ -489,22 +494,29 @@ describe('The Memory Panel', function() {
     await findSearchResult('"searchable_string"', '1 of 2', devToolsPage);
     await waitForRetainerChain(
         [
-          '{y}', 'KeyType', `Window [JSGlobalObject] / localhost:${inspectedPage.serverPort}`,
-          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`
+          '{y}',
+          'KeyType',
+          `Window [JSGlobalObject] / localhost:${inspectedPage.serverPort}`,
+          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`,
         ],
         devToolsPage);
     await clickOnContextMenuForRetainer('KeyType', 'Ignore this retainer', devToolsPage);
     await waitForRetainerChain(
         [
-          '{y}', '{x}', `Window [JSGlobalObject] / localhost:${inspectedPage.serverPort}`,
-          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`
+          '{y}',
+          '{x}',
+          `Window [JSGlobalObject] / localhost:${inspectedPage.serverPort}`,
+          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`,
         ],
         devToolsPage);
     await clickOnContextMenuForRetainer('x', 'Ignore this retainer', devToolsPage);
     await waitForRetainerChain(
         [
-          '{y}', '(internal array)[]', 'WeakMap', `Window [JSGlobalObject] / localhost:${inspectedPage.serverPort}`,
-          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`
+          '{y}',
+          '(internal array)[]',
+          'WeakMap',
+          `Window [JSGlobalObject] / localhost:${inspectedPage.serverPort}`,
+          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`,
         ],
         devToolsPage);
     await clickOnContextMenuForRetainer('(internal array)[]', 'Ignore this retainer', devToolsPage);
@@ -523,8 +535,10 @@ describe('The Memory Panel', function() {
     await restoreIgnoredRetainers(devToolsPage);
     await waitForRetainerChain(
         [
-          '{y}', 'KeyType', `Window [JSGlobalObject] / localhost:${inspectedPage.serverPort}`,
-          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`
+          '{y}',
+          'KeyType',
+          `Window [JSGlobalObject] / localhost:${inspectedPage.serverPort}`,
+          `system / NativeContext / https://localhost:${inspectedPage.serverPort}`,
         ],
         devToolsPage);
   });

@@ -10,7 +10,7 @@ import {
   filterConsoleMessages,
   navigateToConsoleTab,
   showVerboseMessages,
-  waitForConsoleMessagesToBeNonEmpty
+  waitForConsoleMessagesToBeNonEmpty,
 } from '../helpers/console-helpers.js';
 
 describe('The Console Tab', () => {

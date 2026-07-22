@@ -127,7 +127,8 @@ export const toggleAdornerSetting = async (type: string, devToolsPage: DevToolsP
   await openSubMenu(SELECTED_TREE_ELEMENT_SELECTOR, 'Badge settings', devToolsPage);
 
   const adornerToggle = await Promise.any([
-    devToolsPage.waitFor(`[aria-label="${type}, unchecked"]`), devToolsPage.waitFor(`[aria-label="${type}, checked"]`)
+    devToolsPage.waitFor(`[aria-label="${type}, unchecked"]`),
+    devToolsPage.waitFor(`[aria-label="${type}, checked"]`),
   ]);
   await adornerToggle.click();
   await expectVeEvents([veClick(`Menu > Toggle: ${type}`)], undefined, devToolsPage);

@@ -148,7 +148,7 @@ describeWithEnvironment('StylingAgent', function() {
                 [{name: 'executeJavaScript', args: {title: 'title2', explanation: 'thought2', code: 'action2'}}],
             explanation: '',
           }],
-          [{explanation: 'answer2'}]
+          [{explanation: 'answer2'}],
         ]),
         createExtensionScope,
         execJs,
@@ -189,7 +189,7 @@ describeWithEnvironment('StylingAgent', function() {
             }],
             [{
               explanation: 'This is the answer',
-            }]
+            }],
           ]),
           createExtensionScope,
           confirmSideEffectForTest: stub,
@@ -218,7 +218,7 @@ describeWithEnvironment('StylingAgent', function() {
             }],
             [{
               explanation: 'This is the answer',
-            }]
+            }],
           ]),
           createExtensionScope,
           confirmSideEffectForTest: stub,
@@ -246,7 +246,7 @@ describeWithEnvironment('StylingAgent', function() {
             }],
             [{
               explanation: 'This is the answer',
-            }]
+            }],
           ]),
           createExtensionScope,
           confirmSideEffectForTest: stub,
@@ -311,7 +311,7 @@ describeWithEnvironment('StylingAgent', function() {
             }],
             [{
               explanation: 'This is the answer',
-            }]
+            }],
           ]),
           createExtensionScope,
           execJs,
@@ -366,7 +366,7 @@ describeWithEnvironment('StylingAgent', function() {
         }],
         [{
           explanation: 'this is the actual answer',
-        }]
+        }],
       ]);
       const agent = new StylingAgent.StylingAgent({
         aidaClient,
@@ -391,17 +391,16 @@ describeWithEnvironment('StylingAgent', function() {
       snapshotTester.assert(this, JSON.stringify(snapshot, null, 2));
       assert.exists(requests[1].current_message);
       assert.lengthOf(requests[1].current_message.parts, 1);
-      assert.deepEqual(
-          requests[1].current_message.parts[0], {
-            functionResponse: {
-              name: 'executeJavaScript',
-              response: {
-                result: 'test data',
-                widgets: undefined,
-              }
-            }
+      assert.deepEqual(requests[1].current_message.parts[0], {
+        functionResponse: {
+          name: 'executeJavaScript',
+          response: {
+            result: 'test data',
+            widgets: undefined,
           },
-          'Unexpected input in the follow-up request');
+        },
+      },
+                       'Unexpected input in the follow-up request');
     });
 
     it('generates an rpcId for the answer', async function() {
@@ -434,7 +433,7 @@ describeWithEnvironment('StylingAgent', function() {
                 citations: [],
               },
             },
-          }
+          },
         ]]),
         execJs: sinon.spy(),
       });
@@ -493,7 +492,7 @@ describeWithEnvironment('StylingAgent', function() {
           [{
             explanation: 'this is the actual answer',
             metadata: {},
-          }]
+          }],
         ]),
         createExtensionScope,
         execJs,
@@ -530,7 +529,7 @@ describeWithEnvironment('StylingAgent', function() {
             }],
             explanation: '',
           }],
-          [{explanation: 'this is the answer'}]
+          [{explanation: 'this is the answer'}],
         ]),
         createExtensionScope,
         execJs,
@@ -568,7 +567,7 @@ describeWithEnvironment('StylingAgent', function() {
             }],
             explanation: '',
           }],
-          [{explanation: 'this is the answer'}]
+          [{explanation: 'this is the answer'}],
         ]),
         createExtensionScope,
         execJs,
@@ -642,7 +641,7 @@ describeWithEnvironment('StylingAgent', function() {
         }],
         [{
           explanation: 'This is the answer',
-        }]
+        }],
       ]);
     }
 
@@ -719,7 +718,7 @@ describeWithEnvironment('StylingAgent', function() {
           }],
           [{
             explanation: 'this is the actual answer',
-          }]
+          }],
         ]),
         createExtensionScope,
         execJs: sinon.spy(),
@@ -769,7 +768,7 @@ describeWithEnvironment('StylingAgent', function() {
           }],
           [{
             explanation: 'this is the actual answer',
-          }]
+          }],
         ]),
         createExtensionScope,
         execJs: sinon.spy(),
@@ -798,7 +797,7 @@ describeWithEnvironment('StylingAgent', function() {
           }],
           [{
             explanation: 'this is the actual answer',
-          }]
+          }],
         ]),
         createExtensionScope,
         execJs: sinon.spy(),
@@ -828,7 +827,7 @@ describeWithEnvironment('StylingAgent', function() {
           }],
           [{
             explanation: 'this is the actual answer',
-          }]
+          }],
         ]),
         createExtensionScope,
         execJs: sinon.spy(),
@@ -866,7 +865,7 @@ describeWithEnvironment('StylingAgent', function() {
           }],
           [{
             explanation: 'this is the actual answer',
-          }]
+          }],
         ]),
         createExtensionScope,
         execJs: sinon.spy(),
@@ -907,7 +906,7 @@ describeWithEnvironment('StylingAgent', function() {
           }],
           [{
             explanation: 'this is the actual answer',
-          }]
+          }],
         ]),
         createExtensionScope,
         execJs: sinon.spy(),

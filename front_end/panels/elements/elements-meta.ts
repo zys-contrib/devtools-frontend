@@ -627,8 +627,11 @@ UI.ViewManager.registerLocationResolver({
 Common.Revealer.registerRevealer({
   contextTypes() {
     return [
-      SDK.DOMModel.DOMNode, SDK.DOMModel.DeferredDOMNode, SDK.RemoteObject.RemoteObject, SDK.DOMModel.AdoptedStyleSheet,
-      Elements.ElementsPanel.NodeComputedStyles
+      SDK.DOMModel.DOMNode,
+      SDK.DOMModel.DeferredDOMNode,
+      SDK.RemoteObject.RemoteObject,
+      SDK.DOMModel.AdoptedStyleSheet,
+      Elements.ElementsPanel.NodeComputedStyles,
     ];
   },
   destination: Common.Revealer.RevealerDestination.ELEMENTS_PANEL,

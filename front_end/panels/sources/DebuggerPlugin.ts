@@ -403,25 +403,25 @@ export class DebuggerPlugin extends Plugin {
       Workspace.IgnoreListManager.IgnoreListManager.instance().unIgnoreListUISourceCode(uiSourceCode);
     }
 
-    const infobar = new UI.Infobar.Infobar(
-        UI.Infobar.Type.WARNING, i18nString(UIStrings.thisScriptIsOnTheDebuggersIgnore),
-        [
-          {
-            text: i18nString(UIStrings.configure),
-            delegate:
-                UI.ViewManager.ViewManager.instance().showView.bind(UI.ViewManager.ViewManager.instance(), 'blackbox'),
-            dismiss: false,
-            jslogContext: 'configure',
-          },
-          {
-            text: i18nString(UIStrings.removeFromIgnoreList),
-            delegate: unIgnoreList,
-            buttonVariant: Buttons.Button.Variant.TONAL,
-            dismiss: true,
-            jslogContext: 'remove-from-ignore-list',
-          }
-        ],
-        undefined, 'script-on-ignore-list');
+    const infobar =
+        new UI.Infobar.Infobar(UI.Infobar.Type.WARNING, i18nString(UIStrings.thisScriptIsOnTheDebuggersIgnore),
+                               [
+                                 {
+                                   text: i18nString(UIStrings.configure),
+                                   delegate: UI.ViewManager.ViewManager.instance().showView.bind(
+                                       UI.ViewManager.ViewManager.instance(), 'blackbox'),
+                                   dismiss: false,
+                                   jslogContext: 'configure',
+                                 },
+                                 {
+                                   text: i18nString(UIStrings.removeFromIgnoreList),
+                                   delegate: unIgnoreList,
+                                   buttonVariant: Buttons.Button.Variant.TONAL,
+                                   dismiss: true,
+                                   jslogContext: 'remove-from-ignore-list',
+                                 },
+                               ],
+                               undefined, 'script-on-ignore-list');
     this.ignoreListInfobar = infobar;
     infobar.setCloseCallback(() => this.removeInfobar(this.ignoreListInfobar));
 

@@ -8,7 +8,7 @@ import type {ElementHandle} from 'puppeteer-core';
 import {
   increaseTimeoutForPerfPanel,
   navigateToPerformanceTab,
-  openCaptureSettings
+  openCaptureSettings,
 } from '../helpers/performance-helpers.js';
 import {expectVeEvents, veChange} from '../helpers/visual-logging-helpers.js';
 import type {DevToolsPage} from '../shared/frontend-helper.js';

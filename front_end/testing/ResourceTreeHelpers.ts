@@ -40,7 +40,7 @@ export function mockResourceTree(connection: MockCDPConnection) {
                                                          frameTree: {
                                                            frame: MAIN_FRAME,
                                                            resources: [],
-                                                         }
+                                                         },
                                                        }));
 }
 

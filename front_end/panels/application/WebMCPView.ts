@@ -338,8 +338,10 @@ function toolStatsIcon(status: Protocol.WebMCP.InvocationStatus|undefined): {ico
 function getIconGroupsFromStats(toolStats?: ToolStats):
     Array<IconButton.IconButton.IconWithTextData&{status: Protocol.WebMCP.InvocationStatus | undefined}> {
   const status = [
-    Protocol.WebMCP.InvocationStatus.Completed, Protocol.WebMCP.InvocationStatus.Error,
-    Protocol.WebMCP.InvocationStatus.Canceled, undefined
+    Protocol.WebMCP.InvocationStatus.Completed,
+    Protocol.WebMCP.InvocationStatus.Error,
+    Protocol.WebMCP.InvocationStatus.Canceled,
+    undefined,
   ];
   return status
       .map(status => ({
@@ -691,7 +693,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                 ...getJSONEditorParameters(input.selectedTool.tool),
                 commandToDisplay: {
                   command: input.selectedTool.tool.name,
-                  parameters: input.selectedTool.parameters || {}
+                  parameters: input.selectedTool.parameters || {},
                 },
                 })}
               ${UI.Widget.widgetRef(ProtocolMonitor.JSONEditor.JSONEditor, e => { editorWidget = e; })}
@@ -709,7 +711,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
                     data: {
                       command: input.selectedTool.tool.name,
                       parameters: params,
-                    } as ProtocolMonitor.JSONEditor.Command
+                    } as ProtocolMonitor.JSONEditor.Command,
                   });
                 }
               }}>Run tool</devtools-button>
@@ -1145,7 +1147,7 @@ const TOOL_DETAILS_VIEW = (input: ToolDetailsViewInput, output: undefined, targe
           <devtools-node-text .data=${{
               nodeId: origin.getAttribute('id') || undefined,
               nodeTitle: origin.nodeNameInCorrectCase(),
-              nodeClasses: origin.getAttribute('class')?.split(/\s+/).filter(s => Boolean(s))
+              nodeClasses: origin.getAttribute('class')?.split(/\s+/).filter(s => Boolean(s)),
             } as NodeText.NodeText.NodeTextData}>
           </devtools-node-text>
         </span>

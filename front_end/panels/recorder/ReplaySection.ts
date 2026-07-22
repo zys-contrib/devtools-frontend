@@ -274,7 +274,7 @@ export class ReplaySection extends UI.Widget.Widget {
           buttonLabel: () => i18nString(UIStrings.ReplayExtremelySlowButtonLabel),
           label: () => i18nString(UIStrings.ReplayExtremelySlowItemLabel),
         },
-      ]
+      ],
     }];
     if (this.#replayExtensions.length) {
       groups.push({

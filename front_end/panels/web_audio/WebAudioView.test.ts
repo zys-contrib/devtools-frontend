@@ -54,14 +54,13 @@ describeWithEnvironment('WebAudioView', () => {
     const viewFunction = WebAudio.WebAudioView.DEFAULT_VIEW;
     const container = document.createElement('div');
     renderElementIntoDOM(container, {includeCommonStyles: true});
-    viewFunction(
-        {
-          contexts: [],
-          selectedContextIndex: -1,
-          onContextSelectorSelectionChanged: () => {},
-          contextRealtimeData: null
-        },
-        {}, container);
+    viewFunction({
+      contexts: [],
+      selectedContextIndex: -1,
+      onContextSelectorSelectionChanged: () => {},
+      contextRealtimeData: null,
+    },
+                 {}, container);
     await assertScreenshot('web_audio/web-audio-view-placeholder.png');
     container.remove();
   });
@@ -70,14 +69,13 @@ describeWithEnvironment('WebAudioView', () => {
     const viewFunction = WebAudio.WebAudioView.DEFAULT_VIEW;
     const container = document.createElement('div');
     renderElementIntoDOM(container, {includeCommonStyles: true});
-    viewFunction(
-        {
-          contexts: [context1, context2],
-          selectedContextIndex: 0,
-          onContextSelectorSelectionChanged: () => {},
-          contextRealtimeData: null
-        },
-        {}, container);
+    viewFunction({
+      contexts: [context1, context2],
+      selectedContextIndex: 0,
+      onContextSelectorSelectionChanged: () => {},
+      contextRealtimeData: null,
+    },
+                 {}, container);
     await assertScreenshot('web_audio/web-audio-view-contexts.png');
     container.remove();
   });

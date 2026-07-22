@@ -783,12 +783,12 @@ export function getRuntimeSettings(): LighthouseModel.RunTypes.RuntimeSetting[] 
           {
             label: i18nLazyString(UIStrings.mobile),
             tooltip: i18nLazyString(UIStrings.applyMobileEmulationDuring),
-            value: 'mobile'
+            value: 'mobile',
           },
           {
             label: i18nLazyString(UIStrings.desktop),
             tooltip: i18nLazyString(UIStrings.applyDesktopEmulationDuring),
-            value: 'desktop'
+            value: 'desktop',
           },
         ],
       },

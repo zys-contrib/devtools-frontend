@@ -1237,9 +1237,10 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
         {
           title: i18nString(UIStrings.timelineZoom),
           rows: [
-            [{key: 'Scroll ↕'}], [{key: 'W'}, {key: 'S'}, {joinText: 'or'}, {key: '+'}, {key: '-'}],
-            {footnote: 'hold shift for fast zoom'}
-          ]
+            [{key: 'Scroll ↕'}],
+            [{key: 'W'}, {key: 'S'}, {joinText: 'or'}, {key: '+'}, {key: '-'}],
+            {footnote: 'hold shift for fast zoom'},
+          ],
         },
         {
           title: i18nString(UIStrings.timelineScrollPan),
@@ -1247,11 +1248,17 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
             [{key: 'Shift'}, {joinText: '+'}, {key: 'Scroll ↕'}],
             [{key: 'Scroll ↔'}, {joinText: 'or'}, {key: 'A'}, {key: 'D'}],
             [
-              {key: 'Drag'}, {joinText: 'or'}, {key: 'Shift'}, {joinText: '+'}, {key: '↑'}, {key: '↓'}, {key: '←'},
-              {key: '→'}
+              {key: 'Drag'},
+              {joinText: 'or'},
+              {key: 'Shift'},
+              {joinText: '+'},
+              {key: '↑'},
+              {key: '↓'},
+              {key: '←'},
+              {key: '→'},
             ],
-          ]
-        }
+          ],
+        },
       ];
     }
 
@@ -1261,23 +1268,36 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
         title: i18nString(UIStrings.timelineZoom),
         rows: [
           [{key: metaKey}, {joinText: '+'}, {key: 'Scroll ↕'}],
-          [{key: 'W'}, {key: 'S'}, {joinText: 'or'}, {key: '+'}, {key: '-'}], {footnote: ''}
-        ]
+          [{key: 'W'}, {key: 'S'}, {joinText: 'or'}, {key: '+'}, {key: '-'}],
+          {footnote: ''},
+        ],
       },
       {
         title: i18nString(UIStrings.timelineScrollPan),
         rows: [
           [{key: 'Scroll ↕'}],
           [
-            {key: 'Shift'}, {joinText: '+'}, {key: 'Scroll ↕'}, {joinText: 'or'}, {key: 'Scroll ↔'}, {joinText: 'or'},
-            {key: 'A'}, {key: 'D'}
+            {key: 'Shift'},
+            {joinText: '+'},
+            {key: 'Scroll ↕'},
+            {joinText: 'or'},
+            {key: 'Scroll ↔'},
+            {joinText: 'or'},
+            {key: 'A'},
+            {key: 'D'},
           ],
           [
-            {key: 'Drag'}, {joinText: 'or'}, {key: 'Shift'}, {joinText: '+'}, {key: '↑'}, {key: '↓'}, {key: '←'},
-            {key: '→'}
+            {key: 'Drag'},
+            {joinText: 'or'},
+            {key: 'Shift'},
+            {joinText: '+'},
+            {key: '↑'},
+            {key: '↓'},
+            {key: '←'},
+            {key: '→'},
           ],
-        ]
-      }
+        ],
+      },
     ];
   }
 
@@ -2189,7 +2209,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
     const exclusiveFilter = this.#exclusiveFilterPerTrace.get(traceIndex) ?? null;
     this.#applyActiveFilters(parsedTrace.data.Meta.traceIsGeneric, exclusiveFilter);
     (this.saveButton.element as TimelineComponents.ExportTraceOptions.ExportTraceOptions).updateContentVisibility({
-      annotationsExist: currentManager ? currentManager.getAnnotations()?.length > 0 : false
+      annotationsExist: currentManager ? currentManager.getAnnotations()?.length > 0 : false,
     });
 
     // Add ModificationsManager listeners for annotations change to update the
@@ -2327,7 +2347,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
     const annotationEntryToColorMap = this.buildColorsAnnotationsMap(annotations);
     this.#sideBar.setAnnotations(annotations, annotationEntryToColorMap);
     (this.saveButton.element as TimelineComponents.ExportTraceOptions.ExportTraceOptions).updateContentVisibility({
-      annotationsExist: currentManager ? currentManager.getAnnotations()?.length > 0 : false
+      annotationsExist: currentManager ? currentManager.getAnnotations()?.length > 0 : false,
     });
   }
 
@@ -2400,7 +2420,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
       },
       onShowTrackConfigurationMode: () => {
         this.flameChart.enterMainChartTrackConfigurationMode();
-      }
+      },
     });
     if (maybeOverlay) {
       this.flameChart.addOverlay(maybeOverlay);
@@ -2684,7 +2704,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
         const initiator = {
           target: null,
           frameId: script.frame as Protocol.Page.FrameId,
-          initiatorUrl: script.url as Platform.DevToolsPath.UrlString
+          initiatorUrl: script.url as Platform.DevToolsPath.UrlString,
         };
         rawSourceMap = await SDK.SourceMapManager.tryLoadSourceMap(
             this.#resourceLoader, script.sourceMapUrl as Platform.DevToolsPath.UrlString, initiator);
@@ -2796,7 +2816,7 @@ export class TimelinePanel extends Common.ObjectWrapper.eventMixin<EventTypes, t
       const initiator = {
         target: debuggerModelForFrameId.get(frame)?.target() ?? null,
         frameId: frame,
-        initiatorUrl: sourceUrl
+        initiatorUrl: sourceUrl,
       };
       const payload = await SDK.SourceMapManager.tryLoadSourceMap(
           TimelinePanel.instance().#resourceLoader, sourceMapUrl, initiator);

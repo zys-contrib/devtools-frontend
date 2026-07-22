@@ -279,7 +279,7 @@ describeWithEnvironment('AiAgent', () => {
             },
             {
               explanation: 'Partial answer is now completed',
-            }
+            },
           ]]),
         });
 
@@ -312,7 +312,7 @@ describeWithEnvironment('AiAgent', () => {
             },
             {
               explanation: 'Partial answer is now completed',
-            }
+            },
           ]]),
         });
 
@@ -495,7 +495,7 @@ describeWithEnvironment('AiAgent', () => {
             type: Host.AidaClient.ParametersTypes.OBJECT,
             properties: {},
             description: 'arg description',
-            required: []
+            required: [],
           },
           handler: this.#test.bind(this),
         });
@@ -555,7 +555,7 @@ describeWithEnvironment('AiAgent', () => {
           ],
           [{
             explanation: 'Final answer',
-          }]
+          }],
         ]),
       });
 
@@ -597,7 +597,7 @@ describeWithEnvironment('AiAgent', () => {
           ],
           [{
             explanation: 'Final answer',
-          }]
+          }],
         ]),
         // Mock allowedOrigin to return blocked if our flag is set.
         allowedOrigin: () => originBlocked ? {blocked: true} : {origin: 'https://google.com'},
@@ -619,7 +619,7 @@ describeWithEnvironment('AiAgent', () => {
           type: Host.AidaClient.ParametersTypes.OBJECT,
           description: 'test parameters',
           properties: {},
-          required: []
+          required: [],
         },
         handler: async (args, options) => {
           called++;
@@ -652,7 +652,7 @@ describeWithEnvironment('AiAgent', () => {
           ],
           [{
             explanation: 'Final answer',
-          }]
+          }],
         ]),
         allowedOrigin: () => originBlocked ? {blocked: true} : {origin: 'https://google.com'},
       });
@@ -663,7 +663,7 @@ describeWithEnvironment('AiAgent', () => {
           type: Host.AidaClient.ParametersTypes.OBJECT,
           description: 'test parameters',
           properties: {},
-          required: []
+          required: [],
         },
         handler: async (_args, _options) => {
           called++;

@@ -40,7 +40,7 @@ import {
   StringMatcher,
   URLMatcher,
   VariableMatcher,
-  VariableNameMatcher
+  VariableNameMatcher,
 } from './CSSPropertyParserMatchers.js';
 import {
   CSSAtRule,
@@ -1623,7 +1623,7 @@ class DOMInheritanceCascade {
               return defaultValueForCSSType(match.type);
             }
             return evaluateFallback(match.fallback, match.matching);
-          })
+          }),
     ]);
     const decl = PropertyParser.ASTUtils.siblings(PropertyParser.ASTUtils.declValue(matching.ast.tree));
     const declText = decl.length > 0 ? matching.getComputedTextRange(decl[0], decl[decl.length - 1]) : '';
@@ -1673,7 +1673,7 @@ class DOMInheritanceCascade {
         // We've seen the variable before, so we can look up the text directly.
         return {
           value: computedCSSVariablesMap.get(innerNodeCascade)?.get(recordName)?.value ?? null,
-          mayFallback: false
+          mayFallback: false,
         };
       }
 

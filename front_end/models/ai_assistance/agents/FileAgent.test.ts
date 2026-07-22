@@ -12,7 +12,7 @@ import {
   deinitializeGlobalVars,
   restoreUserAgentForTesting,
   setUserAgentForTesting,
-  updateHostConfig
+  updateHostConfig,
 } from '../../../testing/EnvironmentHelpers.js';
 import {TestUniverse} from '../../../testing/TestUniverse.js';
 import * as Logs from '../../logs/logs.js';

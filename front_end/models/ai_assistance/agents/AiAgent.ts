@@ -28,7 +28,7 @@ export const enum ResponseType {
   ERROR = 'error',
   QUERYING = 'querying',
   USER_QUERY = 'user-query',
-  CONTEXT_CHANGE = 'context-change'
+  CONTEXT_CHANGE = 'context-change',
 }
 
 export const enum ErrorType {

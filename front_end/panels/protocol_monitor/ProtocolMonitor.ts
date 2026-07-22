@@ -351,7 +351,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
               ${widgetRef(JSONEditor, e => {output.editorWidget = e;})}>
           </devtools-widget>
         </devtools-split-view>`,
-        target
+        target,
     );
   // clang-format on
 };
@@ -476,7 +476,7 @@ export class ProtocolMonitorImpl extends UI.Panel.Panel implements SDK.TargetMan
     const viewOutput = {
       set editorWidget(value: JSONEditor) {
         that.#editorWidget = value;
-      }
+      },
     };
     this.#view(viewInput, viewOutput, this.contentElement);
   }

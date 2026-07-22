@@ -43,7 +43,7 @@ describe('GcaClient', () => {
       preamble: 'test',
       current_message: {parts: [{text: 'test'}], role: Host.AidaClient.Role.USER},
       use_case: Host.AidaClient.UseCase.CODE_GENERATION,
-      metadata: {disable_user_content_logging: true, client_version: '1.2.3'}
+      metadata: {disable_user_content_logging: true, client_version: '1.2.3'},
     });
 
     assert.isNull(result);
@@ -55,7 +55,7 @@ describe('GcaClient', () => {
         index: 0,
         content: {role: 'model', parts: [{text: 'result'}]},
       }],
-      responseId: '123'
+      responseId: '123',
     };
     sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'dispatchHttpRequest')
         .callsFake((_request: DispatchHttpRequestRequest, callback: (result: DispatchHttpRequestResult) => void) => {
@@ -76,7 +76,7 @@ describe('GcaClient', () => {
         index: 0,
         content: {role: 'model', parts: [{text: 'generated code'}]},
       }],
-      responseId: '456'
+      responseId: '456',
     };
     sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'dispatchHttpRequest')
         .callsFake((_request: DispatchHttpRequestRequest, callback: (result: DispatchHttpRequestResult) => void) => {
@@ -88,7 +88,7 @@ describe('GcaClient', () => {
       preamble: 'test',
       current_message: {parts: [{text: 'test'}], role: Host.AidaClient.Role.USER},
       use_case: Host.AidaClient.UseCase.CODE_GENERATION,
-      metadata: {disable_user_content_logging: true, client_version: '1.2.3'}
+      metadata: {disable_user_content_logging: true, client_version: '1.2.3'},
     });
 
     assert.isNotNull(result);
@@ -102,13 +102,12 @@ describe('GcaClient', () => {
           callback({statusCode: 200, response: '{}'});
         });
 
-    await gcaClient.conversationRequest(
-        {
-          client: 'test',
-          current_message: {parts: [{text: 'test'}], role: Host.AidaClient.Role.USER},
-          metadata: {disable_user_content_logging: true, client_version: '1.2.3'}
-        },
-        1);
+    await gcaClient.conversationRequest({
+      client: 'test',
+      current_message: {parts: [{text: 'test'}], role: Host.AidaClient.Role.USER},
+      metadata: {disable_user_content_logging: true, client_version: '1.2.3'},
+    },
+                                        1);
   });
 
   it('throws for conversationRequest when request fails', async () => {
@@ -118,13 +117,12 @@ describe('GcaClient', () => {
         });
 
     try {
-      await gcaClient.conversationRequest(
-          {
-            client: 'test',
-            current_message: {parts: [{text: 'test'}], role: Host.AidaClient.Role.USER},
-            metadata: {disable_user_content_logging: true, client_version: '1.2.3'}
-          },
-          1);
+      await gcaClient.conversationRequest({
+        client: 'test',
+        current_message: {parts: [{text: 'test'}], role: Host.AidaClient.Role.USER},
+        metadata: {disable_user_content_logging: true, client_version: '1.2.3'},
+      },
+                                          1);
       assert.fail('Should have thrown');
     } catch (err) {
       assert.instanceOf(err, Error);

@@ -371,7 +371,7 @@ export class PageResourceLoader extends Common.ObjectWrapper.ObjectWrapper<Event
               errorDescription: {
                 statusCode: 0,
                 message: e.message,
-              }
+              },
             };
           }
         }

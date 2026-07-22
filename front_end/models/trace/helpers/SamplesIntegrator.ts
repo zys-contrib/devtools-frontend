@@ -531,7 +531,7 @@ export class SamplesIntegrator {
       traceEvents: [cpuProfileEvent],
       metadata: {
         dataOrigin: Types.File.DataOrigin.CPU_PROFILE,
-      }
+      },
     };
   }
 

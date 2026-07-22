@@ -15,7 +15,7 @@ import {
   waitForDomNodeToBeHidden,
   waitForDomNodeToBeVisible,
   waitForElementsStyleSection,
-  waitForPartialContentOfSelectedElementsNode
+  waitForPartialContentOfSelectedElementsNode,
 } from '../helpers/elements-helpers.js';
 
 const TARGET_SHOWN_ON_HOVER_SELECTOR = '.show-on-hover';

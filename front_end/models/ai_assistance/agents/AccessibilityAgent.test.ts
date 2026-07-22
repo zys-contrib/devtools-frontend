@@ -360,7 +360,7 @@ describeWithEnvironment('AccessibilityAgent', () => {
       }],
       [{
         explanation: 'answer',
-      }]
+      }],
     ]);
 
     const execJs = sinon.stub().resolves('test data');

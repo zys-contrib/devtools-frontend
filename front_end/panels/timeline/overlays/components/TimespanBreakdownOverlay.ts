@@ -56,7 +56,7 @@ export const DEFAULT_VIEW = (input: Input, _output: undefined, target: HTMLEleme
     width: input.width !== null ? `${input.width}px` : undefined,
     top: input.top !== null ? `${input.top}px` : undefined,
     maxHeight: input.maxHeight !== null ? `${input.maxHeight}px` : undefined,
-    position: 'relative'
+    position: 'relative',
   });
   // clang-format off
   render(
@@ -257,7 +257,7 @@ export class TimespanBreakdownOverlay extends UI.Widget.Widget {
       width: this.#width,
       top: this.#top,
       maxHeight: this.#maxHeight,
-      className
+      className,
     }, undefined, this.contentElement);
 
     this.checkSectionLabelPositioning();

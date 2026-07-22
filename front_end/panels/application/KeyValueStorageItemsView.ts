@@ -229,7 +229,7 @@ export abstract class KeyValueStorageItemsView extends UI.Widget.VBox {
     const viewOutput = {
       set toolbar(toolbar: StorageItemsToolbar) {
         that.#toolbar = toolbar;
-      }
+      },
     };
     const viewInput = {
       items: this.#items,

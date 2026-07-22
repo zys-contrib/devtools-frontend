@@ -122,7 +122,7 @@ const UIStrings = {
   /**
    * @description Title of the menu item in the customize and control menu leading to the DevTools MCP repository.
    */
-  getDevToolsMcp: 'Get `DevTools MCP`'
+  getDevToolsMcp: 'Get `DevTools MCP`',
 } as const;
 const str_ = i18n.i18n.registerUIStrings('entrypoints/main/MainImpl.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);

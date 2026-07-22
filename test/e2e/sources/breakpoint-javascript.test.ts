@@ -218,7 +218,7 @@ describe('The Sources Tab', function() {
         root: lineNumberColumn,
         modifiers: {
           control: true,
-        }
+        },
       });
 
       await devToolsPage.waitFor('.sources-edit-breakpoint-dialog');
@@ -234,7 +234,7 @@ describe('The Sources Tab', function() {
         root: lineNumberColumn,
         modifiers: {
           control: true,
-        }
+        },
       });
       await devToolsPage.waitFor('.sources-edit-breakpoint-dialog');
     });

@@ -57,7 +57,7 @@ const DEFAULT_VIEW: View = (input, _output, target) => {
       </div>
       <div class="hbox layer-summary">
         <span class="layer-count">${i18nString(UIStrings.layerCount, {
-           PH1: input.layerCount
+           PH1: input.layerCount,
          })}</span>
         <span>${i18n.ByteUtilities.bytesToString(input.totalLayerMemory)}</span>
       </div>

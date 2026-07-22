@@ -91,7 +91,7 @@ export class Linkifier extends Common.ObjectWrapper.ObjectWrapper<EventTypes> im
   }
 
   #onWorkingCopyChangedOrCommitted({
-    data: {uiSourceCode}
+    data: {uiSourceCode},
   }: Common.EventTarget.EventTargetEvent<{uiSourceCode: Workspace.UISourceCode.UISourceCode}>): void {
     const anchors = anchorsByUISourceCode.get(uiSourceCode);
     if (!anchors) {

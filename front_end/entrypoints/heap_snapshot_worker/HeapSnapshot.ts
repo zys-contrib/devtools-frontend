@@ -877,7 +877,7 @@ export class SecondaryInitManager {
         ...retainers,
         essentialEdges: Platform.TypedArrayUtilities.createBitVector(argsStep2.essentialEdgesBuffer),
         port,
-        nodeSelfSizesPromise: this.getNodeSelfSizes()
+        nodeSelfSizesPromise: this.getNodeSelfSizes(),
       };
       const dominatorsAndRetainedSizes = await HeapSnapshot.calculateDominatorsAndRetainedSizes(args);
       const dominatedNodesOutputs = HeapSnapshot.buildDominatedNodes({...args, ...dominatorsAndRetainedSizes});
@@ -2140,7 +2140,7 @@ export abstract class HeapSnapshot {
       rootNodeOrdinal,
       essentialEdges,
       nodeSelfSizesPromise,
-      port
+      port,
     } = inputs;
     function isEssentialEdge(edgeIndex: number): boolean {
       return essentialEdges.getBit(edgeIndex / edgeFieldsCount);
@@ -3338,7 +3338,7 @@ export abstract class HeapSnapshot {
       retainingEdges,
       edgeTypeOffset,
       edgeWeakType,
-      containmentEdges
+      containmentEdges,
     } = this;
     const distances = this.#nodeDistancesForRetainersView ?? this.nodeDistances;
     let traversedNodesCount = 0;
@@ -4367,7 +4367,7 @@ export class JSHeapSnapshot extends HeapSnapshot {
         jsArrays: sizeJSArrays,
         strings: sizeStrings,
         system: sizeSystem,
-      }
+      },
     };
   }
 

@@ -10,7 +10,7 @@ import {
   dispatchClickEvent,
   dispatchKeyDownEvent,
   raf,
-  renderElementIntoDOM
+  renderElementIntoDOM,
 } from '../../../testing/DOMHelpers.js';
 import {setupLocaleHooks} from '../../../testing/LocaleHelpers.js';
 import * as RenderCoordinator from '../render_coordinator/render_coordinator.js';

@@ -137,7 +137,7 @@ export class NetworkWaterfallColumn extends UI.Widget.VBox {
         NetworkTimeCalculator.RequestTimeRangeNames.SERVICE_WORKER,
         {fillStyle: RequestTimeRangeNameToColor[NetworkTimeCalculator.RequestTimeRangeNames.SERVICE_WORKER]});
     styleMap.set(NetworkTimeCalculator.RequestTimeRangeNames.SERVICE_WORKER_PREPARATION, {
-      fillStyle: RequestTimeRangeNameToColor[NetworkTimeCalculator.RequestTimeRangeNames.SERVICE_WORKER_PREPARATION]
+      fillStyle: RequestTimeRangeNameToColor[NetworkTimeCalculator.RequestTimeRangeNames.SERVICE_WORKER_PREPARATION],
     });
     styleMap.set(NetworkTimeCalculator.RequestTimeRangeNames.SERVICE_WORKER_RESPOND_WITH, {
       fillStyle: RequestTimeRangeNameToColor[NetworkTimeCalculator.RequestTimeRangeNames.SERVICE_WORKER_RESPOND_WITH],

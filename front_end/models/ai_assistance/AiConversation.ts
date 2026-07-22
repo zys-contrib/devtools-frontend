@@ -21,7 +21,7 @@ import {
   type MultimodalInput,
   type ResponseData,
   ResponseType,
-  type UserQuery
+  type UserQuery,
 } from './agents/AiAgent.js';
 import {ContextSelectionAgent} from './agents/ContextSelectionAgent.js';
 import {FileAgent} from './agents/FileAgent.js';

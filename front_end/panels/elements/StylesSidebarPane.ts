@@ -600,8 +600,9 @@ export class StylesSidebarPane extends Common.ObjectWrapper.eventMixin<EventType
     const parentNodeId = this.matchedStyles?.getParentLayoutNodeId();
 
     const [computedStyles, parentsComputedStyles, computedStyleExtraFields] = await Promise.all([
-      this.fetchComputedStylesFor(nodeId), this.fetchComputedStylesFor(parentNodeId),
-      this.fetchComputedStyleExtraFieldsFor(nodeId)
+      this.fetchComputedStylesFor(nodeId),
+      this.fetchComputedStylesFor(parentNodeId),
+      this.fetchComputedStyleExtraFieldsFor(nodeId),
     ]);
 
     signal?.throwIfAborted();
@@ -2402,7 +2403,7 @@ export class CSSPropertyPrompt extends UI.TextPrompt.TextPrompt {
             });
           }
         }
-      }
+      },
     });
     return properties;
   }

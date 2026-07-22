@@ -167,7 +167,7 @@ class ResultsDbReporter extends Mocha.reporters.Base {
     const result = {
       duration: `${((test.duration || 1) * .001).toFixed(3)}s`,
       tags: [{key: 'run', value: String(testRetry.currentRetry() + 1)}],
-      ...ResultsDb.buildTestProperties(exactTestId, coarseName, fineName, caseName)
+      ...ResultsDb.buildTestProperties(exactTestId, coarseName, fineName, caseName),
     };
     const hookName = this.maybeHook(test);
     if (hookName) {

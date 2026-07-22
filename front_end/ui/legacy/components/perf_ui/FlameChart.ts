@@ -161,7 +161,7 @@ export const enum HoverType {
 export const enum GroupCollapsibleState {
   ALWAYS = 0,
   NEVER = 1,
-  IF_MULTI_ROW = 2
+  IF_MULTI_ROW = 2,
 }
 
 export interface FlameChartDelegate {

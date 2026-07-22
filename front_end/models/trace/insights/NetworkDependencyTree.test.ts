@@ -192,7 +192,7 @@ describe('generatePreconnectedOrigins', () => {
                          url: 'https://example.com',
                          unused: false,
                          crossorigin: false,
-                         source: 'DOM'
+                         source: 'DOM',
                        }]);
     });
 
@@ -221,7 +221,7 @@ describe('generatePreconnectedOrigins', () => {
                          url: 'https://example.com',
                          unused: true,
                          crossorigin: false,
-                         source: 'DOM'
+                         source: 'DOM',
                        }]);
     });
 
@@ -246,7 +246,7 @@ describe('generatePreconnectedOrigins', () => {
                          url: 'https://example.com',
                          unused: true,
                          crossorigin: true,
-                         source: 'DOM'
+                         source: 'DOM',
                        }]);
     });
 
@@ -271,7 +271,7 @@ describe('generatePreconnectedOrigins', () => {
                          url: 'https://example.com',
                          unused: true,
                          crossorigin: false,
-                         source: 'DOM'
+                         source: 'DOM',
                        }]);
     });
   });
@@ -377,7 +377,8 @@ describe('generatePreconnectedOrigins', () => {
       assert.deepEqual(
           result, [{
             url: 'https://imaginary.url.notreal/segment;foo=bar;baz/item?name=What,+me+worry',
-            headerText: '<https://imaginary.url.notreal/segment;foo=bar;baz/item?name=What,+me+worry>; rel="preconnect"'
+            headerText:
+                '<https://imaginary.url.notreal/segment;foo=bar;baz/item?name=What,+me+worry>; rel="preconnect"',
           }]);
     });
 
@@ -427,7 +428,7 @@ describeWithEnvironment('generatePreconnectCandidates', () => {
     },
     Samples: {
       entryToNode: new Map(),
-    }
+    },
   } as Trace.Handlers.Types.HandlerData;
 
   const mockContext = {
@@ -467,14 +468,14 @@ describeWithEnvironment('generatePreconnectCandidates', () => {
         url: 'https://main.com',
         requestId: 'main-request',
         syntheticData: {finishTime: 1_000},
-        timing: {connectEnd: 0, connectStart: 0}
+        timing: {connectEnd: 0, connectStart: 0},
       },
     },
     ts: 0,
     rawSourceEvent: {
       cat: 'devtools.timeline',
       name: 'ResourceSendRequest',
-    }
+    },
   } as unknown as Trace.Types.Events.SyntheticNetworkRequest;
 
   const validRequest: Trace.Types.Events.SyntheticNetworkRequest = {
@@ -489,7 +490,7 @@ describeWithEnvironment('generatePreconnectCandidates', () => {
     rawSourceEvent: {
       cat: 'devtools.timeline',
       name: 'ResourceSendRequest',
-    }
+    },
   } as unknown as Trace.Types.Events.SyntheticNetworkRequest;
 
   beforeEach(() => {

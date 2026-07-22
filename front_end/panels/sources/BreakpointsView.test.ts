@@ -846,8 +846,8 @@ describe('BreakpointsSidebarController', () => {
           scriptId: script.scriptId,
           lineNumber: 0,
           columnNumber: 0,
-        }]
-      }
+        }],
+      },
     });
     const b1 = await breakpointManager.setBreakpoint(uiSourceCode, 0, 0, ...DEFAULT_BREAKPOINT);
     assert.exists(b1);

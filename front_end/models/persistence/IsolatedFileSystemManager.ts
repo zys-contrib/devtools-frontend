@@ -13,7 +13,7 @@ import {IsolatedFileSystem} from './IsolatedFileSystem.js';
 import {
   Events as PlatformFileSystemEvents,
   type PlatformFileSystem,
-  PlatformFileSystemType
+  PlatformFileSystemType,
 } from './PlatformFileSystem.js';
 
 const UIStrings = {

@@ -73,7 +73,7 @@ describe('UISourceCodeFrame', () => {
       const scriptInfo = {url: `${sourceRoot}/bundle.js`, content: '1;\n'};
       const sourceMapInfo = {
         url: `${scriptInfo.url}.map`,
-        content: {version: 3, mappings: '', sourceRoot, sources, sourcesContent: ['1;']}
+        content: {version: 3, mappings: '', sourceRoot, sources, sourcesContent: ['1;']},
       };
 
       const uiSourceCodePromise =
@@ -96,7 +96,7 @@ describe('UISourceCodeFrame', () => {
       const scriptInfo = {url: `${sourceRoot}/bundle.js`, content: '1;\n'};
       const sourceMapInfo = {
         url: `${scriptInfo.url}.map`,
-        content: {version: 3, mappings: '', sourceRoot, sources, sourcesContent: ['1;']}
+        content: {version: 3, mappings: '', sourceRoot, sources, sourcesContent: ['1;']},
       };
 
       const uiSourceCodePromise =

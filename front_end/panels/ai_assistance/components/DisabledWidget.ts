@@ -134,7 +134,7 @@ export const DEFAULT_VIEW = (
         </div>
       </div>
     `,
-    target
+    target,
   );
   // clang-format on
 };

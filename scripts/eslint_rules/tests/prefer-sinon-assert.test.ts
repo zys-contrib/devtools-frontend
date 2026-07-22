@@ -35,7 +35,7 @@ new RuleTester().run('prefer-sinon-assert', rule, {
     {
       code: 'sinon.assert.calledWith(spy, arg1, arg2);',
       filename: 'foo.ts',
-    }
+    },
   ],
 
   invalid: [

@@ -126,7 +126,7 @@ export class Settings {
     settingRegistrations,
     logSettingAccess,
     runSettingsMigration,
-    console
+    console,
   }: SettingsCreationOptions) {
     this.#console = console;
     this.syncedStorage = syncedStorage;
@@ -178,7 +178,7 @@ export class Settings {
     globalStorage: null,
     localStorage: null,
     settingRegistrations: null,
-    console: null
+    console: null,
   }): Settings {
     const {
       forceNew,

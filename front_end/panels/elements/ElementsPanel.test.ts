@@ -15,7 +15,7 @@ import {
   createTarget,
   describeWithEnvironment,
   stubNoopSettings,
-  updateHostConfig
+  updateHostConfig,
 } from '../../testing/EnvironmentHelpers.js';
 import {expectCall, expectCalled} from '../../testing/ExpectStubCall.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
@@ -74,7 +74,7 @@ describeWithEnvironment('ElementsPanel', () => {
           nodeType: Node.ELEMENT_NODE,
           nodeName: 'BODY',
           childNodeCount: 1,
-        } as Protocol.DOM.Node
+        } as Protocol.DOM.Node,
       });
       return {nodeId: 7 as Protocol.DOM.NodeId};
     });

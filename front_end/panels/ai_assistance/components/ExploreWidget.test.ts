@@ -103,18 +103,17 @@ describe('ExploreWidget', () => {
     it('looks fine', async () => {
       const target = document.createElement('div');
       renderElementIntoDOM(target, {includeCommonStyles: true});
-      AiAssistance.ExploreWidget.DEFAULT_VIEW(
-          {
-            featureCards: [{
-              icon: 'brush-2',
-              heading: 'CSS styles',
-              jslogContext: 'open-elements-panel',
-              onClick: () => {},
-              panelName: 'Elements',
-              text: 'to ask about CSS styles'
-            }]
-          },
-          {}, target);
+      AiAssistance.ExploreWidget.DEFAULT_VIEW({
+        featureCards: [{
+          icon: 'brush-2',
+          heading: 'CSS styles',
+          jslogContext: 'open-elements-panel',
+          onClick: () => {},
+          panelName: 'Elements',
+          text: 'to ask about CSS styles',
+        }],
+      },
+                                              {}, target);
       await assertScreenshot('ai_assistance/explore-default.png');
     });
   });

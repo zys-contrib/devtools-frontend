@@ -16,7 +16,7 @@ import {
   Events,
   LighthouseController,
   type PageAuditabilityChangedEvent,
-  type PageWarningsChangedEvent
+  type PageWarningsChangedEvent,
 } from './LighthouseController.js';
 import lighthousePanelStyles from './lighthousePanel.css.js';
 import {CancelledError, ProtocolService} from './LighthouseProtocolService.js';

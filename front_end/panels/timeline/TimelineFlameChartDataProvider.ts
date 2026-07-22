@@ -156,7 +156,7 @@ export class TimelineFlameChartDataProvider extends Common.ObjectWrapper.ObjectW
       useFirstLineForOverview: true,
       nestingLevel: 1,
       collapsible: PerfUI.FlameChart.GroupCollapsibleState.NEVER,
-      itemsHeight: 150
+      itemsHeight: 150,
     });
 
     ThemeSupport.ThemeSupport.instance().addEventListener(ThemeSupport.ThemeChangeEvent.eventName, () => {
@@ -1409,7 +1409,7 @@ export const InstantEventVisibleDurationMs = Trace.Types.Timing.Milli(0.001);
 export const enum Events {
   DATA_CHANGED = 'DataChanged',
   FLAME_CHART_ITEM_HOVERED = 'FlameChartItemHovered',
-  ENTRY_LABEL_ANNOTATION_ADDED = 'EntryLabelAnnotationAdded'
+  ENTRY_LABEL_ANNOTATION_ADDED = 'EntryLabelAnnotationAdded',
 }
 
 export interface EventTypes {

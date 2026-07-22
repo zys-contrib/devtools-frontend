@@ -15,7 +15,7 @@ import {
   assertScreenshot,
   getCleanTextContentFromElements,
   raf,
-  renderElementIntoDOM
+  renderElementIntoDOM,
 } from '../../testing/DOMHelpers.js';
 import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
@@ -207,7 +207,7 @@ describe('ResourceTimingView', () => {
       endTime: 100,
       timeRanges,
       calculator: new NetworkTimeCalculator.NetworkTimeCalculator(true),
-      wasThrottled
+      wasThrottled,
     };
 
     Network.RequestTimingView.DEFAULT_VIEW(input, {}, container);

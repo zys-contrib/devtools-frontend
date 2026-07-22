@@ -350,7 +350,7 @@ export class SearchView extends UI.Widget.VBox<ShadowRoot> {
       },
       set collapseAllResults(value: () => void) {
         that.#collapseAllResults = value;
-      }
+      },
     };
     this.#view(input, output, this.contentElement);
   }

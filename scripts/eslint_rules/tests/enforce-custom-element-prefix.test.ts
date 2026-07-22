@@ -16,7 +16,7 @@ new RuleTester().run('enforce-custom-element-prefix', rule, {
     },
     {
       code: `MyElements.define('my-element', class extends HTMLElement {})`,
-    }
+    },
   ],
   invalid: [
     {

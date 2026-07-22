@@ -22,7 +22,7 @@ import {
   matchDeclaration,
   matcherBase,
   type SyntaxTree,
-  tokenizeDeclaration
+  tokenizeDeclaration,
 } from './CSSPropertyParser.js';
 import type {CSSStyleDeclaration} from './CSSStyleDeclaration.js';
 
@@ -1030,7 +1030,7 @@ export class LengthMatcher extends matcherBase(LengthMatch) {
     'em',    'ex',    'ch',  'cap', 'ic',    'lh',    'rem',   'rex',   'rch',  'rlh',  'ric', 'rcap', 'pt',    'pc',
     'in',    'cm',    'mm',  'Q',   'vw',    'vh',    'vi',    'vb',    'vmin', 'vmax', 'dvw', 'dvh',  'dvi',   'dvb',
     'dvmin', 'dvmax', 'svw', 'svh', 'svi',   'svb',   'svmin', 'svmax', 'lvw',  'lvh',  'lvi', 'lvb',  'lvmin', 'lvmax',
-    'cqw',   'cqh',   'cqi', 'cqb', 'cqmin', 'cqmax', 'cqem',  'cqlh',  'cqex', 'cqch', '%'
+    'cqw',   'cqh',   'cqi', 'cqb', 'cqmin', 'cqmax', 'cqem',  'cqlh',  'cqex', 'cqch', '%',
   ]);
   override matches(node: CodeMirror.SyntaxNode, matching: BottomUpTreeMatching): LengthMatch|null {
     if (node.name !== 'NumberLiteral') {

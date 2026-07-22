@@ -407,6 +407,6 @@ function serverError(message: string): {error: ProtocolClient.CDPConnection.CDPE
     error: {
       code: ProtocolClient.CDPConnection.CDPErrorStatus.SERVER_ERROR,
       message,
-    }
+    },
   };
 }

@@ -115,8 +115,10 @@ describeWithEnvironment('LayoutPane', () => {
   it('renders grid elements', async () => {
     getNodesByStyle
         .withArgs([
-          {name: 'display', value: 'grid'}, {name: 'display', value: 'inline-grid'},
-          {name: 'display', value: 'grid-lanes'}, {name: 'display', value: 'inline-grid-lanes'}
+          {name: 'display', value: 'grid'},
+          {name: 'display', value: 'inline-grid'},
+          {name: 'display', value: 'grid-lanes'},
+          {name: 'display', value: 'inline-grid-lanes'},
         ])
         .resolves([
           ID_1,
@@ -158,8 +160,10 @@ describeWithEnvironment('LayoutPane', () => {
   it('send an event when an element overlay is toggled', async () => {
     getNodesByStyle
         .withArgs([
-          {name: 'display', value: 'grid'}, {name: 'display', value: 'inline-grid'},
-          {name: 'display', value: 'grid-lanes'}, {name: 'display', value: 'inline-grid-lanes'}
+          {name: 'display', value: 'grid'},
+          {name: 'display', value: 'inline-grid'},
+          {name: 'display', value: 'grid-lanes'},
+          {name: 'display', value: 'inline-grid-lanes'},
         ])
         .resolves([
           ID_1,
@@ -178,8 +182,10 @@ describeWithEnvironment('LayoutPane', () => {
   it('send an event when an element’s Show element button is pressed', async () => {
     getNodesByStyle
         .withArgs([
-          {name: 'display', value: 'grid'}, {name: 'display', value: 'inline-grid'},
-          {name: 'display', value: 'grid-lanes'}, {name: 'display', value: 'inline-grid-lanes'}
+          {name: 'display', value: 'grid'},
+          {name: 'display', value: 'inline-grid'},
+          {name: 'display', value: 'grid-lanes'},
+          {name: 'display', value: 'inline-grid-lanes'},
         ])
         .resolves([
           ID_1,

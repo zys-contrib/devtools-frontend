@@ -97,7 +97,7 @@ export const DEFAULT_PANE_VIEW = (input: PaneViewInput, _output: object, target:
           pin,
           focusOut: input.focusOut,
           onRemove: () => input.onRemove(pin),
-      })
+      }),
     )}
     </div>`, target);
   // clang-format on

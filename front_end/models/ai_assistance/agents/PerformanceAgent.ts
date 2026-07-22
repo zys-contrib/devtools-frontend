@@ -269,20 +269,20 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
 
   #notExternalExtraPreambleFact: Host.AidaClient.RequestFact = {
     text: extraPreambleWhenNotExternal,
-    metadata: {source: 'devtools', score: ScorePriority.CRITICAL}
+    metadata: {source: 'devtools', score: ScorePriority.CRITICAL},
   };
   #freshTraceExtraPreambleFact: Host.AidaClient.RequestFact = {
     text: freshTracePreamble,
-    metadata: {source: 'devtools', score: ScorePriority.CRITICAL}
+    metadata: {source: 'devtools', score: ScorePriority.CRITICAL},
   };
 
   #networkDataDescriptionFact: Host.AidaClient.RequestFact = {
     text: PerformanceTraceFormatter.networkDataFormatDescription,
-    metadata: {source: 'devtools', score: ScorePriority.CRITICAL}
+    metadata: {source: 'devtools', score: ScorePriority.CRITICAL},
   };
   #callFrameDataDescriptionFact: Host.AidaClient.RequestFact = {
     text: PerformanceTraceFormatter.callFrameDataFormatDescription,
-    metadata: {source: 'devtools', score: ScorePriority.CRITICAL}
+    metadata: {source: 'devtools', score: ScorePriority.CRITICAL},
   };
   #traceFacts: Host.AidaClient.RequestFact[] = [];
 
@@ -790,14 +790,14 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
             type: Host.AidaClient.ParametersTypes.STRING,
             description: 'The name of the insight. Only use the insight names given in the "Available insights" list.',
             nullable: false,
-          }
+          },
         },
-        required: ['insightSetId', 'insightName']
+        required: ['insightSetId', 'insightName'],
       },
       displayInfoFromArgs: params => {
         return {
           title: lockedString(`Investigating insight ${params.insightName}`),
-          action: `getInsightDetails('${params.insightSetId}', '${params.insightName}')`
+          action: `getInsightDetails('${params.insightSetId}', '${params.insightName}')`,
         };
       },
       handler: async params => {
@@ -896,9 +896,9 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
             type: Host.AidaClient.ParametersTypes.STRING,
             description: 'The key for the event.',
             nullable: false,
-          }
+          },
         },
-        required: ['eventKey']
+        required: ['eventKey'],
       },
       displayInfoFromArgs: params => {
         return {title: lockedString('Looking at trace event'), action: `getEventByKey('${params.eventKey}')`};
@@ -957,13 +957,13 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
             nullable: false,
           },
         },
-        required: ['label']
+        required: ['label'],
       },
       displayInfoFromArgs: args => {
         const labelName = getLabelName(args.label, focus);
         return {
           title: lockedString(`${UIStringsNotTranslated.mainThreadActivity}: ${labelName}`),
-          action: `getMainThreadTrackSummaryByLabel('${args.label}')`
+          action: `getMainThreadTrackSummaryByLabel('${args.label}')`,
         };
       },
       handler: async args => {
@@ -979,8 +979,8 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
       },
     });
 
-    this.declareFunction<
-        {min?: Trace.Types.Timing.Micro, max?: Trace.Types.Timing.Micro}, {summary: string}>('getNetworkTrackSummary', {
+    this.declareFunction<{min?: Trace.Types.Timing.Micro, max?: Trace.Types.Timing.Micro},
+                         {summary: string}>('getNetworkTrackSummary', {
       description: 'Returns a summary of the network for the given bounds.',
       parameters: {
         type: Host.AidaClient.ParametersTypes.OBJECT,
@@ -1000,14 +1000,14 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
             nullable: true,
           },
         },
-        required: []
+        required: [],
       },
       displayInfoFromArgs: args => {
         const min = args.min ?? parsedTrace.data.Meta.traceBounds.min;
         const max = args.max ?? parsedTrace.data.Meta.traceBounds.max;
         return {
           title: lockedString(UIStringsNotTranslated.networkActivitySummary),
-          action: `getNetworkTrackSummary({min: ${min}, max: ${max}})`
+          action: `getNetworkTrackSummary({min: ${min}, max: ${max}})`,
         };
       },
       handler: async args => {
@@ -1059,7 +1059,7 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
             nullable: false,
           },
         },
-        required: ['eventKey']
+        required: ['eventKey'],
       },
       displayInfoFromArgs: args => {
         return {title: lockedString('Looking at call tree'), action: `getDetailedCallTree('${args.eventKey}')`};
@@ -1137,12 +1137,12 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
             nullable: false,
           },
         },
-        required: ['scriptUrl', 'line', 'column']
+        required: ['scriptUrl', 'line', 'column'],
       },
       displayInfoFromArgs: args => {
         return {
           title: lockedString('Looking up function code'),
-          action: `getFunctionCode('${args.scriptUrl}', ${args.line}, ${args.column})`
+          action: `getFunctionCode('${args.scriptUrl}', ${args.line}, ${args.column})`,
         };
       },
       handler: async args => {
@@ -1211,7 +1211,7 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
             nullable: false,
           },
         },
-        required: ['url']
+        required: ['url'],
       },
       displayInfoFromArgs: args => {
         return {title: lockedString('Looking at resource content'), action: `getResourceContent('${args.url}')`};
@@ -1285,9 +1285,9 @@ export class PerformanceAgent extends AiAgent<AgentFocus> {
             type: Host.AidaClient.ParametersTypes.STRING,
             description: 'The key for the event.',
             nullable: false,
-          }
+          },
         },
-        required: ['eventKey']
+        required: ['eventKey'],
       },
       displayInfoFromArgs: params => {
         return {title: lockedString('Selecting event'), action: `selectEventByKey('${params.eventKey}')`};

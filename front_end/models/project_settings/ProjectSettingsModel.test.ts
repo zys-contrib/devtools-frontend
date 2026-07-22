@@ -94,7 +94,7 @@ describe('ProjectSettingsModel', () => {
       workspace: {
         root: '/home/foo' as Platform.DevToolsPath.RawPathString,
         uuid: '8f7b028c-0323-485f-bcb9-b404edc0f186',
-      }
+      },
     });
   });
 
@@ -149,7 +149,7 @@ describe('ProjectSettingsModel', () => {
       workspace: {
         root: '/path/to/front_end' as Platform.DevToolsPath.RawPathString,
         uuid: '5a509b03-1da9-460d-bc38-0c8166ba0c41',
-      }
+      },
     });
   });
 

@@ -191,7 +191,7 @@ export function getMatchedStyles(
  * to find the actual models.
  */
 export function createStubbedDomNodeWithModels(opts: {nodeId: number} = {
-  nodeId: 1
+  nodeId: 1,
 }): {
   node: SDK.DOMModel.DOMNode,
   domModel: SDK.DOMModel.DOMModel,

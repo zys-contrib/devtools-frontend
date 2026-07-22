@@ -374,7 +374,7 @@ export class AiCodeCompletionProvider {
               clearCachedRequest: this.clearCache.bind(this),
               onImpression: this.#aiCodeCompletion?.registerUserImpression.bind(this.#aiCodeCompletion),
               source: AiSuggestionSource.COMPLETION,
-            })
+            }),
           });
         }
         if (fromCache) {
@@ -580,7 +580,7 @@ function aiCodeCompletionTeaserExtension(teaser: PanelCommon.AiCodeCompletionTea
           return true;
         }
         return false;
-      }
+      },
     },
   });
 }

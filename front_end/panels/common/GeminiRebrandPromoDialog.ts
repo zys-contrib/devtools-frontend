@@ -121,7 +121,7 @@ export const DEFAULT_VIEW: View = (input, _output, target): void => {
           @click=${input.onGetStartedClick}>${i18nString(UIStrings.getStarted)}</devtools-button>
       </div>
     `,
-    target
+    target,
   );
   // clang-format on
 };

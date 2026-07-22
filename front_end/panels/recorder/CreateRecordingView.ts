@@ -137,7 +137,7 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
     onUpdate,
     onRecordingStarted,
     onRecordingCancelled,
-    onErrorReset
+    onErrorReset,
   } = input;
 
   const nameInputRef = createRef<HTMLInputElement>();
@@ -207,7 +207,7 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
           id="user-flow-name"
           ${ref(nameInputRef)}
           @input=${(e:Event) => onUpdate({
-            name: (e.target as HTMLInputElement).value.trim()
+            name: (e.target as HTMLInputElement).value.trim(),
           })}
         />
         <label class="row-label" for="selector-attribute">
@@ -228,7 +228,7 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
           class="devtools-text-input"
           id="selector-attribute"
           @input=${(e:Event) => onUpdate({
-            selectorAttribute: (e.target as HTMLInputElement).value.trim()
+            selectorAttribute: (e.target as HTMLInputElement).value.trim(),
           })}
         />
         <label class="row-label">
@@ -253,7 +253,7 @@ export const DEFAULT_VIEW = (input: ViewInput, output: ViewOutput, target: HTMLE
                   type="checkbox"
                   @change=${(e:Event) => onUpdate({
                     selectorType: item.selectorType,
-                    checked: (e.target as HTMLInputElement).checked
+                    checked: (e.target as HTMLInputElement).checked,
                   })}
                 />
                 ${selectorTypeToLabel.get(item.selectorType) || item.selectorType}

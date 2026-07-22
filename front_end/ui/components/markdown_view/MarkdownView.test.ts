@@ -501,8 +501,10 @@ describeWithEnvironment('Issue description smoke test', () => {
   Object.keys(Deprecation.DEPRECATIONS_METADATA).forEach(deprecation => {
     // TODO(crbug.com/430801230): Re-enable these tests once the descriptions are fixed on the chromium side.
     if ([
-          'CanRequestURLHTTPContainingNewline', 'CookieWithTruncatingChar', 'H1UserAgentFontSizeInSection',
-          'RequestedSubresourceWithEmbeddedCredentials'
+          'CanRequestURLHTTPContainingNewline',
+          'CookieWithTruncatingChar',
+          'H1UserAgentFontSizeInSection',
+          'RequestedSubresourceWithEmbeddedCredentials',
         ].includes(deprecation)) {
       return;
     }

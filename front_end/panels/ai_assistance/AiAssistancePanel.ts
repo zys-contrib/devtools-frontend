@@ -421,7 +421,7 @@ interface ToolbarViewInput {
 export const enum ViewState {
   DISABLED_VIEW = 'disabled-view',
   CHAT_VIEW = 'chat-view',
-  EXPLORE_VIEW = 'explore-view'
+  EXPLORE_VIEW = 'explore-view',
 }
 
 type PanelViewInput = {
@@ -852,7 +852,7 @@ export class AiAssistancePanel extends UI.Panel.Panel {
             activeSidebarMessage: this.#walkthrough.activeSidebarMessage,
             inlineExpandedMessages: this.#walkthrough.inlineExpandedMessages,
           },
-        }
+        },
       };
     }
 

@@ -444,7 +444,7 @@
     TimelineNavigationSettingState: 'DevTools.TimelineNavigationSettingState',
     SyncSetting: 'DevTools.SyncSetting',
     SwatchActivated: 'DevTools.SwatchActivated',
-    BuiltInAiAvailability: 'DevTools.BuiltInAiAvailability'
+    BuiltInAiAvailability: 'DevTools.BuiltInAiAvailability',
     // LINT.ThenChange(/front_end/core/host/InspectorFrontendHostAPI.ts:EnumeratedHistogram)
   };
 
@@ -629,7 +629,7 @@
         blockedByGeo: newConfig.aidaAvailability?.blockedByGeo ?? true,
         blockedByRollout: false,
         disallowLogging: newConfig.aidaAvailability?.disallowLogging ?? true,
-        optIn: false
+        optIn: false,
       };
       const devToolsFreestylerDogfood = {
         enabled: (newConfig.devToolsFreestyler?.enabled && newConfig.aidaAvailability?.enabled) ?? false,
@@ -637,13 +637,13 @@
         aidaTemperature: newConfig.devToolsFreestyler?.temperature ?? 0,
         blockedByAge: newConfig.aidaAvailability?.blockedByAge ?? true,
         blockedByEnterprisePolicy: newConfig.aidaAvailability?.blockedByEnterprisePolicy ?? true,
-        blockedByGeo: newConfig.aidaAvailability?.blockedByGeo ?? true
+        blockedByGeo: newConfig.aidaAvailability?.blockedByGeo ?? true,
       };
       return {
         devToolsConsoleInsights,
         devToolsFreestylerDogfood,
         devToolsVeLogging: newConfig.devToolsVeLogging,
-        isOffTheRecord: newConfig.isOffTheRecord
+        isOffTheRecord: newConfig.isOffTheRecord,
       };
     }
 
@@ -914,13 +914,15 @@
      * @param config
      */
     setDevicesDiscoveryConfig(config) {
-      DevToolsAPI.sendMessageToEmbedder(
-          'setDevicesDiscoveryConfig',
-          [
-            config.discoverUsbDevices, config.portForwardingEnabled, JSON.stringify(config.portForwardingConfig),
-            config.networkDiscoveryEnabled, JSON.stringify(config.networkDiscoveryConfig)
-          ],
-          null);
+      DevToolsAPI.sendMessageToEmbedder('setDevicesDiscoveryConfig',
+                                        [
+                                          config.discoverUsbDevices,
+                                          config.portForwardingEnabled,
+                                          JSON.stringify(config.portForwardingConfig),
+                                          config.networkDiscoveryEnabled,
+                                          JSON.stringify(config.networkDiscoveryConfig),
+                                        ],
+                                        null);
     }
 
     /**
@@ -1152,7 +1154,7 @@
     [0xb3, 'MediaPlayPause'],
     [0xad, 'VolumeMute'],
     [0xae, 'VolumeDown'],
-    [0xaf, 'VolumeUp']
+    [0xaf, 'VolumeUp'],
   ]);
 
   /**
@@ -1217,7 +1219,7 @@
       Object.defineProperty(HTMLSlotElement.prototype, 'select', {
         set(selector) {
           this.name = selector;
-        }
+        },
       });
     }
 

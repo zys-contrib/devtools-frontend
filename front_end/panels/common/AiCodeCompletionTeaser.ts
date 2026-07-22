@@ -157,7 +157,7 @@ export const DEFAULT_VIEW: View = (input, _output, target) => {
             </span>
             ${newBadgeTemplate}
           </div>
-        `, target
+        `, target,
       );
   // clang-format on
 };

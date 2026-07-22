@@ -71,7 +71,7 @@ describeWithEnvironment('ChangesSidebar', () => {
       targetManager,
       workspace,
       debuggerWorkspaceBinding,
-      settings: Common.Settings.Settings.instance()
+      settings: Common.Settings.Settings.instance(),
     });
     Persistence.Persistence.PersistenceImpl.instance({forceNew: true, workspace, breakpointManager});
     Persistence.NetworkPersistenceManager.NetworkPersistenceManager.instance({forceNew: true, workspace});

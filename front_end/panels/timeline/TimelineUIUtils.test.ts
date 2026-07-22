@@ -640,7 +640,7 @@ describeWithEnvironment('TimelineUIUtils', function() {
           value: '1,058.3\xA0ms',
         },
         {title: 'Details', value: '{   "hello": "world"\n}'},
-        {title: undefined, value: '(anonymous) @ localhost:8787/perf-details/app.js:1:12'}
+        {title: undefined, value: '(anonymous) @ localhost:8787/perf-details/app.js:1:12'},
       ]);
     });
 
@@ -770,8 +770,8 @@ describeWithEnvironment('TimelineUIUtils', function() {
         devtoolsObj: {
           ...extensionEntry.devtoolsObj,
           // Note: we do not support this, but bad values can come in via mistakes in user code.
-          properties: [['key', null]]
-        }
+          properties: [['key', null]],
+        },
       };
 
       const details = await Timeline.TimelineUIUtils.TimelineUIUtils.buildTraceEventDetails(
@@ -818,7 +818,7 @@ describeWithEnvironment('TimelineUIUtils', function() {
             {
               title: 'Description',
               value: 'This marks the start of a task',
-            }
+            },
           ],
       );
     });
@@ -1145,7 +1145,7 @@ describeWithEnvironment('TimelineUIUtils', function() {
            {
              title: undefined,
              value:
-                 'connect @ socketsbay.com/test-websockets:314:25\n(anonymous) @ socketsbay.com/test-websockets:130:129'
+                 'connect @ socketsbay.com/test-websockets:314:25\n(anonymous) @ socketsbay.com/test-websockets:130:129',
            },
            // The 2 entries under "Initiator for" are displayed as separate links and in the UI it is obvious they are separate
            {title: 'Initiator for', value: 'Send WebSocket handshake Receive WebSocket handshake'},

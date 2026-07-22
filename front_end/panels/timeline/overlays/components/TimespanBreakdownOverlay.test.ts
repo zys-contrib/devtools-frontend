@@ -9,7 +9,7 @@ import {
   assertScreenshot,
   getCleanTextContentFromElements,
   raf,
-  renderElementIntoDOM
+  renderElementIntoDOM,
 } from '../../../../testing/DOMHelpers.js';
 import {describeWithEnvironment} from '../../../../testing/EnvironmentHelpers.js';
 import {

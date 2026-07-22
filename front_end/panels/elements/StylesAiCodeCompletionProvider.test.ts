@@ -73,7 +73,7 @@ describeWithEnvironment('StylesAiCodeCompletionProvider', () => {
         blockedByAge: false,
         blockedByGeo: false,
         blockedByEnterprisePolicy: false,
-      }
+      },
     });
 
     sinon.stub(Host.AidaClient.HostConfigTracker.instance(), 'pollAidaAvailability').resolves();

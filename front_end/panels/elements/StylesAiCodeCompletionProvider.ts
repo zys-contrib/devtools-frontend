@@ -60,12 +60,12 @@ export class StylesAiCodeCompletionProvider {
     if (this.#aiCodeCompletionConfig.completionContext.stopSequences) {
       stopSequences.push(...this.#aiCodeCompletionConfig.completionContext.stopSequences);
     }
-    this.#aiCodeCompletion = new AiCodeCompletion.AiCodeCompletion.AiCodeCompletion(
-        {
-          aidaClient: this.#aidaClient,
-          serverSideLoggingEnabled: !Root.Runtime.hostConfig.aidaAvailability?.disallowLogging
-        },
-        this.#aiCodeCompletionConfig.panel, undefined, stopSequences);
+    this.#aiCodeCompletion = new AiCodeCompletion.AiCodeCompletion.AiCodeCompletion({
+      aidaClient: this.#aidaClient,
+      serverSideLoggingEnabled: !Root.Runtime.hostConfig.aidaAvailability?.disallowLogging,
+    },
+                                                                                    this.#aiCodeCompletionConfig.panel,
+                                                                                    undefined, stopSequences);
     this.#aiCodeCompletionConfig.onFeatureEnabled();
   }
 

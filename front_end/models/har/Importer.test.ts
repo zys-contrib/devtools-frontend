@@ -463,7 +463,7 @@ describe('HAR Importer', () => {
         eventId: '3',
         eventName: 'message',
         time: 1607978160,
-      }
+      },
     ];
     assert.deepEqual(messages, expected);
   });

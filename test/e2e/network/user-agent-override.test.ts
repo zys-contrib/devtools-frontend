@@ -9,7 +9,7 @@ import {
   selectRequestByName,
   setCacheDisabled,
   setTextFilter,
-  waitForSomeRequestsToAppear
+  waitForSomeRequestsToAppear,
 } from '../helpers/network-helpers.js';
 import type {DevToolsPage} from '../shared/frontend-helper.js';
 

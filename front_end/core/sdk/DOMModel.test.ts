@@ -1280,7 +1280,7 @@ describeWithEnvironment('DOMModel', () => {
                   nodeName: 'span',
                   localName: 'span',
                   nodeValue: '',
-                }]
+                }],
               },
             ],
           },
@@ -1363,7 +1363,7 @@ describeWithEnvironment('DOMModel', () => {
                   nodeName: 'span',
                   localName: 'span',
                   nodeValue: '',
-                }]
+                }],
               },
             ],
           },

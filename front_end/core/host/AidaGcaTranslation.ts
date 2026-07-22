@@ -219,7 +219,7 @@ function inFileEditRequestToSourceFile(request: AIDA.CompletionRequest): GCA.Sou
       {
         content: '',
         isSelected: true,  // Cursor position
-      }
+      },
     ],
   };
   if (request.suffix) {
@@ -481,7 +481,7 @@ export function gcaChunkResponseToAidaChunkResponse(response: GCA.GenerateConten
     const parts = candidate?.content?.parts || [];
     const metadata: AIDA.ResponseMetadata = {
       rpcGlobalId: response.responseId,
-      inferenceOptionMetadata: {modelId: response.modelVersion}
+      inferenceOptionMetadata: {modelId: response.modelVersion},
     };
 
     if (candidate?.citationMetadata?.citations) {

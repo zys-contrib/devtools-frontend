@@ -140,7 +140,7 @@ describe('TextUtils', () => {
             ['123', 5, 1],
             ['hello', 8, 0],
             ['123', 13, 1],
-          ]
+          ],
         },
         {
           testName: 'returns splitted string with match at start',
@@ -149,7 +149,7 @@ describe('TextUtils', () => {
           expected: [
             ['yes', 0, 0],
             [' thank you', 3, -1],
-          ]
+          ],
         },
         {
           testName: 'returns splitted string with match at end',
@@ -158,7 +158,7 @@ describe('TextUtils', () => {
           expected: [
             ['yes thank ', 0, -1],
             ['you', 10, 0],
-          ]
+          ],
         },
         {
           testName: 'returns splitted string avoiding inner match',
@@ -167,7 +167,7 @@ describe('TextUtils', () => {
           expected: [
             ['image: ', 0, -1],
             ['url("red.com")', 7, 0],
-          ]
+          ],
         },
         {
           testName: 'returns input for single regex without match',
@@ -175,7 +175,7 @@ describe('TextUtils', () => {
           regexes: [/something/g],
           expected: [
             ['nothing', 0, -1],
-          ]
+          ],
         },
         {
           testName: 'returns input for multiple regex without match',
@@ -183,7 +183,7 @@ describe('TextUtils', () => {
           regexes: [/something/g, /123/g, /abc/g],
           expected: [
             ['nothing', 0, -1],
-          ]
+          ],
         },
         {
           testName: 'complex case',
@@ -204,8 +204,8 @@ describe('TextUtils', () => {
             [' ', 39, -1],
             ['okay', 40, 1],
             ['. End', 44, -1],
-          ]
-        }
+          ],
+        },
       ];
 
       for (const testCase of splitByRegexTestCases) {

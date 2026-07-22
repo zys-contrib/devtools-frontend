@@ -304,7 +304,7 @@ describe('TracingContext', () => {
     assert.isTrue(tracingContext.nextSubstitution());
     const childTracingContext = tracingContext.substitution({
       match,
-      context: new Elements.PropertyRenderer.RenderingContext(matchedResult.ast, null, new Map(), matchedResult)
+      context: new Elements.PropertyRenderer.RenderingContext(matchedResult.ast, null, new Map(), matchedResult),
     });
     assert.exists(childTracingContext);
     // The var(--c) appears in the longhand position #2.

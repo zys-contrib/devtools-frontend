@@ -83,7 +83,7 @@ export class ScreenshotError extends Error {
     const screenshots: ArtifactGroup = {
       inspectedPage: {filePath: this.saveArtifact(inspectedPageScreenshot)},
       devToolsPage: {filePath: this.saveArtifact(devToolsPageScreenshot)},
-      ...ScreenshotError.saveArtifacts(collectedScreenshots)
+      ...ScreenshotError.saveArtifacts(collectedScreenshots),
     };
     return new ScreenshotError(screenshots, undefined, error);
   }

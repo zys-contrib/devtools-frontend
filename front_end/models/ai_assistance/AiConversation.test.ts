@@ -182,7 +182,7 @@ describe('AiConversation', () => {
 
     const networkRequest = createNetworkRequest({
       url: Platform.DevToolsPath.urlString`https://example.com/test`,
-      documentURL: Platform.DevToolsPath.urlString`https://example.com`
+      documentURL: Platform.DevToolsPath.urlString`https://example.com`,
     });
     const contentData = new TextUtils.ContentData.ContentData('test content', false, 'text/plain');
     sinon.stub(networkRequest, 'requestContentData').resolves(contentData);
@@ -229,7 +229,7 @@ describe('AiConversation', () => {
         {
           explanation: 'Works 3',
         },
-      ]
+      ],
     ]);
 
     const conversation = new AiAssistance.AiConversation.AiConversation({
@@ -241,7 +241,7 @@ describe('AiConversation', () => {
     });
     const networkRequest = createNetworkRequest({
       url: Platform.DevToolsPath.urlString`https://example.com`,
-      documentURL: Platform.DevToolsPath.urlString`https://example.com`
+      documentURL: Platform.DevToolsPath.urlString`https://example.com`,
     });
     sinon.stub(networkRequest, 'requestContentData')
         .resolves(new TextUtils.ContentData.ContentData('test content', false, 'text/plain'));
@@ -444,8 +444,8 @@ describe('AiConversation', () => {
         data: {
           root: {} as SDK.DOMModel.DOMNodeSnapshot,
           title: 'Title' as Platform.UIString.LocalizedString,
-          accessibleRevealLabel: 'Label' as Platform.UIString.LocalizedString
-        }
+          accessibleRevealLabel: 'Label' as Platform.UIString.LocalizedString,
+        },
       }],
     };
 
@@ -554,7 +554,7 @@ describe('AiConversation', () => {
         resourceTreeModel: () => resourceTreeModel,
         unreachableUrl: () => '',
       } as unknown as SDK.ResourceTreeModel.ResourceTreeFrame,
-      type: SDK.ResourceTreeModel.PrimaryPageChangeType.NAVIGATION
+      type: SDK.ResourceTreeModel.PrimaryPageChangeType.NAVIGATION,
     });
 
     // Continue running the generator to completion
@@ -645,7 +645,7 @@ describe('AiConversation', () => {
 
     const networkRequest = createNetworkRequest({
       url: Platform.DevToolsPath.urlString`https://example.com`,
-      documentURL: Platform.DevToolsPath.urlString`https://example.com`
+      documentURL: Platform.DevToolsPath.urlString`https://example.com`,
     });
     sinon.stub(networkRequest, 'requestContentData')
         .resolves(new TextUtils.ContentData.ContentData('test content', false, 'text/plain'));

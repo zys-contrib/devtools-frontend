@@ -97,7 +97,7 @@ export function render(template: unknown, container: HTMLElement|DocumentFragmen
             if (currentListener && 'handleEvent' in currentListener) {
               return currentListener.handleEvent(event);
             }
-          }
+          },
         };
         listenersMap.set(name, newEntry);
         host.addEventListener(name, newEntry.wrapper);

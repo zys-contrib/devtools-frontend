@@ -170,7 +170,7 @@ export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.Cont
             @cancel=${cancel}>
         </devtools-prompt>
       `,
-      inputElementContainer
+      inputElementContainer,
     );
     // clang-format on
   }
@@ -282,7 +282,7 @@ export class XHRBreakpointsSidebarPane extends UI.Widget.VBox implements UI.Cont
           </devtools-checkbox>
         </div>
       `,
-      listItemElement
+      listItemElement,
     );
     // clang-format on
 

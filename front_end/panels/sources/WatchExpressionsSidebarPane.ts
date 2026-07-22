@@ -235,10 +235,10 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
           classes: ['watch-expressions'],
           attributes: {
             jslog: `${VisualLogging.section('sources.watch')}`,
-            'aria-label': i18nString(UIStrings.addWatchExpression)
+            'aria-label': i18nString(UIStrings.addWatchExpression),
           },
-          listeners: {contextmenu: onContextMenu.bind(undefined, undefined)}
-        }
+          listeners: {contextmenu: onContextMenu.bind(undefined, undefined)},
+        },
       });
 };
 
@@ -396,7 +396,7 @@ export class WatchExpressionsSidebarPane extends UI.Widget.VBox implements UI.Ac
           await e.result?.populateChildrenIfNeeded();
           this.requestUpdate();
         }
-      }
+      },
     },
                {}, this.contentElement);
   }

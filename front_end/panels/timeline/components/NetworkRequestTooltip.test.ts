@@ -30,9 +30,9 @@ describeWithEnvironment('NetworkRequestTooltip', () => {
           syntheticData: {sendStartTime: 100},
           url: 'https://example.com',
           mimeType: Protocol.Network.ResourceType.Document,
-          redirects: []
-        }
-      }
+          redirects: [],
+        },
+      },
     } as unknown as Trace.Types.Events.SyntheticNetworkRequest;
     tooltip.entityMapper = sinon.createStubInstance(Trace.EntityMapper.EntityMapper);
     await tooltip.updateComplete;

@@ -907,7 +907,7 @@ export class DebuggerModel extends SDKModel<EventTypes> {
         {
           callFrames: [],
           parent: stackTraceOrPausedDetails.asyncStackTrace,
-          parentId: stackTraceOrPausedDetails.asyncStackTraceId
+          parentId: stackTraceOrPausedDetails.asyncStackTraceId,
         } :
         stackTraceOrPausedDetails;
     let target = this.target();

@@ -711,7 +711,7 @@ export class SensorsView extends UI.Widget.VBox {
           </div>
         </div>
       `,
-      orientationGroup
+      orientationGroup,
     );
     // clang-format on
 

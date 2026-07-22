@@ -11,7 +11,7 @@ import type * as Platform from '../../core/platform/platform.js';
 import {
   deinitializeGlobalVars,
   describeWithEnvironment,
-  initializeGlobalVars
+  initializeGlobalVars,
 } from '../../testing/EnvironmentHelpers.js';
 import * as ThemeSupport from '../../ui/legacy/theme_support/theme_support.js';
 

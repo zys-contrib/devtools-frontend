@@ -12,7 +12,7 @@ import {
   type ConversationContext,
   type MultimodalInputType,
   type RequestOptions,
-  ResponseType
+  ResponseType,
 } from './agents/AiAgent.js';
 import {type ExecuteJsAgentOptions, executeJsCode} from './agents/ExecuteJavascript.js';
 import {ChangeManager} from './ChangeManager.js';

@@ -89,28 +89,27 @@ const DEFAULT_VIEW: View = (input, _output, target) => {
     displayMode: IssueCounter.IssueCounter.DisplayMode.ONLY_MOST_IMPORTANT,
   };
 
-  render(
-      html`<div class="status-buttons"
+  render(html`<div class="status-buttons"
          >${
-          errors + warnings ? html`<icon-button
+             errors + warnings ? html`<icon-button
             .data=${iconData}
             title=${consoleTitle}
             class=${'small'}
             jslog=${VisualLogging.counter('console').track({
-            click: true
-          })}
+               click: true,
+             })}
          ></icon-button>` :
-                              nothing}${
-          issues ? html`<devtools-issue-counter
+                                 nothing}${
+             issues ? html`<devtools-issue-counter
             class=${'main-toolbar'}
             title=${issuesTitle}
             .data=${issueCounterData}
             jslog=${VisualLogging.counter('issue').track({
-            click: true
-          })}
+               click: true,
+             })}
          ></devtools-issue-counter>` :
-                   nothing}</div>`,
-      target);
+                      nothing}</div>`,
+         target);
 };
 
 export class WarningErrorCounterWidget extends UI.Widget.Widget {

@@ -751,7 +751,7 @@ describe('Recorder', function() {
             {
               type: 'waitForExpression' as StepType.WaitForExpression,
               expression: 'document.querySelector("div")?.innerText === "true"',
-            }
+            },
           ],
         },
         undefined,

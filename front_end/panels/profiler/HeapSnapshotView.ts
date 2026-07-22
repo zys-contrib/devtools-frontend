@@ -642,12 +642,12 @@ export class HeapSnapshotView extends UI.View.SimpleView implements DataDisplayD
       {
         value: otherJSObjectsSize,
         color: 'var(--app-color-other-js-objects)',
-        title: i18nString(UIStrings.otherJSObjects)
+        title: i18nString(UIStrings.otherJSObjects),
       },
       {
         value: native.total - native.typedArrays,
         color: 'var(--app-color-other-non-js-objects)',
-        title: i18nString(UIStrings.otherNonJSObjects)
+        title: i18nString(UIStrings.otherNonJSObjects),
       },
     ];
     this.statisticsView.setTotalAndRecords(statistics.total, records);
@@ -869,7 +869,7 @@ export class HeapSnapshotView extends UI.View.SimpleView implements DataDisplayD
       {uiName: i18nString(UIStrings.duplicatedStrings), filterName: 'duplicatedStrings'},
       {
         uiName: i18nString(UIStrings.objectsRetainedByDetachedDomNodes),
-        filterName: 'objectsRetainedByDetachedDomNodes'
+        filterName: 'objectsRetainedByDetachedDomNodes',
       },
       {uiName: i18nString(UIStrings.objectsRetainedByContexts), filterName: 'objectsRetainedByContexts'},
       {uiName: i18nString(UIStrings.objectsRetainedByConsole), filterName: 'objectsRetainedByConsole'},

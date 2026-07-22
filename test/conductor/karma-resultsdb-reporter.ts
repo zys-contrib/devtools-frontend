@@ -102,7 +102,7 @@ export const ResultsDBReporter = function(
       status,
       expected,
       summaryHtml,
-      ...ResultsDb.buildTestProperties(exactTestId, coarseName, fineName, caseName)
+      ...ResultsDb.buildTestProperties(exactTestId, coarseName, fineName, caseName),
     };
 
     if (result.log?.[0]?.startsWith('Error: ScreenshotError')) {

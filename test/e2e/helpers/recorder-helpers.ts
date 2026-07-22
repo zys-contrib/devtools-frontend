@@ -210,7 +210,7 @@ export const processAndVerifyBaseRecording = (
           deviceScaleFactor: 1,
           isMobile: false,
           hasTouch: false,
-          isLandscape: false
+          isLandscape: false,
         },
     );
     assert.deepEqual(
@@ -222,7 +222,7 @@ export const processAndVerifyBaseRecording = (
             type: 'navigation',
             url: `https://localhost:<test-port>/test/e2e/resources/${resource}`,
             title: '',
-          }]
+          }],
         },
     );
 

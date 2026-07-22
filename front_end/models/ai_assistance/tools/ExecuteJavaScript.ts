@@ -4,7 +4,7 @@
 
 import * as Host from '../../../core/host/host.js';
 import * as Root from '../../../core/root/root.js';
-import type {FunctionCallHandlerResult, FunctionHandlerOptions,} from '../agents/AiAgent.js';
+import type {FunctionCallHandlerResult, FunctionHandlerOptions} from '../agents/AiAgent.js';
 import {JavascriptExecutor} from '../agents/ExecuteJavascript.js';
 
 import {

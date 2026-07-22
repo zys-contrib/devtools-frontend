@@ -171,7 +171,7 @@ export class ConsolePrompt extends Common.ObjectWrapper.eventMixin<EventTypes, t
       this.aiCodeCompletionProvider.editorInitialized(this.editor);
       this.editor.editor.dispatch({
         effects: TextEditor.AiCodeCompletionProvider.setAiCodeCompletionTeaserMode.of(
-            TextEditor.AiCodeCompletionProvider.AiCodeCompletionTeaserMode.ONLY_SHOW_ON_EMPTY)
+            TextEditor.AiCodeCompletionProvider.AiCodeCompletionTeaserMode.ONLY_SHOW_ON_EMPTY),
       });
     }
 
@@ -391,7 +391,7 @@ export class ConsolePrompt extends Common.ObjectWrapper.eventMixin<EventTypes, t
         if (teaserMode !== TextEditor.AiCodeCompletionProvider.AiCodeCompletionTeaserMode.OFF) {
           this.editor.editor.dispatch({
             effects: TextEditor.AiCodeCompletionProvider.setAiCodeCompletionTeaserMode.of(
-                TextEditor.AiCodeCompletionProvider.AiCodeCompletionTeaserMode.OFF)
+                TextEditor.AiCodeCompletionProvider.AiCodeCompletionTeaserMode.OFF),
           });
         }
       }

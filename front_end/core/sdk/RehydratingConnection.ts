@@ -328,7 +328,7 @@ export class RehydratingSession extends RehydratingSessionBase {
           error: {
             message: `Command ${data.method} not implemented in RehydratingSession.`,
             code: ProtocolClient.CDPConnection.CDPErrorStatus.DEVTOOLS_STUB_ERROR,
-          }
+          },
         });
         break;
     }

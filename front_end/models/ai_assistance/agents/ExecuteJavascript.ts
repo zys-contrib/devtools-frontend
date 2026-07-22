@@ -12,7 +12,7 @@ import {debugLog} from '../debug.js';
 import {EvaluateAction, formatError, SideEffectError} from '../EvaluateAction.js';
 import {FREESTYLER_WORLD_NAME} from '../injected.js';
 
-import type {AgentOptions as BaseAgentOptions, FunctionCallHandlerResult, FunctionHandlerOptions,} from './AiAgent.js';
+import type {AgentOptions as BaseAgentOptions, FunctionCallHandlerResult, FunctionHandlerOptions} from './AiAgent.js';
 
 const lockedString = i18n.i18n.lockedString;
 

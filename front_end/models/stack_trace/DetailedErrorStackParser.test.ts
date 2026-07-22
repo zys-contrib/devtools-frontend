@@ -258,8 +258,8 @@ describe('DetailedErrorStackParser', () => {
             scriptId: '16' as Protocol.Runtime.ScriptId,
             lineNumber: 26,
             columnNumber: 28,
-          }
-        ]
+          },
+        ],
       };
 
       StackTraceImpl.DetailedErrorStackParser.augmentRawFramesWithScriptIds(rawFrames, protocolStackTrace);
@@ -293,8 +293,8 @@ describe('DetailedErrorStackParser', () => {
             scriptId: '20' as Protocol.Runtime.ScriptId,
             lineNumber: 0,
             columnNumber: 33,  // 0x21
-          }
-        ]
+          },
+        ],
       };
 
       StackTraceImpl.DetailedErrorStackParser.augmentRawFramesWithScriptIds(rawFrames, protocolStackTrace);

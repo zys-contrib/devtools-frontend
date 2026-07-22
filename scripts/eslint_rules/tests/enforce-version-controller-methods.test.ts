@@ -36,7 +36,7 @@ new RuleTester().run('enforce-version-controller-methods', rule, {
         }
       `,
       filename: 'front_end/core/common/OtherClass.ts',
-    }
+    },
   ],
   invalid: [
     {
@@ -53,7 +53,7 @@ new RuleTester().run('enforce-version-controller-methods', rule, {
           data: {
             currentVersion: 2,
             methodCount: 1,
-          }
+          },
         },
       ],
     },
@@ -73,7 +73,7 @@ new RuleTester().run('enforce-version-controller-methods', rule, {
           data: {
             expectedFrom: 1,
             expectedTo: 2,
-          }
+          },
         },
       ],
     },
@@ -93,7 +93,7 @@ new RuleTester().run('enforce-version-controller-methods', rule, {
           data: {
             currentVersion: 2,
             methodCount: 3,
-          }
+          },
         },
       ],
     },

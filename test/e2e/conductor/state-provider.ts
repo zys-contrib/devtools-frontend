@@ -13,7 +13,7 @@ import {
   type BrowserSettings,
   type BrowserWrapper,
   DEFAULT_BROWSER_SETTINGS,
-  Launcher
+  Launcher,
 } from '../shared/browser-helper.js';
 import {DEFAULT_DEVTOOLS_SETTINGS, setupDevToolsPage} from '../shared/frontend-helper.js';
 import {setupInspectedPage} from '../shared/target-helper.js';
@@ -22,7 +22,7 @@ import type {TestStateProvider} from './mocha-interface-helpers.js';
 
 const DEFAULT_SETTINGS = {
   ...DEFAULT_BROWSER_SETTINGS,
-  ...DEFAULT_DEVTOOLS_SETTINGS
+  ...DEFAULT_DEVTOOLS_SETTINGS,
 };
 
 export interface E2EState extends E2E.State {

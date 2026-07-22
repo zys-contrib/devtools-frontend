@@ -402,9 +402,9 @@ export class ContextSelectionAgent extends AiAgent<never> {
         return {
           context: PerformanceTraceContext.fromParsedTrace(result),
           description: 'User recorded a performance trace',
-          widgets: [{name: 'PERFORMANCE_TRACE', data: {parsedTrace: result}}]
+          widgets: [{name: 'PERFORMANCE_TRACE', data: {parsedTrace: result}}],
         };
-      }
+      },
     });
 
     type LHSupportedRunMode = Extract<LHModel.RunTypes.RunMode, 'navigation'|'snapshot'>;
@@ -426,7 +426,7 @@ export class ContextSelectionAgent extends AiAgent<never> {
             description:
                 'The mode to run Lighthouse in. Your ONLY options are "navigation" or "snapshot". You should determine this based on the user\'s question. If the user is asking specifically about accessibility, you can run in "snapshot" mode which avoids reloading the page. If the user asks for a full Lighthouse report, you should run in "navigation" mode which is the default. These are the only options you can pass.',
             nullable: false,
-          }
+          },
         },
       },
       displayInfoFromArgs: args => {
@@ -454,7 +454,7 @@ export class ContextSelectionAgent extends AiAgent<never> {
           description: 'User has selected a Lighthouse report',
           widgets: [{name: 'LIGHTHOUSE_REPORT', data: {report: result}}],
         };
-      }
+      },
     });
 
     this.declareFunction<Record<string, never>>('inspectDom', {

@@ -17,7 +17,7 @@ import {
 import {
   deinitializeGlobalVars,
   describeWithEnvironment,
-  initializeGlobalVars
+  initializeGlobalVars,
 } from '../../../testing/EnvironmentHelpers.js';
 
 import * as TimelineComponents from './components.js';

@@ -124,7 +124,7 @@ describe('The Network Request view', () => {
     // This stylesheets violates the iframe csp as well as the devtools csp
     const styleSrcErrors = [
       expectError(`Loading the stylesheet '${stylesheet}' violates`),
-      expectError(`Loading the stylesheet '${stylesheet}' violates`)
+      expectError(`Loading the stylesheet '${stylesheet}' violates`),
     ];
     const networkView = await devToolsPage.waitFor('.network-item-view');
     await devToolsPage.click('[aria-label=Preview].tabbed-pane-header-tab', {

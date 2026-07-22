@@ -58,7 +58,7 @@ function stubResolveFunctionCode(formatter: PerformanceTraceFormatter.Performanc
             uiSourceCode: {
               url() {
                 return url;
-              }
+              },
             } as Workspace.UISourceCode.UISourceCode,
             range,
             name: '',

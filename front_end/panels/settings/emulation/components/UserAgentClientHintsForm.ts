@@ -236,7 +236,7 @@ const DEFAULT_METADATA = {
   architecture: '',
   model: '',
   mobile: false,
-  formFactors: []
+  formFactors: [],
 };
 
 export const ALL_PROTOCOL_FORM_FACTORS: string[] = [
@@ -797,7 +797,7 @@ export class UserAgentClientHintsForm extends HTMLElement {
             .checked=${isChecked}
             value=${ffValue}
             jslog=${VisualLogging.toggle(Platform.StringUtilities.toKebabCase(ffValue)).track({
-        click: true
+        click: true,
       })}
             @change=${
           (e: Event) => this.#handleFormFactorCheckboxChange(ffValue, (e.target as HTMLInputElement).checked)}

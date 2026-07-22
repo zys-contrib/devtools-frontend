@@ -23,7 +23,7 @@ function makeFakeNetworkConditions(index: number): SDK.NetworkManager.Conditions
     upload: -1,
     latency: 0,
     packetLoss: 0,
-    packetReordering: false
+    packetReordering: false,
   };
 }
 

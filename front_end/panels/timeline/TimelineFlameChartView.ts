@@ -41,7 +41,7 @@ import {
   selectionIsEvent,
   selectionIsRange,
   selectionsEqual,
-  type TimelineSelection
+  type TimelineSelection,
 } from './TimelineSelection.js';
 import {AggregatedTimelineTreeView, TimelineTreeView} from './TimelineTreeView.js';
 import type {TimelineMarkerStyle} from './TimelineUIUtils.js';
@@ -244,7 +244,7 @@ export class TimelineFlameChartView extends Common.ObjectWrapper.eventMixin<Even
       selectedElementOutline: false,
       tooltipElement: this.#tooltipElement,
       useOverlaysForCursorRuler: true,
-      canvasVELogContext: 'timeline.flamechart.main'
+      canvasVELogContext: 'timeline.flamechart.main',
     });
     this.mainFlameChart.alwaysShowVerticalScroll();
     this.mainFlameChart.enableRuler(false);
@@ -262,7 +262,7 @@ export class TimelineFlameChartView extends Common.ObjectWrapper.eventMixin<Even
       selectedElementOutline: false,
       tooltipElement: this.#tooltipElement,
       useOverlaysForCursorRuler: true,
-      canvasVELogContext: 'timeline.flamechart.network'
+      canvasVELogContext: 'timeline.flamechart.network',
     });
     this.networkFlameChart.alwaysShowVerticalScroll();
     this.networkFlameChart.addEventListener(PerfUI.FlameChart.Events.LATEST_DRAW_DIMENSIONS, dimensions => {
@@ -505,7 +505,7 @@ export class TimelineFlameChartView extends Common.ObjectWrapper.eventMixin<Even
       mainChartIndices: [],
       networkChartIndices: [],
       inclusive: opts.inclusive,
-      outline: opts.outline
+      outline: opts.outline,
     };
     this.#flameChartDimmers.push(dimmer);
     return dimmer;

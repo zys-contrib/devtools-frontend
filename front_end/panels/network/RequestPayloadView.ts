@@ -167,7 +167,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
             @contextmenu=${copyValueContextmenu(
                 i18nString(UIStrings.copyValue),
                 () => decodeURIComponent(param.value),
-                'copy-value'
+                'copy-value',
             )}>
           ${param.name !== '' ? html`
             ${RequestPayloadView.formatParameter(param.name, 'payload-name', decodeParameters)}
@@ -175,7 +175,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
           ` : RequestPayloadView.formatParameter(
               i18nString(UIStrings.empty),
               'empty-request-payload',
-              decodeParameters
+              decodeParameters,
           )}
         </li>
       `;
@@ -255,7 +255,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
               {
                 decode: input.decodeQueryParameters,
                 toggleDecode: () => input.setDecodeQueryParameters(!input.decodeQueryParameters),
-              }
+              },
           )}
           @expanded=${(e: UI.TreeOutline.TreeViewElement.ExpandEvent) =>
             queryStringExpandedSetting.set(e.detail.expanded)}
@@ -287,7 +287,7 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
               {
                 decode: input.decodeFormParameters,
                 toggleDecode: () => input.setDecodeFormParameters(!input.decodeFormParameters),
-              }
+              },
           )}
           @expanded=${(e: UI.TreeOutline.TreeViewElement.ExpandEvent) => formDataExpandedSetting.set(e.detail.expanded)}
           ?open=${formDataExpandedSetting.get()}

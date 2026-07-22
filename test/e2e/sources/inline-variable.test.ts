@@ -31,16 +31,24 @@ describe('Sources Tab', function() {
       ['a = {k: 1}', 'b = (5) [1, 2, 3, 4, 5]', 'c = (100) [empty × 10, 1, empty × 89]'],
       ['a = {k: 2}', 'b = (5) [1, 2, 3, 4, 5]', 'c = (100) [empty × 10, 1, empty × 89]', 'a = {k: 2}'],
       [
-        'a = {k: 2, l: Window}', 'b = (5) [1, 2, 3, 4, 5]', 'c = (100) [empty × 10, 1, empty × 89]',
-        'a = {k: 2, l: Window}'
+        'a = {k: 2, l: Window}',
+        'b = (5) [1, 2, 3, 4, 5]',
+        'c = (100) [empty × 10, 1, empty × 89]',
+        'a = {k: 2, l: Window}',
       ],
       [
-        'a = {k: 2, l: Window}', 'b = (5) [1, 3, 3, 4, 5]', 'c = (100) [empty × 10, 1, empty × 89]',
-        'a = {k: 2, l: Window}', 'b = (5) [1, 3, 3, 4, 5]'
+        'a = {k: 2, l: Window}',
+        'b = (5) [1, 3, 3, 4, 5]',
+        'c = (100) [empty × 10, 1, empty × 89]',
+        'a = {k: 2, l: Window}',
+        'b = (5) [1, 3, 3, 4, 5]',
       ],
       [
-        'a = {k: 2, l: Window}', 'b = (5) [1, 3, body, 4, 5]', 'c = (100) [empty × 10, 1, empty × 89]',
-        'a = {k: 2, l: Window}', 'b = (5) [1, 3, body, 4, 5]'
+        'a = {k: 2, l: Window}',
+        'b = (5) [1, 3, body, 4, 5]',
+        'c = (100) [empty × 10, 1, empty × 89]',
+        'a = {k: 2, l: Window}',
+        'b = (5) [1, 3, body, 4, 5]',
       ],
     ];
 

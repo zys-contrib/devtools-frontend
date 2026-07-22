@@ -16,14 +16,14 @@ import * as Workspace from '../../models/workspace/workspace.js';
 import {
   findMenuItemWithLabel,
   getContextMenuForElement,
-  getMenuForToolbarButton
+  getMenuForToolbarButton,
 } from '../../testing/ContextMenuHelpers.js';
 import {assertScreenshot, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {
   createTarget,
   deinitializeGlobalVars,
   initializeGlobalVars,
-  updateHostConfig
+  updateHostConfig,
 } from '../../testing/EnvironmentHelpers.js';
 import {StubStackTrace} from '../../testing/StackTraceHelpers.js';
 import {createViewFunctionStub} from '../../testing/ViewFunctionHelpers.js';
@@ -35,11 +35,10 @@ import * as Application from './application.js';
 
 const {DEFAULT_VIEW, WebMCPView, filterToolCalls} = Application.WebMCPView;
 
-function createTool(
-    name: string, description: string, frameId: Protocol.Page.FrameId, target: SDK.Target.Target,
-    backendNodeId?: Protocol.DOM.BackendNodeId, inputSchema: unknown = {
-      type: 'object'
-    }): WebMCP.WebMCPModel.Tool {
+function createTool(name: string, description: string, frameId: Protocol.Page.FrameId, target: SDK.Target.Target,
+                    backendNodeId?: Protocol.DOM.BackendNodeId, inputSchema: unknown = {
+                      type: 'object',
+                    }): WebMCP.WebMCPModel.Tool {
   return new WebMCP.WebMCPModel.Tool({name, description, inputSchema, frameId, backendNodeId}, target);
 }
 const createDefaultViewInput = (): Application.WebMCPView.ViewInput => {
@@ -342,7 +341,7 @@ describe('WebMCPView (View)', () => {
 
     const tools = [
       createTool('calculator', 'Calculates math expressions', 'frame1' as Protocol.Page.FrameId, sdkTarget),
-      createTool('weather', 'Gets the current weather', 'frame1' as Protocol.Page.FrameId, sdkTarget)
+      createTool('weather', 'Gets the current weather', 'frame1' as Protocol.Page.FrameId, sdkTarget),
     ];
 
     DEFAULT_VIEW(
@@ -395,7 +394,7 @@ describe('WebMCPView (View)', () => {
     renderElementIntoDOM(target, {includeCommonStyles: true});
     const tools = [
       createTool('tool1', 'desc1', 'frame1' as Protocol.Page.FrameId, sdkTarget),
-      createTool('tool2', 'desc2', 'frame1' as Protocol.Page.FrameId, sdkTarget)
+      createTool('tool2', 'desc2', 'frame1' as Protocol.Page.FrameId, sdkTarget),
     ];
     DEFAULT_VIEW(
         {
@@ -420,7 +419,7 @@ describe('WebMCPView (View)', () => {
     renderElementIntoDOM(target, {includeCommonStyles: true});
     const tools = [
       createTool('tool1', 'desc1', 'frame1' as Protocol.Page.FrameId, sdkTarget),
-      createTool('tool2', 'desc2', 'frame1' as Protocol.Page.FrameId, sdkTarget)
+      createTool('tool2', 'desc2', 'frame1' as Protocol.Page.FrameId, sdkTarget),
     ];
     DEFAULT_VIEW(
         {
@@ -649,15 +648,15 @@ describe('WebMCPView Presenter', () => {
           name: 'b-tool',
           description: 'desc1',
           inputSchema: {type: 'object'},
-          frameId: 'frame1' as Protocol.Page.FrameId
+          frameId: 'frame1' as Protocol.Page.FrameId,
         },
         {
           name: 'a-tool',
           description: 'desc2',
           inputSchema: {type: 'object'},
-          frameId: 'frame1' as Protocol.Page.FrameId
-        }
-      ]
+          frameId: 'frame1' as Protocol.Page.FrameId,
+        },
+      ],
     });
     const input = await viewStub.nextInput;
 
@@ -672,7 +671,7 @@ describe('WebMCPView Presenter', () => {
       name: 'tool1',
       description: 'desc1',
       inputSchema: {type: 'object'},
-      frameId: 'frame1' as Protocol.Page.FrameId
+      frameId: 'frame1' as Protocol.Page.FrameId,
     };
     model.toolsAdded({tools: [toolProtocol]});
     const input = await viewStub.nextInput;
@@ -689,7 +688,7 @@ describe('WebMCPView Presenter', () => {
       name: 'tool1',
       description: 'desc1',
       inputSchema: {type: 'object'},
-      frameId: 'frame1' as Protocol.Page.FrameId
+      frameId: 'frame1' as Protocol.Page.FrameId,
     };
     model.toolsAdded({tools: [toolProtocol]});
     const input = await viewStub.nextInput;
@@ -707,7 +706,7 @@ describe('WebMCPView Presenter', () => {
       name: 'tool1',
       description: 'desc1',
       inputSchema: {type: 'object'},
-      frameId: 'frame1' as Protocol.Page.FrameId
+      frameId: 'frame1' as Protocol.Page.FrameId,
     };
     model.toolsAdded({tools: [toolProtocol]});
     const input = await viewStub.nextInput;
@@ -723,7 +722,7 @@ describe('WebMCPView Presenter', () => {
       data: {
         command: 'tool1',
         parameters: {arg1: 'value'},
-      } as ProtocolMonitor.JSONEditor.Command
+      } as ProtocolMonitor.JSONEditor.Command,
     });
     sinon.assert.calledWith(
         invokeStub, {toolName: 'tool1', frameId: 'frame1' as Protocol.Page.FrameId, input: {arg1: 'value'}});
@@ -732,7 +731,7 @@ describe('WebMCPView Presenter', () => {
     nextInput.onRunTool({
       data: {
         command: 'tool1',
-      } as ProtocolMonitor.JSONEditor.Command
+      } as ProtocolMonitor.JSONEditor.Command,
     });
     sinon.assert.calledWith(invokeStub, {toolName: 'tool1', frameId: 'frame1' as Protocol.Page.FrameId, input: {}});
   });
@@ -742,7 +741,7 @@ describe('WebMCPView Presenter', () => {
       name: 'tool1',
       description: 'desc1',
       inputSchema: {type: 'object'},
-      frameId: 'frame1' as Protocol.Page.FrameId
+      frameId: 'frame1' as Protocol.Page.FrameId,
     };
     model.toolsAdded({tools: [tool]});
     await viewStub.nextInput;
@@ -759,7 +758,7 @@ describe('WebMCPView Presenter', () => {
       name: 'tool1',
       description: 'desc1',
       inputSchema: {type: 'object'},
-      frameId: 'frame1' as Protocol.Page.FrameId
+      frameId: 'frame1' as Protocol.Page.FrameId,
     };
     model.toolsAdded({tools: [toolProtocol]});
     const input = await viewStub.nextInput;
@@ -812,7 +811,7 @@ describe('WebMCPView Presenter', () => {
         name: 'tool1',
         description: 'desc1',
         inputSchema: {type: 'object', properties: {arg1: {type: 'string'}}},
-        frameId: 'frame1' as Protocol.Page.FrameId
+        frameId: 'frame1' as Protocol.Page.FrameId,
       };
       model.toolsAdded({tools: [toolProtocol]});
       const input = await viewStub.nextInput;
@@ -835,7 +834,7 @@ describe('WebMCPView Presenter', () => {
         name: 'tool1',
         description: 'desc1',
         inputSchema: {type: 'object'},
-        frameId: 'frame1' as Protocol.Page.FrameId
+        frameId: 'frame1' as Protocol.Page.FrameId,
       };
       model.toolsAdded({tools: [toolProtocol]});
       const input = await viewStub.nextInput;
@@ -885,16 +884,16 @@ describe('filterToolCalls', () => {
       invocationId: '2',
       tool: tools[1],
       input: '{"path": "/tmp/test.txt"}',
-      result: new WebMCP.WebMCPModel.Result(
-          Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined, undefined),
+      result: new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Completed, 'File content here', undefined,
+                                            undefined),
       cancel: () => {},
     },
     {
       invocationId: '3',
       tool: tools[2],
       input: '{"path": "/root/secret.txt"}',
-      result: new WebMCP.WebMCPModel.Result(
-          Protocol.WebMCP.InvocationStatus.Error, undefined, 'Permission denied', undefined),
+      result: new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Error, undefined, 'Permission denied',
+                                            undefined),
       cancel: () => {},
     },
     {
@@ -907,8 +906,8 @@ describe('filterToolCalls', () => {
       invocationId: '5',
       tool: tools[3],
       input: '{}',
-      result: new WebMCP.WebMCPModel.Result(
-          Protocol.WebMCP.InvocationStatus.Completed, 'Declarative success content', undefined, undefined),
+      result: new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Completed, 'Declarative success content',
+                                            undefined, undefined),
       cancel: () => {},
     },
     {
@@ -917,7 +916,7 @@ describe('filterToolCalls', () => {
       input: '{}',
       result: new WebMCP.WebMCPModel.Result(Protocol.WebMCP.InvocationStatus.Canceled, undefined, undefined, undefined),
       cancel: () => {},
-    }
+    },
   ];
 
   it('filters by name/text', () => {

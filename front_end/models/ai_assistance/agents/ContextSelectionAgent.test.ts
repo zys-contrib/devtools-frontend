@@ -15,7 +15,7 @@ import {
   deinitializeGlobalVars,
   restoreUserAgentForTesting,
   setUserAgentForTesting,
-  updateHostConfig
+  updateHostConfig,
 } from '../../../testing/EnvironmentHelpers.js';
 import {setupLocaleHooks} from '../../../testing/LocaleHelpers.js';
 import {setupSettingsHooks} from '../../../testing/SettingsHelpers.js';
@@ -147,7 +147,7 @@ describe('ContextSelectionAgent', function() {
           }],
           [{
             explanation: 'Performance recording completed',
-          }]
+          }],
         ]),
         performanceRecordAndReload,
       });
@@ -716,7 +716,7 @@ describe('ContextSelectionAgent', function() {
           [{explanation: 'Done'}],
         ]),
         onInspectElement,
-        confirmSideEffectForTest: sinon.stub().returns(sideEffectConfirmationPromise)
+        confirmSideEffectForTest: sinon.stub().returns(sideEffectConfirmationPromise),
       });
 
       const responses = await Array.fromAsync(agent.run('test', {selected: null}));

@@ -662,7 +662,7 @@ class ModelData {
           uiSourceCode: uiLocation.uiSourceCode,
           name: functionName,
           line: uiLocation.lineNumber,
-          column: uiLocation.columnNumber ?? -1
+          column: uiLocation.columnNumber ?? -1,
         }]);
         return;
       }

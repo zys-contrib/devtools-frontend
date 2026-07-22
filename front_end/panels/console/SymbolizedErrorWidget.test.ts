@@ -547,7 +547,7 @@ Caused by: Error: cause error
           name: 'window.triggerIgnoredError',
           url: 'http://example.com/node_modules/my-lib/index.js',
           line: 8,
-          column: 6
+          column: 6,
         },
         {name: '', url: 'http://example.com/error-demo.html', line: 59, column: 11},
         {name: '', url: 'http://example.com/error-demo.html', line: 221, column: 2},
@@ -887,7 +887,7 @@ Caused by: Error: Root cause inside eval in third-party
           name: 'StackTest.staticPublicMethod',
           url: 'http://example.com/class_method_source_map.js',
           line: 11,
-          column: 21
+          column: 21,
         },
         {name: 'get #c', url: 'http://example.com/class_method_source_map.js', line: 15, column: 21},
         {name: 'get publicAccessor', url: 'http://example.com/class_method_source_map.js', line: 18, column: 16},

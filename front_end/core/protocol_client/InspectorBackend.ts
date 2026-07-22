@@ -14,7 +14,7 @@ import {
   type CDPEvent,
   type Command,
   type CommandParams,
-  type Event
+  type Event,
 } from './CDPConnection.js';
 import {ConnectionTransport} from './ConnectionTransport.js';
 import {DevToolsCDPConnection} from './DevToolsCDPConnection.js';

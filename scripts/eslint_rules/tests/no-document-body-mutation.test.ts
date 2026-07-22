@@ -23,13 +23,13 @@ new RuleTester().run('no-document-body-mutation', rule, {
       code: 'widget.show(document.body);',
       filename: 'front_end/panels/foo/foo.test.ts',
       errors: [{messageId: 'invalidShowUsage'}],
-      output: 'renderElementIntoDOM(widget);'
+      output: 'renderElementIntoDOM(widget);',
     },
     {
       code: 'networkPanel.show(document.body);',
       filename: 'front_end/panels/foo/foo.test.ts',
       errors: [{messageId: 'invalidShowUsage'}],
-      output: 'renderElementIntoDOM(networkPanel);'
+      output: 'renderElementIntoDOM(networkPanel);',
     },
     {
       code: 'document.body.appendChild(foo)',

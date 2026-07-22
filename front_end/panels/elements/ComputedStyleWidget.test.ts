@@ -125,10 +125,9 @@ describe('ComputedStyleWidget', () => {
         node,
         propertyState: SDK.CSSMatchedStyles.PropertyState.ACTIVE,
         nodeStyles: [
-          new SDK.CSSStyleDeclaration.CSSStyleDeclaration(
-              {} as SDK.CSSModel.CSSModel, parentRule ?? null, stubCSSStyle, cssStyleDeclarationType,
-              cssStyleDeclarationName),
-        ]
+          new SDK.CSSStyleDeclaration.CSSStyleDeclaration({} as SDK.CSSModel.CSSModel, parentRule ?? null, stubCSSStyle,
+                                                          cssStyleDeclarationType, cssStyleDeclarationName),
+        ],
       });
 
       const computedStyleModel = new ComputedStyle.ComputedStyleModel.ComputedStyleModel(node);

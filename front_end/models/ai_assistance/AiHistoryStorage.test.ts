@@ -307,7 +307,7 @@ describe('AiHistoryStorage', () => {
             id: 'image-id2',
             data: 'imageInput',
             mimeType: 'image/jpeg',
-          }
+          },
         ],
     );
   });
@@ -507,7 +507,7 @@ describe('AiHistoryStorage', () => {
           data: [{
             type: AiAssistance.AiAgent.ResponseType.USER_QUERY,
             query: 'this is less than 80',
-          }]
+          }],
         });
         assert.strictEqual(conversation.title, 'this is less than 80');
       });
@@ -520,7 +520,7 @@ describe('AiHistoryStorage', () => {
                type: AiAssistance.AiAgent.ResponseType.USER_QUERY,
                query:
                    'this is more than 80 characters because I\'m just going to keep typing words and words and words until it\'s really, really long, see?',
-             }]
+             }],
            });
 
            assert.strictEqual(
@@ -537,7 +537,7 @@ describe('AiHistoryStorage', () => {
           inlineData: {
             data: '1',
             mimeType: 'image/jpeg',
-          }
+          },
         },
         imageId: 'image-id1',
       };
@@ -548,7 +548,7 @@ describe('AiHistoryStorage', () => {
           inlineData: {
             data: '2',
             mimeType: 'image/jpeg',
-          }
+          },
         },
         imageId: 'image-id2',
       };
@@ -640,7 +640,7 @@ describe('AiHistoryStorage', () => {
                              inlineData: {
                                data: AiAssistance.AiConversation.NOT_FOUND_IMAGE_DATA,
                                mimeType: 'image/jpeg',
-                             }
+                             },
                            },
                            imageId: 'image-id1',
                          }]);
@@ -651,7 +651,7 @@ describe('AiHistoryStorage', () => {
                              inlineData: {
                                data: '2',
                                mimeType: 'image/jpeg',
-                             }
+                             },
                            },
                            imageId: 'image-id2',
                          }]);

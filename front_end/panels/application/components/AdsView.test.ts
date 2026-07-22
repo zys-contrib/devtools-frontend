@@ -50,7 +50,7 @@ describeWithEnvironment('AdsView', () => {
                                                          totalAdNetworkBytes: 2048,
                                                          updateAdFrames: [],
                                                          removeAdFrames: [],
-                                                       }
+                                                       },
                                                      }));
 
     const tabTarget = createTarget({type: SDK.Target.Type.TAB, connection});
@@ -146,7 +146,7 @@ describeWithEnvironment('AdsView', () => {
                                                          totalAdNetworkBytes: 0,
                                                          updateAdFrames: [],
                                                          removeAdFrames: [],
-                                                       }
+                                                       },
                                                      }));
 
     resourceTreeModel.dispatchEventToListeners(SDK.ResourceTreeModel.Events.PrimaryPageChanged, {
@@ -194,10 +194,10 @@ describeWithEnvironment('AdsView', () => {
                 initialOrigin: 'https://example2.com',
                 cpuTime: 50,
                 networkBytes: 1024,
-              }
+              },
             ],
             removeAdFrames: [],
-          }
+          },
         };
       }
       return {
@@ -210,7 +210,7 @@ describeWithEnvironment('AdsView', () => {
           totalAdNetworkBytes: 0,
           updateAdFrames: [],
           removeAdFrames: ['frame-1' as Protocol.Page.FrameId],
-        }
+        },
       };
     });
 
@@ -292,7 +292,7 @@ describeWithEnvironment('AdsView', () => {
               },
             ],
             removeAdFrames: [],
-          }
+          },
         };
       }
       return {
@@ -305,7 +305,7 @@ describeWithEnvironment('AdsView', () => {
           totalAdNetworkBytes: 0,
           updateAdFrames: [],
           removeAdFrames: [],
-        }
+        },
       };
     });
 

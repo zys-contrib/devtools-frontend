@@ -14,7 +14,7 @@ import {
   createTarget,
   deinitializeGlobalVars,
   describeWithEnvironment,
-  initializeGlobalVars
+  initializeGlobalVars,
 } from '../../../../testing/EnvironmentHelpers.js';
 import {setupMockedUISourceCode} from '../../../../testing/UISourceCodeHelpers.js';
 

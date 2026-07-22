@@ -76,7 +76,7 @@ describeWithEnvironment('NodeLink', () => {
     component.data = {
       backendNodeId: nodeId(2),
       frame: domNode.frameId() as string,
-      fallbackHtmlSnippet: '<p class="fallback">fallback html</p>'
+      fallbackHtmlSnippet: '<p class="fallback">fallback html</p>',
     };
     renderElementIntoDOM(component);
     await raf();

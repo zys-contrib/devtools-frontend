@@ -14,7 +14,7 @@ import {
   FREESTYLER_BINDING_NAME,
   FREESTYLER_WORLD_NAME,
   freestylerBinding,
-  injectedFunctions
+  injectedFunctions,
 } from './injected.js';
 
 interface ElementContext {
@@ -303,7 +303,7 @@ export class ExtensionScope {
       const id = data.payload;
       const [args, element] = await Promise.all([
         this.#simpleEval(executionContext, `freestyler.getArgs(${id})`),
-        this.#simpleEval(executionContext, `freestyler.getElement(${id})`, false)
+        this.#simpleEval(executionContext, `freestyler.getElement(${id})`, false),
       ]);
 
       const arg = JSON.parse(args.object.value) as Omit<FreestyleCallbackArgs, 'element'>;

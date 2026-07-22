@@ -66,7 +66,7 @@ describe('ExtensionScope', () => {
           }
 
           return undefined;
-        }
+        },
       });
       const selector = AiAssistance.ExtensionScope.ExtensionScope.getSelectorForNode(node);
       assert.strictEqual(selector, '.my-class-a.my-class-b');
@@ -80,7 +80,7 @@ describe('ExtensionScope', () => {
           }
 
           return undefined;
-        }
+        },
       });
       const selector = AiAssistance.ExtensionScope.ExtensionScope.getSelectorForNode(node);
       assert.strictEqual(selector, '.my-class-a.my-class-b');
@@ -94,7 +94,7 @@ describe('ExtensionScope', () => {
           }
 
           return undefined;
-        }
+        },
       });
       const selector = AiAssistance.ExtensionScope.ExtensionScope.getSelectorForNode(node);
       assert.strictEqual(selector, '.my\\.special-class.my-class-b');
@@ -108,7 +108,7 @@ describe('ExtensionScope', () => {
           }
 
           return undefined;
-        }
+        },
       });
       const selector = AiAssistance.ExtensionScope.ExtensionScope.getSelectorForNode(node);
       assert.strictEqual(selector, 'div');
@@ -171,7 +171,7 @@ describe('ExtensionScope', () => {
                   specificity: {a: 0, b: 0, c: 1},
                 },
               ],
-              text: '#my-id, .my-class, div'
+              text: '#my-id, .my-class, div',
             },
             MOCK_STYLE,
             ),
@@ -194,7 +194,7 @@ describe('ExtensionScope', () => {
                   specificity: {a: 0, b: 0, c: 1},
                 },
               ],
-              text: '.my-class, div'
+              text: '.my-class, div',
             },
             MOCK_STYLE,
             ),
@@ -239,12 +239,11 @@ describe('ExtensionScope', () => {
       // be returned correctly
       // front_end/core/sdk/CSSMatchedStyles.ts:373
       const matchedPayload = [
-        ruleMatch(
-            {
-              selectors: [{text: `.${AiAssistance.Injected.AI_ASSISTANCE_CSS_CLASS_NAME}-1`}, {text: '.test'}],
-              text: `.${AiAssistance.Injected.AI_ASSISTANCE_CSS_CLASS_NAME}-1, .test`
-            },
-            MOCK_STYLE),
+        ruleMatch({
+          selectors: [{text: `.${AiAssistance.Injected.AI_ASSISTANCE_CSS_CLASS_NAME}-1`}, {text: '.test'}],
+          text: `.${AiAssistance.Injected.AI_ASSISTANCE_CSS_CLASS_NAME}-1, .test`,
+        },
+                  MOCK_STYLE),
       ];
       const selector = await getSelector({matchedPayload});
       assert.strictEqual(selector, '.test');
@@ -287,7 +286,7 @@ describe('ExtensionScope', () => {
             {
               nestingSelectors: ['.my-parent-selector'],
             },
-            )
+            ),
       ];
       const selector = await getSelector({matchedPayload});
       assert.strictEqual(selector, 'div');
@@ -311,7 +310,7 @@ describe('ExtensionScope', () => {
                   a: 0,
                   b: 0,
                   c: 1,
-                }
+                },
               }],
               text: 'div > *',
 
@@ -333,7 +332,7 @@ describe('ExtensionScope', () => {
                   a: 0,
                   b: 2,
                   c: 0,
-                }
+                },
               }],
               text: '.main > * > .header',
 
@@ -353,7 +352,7 @@ describe('ExtensionScope', () => {
                 a: 1,
                 b: 1,
                 c: 0,
-              }
+              },
             }],
             text: '.main > * > #header',
 
