@@ -1214,4 +1214,148 @@ describeWithEnvironment('ElementsTreeOutline', () => {
     assert.exists(boundFirstTextNode);
     assert.strictEqual(boundFirstTextNode.nodeValue(), 'First text');
   });
+
+  it('updates the DOM tree structure upon node removal', async () => {
+    const textNodePayload = {
+      nodeId: 7 as Protocol.DOM.NodeId,
+      parentId: 3 as Protocol.DOM.NodeId,
+      backendNodeId: 7 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.TEXT_NODE,
+      nodeName: '#text',
+      localName: '',
+      nodeValue: 'Text',
+      childNodeCount: 0,
+      children: [],
+    } as Protocol.DOM.Node;
+
+    const child1Payload = {
+      nodeId: 3 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [textNodePayload],
+      attributes: ['id', 'child1'],
+    } as Protocol.DOM.Node;
+
+    const child2Payload = {
+      nodeId: 4 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 4 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      children: [],
+      attributes: ['id', 'child2'],
+    } as Protocol.DOM.Node;
+
+    const child3Payload = {
+      nodeId: 5 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 5 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      children: [],
+      attributes: ['id', 'child3'],
+    } as Protocol.DOM.Node;
+
+    const child4Payload = {
+      nodeId: 6 as Protocol.DOM.NodeId,
+      parentId: 2 as Protocol.DOM.NodeId,
+      backendNodeId: 6 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      children: [],
+      attributes: ['id', 'child4'],
+    } as Protocol.DOM.Node;
+
+    const containerPayload = {
+      nodeId: 2 as Protocol.DOM.NodeId,
+      parentId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 4,
+      children: [child1Payload, child2Payload, child3Payload, child4Payload],
+      attributes: ['id', 'container'],
+    } as Protocol.DOM.Node;
+
+    const rootNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+      nodeId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.DOCUMENT_NODE,
+      nodeName: '#document',
+      localName: '',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [containerPayload],
+      attributes: [],
+    });
+
+    treeOutline.rootDOMNode = rootNode;
+    const containerNode = rootNode.children()![0];
+    assert.exists(containerNode);
+    const containerTreeElement =
+        treeOutline.findTreeElement(containerNode) as Elements.ElementsTreeElement.ElementsTreeElement;
+    assert.exists(containerTreeElement);
+    await treeOutline.populateTreeElement(containerTreeElement);
+    containerTreeElement.expand();
+
+    const getChildIds = (): string[] => {
+      return (containerNode.children() || []).map(child => child.getAttribute('id') || '');
+    };
+
+    // Verify the initial state.
+    assert.deepEqual(getChildIds(), ['child1', 'child2', 'child3', 'child4']);
+    assert.isNotNull(treeOutline.findTreeElement(containerNode.children()![0]));
+    assert.isNotNull(treeOutline.findTreeElement(containerNode.children()![1]));
+    assert.isNotNull(treeOutline.findTreeElement(containerNode.children()![2]));
+    assert.isNotNull(treeOutline.findTreeElement(containerNode.children()![3]));
+
+    // Remove text node
+    model.childNodeRemoved(3 as Protocol.DOM.NodeId, 7 as Protocol.DOM.NodeId);
+    treeOutline.runPendingUpdates();
+    assert.deepEqual(getChildIds(), ['child1', 'child2', 'child3', 'child4']);
+    assert.isNull(model.nodeForId(7 as Protocol.DOM.NodeId));
+    const child1Node = model.nodeForId(3 as Protocol.DOM.NodeId);
+    assert.exists(child1Node);
+    assert.strictEqual(child1Node.childNodeCount(), 0);
+
+    // Remove first child
+    model.childNodeRemoved(2 as Protocol.DOM.NodeId, 3 as Protocol.DOM.NodeId);
+    treeOutline.runPendingUpdates();
+    assert.deepEqual(getChildIds(), ['child2', 'child3', 'child4']);
+    assert.isNull(model.nodeForId(3 as Protocol.DOM.NodeId));
+
+    // Remove middle child (child3)
+    model.childNodeRemoved(2 as Protocol.DOM.NodeId, 5 as Protocol.DOM.NodeId);
+    treeOutline.runPendingUpdates();
+    assert.deepEqual(getChildIds(), ['child2', 'child4']);
+    assert.isNull(model.nodeForId(5 as Protocol.DOM.NodeId));
+
+    // Remove last child (child4)
+    model.childNodeRemoved(2 as Protocol.DOM.NodeId, 6 as Protocol.DOM.NodeId);
+    treeOutline.runPendingUpdates();
+    assert.deepEqual(getChildIds(), ['child2']);
+    assert.isNull(model.nodeForId(6 as Protocol.DOM.NodeId));
+
+    // Remove the only (child2)
+    model.childNodeRemoved(2 as Protocol.DOM.NodeId, 4 as Protocol.DOM.NodeId);
+    treeOutline.runPendingUpdates();
+    assert.deepEqual(getChildIds(), []);
+    assert.isNull(model.nodeForId(4 as Protocol.DOM.NodeId));
+  });
 });
