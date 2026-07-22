@@ -376,13 +376,14 @@ class Init(RunnerCommand):
         mocha_spec = {
             'require': [
                 repo_path(options.build_root,
-                          'extensions/cxx_debugging/e2e/MochaRootHooks.js'),
+                          get_artifact_dir('devtools-frontend'),
+                          'gen/test/e2e/conductor/mocha_hooks.js'),
                 'source-map-support/register'
             ],
             'ui':
             repo_path(options.build_root,
                       get_artifact_dir('devtools-frontend'),
-                      'gen/test/conductor/mocha-interface.js'),
+                      'gen/test/e2e/conductor/mocha-interface.js'),
             'spec': [
                 repo_path(
                     options.build_root,
