@@ -6,10 +6,17 @@ import sinon from 'sinon';
 
 import * as Common from '../core/common/common.js';
 
-function createSettingValue(
-    category: Common.Settings.SettingCategory, settingName: string, defaultValue: unknown,
-    settingType = Common.Settings.SettingType.BOOLEAN): Common.Settings.SettingRegistration {
-  return {category, settingName, defaultValue, settingType};
+function createSettingValue(category: Common.Settings.SettingCategory, settingName: string, defaultValue: unknown,
+                            settingType = Common.Settings.SettingType.BOOLEAN,
+                            title?: string|
+                            (() => Common.UIString.LocalizedString)): Common.Settings.SettingRegistration {
+  return {
+    category,
+    settingName,
+    defaultValue,
+    settingType,
+    title: typeof title === 'string' ? () => title as Common.UIString.LocalizedString : title,
+  };
 }
 
 export function stubNoopSettings() {
@@ -20,7 +27,6 @@ export function stubNoopSettings() {
     addChangeListener: () => {},
     removeChangeListener: () => {},
     setDisabled: () => {},
-    setTitle: () => {},
     title: () => {},
     asRegExp: () => {},
     type: () => Common.Settings.SettingType.BOOLEAN,
@@ -70,10 +76,47 @@ export const DEFAULT_SETTING_REGISTRATIONS_FOR_TEST: ReadonlyArray<ReturnType<ty
   createSettingValue(Common.Settings.SettingCategory.ELEMENTS, 'collapse-non-contributing-css-rules', false),
   createSettingValue(Common.Settings.SettingCategory.ELEMENTS, 'show-metrics-rulers', false),
   createSettingValue(Common.Settings.SettingCategory.ELEMENTS, 'apca', false),
+  createSettingValue(Common.Settings.SettingCategory.ELEMENTS, 'show-frameowkr-listeners', true),
+  createSettingValue(Common.Settings.SettingCategory.RENDERING, 'frame-viewer-show-paints', false),
+  createSettingValue(Common.Settings.SettingCategory.RENDERING, 'frame-viewer-show-slow-scroll-rects', true),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.cat-perf', true,
+                     Common.Settings.SettingType.BOOLEAN, 'Performance'),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.cat-a11y', true,
+                     Common.Settings.SettingType.BOOLEAN, 'Accessibility'),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.cat-best-practices', true,
+                     Common.Settings.SettingType.BOOLEAN, 'Best practices'),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.cat-seo', true,
+                     Common.Settings.SettingType.BOOLEAN, 'SEO'),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.cat-agentic-browsing', false,
+                     Common.Settings.SettingType.BOOLEAN, 'Agentic browsing'),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.device-type', 'mobile',
+                     Common.Settings.SettingType.ENUM, 'Apply mobile emulation'),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.mode', 'navigation',
+                     Common.Settings.SettingType.ENUM, 'Lighthouse mode'),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.throttling', 'simulate',
+                     Common.Settings.SettingType.ENUM, 'Throttling method'),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.clear-storage', true,
+                     Common.Settings.SettingType.BOOLEAN, 'Clear storage'),
+  createSettingValue(Common.Settings.SettingCategory.NONE, 'lighthouse.enable-sampling', false,
+                     Common.Settings.SettingType.BOOLEAN, 'Enable JS sampling'),
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'annotations-hidden', false),
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-show-all-events', false),
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-debug-mode', false),
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-invalidation-tracking', false),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-disable-js-sampling', false),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-capture-layers-and-pictures', false),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-capture-selector-stats', false),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-screenshot-capture-mode', 'auto',
+                     Common.Settings.SettingType.ENUM),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-show-screenshots', true),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-show-memory', false),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-dim-third-parties', false),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-show-extension-data', true),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-counters-graph-js-heap-size-used', true),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-counters-graph-documents', true),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-counters-graph-nodes', true),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-counters-graph-js-event-listeners', true),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-counters-graph-gpu-memory-used-kb', true),
   createSettingValue(Common.Settings.SettingCategory.NETWORK, 'cache-disabled', false),
   createSettingValue(Common.Settings.SettingCategory.NETWORK, 'network-blocked-patterns', [],
                      Common.Settings.SettingType.ARRAY),

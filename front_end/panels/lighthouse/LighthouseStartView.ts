@@ -181,9 +181,8 @@ export class StartView extends UI.Widget.Widget {
       throw new Error(`${settingName} is not a setting with a title`);
     }
 
-    runtimeSetting.setting.setTitle(runtimeSetting.title());
-    const control = new UI.Toolbar.ToolbarSettingCheckbox(
-        runtimeSetting.setting as Common.Settings.Setting<boolean>, runtimeSetting.description());
+    const control = new UI.Toolbar.ToolbarSettingCheckbox(runtimeSetting.setting as Common.Settings.Setting<boolean>,
+                                                          runtimeSetting.description(), runtimeSetting.title());
     toolbar.appendToolbarItem(control);
     if (runtimeSetting.learnMore) {
       const link =
@@ -201,7 +200,6 @@ export class StartView extends UI.Widget.Widget {
 
     const options = runtimeSetting.options?.map(option => ({label: option.label(), value: option.value})) || [];
 
-    runtimeSetting.setting.setTitle(runtimeSetting.title());
     const control = new UI.Toolbar.ToolbarSettingComboBox(
         options,
         runtimeSetting.setting as Common.Settings.Setting<string>,
@@ -227,8 +225,7 @@ export class StartView extends UI.Widget.Widget {
 
     this.checkboxes = [];
     for (const preset of getPresets()) {
-      preset.setting.setTitle(preset.title());
-      const checkbox = new UI.Toolbar.ToolbarSettingCheckbox(preset.setting, preset.description());
+      const checkbox = new UI.Toolbar.ToolbarSettingCheckbox(preset.setting, preset.description(), preset.title());
       const row = categoryFormElements.createChild('div', 'vbox lighthouse-launcher-row');
       row.appendChild(checkbox.element);
       checkbox.element.setAttribute('data-lh-category', preset.configID);

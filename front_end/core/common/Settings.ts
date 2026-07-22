@@ -145,7 +145,6 @@ export class Settings {
           this.createRegExpSetting(settingName, evaluatedDefaultValue, undefined, storageType) :
           this.createSetting(settingName, evaluatedDefaultValue, storageType);
 
-      setting.setTitleFunction(registration.title);
       setting.setRegistration(registration);
 
       this.registerModuleSetting(setting);
@@ -511,8 +510,6 @@ export class Deprecation {
 }
 
 export class Setting<V> {
-  #titleFunction?: () => Platform.UIString.LocalizedString;
-  #title!: Platform.UIString.LocalizedString;
   #registration: SettingRegistration|null = null;
   #requiresUserAction?: boolean;
   #value?: V;
@@ -555,23 +552,10 @@ export class Setting<V> {
   }
 
   title(): Platform.UIString.LocalizedString {
-    if (this.#title) {
-      return this.#title;
-    }
-    if (this.#titleFunction) {
-      return this.#titleFunction();
+    if (this.#registration?.title) {
+      return this.#registration.title();
     }
     return '' as Platform.UIString.LocalizedString;
-  }
-
-  setTitleFunction(titleFunction?: (() => Platform.UIString.LocalizedString)): void {
-    if (titleFunction) {
-      this.#titleFunction = titleFunction;
-    }
-  }
-
-  setTitle(title: Platform.UIString.LocalizedString): void {
-    this.#title = title;
   }
 
   setRequiresUserAction(requiresUserAction: boolean): void {
