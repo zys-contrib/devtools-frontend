@@ -109,6 +109,40 @@ describeWithEnvironment('StylesPropertySection', () => {
     assert.strictEqual(linkifier.linkifyCSSLocation.args[0][0].url, 'constructed.css');
   });
 
+  it('displays the proper sourceURL for matched styles with spaces in URL', async () => {
+    const cssModel = createTarget({connection}).model(SDK.CSSModel.CSSModel);
+    assert.exists(cssModel);
+    const origin = Protocol.CSS.StyleSheetOrigin.Regular;
+    const styleSheetId = '0' as Protocol.DOM.StyleSheetId;
+    const range = {startLine: 0, endLine: 1, startColumn: 0, endColumn: 0};
+    const header = {
+      sourceURL: 'file:///drive/path%20with%20spaces/style.css',
+      isMutable: true,
+      hasSourceURL: true,
+      length: 1,
+      ...range,
+    };
+    const matchedPayload: Protocol.CSS.RuleMatch[] = [{
+      rule: {
+        selectorList: {selectors: [{text: 'div'}], text: 'div'},
+        origin,
+        styleSheetId,
+        style: {cssProperties: [{name: 'color', value: 'red'}], shorthandEntries: [], range},
+      },
+      matchingSelectors: [0],
+    }];
+    const matchedStyles =
+        await getMatchedStylesWithStylesheet({cssModel, origin, styleSheetId, ...header, matchedPayload, connection});
+
+    const rule = matchedStyles.nodeStyles()[0].parentRule;
+    const linkifier = sinon.createStubInstance(Components.Linkifier.Linkifier);
+    Elements.StylePropertiesSection.StylePropertiesSection.createRuleOriginNode(matchedStyles, linkifier, rule);
+
+    sinon.assert.calledOnce(linkifier.linkifyCSSLocation);
+    assert.strictEqual(linkifier.linkifyCSSLocation.args[0][0].styleSheetId, styleSheetId);
+    assert.strictEqual(linkifier.linkifyCSSLocation.args[0][0].url, 'file:///drive/path%20with%20spaces/style.css');
+  });
+
   it('displays the proper sourceMappingURL origin for constructed stylesheets', async () => {
     const cssModel = createTarget({connection}).model(SDK.CSSModel.CSSModel);
     assert.exists(cssModel);
