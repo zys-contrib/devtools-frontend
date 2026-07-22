@@ -329,6 +329,9 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
         const inpEvent: InpValue = {
           value: webVitalsEvent.value,
           subparts: webVitalsEvent.subparts,
+          // Use our own "interactionId" rather than the Chrome/web-vitals
+          // provided one, so we can group events with same start time
+          // (e.g. `pointerup` and `click` are one interaction log entry)
           interactionId: `interaction-${webVitalsEvent.entryGroupId}-${webVitalsEvent.startTime}`,
         };
         this.#inpValue = inpEvent;
@@ -339,13 +342,17 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
             Platform.MapUtilities.getWithDefault(this.#interactionsByGroupId, webVitalsEvent.entryGroupId, () => []);
 
         // `nextPaintTime` uses the event duration which is rounded to the nearest 8ms. The best we can do
-        // is check if the `nextPaintTime`s are within 8ms.
+        // is check if the `nextPaintTime`s are within 8ms. Exclude undefined/null/0 nextPaintTimes.
         // https://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry/duration#event
-        let interaction = groupInteractions.find(
-            interaction => Math.abs(interaction.nextPaintTime - webVitalsEvent.nextPaintTime) < 8);
+        let interaction =
+            groupInteractions.find(interaction => interaction.nextPaintTime && webVitalsEvent.nextPaintTime &&
+                                       Math.abs(interaction.nextPaintTime - webVitalsEvent.nextPaintTime) < 8);
 
         if (!interaction) {
           interaction = {
+            // Use our own "interactionId" rather than the Chrome/web-vitals
+            // provided one, so we can group events with same start time
+            // (e.g. `pointerup` and `click` are one interaction log entry)
             interactionId: `interaction-${webVitalsEvent.entryGroupId}-${webVitalsEvent.startTime}`,
             interactionType: webVitalsEvent.interactionType,
             duration: webVitalsEvent.duration,
@@ -625,6 +632,9 @@ export const enum Events {
   STATUS = 'status',
 }
 
+// Use our own "interactionId" rather than the Chrome/web-vitals
+// provided one, so we can group events with same start time
+// (e.g. `pointerup` and `click` are one interaction log entry)
 export type InteractionId = `interaction-${number}-${number}`;
 
 export interface MetricValue {
@@ -652,13 +662,20 @@ export interface LayoutShift {
   affectedNodeRefs: SDK.DOMModel.DOMNode[];
 }
 
+/*
+ * Note web-vitals can emit "fake" INP events without an interactionType nor a
+ * nextPaintTime for small interactions after soft navs or bfcache restores.
+ * For hardNavs these would have a FID event, but for soft navs or bfcache
+ * restores there is no FID equivalent (it's only emitted once per page)
+ * so dummy events without full details are used.
+ */
 export interface Interaction {
   interactionId: InteractionId;
-  interactionType: Spec.InteractionEntryEvent['interactionType'];
+  interactionType?: Spec.InteractionEntryEvent['interactionType'];
   eventNames: string[];
   duration: number;
   startTime: number;
-  nextPaintTime: number;
+  nextPaintTime?: number;
   subparts: Spec.InpSubparts;
   longAnimationFrameTimings: Spec.PerformanceLongAnimationFrameTimingJSON[];
   nodeRef?: SDK.DOMModel.DOMNode;

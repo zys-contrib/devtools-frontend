@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-let firstHiddenTime = document.visibilityState === 'hidden' ? 0 : Infinity;
-
-const onVisibilityChange = (event: Event) => {
-  if (document.visibilityState === 'hidden') {
-    firstHiddenTime = event.timeStamp;
-    removeEventListener('visibilitychange', onVisibilityChange, true);
-  }
-};
-
-// Note: do not add event listeners unconditionally (outside of polyfills).
-addEventListener('visibilitychange', onVisibilityChange, true);
-
-export const getFirstHiddenTime = () => firstHiddenTime;
+export class FCPEntryManager {
+    _softNavigationEntryMap;
+}
