@@ -55,14 +55,4 @@ export class AsyncScope {
       this.pop();
     }
   }
-
-  execSync<T>(callable: (messages: string[]) => T, description?: string) {
-    const messages = this.push(description);
-    try {
-      const result = callable(messages);
-      return result;
-    } finally {
-      this.pop();
-    }
-  }
 }

@@ -11,7 +11,7 @@ const diff: any = diffImport;
 
 type DiffCallback = (line: string) => string;
 
-export function sanitize(message: string): string {
+function sanitize(message: string): string {
   return message.replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;')

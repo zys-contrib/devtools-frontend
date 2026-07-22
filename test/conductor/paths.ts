@@ -15,7 +15,7 @@ export const GEN_DIR = path.normalize(path.join(__dirname, '..', '..'));
 export const BUILD_WITH_CHROMIUM = build.BUILD_WITH_CHROMIUM;
 export const TEST_ID_REGEX = /^(.*\.[tj]s):(.*)$/;
 
-export function rebase(fromRoot: string, toRoot: string, filename: string, newExt?: string) {
+function rebase(fromRoot: string, toRoot: string, filename: string, newExt?: string) {
   if (!path.isAbsolute(filename) || !path.isAbsolute(fromRoot) || !path.isAbsolute(toRoot)) {
     return filename;
   }

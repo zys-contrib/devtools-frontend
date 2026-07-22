@@ -9,7 +9,6 @@ node_ts_library("shared") {
     "debug-check.ts",
     "helper.ts",
     "mocha-resultsdb-reporter.ts",
-    "non_hosted_wrappers.ts",
     "run-mocha.ts",
     "screenshots.ts",
   ]
