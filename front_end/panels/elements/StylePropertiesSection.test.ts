@@ -14,6 +14,7 @@ import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHe
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {getMatchedStylesWithBlankRule, getMatchedStylesWithStylesheet} from '../../testing/StyleHelpers.js';
 import * as Components from '../../ui/legacy/components/utils/utils.js';
+import * as UI from '../../ui/legacy/legacy.js';
 import {render} from '../../ui/lit/lit.js';
 
 import * as Elements from './elements.js';
@@ -479,6 +480,66 @@ describeWithEnvironment('StylesPropertySection', () => {
 
       sinon.assert.calledOnceWithExactly(
           commitAiSuggestionStub, 'background-color: white; color: red; font-size: 10px;');
+    });
+    it('looks like unit test http/tests/devtools/elements/styles-1/commit-selector.js', async () => {
+      const cssModel = createTarget({connection}).model(SDK.CSSModel.CSSModel) as SDK.CSSModel.CSSModel;
+
+      const origin = Protocol.CSS.StyleSheetOrigin.Regular;
+      const styleSheetId = '0' as Protocol.DOM.StyleSheetId;
+      const range = {startLine: 0, endLine: 1, startColumn: 0, endColumn: 0};
+      const header: Partial<Protocol.CSS.CSSStyleSheetHeader> = {
+        sourceMapURL: '',
+        isMutable: true,
+        isConstructed: false,
+        length: 1,
+        ...range,
+      };
+
+      const matchedPayload: Protocol.CSS.RuleMatch[] = [{
+        rule: {
+          selectorList: {selectors: [{text: '#inspected', range}], text: '#inspected'},
+          origin,
+          styleSheetId,
+          style: {cssProperties: [{name: 'color', value: 'red'}], shorthandEntries: [], range},
+        },
+        matchingSelectors: [0],
+      }];
+
+      const matchedStyles =
+          await getMatchedStylesWithStylesheet({cssModel, origin, styleSheetId, ...header, matchedPayload, connection});
+      const declaration = matchedStyles.nodeStyles()[0];
+
+      const setSelectorSpy = sinon.spy(cssModel, 'setSelectorText');
+
+      const section = new Elements.StylePropertiesSection.StylePropertiesSection(
+          new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel), matchedStyles, declaration, 0,
+          new Map(), new Map(), null);
+
+      const selectorElement = section.element.querySelector('.selector') as HTMLElement;
+
+      let commitHandler: (element: Element, newText: string, oldText: string, context: unknown,
+                          moveDirection: string) => void;
+      const startEditingStub =
+          sinon.stub(UI.InplaceEditor.InplaceEditor, 'startEditing').callsFake((element, config) => {
+            commitHandler = config.commitHandler as typeof commitHandler;
+            return {cancel: () => {}, commit: () => {}};
+          });
+
+      section.startEditingSelector();
+      sinon.assert.calledOnce(startEditingStub);
+
+      commitHandler!(selectorElement, 'hr, #inspected', '#inspected', undefined, 'forward');
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+      sinon.assert.calledOnce(setSelectorSpy);
+      assert.strictEqual(setSelectorSpy.firstCall.args[2], 'hr, #inspected');
+
+      section.startEditingSelector();
+      commitHandler!(selectorElement, '#inspectedChanged', 'hr, #inspected', undefined, 'forward');
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+      sinon.assert.calledTwice(setSelectorSpy);
+      assert.strictEqual(setSelectorSpy.secondCall.args[2], '#inspectedChanged');
     });
   });
 
