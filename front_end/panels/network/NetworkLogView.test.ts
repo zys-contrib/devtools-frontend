@@ -1033,6 +1033,22 @@ describeWithEnvironment('NetworkLogView', () => {
     assert.deepEqual(shownRequestUrls(), ['urlFetch']);
   });
 
+  it('can apply substring filter on same-site domain', async () => {
+    target.setInspectedURL(urlString`http://example.com`);
+    const sameSiteRequest = createNetworkRequest(urlString`http://example.com/api/data`, {});
+    const crossSiteRequest = createNetworkRequest(urlString`http://cross-site.com/api/data`, {});
+
+    const filterBar = new UI.FilterBar.FilterBar('network-panel', true);
+    networkLogView = createNetworkLogView(filterBar);
+    networkLogView.setTextFilterValue('example.com');
+    renderElementIntoDOM(networkLogView);
+    const rootNode = networkLogView.columns().dataGrid().rootNode();
+
+    const visibleUrls = rootNode.children.map(n => (n as Network.NetworkDataGridNode.NetworkNode).request()?.url());
+    assert.deepEqual(visibleUrls, [sameSiteRequest.url()]);
+    assert.notInclude(visibleUrls, crossSiteRequest.url());
+  });
+
   it('"Copy all" commands respects filters', async () => {
     createOverrideRequests();
 

@@ -63,7 +63,7 @@ describe('The Network Tab', function() {
 
   it('can filter by text in the log view', async ({devToolsPage, inspectedPage}) => {
     await navigateToNetworkTab(SIMPLE_PAGE_URL, devToolsPage, inspectedPage);
-    await devToolsPage.typeText('9');
+    await devToolsPage.typeText('id=9');
     const nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 1);
     assert.lengthOf(nodes, 1);
     assert.strictEqual(await elementTextContent(nodes[0]), RESULTS[10]);
@@ -78,7 +78,7 @@ describe('The Network Tab', function() {
 
   it('can filter by regex in the log view', async ({devToolsPage, inspectedPage}) => {
     await navigateToNetworkTab(SIMPLE_PAGE_URL, devToolsPage, inspectedPage);
-    await devToolsPage.typeText('/8/');
+    await devToolsPage.typeText('/id=8/');
     const nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 1);
     assert.lengthOf(nodes, 1);
     assert.strictEqual(await elementTextContent(nodes[0]), RESULTS[9]);
@@ -146,14 +146,15 @@ describe('The Network Tab', function() {
     assert.isAtLeast(nodes.length, 11);
   });
 
-  it('require operator to filter by domain', async ({devToolsPage, inspectedPage}) => {
+  it('can filter by domain without operator', async ({devToolsPage, inspectedPage}) => {
     await navigateToNetworkTab(SIMPLE_PAGE_URL, devToolsPage, inspectedPage);
     await devToolsPage.typeText('localhost');
-    await devToolsPage.waitForNone('.data-grid-data-grid-node > .name-column');
+    let nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 1);
+    assert.isAtLeast(nodes.length, 11);
 
     await clearTextFilter(devToolsPage);
     await devToolsPage.typeText('domain:localhost');
-    const nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 1);
+    nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 1);
     assert.isAtLeast(nodes.length, 11);
   });
 
@@ -167,7 +168,7 @@ describe('The Network Tab', function() {
 
   it('can reverse filter text in the log view', async ({devToolsPage, inspectedPage}) => {
     await navigateToNetworkTab(SIMPLE_PAGE_URL, devToolsPage, inspectedPage);
-    await devToolsPage.typeText('-7');
+    await devToolsPage.typeText('-id=7');
     const nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 10);
     const output = [...RESULTS];
     output.splice(8, 1);
@@ -176,7 +177,7 @@ describe('The Network Tab', function() {
 
   it('can reverse filter regex in the log view', async ({devToolsPage, inspectedPage}) => {
     await navigateToNetworkTab(SIMPLE_PAGE_URL, devToolsPage, inspectedPage);
-    await devToolsPage.typeText('-/6/');
+    await devToolsPage.typeText('-/id=6/');
     const nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 10);
     const output = [...RESULTS];
     output.splice(7, 1);
@@ -187,7 +188,7 @@ describe('The Network Tab', function() {
     await navigateToNetworkTab(SIMPLE_PAGE_URL, devToolsPage, inspectedPage);
     const invertCheckbox = await (await devToolsPage.waitForAria('Invert')).toElement('input');
     assert.isFalse(await checkboxIsChecked(invertCheckbox));
-    await devToolsPage.typeText('5');
+    await devToolsPage.typeText('id=5');
     await invertCheckbox.click();
     assert.isTrue(await checkboxIsChecked(invertCheckbox));
     const nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 10);
@@ -203,7 +204,7 @@ describe('The Network Tab', function() {
     await navigateToNetworkTab(SIMPLE_PAGE_URL, devToolsPage, inspectedPage);
     const invertCheckbox = await (await devToolsPage.waitForAria('Invert')).toElement('input');
     assert.isFalse(await checkboxIsChecked(invertCheckbox));
-    await devToolsPage.typeText('/4/');
+    await devToolsPage.typeText('/id=4/');
     await invertCheckbox.click();
     assert.isTrue(await checkboxIsChecked(invertCheckbox));
     const nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 10);
@@ -219,7 +220,7 @@ describe('The Network Tab', function() {
     await navigateToNetworkTab(SIMPLE_PAGE_URL, devToolsPage, inspectedPage);
     const invertCheckbox = await (await devToolsPage.waitForAria('Invert')).toElement('input');
     assert.isFalse(await checkboxIsChecked(invertCheckbox));
-    await devToolsPage.typeText('-10');
+    await devToolsPage.typeText('-num=10');
     await invertCheckbox.click();
     assert.isTrue(await checkboxIsChecked(invertCheckbox));
     const nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 1);
@@ -234,7 +235,7 @@ describe('The Network Tab', function() {
     await navigateToNetworkTab(SIMPLE_PAGE_URL, devToolsPage, inspectedPage);
     const invertCheckbox = await (await devToolsPage.waitForAria('Invert')).toElement('input');
     assert.isFalse(await checkboxIsChecked(invertCheckbox));
-    await devToolsPage.typeText('-/10/');
+    await devToolsPage.typeText('-/num=10/');
     await invertCheckbox.click();
     assert.isTrue(await checkboxIsChecked(invertCheckbox));
     const nodes = await devToolsPage.waitForMany('.data-grid-data-grid-node > .name-column', 1);

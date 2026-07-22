@@ -734,12 +734,11 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin<EventTypes, 
     return !filter(request);
   }
 
-  private static requestPathFilter(regex: RegExp|null, request: SDK.NetworkRequest.NetworkRequest): boolean {
+  private static requestHostAndPathFilter(regex: RegExp|null, request: SDK.NetworkRequest.NetworkRequest): boolean {
     if (!regex) {
       return false;
     }
-
-    return regex.test(request.path() + '/' + request.name());
+    return regex.test(request.parsedURL.urlWithoutScheme());
   }
 
   private static subdomains(domain: string): string[] {
@@ -2169,13 +2168,13 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin<EventTypes, 
       if (key) {
         const defaultText = Platform.StringUtilities.escapeForRegExp(key + ':' + text);
         filter = this.createSpecialFilter((key as NetworkForward.UIFilter.FilterType), text) ||
-            NetworkLogView.requestPathFilter.bind(null, new RegExp(defaultText, 'i'));
+            NetworkLogView.requestHostAndPathFilter.bind(null, new RegExp(defaultText, 'i'));
       } else if (descriptor.regex) {
-        filter = NetworkLogView.requestPathFilter.bind(null, (regex as RegExp));
+        filter = NetworkLogView.requestHostAndPathFilter.bind(null, (regex as RegExp));
       } else if (this.isValidUrl(text)) {
         filter = NetworkLogView.requestUrlFilter.bind(null, text);
       } else {
-        filter = NetworkLogView.requestPathFilter.bind(
+        filter = NetworkLogView.requestHostAndPathFilter.bind(
             null, new RegExp(Platform.StringUtilities.escapeForRegExp(text), 'i'));
       }
       if ((descriptor.negative && !invert) || (!descriptor.negative && invert)) {
