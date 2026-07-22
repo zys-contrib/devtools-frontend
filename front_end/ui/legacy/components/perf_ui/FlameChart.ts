@@ -12,6 +12,7 @@ import type * as NetworkTimeCalculator from '../../../../models/network_time_cal
 import * as Trace from '../../../../models/trace/trace.js';
 import * as VisualLogging from '../../../../ui/visual_logging/visual_logging.js';
 import * as Buttons from '../../../components/buttons/buttons.js';
+import {html, render, type TemplateResult} from '../../../lit/lit.js';
 import * as UI from '../../legacy.js';
 import * as ThemeSupport from '../../theme_support/theme_support.js';
 
@@ -922,9 +923,9 @@ export class FlameChart extends Common.ObjectWrapper.eventMixin<EventTypes, type
     };
   }
 
-  updatePopoverContents(popoverElement: Element): void {
-    this.popoverElement.removeChildren();
-    this.popoverElement.appendChild(popoverElement);
+  updatePopoverContents(popoverElement: Element|TemplateResult): void {
+    // eslint-disable-next-line @devtools/no-lit-render-outside-of-view
+    render(html`${popoverElement}`, this.popoverElement);
     // Must update the offset AFTER the new content has been added.
     this.updatePopoverOffset();
     this.lastPopoverState.entryIndex = -1;
@@ -4379,7 +4380,7 @@ export interface FlameChartDataProvider {
    */
   timelineData(rebuild?: boolean): FlameChartTimelineData|null;
 
-  preparePopoverElement(entryIndex: number): Element|null;
+  preparePopoverElement(entryIndex: number): Element|TemplateResult|null;
 
   preparePopoverForCollapsedArrow?(entryIndex: number): Element|null;
 

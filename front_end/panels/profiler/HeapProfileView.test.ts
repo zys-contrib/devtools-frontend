@@ -9,7 +9,7 @@ import type * as Common from '../../core/common/common.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 import {describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
-import {render} from '../../ui/lit/lit.js';
+import {html, render} from '../../ui/lit/lit.js';
 
 import * as Profiler from './profiler.js';
 
@@ -57,7 +57,9 @@ describeWithEnvironment('HeapFlameChartDataProvider', () => {
     const popover = dataProvider.preparePopoverElement(1);
 
     assert.isNotNull(popover);
-    const text = (popover as HTMLElement).deepInnerText();
+    const container = document.createElement('div');
+    render(html`${popover}`, container);
+    const text = container.deepInnerText();
     assert.include(text, 'Name');
     assert.include(text, 'child1');
     assert.include(text, 'Self size');

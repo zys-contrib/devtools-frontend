@@ -505,14 +505,15 @@ export class HeapProfileView extends UI.View.SimpleView implements UI.Searchable
   static buildPopoverTable(popoverInfo: Array<{
     title: string,
     value: string,
-  }>): Element {
-    const table = document.createElement('table');
-    for (const entry of popoverInfo) {
-      const row = table.createChild('tr');
-      row.createChild('td').textContent = entry.title;
-      row.createChild('td').textContent = entry.value;
-    }
-    return table;
+  }>): TemplateResult {
+    return html`<table>
+      ${popoverInfo.map(entry => html`
+        <tr>
+          <td>${entry.title}</td>
+          <td>${entry.value}</td>
+        </tr>
+      `)}
+    </table>`;
   }
 
   setProfile(profile: CPUProfile.ProfileTreeModel.ProfileTreeModel): void {
@@ -1349,7 +1350,7 @@ export class HeapFlameChartDataProvider extends ProfileFlameChartDataProvider {
     return this.timelineDataInternal;
   }
 
-  override preparePopoverElement(entryIndex: number): Element|null {
+  override preparePopoverElement(entryIndex: number): TemplateResult|null {
     const node = this.entryNodes[entryIndex];
     if (!node) {
       return null;

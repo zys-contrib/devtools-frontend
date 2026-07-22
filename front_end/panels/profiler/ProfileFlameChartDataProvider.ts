@@ -10,6 +10,7 @@ import type * as CPUProfile from '../../models/cpu_profile/cpu_profile.js';
 import type * as NetworkTimeCalculator from '../../models/network_time_calculator/network_time_calculator.js';
 import * as PerfUI from '../../ui/legacy/components/perf_ui/perf_ui.js';
 import * as UI from '../../ui/legacy/legacy.js';
+import type {TemplateResult} from '../../ui/lit/lit.js';
 
 let colorGeneratorInstance: Common.Color.Generator|null = null;
 
@@ -82,7 +83,7 @@ export class ProfileFlameChartDataProvider implements PerfUI.FlameChart.FlameCha
     throw new Error('Not implemented');
   }
 
-  preparePopoverElement(_entryIndex: number): Element|null {
+  preparePopoverElement(_entryIndex: number): Element|TemplateResult|null {
     throw new Error('Not implemented');
   }
 
