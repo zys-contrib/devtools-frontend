@@ -1332,6 +1332,86 @@ describe('StylesSidebarPane', () => {
       assert.strictEqual(sectionBlocks[1].sections[1].treeScopeDistance(), 2);
     });
 
+    describe('Adding a new rule', () => {
+      it('fails silently when adding a new rule with an invalid selector', async () => {
+        const stylesSidebarPane =
+            new Elements.StylesSidebarPane.StylesSidebarPane(new ComputedStyle.ComputedStyleModel.ComputedStyleModel());
+        const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        node.id = 1 as Protocol.DOM.NodeId;
+        node.simpleSelector.returns('div');
+        sinon.stub(stylesSidebarPane, 'node').returns(node);
+
+        const cssModel = stylesSidebarPane.cssModel() as SDK.CSSModel.CSSModel;
+        const addRuleStub = sinon.stub(cssModel, 'addRule').resolves(null);
+
+        const styleSheetHeader = sinon.createStubInstance(SDK.CSSStyleSheetHeader.CSSStyleSheetHeader);
+        styleSheetHeader.id = '1' as Protocol.DOM.StyleSheetId;
+        styleSheetHeader.cssModel.returns(cssModel);
+        styleSheetHeader.lineNumberInSource.returns(0);
+        styleSheetHeader.columnNumberInSource.returns(0);
+
+        sinon.stub(stylesSidebarPane.linkifier, 'linkifyCSSLocation').returns(document.createElement('div'));
+
+        const matchedStyles = await getMatchedStyles({
+          connection,
+          cssModel,
+          node,
+          matchedPayload: [
+            {
+              rule: {
+                selectorList: {selectors: [{text: 'div'}], text: 'div'},
+                origin: Protocol.CSS.StyleSheetOrigin.Regular,
+                style: {
+                  cssProperties: [{name: 'color', value: 'blue'}],
+                  shorthandEntries: [],
+                },
+              },
+              matchingSelectors: [0],
+            },
+          ],
+        });
+
+        const sectionBlocks = await stylesSidebarPane.rebuildSectionsForMatchedStyleRulesForTest(
+            matchedStyles, new Map(), new Map(), null);
+        (stylesSidebarPane as unknown as {sectionBlocks: Elements.StylesSidebarPane.SectionBlock[]}).sectionBlocks =
+            sectionBlocks;
+
+        const insertAfterSection = sectionBlocks[0].sections[0];
+        assert.exists(insertAfterSection);
+
+        sinon.stub(stylesSidebarPane, 'performUpdate').resolves();
+
+        // Add a blank section.
+        const range = {
+          startLine: 0,
+          startColumn: 0,
+          endLine: 0,
+          endColumn: 0,
+          rebaseAfterTextEdit: () => range,
+        } as unknown as Parameters<typeof stylesSidebarPane.addBlankSection>[2];
+        stylesSidebarPane.addBlankSection(insertAfterSection, styleSheetHeader, range);
+
+        const blankSection =
+            sectionBlocks[0].sections[1] as Elements.StylePropertiesSection.BlankStylePropertiesSection;
+        assert.exists(blankSection);
+        assert.isTrue(blankSection.isBlank);
+
+        // Commit with an invalid selector.
+        blankSection.editingSelectorCommitted(blankSection.element, '@keyframes shake', '@keyframes shake', undefined,
+                                              'forward');
+
+        // Wait for the async addRule to complete and microtasks to process.
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        // The addRule should have been called.
+        sinon.assert.calledOnce(addRuleStub);
+
+        // Since it returned null (invalid selector), the blank section should have been removed.
+        assert.lengthOf(sectionBlocks[0].sections, 1);
+        assert.strictEqual(sectionBlocks[0].sections[0], insertAfterSection);
+      });
+    });
+
     describe('Animation styles', () => {
       function mockGetAnimatedComputedStyles(response: Partial<Protocol.CSS.GetAnimatedStylesForNodeResponse>) {
         connection.setHandler('CSS.getAnimatedStylesForNode', null);
