@@ -3179,7 +3179,6 @@
     {
       name: "Fledge",
       status: "stable",
-      base_feature: "none",
       public: true,
     },
     {
@@ -4760,10 +4759,6 @@
       base_feature: "none",
       origin_trial_feature_name: "PNaCl",
       public: true,
-    },
-    {
-      name: "PointerEventDeviceId",
-      status: "stable",
     },
     {
       // Flag for enabling the pointer lock API on Android

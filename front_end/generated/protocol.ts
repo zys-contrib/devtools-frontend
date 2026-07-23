@@ -18270,7 +18270,6 @@ export namespace Storage {
     Websql = 'websql',
     Service_workers = 'service_workers',
     Cache_storage = 'cache_storage',
-    Interest_groups = 'interest_groups',
     Shared_storage = 'shared_storage',
     Storage_buckets = 'storage_buckets',
     All = 'all',
