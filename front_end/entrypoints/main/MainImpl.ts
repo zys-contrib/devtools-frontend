@@ -45,7 +45,6 @@ import * as Foundation from '../../foundation/foundation.js';
 import * as AiAssistanceModel from '../../models/ai_assistance/ai_assistance.js';
 import * as Badges from '../../models/badges/badges.js';
 import * as CrUXManager from '../../models/crux-manager/crux-manager.js';
-import * as IssuesManager from '../../models/issues_manager/issues_manager.js';
 import * as Persistence from '../../models/persistence/persistence.js';
 import * as Workspace from '../../models/workspace/workspace.js';
 import * as PanelCommon from '../../panels/common/common.js';
@@ -444,15 +443,6 @@ export class MainImpl {
     UI.ContextMenu.ContextMenu.initialize();
     UI.ContextMenu.ContextMenu.installHandler(document);
     UI.ViewManager.ViewManager.instance({forceNew: true, universe: this.#universe});
-
-    // These instances need to be created early so they don't miss any events about requests/issues/etc.
-    IssuesManager.IssuesManager.IssuesManager.instance({
-      forceNew: true,
-      ensureFirst: true,
-      showThirdPartyIssuesSetting:
-          IssuesManager.Issue.getShowThirdPartyIssuesSetting(Common.Settings.Settings.instance()),
-      hideIssueSetting: IssuesManager.IssuesManager.getHideIssueByCodeSetting(),
-    });
 
     UI.DockController.DockController.instance({forceNew: true, canDock});
     const targetManager = SDK.TargetManager.TargetManager.instance();

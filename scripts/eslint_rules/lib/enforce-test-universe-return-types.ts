@@ -29,6 +29,7 @@ const ALLOWED_RETURN_TYPES = new Set([
   'Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager',
   'Bindings.ResourceMapping.ResourceMapping',
   'Breakpoints.BreakpointManager.BreakpointManager',
+  'IssuesManager.IssuesManager.IssuesManager',
   'JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl',
   'Logs.LogManager.LogManager',
   'LiveMetrics.LiveMetrics',

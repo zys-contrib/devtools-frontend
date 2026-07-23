@@ -13,6 +13,7 @@ import * as Bindings from '../models/bindings/bindings.js';
 import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as CrUXManager from '../models/crux-manager/crux-manager.js';
 import * as Emulation from '../models/emulation/emulation.js';
+import * as IssuesManager from '../models/issues_manager/issues_manager.js';
 import * as JavaScriptMetadata from '../models/javascript_metadata/javascript_metadata.js';
 import * as LiveMetrics from '../models/live-metrics/live-metrics.js';
 import * as Logs from '../models/logs/logs.js';
@@ -191,6 +192,17 @@ export class Universe {
     const logManager = new Logs.LogManager.LogManager(targetManager, networkLog);
     context.set(Logs.LogManager.LogManager, logManager);
 
+    const issuesManager = new IssuesManager.IssuesManager.IssuesManager(
+        IssuesManager.Issue.getShowThirdPartyIssuesSetting(settings),
+        IssuesManager.IssuesManager.getHideIssueByCodeSetting(settings),
+        frameManager,
+        targetManager,
+        workspace,
+        debuggerWorkspaceBinding,
+        cssWorkspaceBinding,
+    );
+    context.set(IssuesManager.IssuesManager.IssuesManager, issuesManager);
+
     const javaScriptMetadata = new JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl();
     context.set(JavaScriptMetadata.JavaScriptMetadata.JavaScriptMetadataImpl, javaScriptMetadata);
 
@@ -278,6 +290,10 @@ export class Universe {
 
   get isolateManager(): SDK.IsolateManager.IsolateManager {
     return this.context.get(SDK.IsolateManager.IsolateManager);
+  }
+
+  get issuesManager(): IssuesManager.IssuesManager.IssuesManager {
+    return this.context.get(IssuesManager.IssuesManager.IssuesManager);
   }
 
   get networkPersistenceManager(): Persistence.NetworkPersistenceManager.NetworkPersistenceManager {
