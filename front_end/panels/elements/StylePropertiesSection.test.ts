@@ -787,12 +787,7 @@ describeWithEnvironment('StylesPropertySection', () => {
 
     const stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
     sinon.stub(stylesSidebarPane, 'node').returns(node);
-    const setTimeoutStub = sinon.stub(window, 'setTimeout').callsFake((handler: TimerHandler) => {
-      if (typeof handler === 'function') {
-        handler();
-      }
-      return 1 as unknown as number;
-    });
+    const clock = sinon.useFakeTimers();
 
     const origin = Protocol.CSS.StyleSheetOrigin.Regular;
     const styleSheetId = '0' as Protocol.DOM.StyleSheetId;
@@ -846,11 +841,168 @@ describeWithEnvironment('StylesPropertySection', () => {
     assert.exists(selectorHeader);
 
     selectorHeader.dispatchEvent(new MouseEvent('mouseenter'));
+    clock.tick(300);
 
     sinon.assert.calledOnceWithExactly(highlightSpy, {node, selectorList: '.header, .sidebar'}, 'all');
 
     selectorHeader.dispatchEvent(new MouseEvent('mouseleave'));
     sinon.assert.called(hideStub);
-    setTimeoutStub.restore();
+    clock.restore();
   });
+
+  describe('constructResolvedSelector', () => {
+    function createMockRule(selectorText: string, nestingSelectors?: string[]): SDK.CSSRule.CSSStyleRule {
+      return new SDK.CSSRule.CSSStyleRule({} as SDK.CSSModel.CSSModel, {
+        origin: Protocol.CSS.StyleSheetOrigin.Regular,
+        selectorList: {selectors: [{text: selectorText}], text: selectorText},
+        nestingSelectors,
+        style: {cssProperties: [], shorthandEntries: []},
+      });
+    }
+
+    it('returns the selector unchanged when there are no nesting selectors', () => {
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(createMockRule('.card')),
+          '.card',
+      );
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(createMockRule('.card', [])),
+          '.card',
+      );
+    });
+
+    it('resolves singly-nested selector with &', () => {
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(createMockRule('& .title', ['.card'])),
+          ':is(.card) .title',
+      );
+    });
+
+    it('resolves singly-nested selector with direct child combinator', () => {
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(createMockRule('& > .child', ['.card'])),
+          ':is(.card) > .child',
+      );
+    });
+
+    it('resolves doubly-nested selectors', () => {
+      const rule = createMockRule('& .title', ['& .card', '.container']);
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(rule),
+          ':is(:is(.container) .card) .title',
+      );
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(rule, 0),
+          ':is(.container) .card',
+      );
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(rule, 1),
+          '.container',
+      );
+    });
+
+    it('resolves selectors with comma-separated parent selectors', () => {
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(createMockRule('& .title', ['.header, .sidebar'])),
+          ':is(.header, .sidebar) .title',
+      );
+    });
+
+    it('resolves nested selectors without explicit &', () => {
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(createMockRule('.title', ['.card'])),
+          ':is(.card) .title',
+      );
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(createMockRule('> .child', ['.card'])),
+          ':is(.card) > .child',
+      );
+    });
+
+    it('handles pseudo-elements correctly', () => {
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(createMockRule('&::before', ['.card'])),
+          ':is(.card)::before',
+      );
+      assert.strictEqual(
+          Elements.StylePropertiesSection.constructResolvedSelector(createMockRule('& .child', ['.card::before'])),
+          ':is(.card) .child',
+      );
+    });
+
+    it('returns undefined for non-style rules or null', () => {
+      assert.isUndefined(Elements.StylePropertiesSection.constructResolvedSelector(null));
+    });
+  });
+
+  it('triggers node overlay highlight with resolved :is(...) selector when hovering nested section selector',
+     async () => {
+       const target = createTarget({connection});
+       const cssModel = target.model(SDK.CSSModel.CSSModel);
+       assert.exists(cssModel);
+       const domModel = target.model(SDK.DOMModel.DOMModel);
+       assert.exists(domModel);
+       const overlayModel = domModel.overlayModel();
+
+       const node = SDK.DOMModel.DOMNode.create(domModel, null, false, {
+         nodeId: 1 as Protocol.DOM.NodeId,
+         backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+         nodeType: Node.ELEMENT_NODE,
+         nodeName: 'DIV',
+         localName: 'div',
+         nodeValue: '',
+       });
+
+       const stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
+       sinon.stub(stylesSidebarPane, 'node').returns(node);
+
+       const origin = Protocol.CSS.StyleSheetOrigin.Regular;
+       const styleSheetId = '0' as Protocol.DOM.StyleSheetId;
+
+       const parentRule: Protocol.CSS.RuleMatch = {
+         rule: {
+           selectorList: {selectors: [{text: '.card', specificity: {a: 0, b: 1, c: 0}}], text: '.card'},
+           origin,
+           style: {cssProperties: [{name: 'display', value: 'flex'}], shorthandEntries: []},
+         },
+         matchingSelectors: [0],
+       };
+
+       const childRule: Protocol.CSS.RuleMatch = {
+         rule: {
+           nestingSelectors: ['.card'],
+           ruleTypes: [Protocol.CSS.CSSRuleType.StyleRule],
+           selectorList: {selectors: [{text: '& .title', specificity: {a: 0, b: 2, c: 0}}], text: '& .title'},
+           origin,
+           style: {cssProperties: [{name: 'color', value: 'blue'}], shorthandEntries: []},
+         },
+         matchingSelectors: [0],
+       };
+
+       const matchedStyles = await getMatchedStylesWithStylesheet({
+         cssModel,
+         node,
+         origin,
+         styleSheetId,
+         matchedPayload: [parentRule, childRule],
+         connection,
+       });
+
+       const highlightSpy = sinon.spy(overlayModel, 'highlightInOverlay');
+
+       const declaration = matchedStyles.nodeStyles()[0];
+       assert.exists(declaration);
+       const section = new Elements.StylePropertiesSection.StylePropertiesSection(stylesSidebarPane, matchedStyles,
+                                                                                  declaration, 0, null, null, null);
+
+       const clock = sinon.useFakeTimers();
+
+       const selectorElement = section.element.querySelector('.selector:not(.ancestor-rule-list *)');
+       assert.exists(selectorElement);
+       selectorElement.dispatchEvent(new MouseEvent('mouseenter'));
+       clock.tick(300);
+       sinon.assert.calledWith(highlightSpy, {node, selectorList: ':is(.card) .title'}, 'all');
+
+       clock.restore();
+     });
 });
