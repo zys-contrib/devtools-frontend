@@ -1176,4 +1176,26 @@ describeWithEnvironment('ConsoleView', () => {
     timestampElement = itemElement.contentElement().querySelector('.console-timestamp');
     assert.isNull(timestampElement);
   });
+
+  it('verifies viewport stick-to-bottom behavior when Console is opened', async () => {
+    const tabTarget = createTarget({type: SDK.Target.Type.TAB});
+    const target = createTarget({parentTarget: tabTarget});
+    const consoleModel = target.model(SDK.ConsoleModel.ConsoleModel);
+    assert.exists(consoleModel);
+
+    for (let i = 0; i < 150; ++i) {
+      consoleModel.addMessage(createConsoleMessage(target, `Message #${i}`));
+    }
+
+    consoleView.markAsRoot();
+    renderElementIntoDOM(consoleView, {height: 200});
+
+    await consoleView.getScheduledRefreshPromiseForTest();
+
+    const viewport = (consoleView as unknown as {viewport: Console.ConsoleViewport.ConsoleViewport}).viewport;
+    assert.exists(viewport);
+
+    assert.isTrue(UI.UIUtils.isScrolledToBottom(viewport.element));
+    assert.isTrue(viewport.stickToBottom());
+  });
 });
