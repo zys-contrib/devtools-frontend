@@ -123,3 +123,22 @@ Always detect the execution environment first to run tests successfully:
         ```bash
         npm run build
         ```
+
+### Scenario D: Screenshot Test Fails (Visual Diffs > 0%)
+
+*   **Symptom**: The test runs but fails with a percentage difference in visual regression.
+*   **Resolution Steps**:
+    1.  Do **NOT** ask the user to accept the new screenshot yet.
+    2.  Inspect the failure log to see if it is a **layout shift** or a **missing style**.
+    3.  If it's a layout shift, check if you replaced a block element with an inline element (e.g. `div` -> `span`).
+    4.  If styles are missing, verify if the test wrapper needs `{includeCommonStyles: true}`.
+
+--------------------------------------------------------------------------------
+
+## 🔍 Mental Audit (Internal Self-Correction)
+
+*Before reporting back or committing, re-read the instructions and verify:*
+1.  ❓ **Coverage**: Did I cover all classes in the file, or only the main one?
+2.  ❓ **Stability**: Can the tests run repeatedly without flakiness?
+3.  ❓ **Integrations**: Did I verify that the component mounts correctly?
+

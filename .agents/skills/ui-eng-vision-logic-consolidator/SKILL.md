@@ -79,3 +79,13 @@ consolidating them into private helper methods with explicit data contracts.
 6.  **Wait for confirmation**:
 
     *   Wait for an explicit confirmation from the user (or Parent Orchestrator Agent) before proceeding to the next step.
+
+--------------------------------------------------------------------------------
+
+## 🔍 Mental Audit (Internal Self-Correction)
+
+*Before reporting back or committing, re-read the instructions and verify:*
+1.  ❓ **Minimal Diffs**: Did I move code blocks around unnecessarily?
+2.  ❓ **State Completeness**: Are all imperative DOM updates now backed by state variables?
+3.  ❓ **Build**: Does the code still compile?
+

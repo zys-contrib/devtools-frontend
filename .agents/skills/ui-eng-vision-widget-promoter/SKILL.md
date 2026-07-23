@@ -76,3 +76,12 @@ clean `UI.Widget` classes that use native update rendering delegates.
 *   **Minimal Code Movement**: When migrating, try to move code around as little as possible, in particular around the lit rendering helpers. This minimizes the git diff and improves reviewability.
 
 --------------------------------------------------------------------------------
+
+## 🔍 Mental Audit (Internal Self-Correction)
+
+*Before reporting back or committing, re-read the instructions and verify:*
+1.  ❓ **Decoupling**: Did I remove all direct `.element` or `.contentElement` couplings from instantiator files?
+2.  ❓ **Inheritance**: Does the class now cleanly inherit from `UI.Widget` or its variants?
+3.  ❓ **Injectability**: Is the view injectable in the constructor?
+4.  ❓ **Build**: Does the code compile and do tests pass?
+

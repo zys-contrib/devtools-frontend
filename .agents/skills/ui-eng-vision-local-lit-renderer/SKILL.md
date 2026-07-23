@@ -43,14 +43,13 @@ existing element containers.
         ```
 
 4.  **Modern Component Mapping**:
-
-    *   Refer to [ui_engineering.md](../../../docs/ui_engineering.md) for
-        specific migration examples.
+    *   **MANDATORY**: You **MUST** read and load [ui_engineering.md](../../../docs/ui_engineering.md) first to understand specific component mappings (e.g., Toolbar vs `devtools-toolbar`). Do not assume standard Lit defaults.
     *   If unsure, also consult the [automatic migration code](../../../scripts/eslint_rules/lib/no-imperative-dom-api.ts)
     *   **Prefer Component Built-Ins Over Legacy Boilerplate**: Before porting
         legacy event handlers, comparators, or state variables, check if the
         modern component handles them natively. Drop host-level workarounds in
         favor of declarative component attributes.
+
 
 5.  **Local Modular Renders**:
 
@@ -125,3 +124,14 @@ existing element containers.
 13. **Wait for confirmation**:
 
     *   Wait for an explicit confirmation from the user (or Parent Orchestrator Agent) before proceeding to the next step.
+
+--------------------------------------------------------------------------------
+
+## 🔍 Mental Audit (Internal Self-Correction)
+
+*Before reporting back or committing, re-read the instructions and verify:*
+1.  ❓ **Tag Parity**: Did I accidentally change any `span` to `div` (or vice versa)?
+2.  ❓ **Attribute Drop**: Did I drop any `aria-*`, `role`, or custom data attributes?
+3.  ❓ **Clang-Off Boundary**: Is the template wrapped in `// clang-format off`?
+4.  ❓ **Build**: Does the code compile and do visual tests pass with 0% diff?
+

@@ -16,6 +16,16 @@ principles.
 
 --------------------------------------------------------------------------------
 
+## 🛑 Critical Constraints & Forbidden Actions
+
+1.  **NEVER Break the Build**: Code must compile and tests must pass at all steps. If you change a class API or method signature, you **MUST** update its usage in the same CL to maintain stability.
+2.  **Strict Intermediate Stability**: Do not leave the code in a broken state between passes.
+3.  **No Beautification of Adjacent Code**: Do NOT fix unrelated typos, formatting issues, or lint warnings in code you aren't actively migrating.
+4.  **No Monolithic Refactors**: Do NOT batch Lit conversion and Widget Promotion in the same pass. Keep CLs small and focused.
+
+
+--------------------------------------------------------------------------------
+
 ## 1. Migration Philosophy & Plan-Validate-Execute Pattern
 
 1.  **The Plan-Validate-Execute Principle**: For each target file, the
@@ -48,8 +58,8 @@ principles.
     converting imperative DOM to Lit-html) with base class refactoring in the
     same diff.
 8.  **Strict Intermediate Stability**: The code must compile and work correctly,
-    and all tests must pass after each step. We should not split the class API
-    update from its usage update.
+    and all tests must pass after each step. You **MUST** update usages if you
+    change APIs.
 9.  **Establish Comprehensive Guardrails First**: Ensure both **logic tests**
     (verifying presenter interactions and state updates) and **screenshot
     tests** (verifying layout/styling) exist before rewriting code. If coverage
@@ -101,10 +111,32 @@ principles.
             DOM construction. Converting the layout to declarative Lit templates
             first (using temporary inline or local state) makes it much easier
             to isolate and group the remaining state updates afterward.
-    5.  Generate a `migration_plan.md` reflecting this ordering and outlining
-        the target steps.
+    5.  Generate a `migration_plan.md` using the **Structured Plan Template** below.
     6.  Halt execution and print the formatted plan in Markdown to the chat.
         Wait for user approval.
+
+### 📝 Structured Plan Template
+The plan you generate **MUST** follow this structure:
+
+```markdown
+# Migration Plan: [FileName.ts]
+
+## 📊 Current State
+- **Hybrid File**: [Yes/No]
+- **Classes Found**: [ClassA, ClassB]
+- **Strategy Selection**: [Option A (Logic First) | Option B (Tech First)]
+
+## 🛠️ Passes Checklist
+- [ ] **Pass 0: Baseline & Safety Scaffolding**
+  - Assigned to: `ui-eng-vision-test-scaffolder`
+- [ ] **Pass 1: Logic Consolidation**
+  - Assigned to: `ui-eng-vision-logic-consolidator`
+- [ ] **Pass 2: Lit-HTML Rendering**
+  - Assigned to: `ui-eng-vision-local-lit-renderer`
+- [ ] **Pass 3: Widget Promotion**
+  - Assigned to: `ui-eng-vision-widget-promoter`
+```
+
 
 ### Baseline & Safety Scaffolding
 
