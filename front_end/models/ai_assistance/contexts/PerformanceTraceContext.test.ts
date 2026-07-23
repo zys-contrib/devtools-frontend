@@ -5,10 +5,20 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
+import {setupSettingsHooks} from '../../../testing/SettingsHelpers.js';
+import {TestUniverse} from '../../../testing/TestUniverse.js';
 import type * as Trace from '../../trace/trace.js';
 import * as AiAssistance from '../ai_assistance.js';
 
 describe('PerformanceTraceContext', () => {
+  setupSettingsHooks();
+
+  let universe: TestUniverse;
+
+  beforeEach(() => {
+    universe = new TestUniverse();
+  });
+
   it('should return prompt details correctly by combining trace formatter output', async () => {
     const mockTrace = {
       insights: new Map(),
@@ -20,7 +30,8 @@ describe('PerformanceTraceContext', () => {
       },
     } as unknown as Trace.TraceModel.ParsedTrace;
 
-    const context = AiAssistance.PerformanceTraceContext.PerformanceTraceContext.fromParsedTrace(mockTrace);
+    const context = AiAssistance.PerformanceTraceContext.PerformanceTraceContext.fromParsedTrace(
+        mockTrace, universe.targetManager, undefined, universe.debuggerWorkspaceBinding);
 
     const formatterProto = AiAssistance.PerformanceTraceFormatter.PerformanceTraceFormatter.prototype;
     sinon.stub(formatterProto, 'formatTraceSummary').returns('Mock Trace Summary');
@@ -53,7 +64,8 @@ Mock Longest Tasks`);
       },
     } as unknown as Trace.TraceModel.ParsedTrace;
 
-    const context = AiAssistance.PerformanceTraceContext.PerformanceTraceContext.fromParsedTrace(mockTrace);
+    const context = AiAssistance.PerformanceTraceContext.PerformanceTraceContext.fromParsedTrace(
+        mockTrace, universe.targetManager, undefined, universe.debuggerWorkspaceBinding);
 
     const formatterProto = AiAssistance.PerformanceTraceFormatter.PerformanceTraceFormatter.prototype;
     sinon.stub(formatterProto, 'formatTraceSummary').returns('Mock Trace Summary');

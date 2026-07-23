@@ -21,6 +21,7 @@ import {setupLocaleHooks} from '../../../testing/LocaleHelpers.js';
 import {setupSettingsHooks} from '../../../testing/SettingsHelpers.js';
 import {SnapshotTester} from '../../../testing/SnapshotTester.js';
 import {TestUniverse} from '../../../testing/TestUniverse.js';
+import * as Bindings from '../../bindings/bindings.js';
 import * as Logs from '../../logs/logs.js';
 import type * as Trace from '../../trace/trace.js';
 import * as Workspace from '../../workspace/workspace.js';
@@ -58,11 +59,13 @@ describe('ContextSelectionAgent', function() {
 
   beforeEach(() => {
     universe = new TestUniverse();
-    const {targetManager, workspace, settings, networkLog, ignoreListManager} = universe;
+    const {targetManager, workspace, settings, networkLog, ignoreListManager, debuggerWorkspaceBinding} = universe;
 
     sinon.stub(Workspace.Workspace.WorkspaceImpl, 'instance').returns(workspace);
     sinon.stub(SDK.TargetManager.TargetManager, 'instance').returns(targetManager);
     sinon.stub(Common.Settings.Settings, 'instance').returns(settings);
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
+        .returns(debuggerWorkspaceBinding);
     sinon.stub(Logs.NetworkLog.NetworkLog, 'instance').returns(networkLog);
     sinon.stub(Workspace.IgnoreListManager.IgnoreListManager, 'instance').returns(ignoreListManager);
   });

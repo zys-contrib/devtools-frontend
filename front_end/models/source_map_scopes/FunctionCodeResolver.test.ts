@@ -200,8 +200,8 @@ describe('FunctionCodeResolver', function() {
         }
 
         const code = await SourceMapScopes.FunctionCodeResolver.getFunctionCodeFromLocation(
-            target, testCase.url, testCase.line, testCase.column, {contextLength: 30, appendProfileData: true},
-            backend.universe.debuggerWorkspaceBinding);
+            target, testCase.url, testCase.line, testCase.column, backend.universe.debuggerWorkspaceBinding,
+            {contextLength: 30, appendProfileData: true});
         assert.isOk(code);
         assert.strictEqual(code.code, testCase.expectedCode);
         snapshotTester.assert(this, code.codeWithContext);
@@ -216,12 +216,12 @@ describe('FunctionCodeResolver', function() {
 
       // Attempt to retrieve code using target1
       const codeFromTarget1 = await SourceMapScopes.FunctionCodeResolver.getFunctionCodeFromLocation(
-          target1, URL, 0, 35, undefined, backend.universe.debuggerWorkspaceBinding);
+          target1, URL, 0, 35, backend.universe.debuggerWorkspaceBinding);
       assert.isNull(codeFromTarget1);
 
       // Retrieve code using target2 (which actually owns the script)
       const codeFromTarget2 = await SourceMapScopes.FunctionCodeResolver.getFunctionCodeFromLocation(
-          target2, URL, 0, 35, undefined, backend.universe.debuggerWorkspaceBinding);
+          target2, URL, 0, 35, backend.universe.debuggerWorkspaceBinding);
       assert.isNotNull(codeFromTarget2);
     });
   });

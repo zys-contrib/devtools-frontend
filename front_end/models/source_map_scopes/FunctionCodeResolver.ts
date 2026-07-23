@@ -216,9 +216,8 @@ function createFunctionCode(
  */
 export async function getFunctionCodeFromLocation(
     target: SDK.Target.Target, url: Platform.DevToolsPath.UrlString, line: number, column: number,
-    options?: CreateFunctionCodeOptions,
-    debuggerWorkspaceBinding =
-        Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()): Promise<FunctionCode|null> {
+    debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding,
+    options?: CreateFunctionCodeOptions): Promise<FunctionCode|null> {
   const debuggerModel = target.model(SDK.DebuggerModel.DebuggerModel);
   if (!debuggerModel) {
     throw new Error('missing debugger model');
@@ -246,7 +245,7 @@ export async function getFunctionCodeFromLocation(
     return null;
   }
 
-  return await getFunctionCodeFromRawLocation(rawLocation, options, debuggerWorkspaceBinding);
+  return await getFunctionCodeFromRawLocation(rawLocation, debuggerWorkspaceBinding, options);
 }
 
 async function format(uiSourceCode: Workspace.UISourceCode.UISourceCode, content: string,
@@ -265,9 +264,9 @@ async function format(uiSourceCode: Workspace.UISourceCode.UISourceCode, content
  * Returns a {@link FunctionCode} for the given raw location.
  */
 export async function getFunctionCodeFromRawLocation(
-    rawLocation: SDK.DebuggerModel.Location, options?: CreateFunctionCodeOptions,
-    debuggerWorkspaceBinding =
-        Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()): Promise<FunctionCode|null> {
+    rawLocation: SDK.DebuggerModel.Location,
+    debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding,
+    options?: CreateFunctionCodeOptions): Promise<FunctionCode|null> {
   const functionBounds = await debuggerWorkspaceBinding.functionBoundsAtRawLocation(rawLocation);
   if (!functionBounds) {
     return null;

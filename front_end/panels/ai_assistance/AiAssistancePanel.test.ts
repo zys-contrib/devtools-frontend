@@ -12,6 +12,7 @@ import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as AiAssistanceModel from '../../models/ai_assistance/ai_assistance.js';
 import * as Badges from '../../models/badges/badges.js';
+import * as Bindings from '../../models/bindings/bindings.js';
 import * as NetworkTimeCalculator from '../../models/network_time_calculator/network_time_calculator.js';
 import type * as Trace from '../../models/trace/trace.js';
 import * as Workspace from '../../models/workspace/workspace.js';
@@ -86,6 +87,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
   }
 
   beforeEach(() => {
+    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance');
     viewManagerIsViewVisibleStub = sinon.stub(
         UI.ViewManager.ViewManager.instance(),
         'isViewVisible',

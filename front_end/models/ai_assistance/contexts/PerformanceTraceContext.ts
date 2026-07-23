@@ -7,6 +7,7 @@ import type {UrlString} from '../../../core/platform/DevToolsPath.js';
 import type * as Platform from '../../../core/platform/platform.js';
 import * as SDK from '../../../core/sdk/sdk.js';
 import * as Tracing from '../../../services/tracing/tracing.js';
+import * as Bindings from '../../bindings/bindings.js';
 import * as SourceMapScopes from '../../source_map_scopes/source_map_scopes.js';
 import * as Trace from '../../trace/trace.js';
 import {
@@ -28,52 +29,63 @@ import {AgentFocus} from '../performance/AIContext.js';
  * the context data for the LLM prompt and user-facing accordion disclosures.
  */
 export class PerformanceTraceContext extends ConversationContext<AgentFocus> {
-  static fromParsedTrace(parsedTrace: Trace.TraceModel.ParsedTrace,
-                         targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
-                         freshRecordingTracker:
-                             Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance()):
-      PerformanceTraceContext {
+  static fromParsedTrace(
+      parsedTrace: Trace.TraceModel.ParsedTrace,
+      targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
+      freshRecordingTracker: Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance(),
+      debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+          Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()): PerformanceTraceContext {
     return new PerformanceTraceContext(
         AgentFocus.fromParsedTrace(parsedTrace),
         targetManager,
         freshRecordingTracker,
+        debuggerWorkspaceBinding,
     );
   }
 
   static fromInsight(parsedTrace: Trace.TraceModel.ParsedTrace, insight: Trace.Insights.Types.InsightModel,
                      targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
-                     freshRecordingTracker: Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance()):
+                     freshRecordingTracker: Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance(),
+                     debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+                         Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()):
       PerformanceTraceContext {
     return new PerformanceTraceContext(
         AgentFocus.fromInsight(parsedTrace, insight),
         targetManager,
         freshRecordingTracker,
+        debuggerWorkspaceBinding,
     );
   }
 
   static fromCallTree(callTree: AICallTree,
                       targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
-                      freshRecordingTracker:
-                          Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance()):
+                      freshRecordingTracker: Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance(),
+                      debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+                          Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()):
       PerformanceTraceContext {
     return new PerformanceTraceContext(
         AgentFocus.fromCallTree(callTree),
         targetManager,
         freshRecordingTracker,
+        debuggerWorkspaceBinding,
     );
   }
 
   readonly #focus: AgentFocus;
   readonly #targetManager: SDK.TargetManager.TargetManager;
   readonly #freshRecordingTracker: Tracing.FreshRecording.Tracker;
+  readonly #debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding;
 
   constructor(focus: AgentFocus,
               targetManager: SDK.TargetManager.TargetManager = SDK.TargetManager.TargetManager.instance(),
-              freshRecordingTracker: Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance()) {
+              freshRecordingTracker: Tracing.FreshRecording.Tracker = Tracing.FreshRecording.Tracker.instance(),
+              debuggerWorkspaceBinding: Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding =
+                  Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding.instance()) {
     super();
     this.#focus = focus;
     this.#targetManager = targetManager;
     this.#freshRecordingTracker = freshRecordingTracker;
+    this.#debuggerWorkspaceBinding = debuggerWorkspaceBinding;
   }
 
   /**
@@ -95,7 +107,8 @@ export class PerformanceTraceContext extends ConversationContext<AgentFocus> {
         return null;
       }
       return await SourceMapScopes.FunctionCodeResolver.getFunctionCodeFromLocation(
-          target, url, line, column, {contextLength: 200, contextLineLength: 5, appendProfileData: true});
+          target, url, line, column, this.#debuggerWorkspaceBinding,
+          {contextLength: 200, contextLineLength: 5, appendProfileData: true});
     };
     return formatter;
   }
