@@ -6,6 +6,7 @@
 
 import subprocess
 import re
+import contextlib
 import sys
 import json
 import unittest
@@ -15,6 +16,18 @@ import unittest
 
 
 class DevToolsTestHarness(unittest.TestCase):
+
+    @contextlib.contextmanager
+    def _expectations_file(self, content):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(content)
+            expectations_file = f.name
+        try:
+            yield expectations_file
+        finally:
+            os.remove(expectations_file)
 
     def run_test_with_rdb(self, cmd_args):
         cmd = [
@@ -273,15 +286,9 @@ class DevToolsTestHarness(unittest.TestCase):
         self.assertEqual(results[0].get('status'), 'PASS')
 
     def test_unit_expectations(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/unit/hooks.test.ts [ Failure Pass ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/unit/hooks.test.ts")
             results, exit_code = self.run_test_with_rdb([
@@ -293,19 +300,11 @@ class DevToolsTestHarness(unittest.TestCase):
             self.assertEqual(len(results), 3)
             for r in results:
                 self.assertTrue(r.get('expected', False))
-        finally:
-            os.remove(expectations_file)
 
     def test_unit_expectations_unexpected_pass(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/unit/unit.test.ts [ Failure ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/unit/unit.test.ts")
             results, exit_code = self.run_test_with_rdb([
@@ -318,19 +317,11 @@ class DevToolsTestHarness(unittest.TestCase):
             for r in results:
                 self.assertEqual(r['status'], 'PASS')
                 self.assertFalse(r.get('expected', False))
-        finally:
-            os.remove(expectations_file)
 
     def test_unit_expectations_exact_id(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/unit/hooks.test.ts:block_1:run_1 [ Failure ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/unit/hooks.test.ts")
             results, exit_code = self.run_test_with_rdb([
@@ -348,19 +339,11 @@ class DevToolsTestHarness(unittest.TestCase):
                 else:
                     self.assertTrue(r.get('expected', False))
                     self.assertEqual(r.get('status'), 'PASS')
-        finally:
-            os.remove(expectations_file)
 
     def test_unit_expectations_skip_file(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/unit/unit.test.ts [ Skip ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/unit/unit.test.ts")
             abs_test_file_2 = self._resolve_test_file(
@@ -375,19 +358,11 @@ class DevToolsTestHarness(unittest.TestCase):
             results.sort(key=lambda r: r.get('testId'))
             self.assertEqual(results[0].get('status'), 'SKIP')
             self.assertEqual(results[1].get('status'), 'PASS')
-        finally:
-            os.remove(expectations_file)
 
     def test_unit_expectations_skip_exact_id(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/unit/unit.test.ts:unit:should_run_a_basic_unit_test_successfully [ Skip ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/unit/unit.test.ts")
             abs_test_file_2 = self._resolve_test_file(
@@ -402,8 +377,6 @@ class DevToolsTestHarness(unittest.TestCase):
             results.sort(key=lambda r: r.get('testId'))
             self.assertEqual(results[0].get('status'), 'SKIP')
             self.assertEqual(results[1].get('status'), 'PASS')
-        finally:
-            os.remove(expectations_file)
 
     def test_e2e_ids(self):
         results, exit_code = self.run_e2e_test(
@@ -461,15 +434,9 @@ class DevToolsTestHarness(unittest.TestCase):
         self.assertEqual(results[1].get('status'), 'PASS')
 
     def test_e2e_expectations(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts [ Failure Pass ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/e2e/errors.test.ts")
             results, exit_code = self.run_test_with_rdb([
@@ -480,19 +447,11 @@ class DevToolsTestHarness(unittest.TestCase):
             self.assertEqual(len(results), 4)
             for r in results:
                 self.assertTrue(r.get('expected', False))
-        finally:
-            os.remove(expectations_file)
 
     def test_e2e_expectations_unexpected_pass(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts [ Failure ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/e2e/errors.test.ts")
             results, exit_code = self.run_test_with_rdb([
@@ -506,19 +465,11 @@ class DevToolsTestHarness(unittest.TestCase):
                     self.assertFalse(r.get('expected', False))
                 else:
                     self.assertTrue(r.get('expected', False))
-        finally:
-            os.remove(expectations_file)
 
     def test_e2e_expectations_exact_id(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts:block_1:run_1 [ Failure ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/e2e/errors.test.ts")
             results, exit_code = self.run_test_with_rdb([
@@ -537,19 +488,11 @@ class DevToolsTestHarness(unittest.TestCase):
                     self.assertFalse(r.get('expected', False))
                 else:
                     self.assertTrue(r.get('expected', False))
-        finally:
-            os.remove(expectations_file)
 
     def test_e2e_expectations_skip_file(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts [ Skip ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/e2e/errors.test.ts")
             results, exit_code = self.run_test_with_rdb([
@@ -560,19 +503,11 @@ class DevToolsTestHarness(unittest.TestCase):
             self.assertEqual(len(results), 4)
             for r in results:
                 self.assertEqual(r.get('status'), 'SKIP')
-        finally:
-            os.remove(expectations_file)
 
     def test_e2e_expectations_skip_exact_id(self):
-        import tempfile
-        import os
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(
+        with self._expectations_file(
                 "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts:block_1:run_1 [ Skip ]\n"
-            )
-            expectations_file = f.name
-
-        try:
+        ) as expectations_file:
             abs_test_file = self._resolve_test_file(
                 "test/harness/e2e/errors.test.ts")
             results, exit_code = self.run_test_with_rdb([
@@ -591,8 +526,6 @@ class DevToolsTestHarness(unittest.TestCase):
                     self.assertEqual(r.get('status'), 'FAIL')
                 else:
                     self.assertEqual(r.get('status'), 'PASS')
-        finally:
-            os.remove(expectations_file)
 
     def test_unit_screenshot_retry(self):
         import sys
