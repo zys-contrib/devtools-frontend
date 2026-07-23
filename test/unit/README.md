@@ -96,48 +96,34 @@ press F5.
 ## Dealing with flaky unit tests
 
 To skip a flaky unit test, create a new bug on [crbug.com](https://crbug.com) in the
-`Chromium > Platform > DevTools` component, and modify the `it` or `describe`
-block accordingly by adding `.skip` to it, adding a preceeding comment
-why the test is skipp and adding the `crbug.com` reference to the test
-block string. For example
+`Chromium > Platform > DevTools` component, and add an entry to the `test/TestExpectations` file.
+For example, to skip the `can return bar` test in `test/unit/foo.test.ts`, add:
 
-```ts
-describe('Foo', () => {
-  it('can return bar', () => {
-    assert.strictEqual(new Foo().bar(), 'bar');
-  });
-
-  // ...
-});
+```
+# Flaking on multiple bots on CQ after recent CL xyz.
+crbug.com/12345678 test/unit/foo.test.ts:Foo:can_return_bar [ Skip ]
 ```
 
-would be changed to look like this
-
-```ts
-describe('Foo', () => {
-  // Flaking on multiple bots on CQ after recent CL xyz.
-  it.skip('[crbug.com/12345678] can return bar', () => {
-    assert.strictEqual(new Foo().bar(), 'bar');
-  });
-
-  // ...
-});
+If the test is only flaky on specific platforms, you can specify them:
+```
+crbug.com/12345678 [ mac win32 ] test/unit/foo.test.ts:Foo:can_return_bar [ Skip ]
 ```
 
-if only the one test case should be skipped, or like this
-
-```ts
-// Flaking on multiple bots on CQ after recent CL xyz.
-describe.skip('[crbug.com/12345678] Foo', () => {
-  it('can return bar', () => {
-    assert.strictEqual(new Foo().bar(), 'bar');
-  });
-
-  // ...
-});
+If you need to skip the entire file:
+```
+crbug.com/12345678 test/unit/foo.test.ts [ Skip ]
 ```
 
-if all the tests for `Foo` should be skipped.
+Note that it is preferable to skip individual tests so that test results list the skipped tests, rather than skipping entire files.
+
+Also, when dealing with flaky tests, it is highly recommended to use `[ Pass Failure ]` instead of `[ Skip ]`. `[ Skip ]` is a last resort, as skipped tests won't run at all and will not report coverage. Using `[ Pass Failure ]` allows the test to run and fail without turning the tree red, but still provides signal and coverage.
+
+For example, to mark a test as flaky:
+
+```
+# Flaking on multiple bots on CQ after recent CL xyz.
+crbug.com/12345678 test/unit/foo.test.ts:Foo:can_return_bar [ Pass Failure ]
+```
 
 ## Screenshot tests
 

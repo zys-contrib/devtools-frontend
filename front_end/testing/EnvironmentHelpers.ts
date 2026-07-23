@@ -150,14 +150,6 @@ describeWithEnvironment.only = function(title: string, fn: (this: Mocha.Suite) =
     afterEach(async () => await deinitializeGlobalVars());
   });
 };
-describeWithEnvironment.skip = function(title: string, fn: (this: Mocha.Suite) => void, _opts: {reset: boolean} = {
-  reset: true,
-}) {
-  // eslint-disable-next-line @devtools/check-test-definitions
-  return describe.skip(title, function() {
-    fn.call(this);
-  });
-};
 
 export function createFakeSetting<T>(name: string, defaultValue: T): Common.Settings.Setting<T> {
   const storage = new Common.Settings.SettingsStorage({}, undefined, 'test');

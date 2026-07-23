@@ -13,7 +13,6 @@ import {
   type TestCallback,
   type TestStateProvider,
 } from './mocha-interface-helpers.js';
-import {platform, type Platform} from './platform.js';
 
 type SuiteFunction = ((this: Mocha.Suite) => void)|undefined;
 
@@ -26,7 +25,6 @@ export interface CustomItFunction<TState> {
   (title: string, fn?: TestCallback<TState>|Mocha.AsyncFunc): Mocha.Test;
   skip: (title: string, _fn?: TestCallback<TState>|Mocha.AsyncFunc) => Mocha.Test;
   only: (title: string, fn?: TestCallback<TState>|Mocha.AsyncFunc) => Mocha.Test;
-  skipOnPlatforms: (platforms: Platform[], title: string, fn?: TestCallback<TState>|Mocha.AsyncFunc) => Mocha.Test;
 }
 
 export interface CustomDescribeFunction {
@@ -169,13 +167,7 @@ function customIt<TState>(
         only: function(title: string, fn?: TestCallback<TState>|Mocha.AsyncFunc): Mocha.Test {
           return testImplementation.only(mocha, createTest(title, fn));
         },
-        skipOnPlatforms: function(platforms: Platform[], title: string, fn?: TestCallback<TState>|Mocha.AsyncFunc):
-                             Mocha.Test {
-                               if (platforms.includes(platform)) {
-                                 return localIt.skip(title, fn);
-                               }
-                               return localIt(title, fn);
-                             },
+
       },
   );
 

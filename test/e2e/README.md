@@ -79,61 +79,36 @@ Current limitations when using VSCode for e2e tests:
 ## Dealing with flaky E2E tests
 
 To skip a flaky E2E test, create a new bug on [crbug.com](https://crbug.com) in the
-`Chromium > Platform > DevTools` component, and modify the `it` or `describe`
-block accordingly by adding `.skip` to it, adding a preceeding comment
-why the test is skipp and adding the `crbug.com` reference to the test
-block string. For example
+`Chromium > Platform > DevTools` component, and add an entry to the `test/TestExpectations` file.
+For example, to skip the `can return bar` test in `test/e2e/foo.test.ts`, add:
 
-```ts
-describe('Foo', () => {
-  it('can return bar', () => {
-    assert.strictEqual((new Foo()).bar(), 'bar');
-  });
-
-  ...
-});
+```
+# Flaking on multiple bots on CQ after recent CL xyz.
+crbug.com/12345678 test/e2e/foo.test.ts:Foo:can_return_bar [ Skip ]
 ```
 
-would be changed to look like this
-
-```ts
-describe('Foo', () => {
-  // Flaking on multiple bots on CQ after recent CL xyz.
-  it.skip('[crbug.com/12345678] can return bar', () => {
-    assert.strictEqual((new Foo()).bar(), 'bar');
-  });
-
-  ...
-});
+If the test is only flaky on specific platforms, you can specify them:
+```
+crbug.com/12345678 [ mac win32 ] test/e2e/foo.test.ts:Foo:can_return_bar [ Skip ]
 ```
 
-if only the one test case should be skipped, or like this
-
-```ts
-// Flaking on multiple bots on CQ after recent CL xyz.
-describe.skip('[crbug.com/12345678] Foo', () => {
-  it('can return bar', () => {
-    assert.strictEqual((new Foo()).bar(), 'bar');
-  });
-
-  ...
-});
+If you need to skip the entire file:
+```
+crbug.com/12345678 test/e2e/foo.test.ts [ Skip ]
 ```
 
-if all the tests for `Foo` should be skipped. Note that it is preferable to
-skip individual tests so that test results list the skipped tests, rather than
-skipping groups of tests.
+Note that it is preferable to skip individual tests so that test results list the skipped tests, rather than skipping entire files.
 
-If you are disabling a flaky test, consider disabling it only on the affected
-platforms. For example:
+Also, when dealing with flaky tests, it is highly recommended to use `[ Pass Failure ]` instead of `[ Skip ]`. `[ Skip ]` is a last resort, as skipped tests won't run at all and will not report coverage. Using `[ Pass Failure ]` allows the test to run and fail without turning the tree red, but still provides signal and coverage.
 
-```ts
-// Consistently flakes on Mac and Windows bots.
-it.skipOnPlatforms(['mac', 'win32'], '[crbug.com/xxx] ...', () => {...});
+For example, to mark a test as flaky:
 
-// Skipped on Linux because the world isn't round.
-it.skipOnPlatforms(['linux'], '[crbug.com/xxx] ...', () => {...});
 ```
+# Flaking on multiple bots on CQ after recent CL xyz.
+crbug.com/12345678 test/e2e/foo.test.ts:Foo:can_return_bar [ Pass Failure ]
+```
+
+
 
 ### De-flaking E2E and Unit tests
 
