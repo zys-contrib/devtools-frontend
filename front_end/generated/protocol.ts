@@ -20462,6 +20462,8 @@ export namespace WebAuthn {
     credentialId: binary;
     backupEligibility?: boolean;
     backupState?: boolean;
+    activeCmtgKeyIndex?: integer;
+    generateCmtgKeyOnNextOperation?: boolean;
   }
 
   /**
