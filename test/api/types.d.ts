@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type * as Mocha from 'mocha';
 
-import type {Universe} from '../../front_end/foundation/Universe.js';
+import type * as Foundation from '../../front_end/foundation/foundation.js';
 import type {InspectedPage as SharedInspectedPage} from '../conductor/inspected_page.js';
 
 declare global {
@@ -33,7 +33,7 @@ declare global {
 
     export interface State {
       inspectedPage: InspectedPage;
-      universe: Universe;
+      universe: Foundation.Universe.Universe;
     }
 
     export type TestAsyncCallbackWithState = (this: undefined, state: State) => PromiseLike<unknown>;
