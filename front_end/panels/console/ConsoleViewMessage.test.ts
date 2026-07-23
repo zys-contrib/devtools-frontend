@@ -1625,4 +1625,146 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       assert.strictEqual(formattedCommand.textContent, 'var\uFFFD i = 0;');
     });
   });
+
+  describe('ES2025 format', () => {
+    let target: SDK.Target.Target;
+    let runtimeModel: SDK.RuntimeModel.RuntimeModel;
+
+    beforeEach(() => {
+      target = createTarget();
+      runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel)!;
+    });
+
+    it('formats Promise correctly', () => {
+      const promisePreview: Protocol.Runtime.ObjectPreview = {
+        type: Protocol.Runtime.ObjectPreviewType.Object,
+        subtype: Protocol.Runtime.ObjectPreviewSubtype.Promise,
+        description: 'Promise',
+        overflow: false,
+        properties: [
+          {name: '[[PromiseState]]', type: Protocol.Runtime.PropertyPreviewType.String, value: 'rejected'},
+          {name: '[[PromiseResult]]', type: Protocol.Runtime.PropertyPreviewType.Number, value: '-0'},
+        ],
+      };
+
+      const remoteObject = new SDK.RemoteObject.RemoteObjectImpl(
+          runtimeModel,
+          'mock-id' as Protocol.Runtime.RemoteObjectId,
+          'object',
+          'promise',
+          undefined,
+          undefined,
+          'Promise',
+          promisePreview,
+      );
+
+      const rawMessage =
+          new SDK.ConsoleModel.ConsoleMessage(runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI,
+                                              Protocol.Log.LogEntryLevel.Info, '', {parameters: [remoteObject]});
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      assert.strictEqual(messageElement.textContent, 'Promise {<rejected>: -0}');
+    });
+
+    it('formats Symbol correctly', () => {
+      const remoteObject = new SDK.RemoteObject.RemoteObjectImpl(
+          runtimeModel,
+          undefined,
+          'symbol',
+          undefined,
+          undefined,
+          undefined,
+          'Symbol(a)',
+      );
+
+      const rawMessage =
+          new SDK.ConsoleModel.ConsoleMessage(runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI,
+                                              Protocol.Log.LogEntryLevel.Info, '', {parameters: [remoteObject]});
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      assert.strictEqual(messageElement.textContent, 'Symbol(a)');
+    });
+
+    it('formats Map correctly', () => {
+      const mapPreview: Protocol.Runtime.ObjectPreview = {
+        type: Protocol.Runtime.ObjectPreviewType.Object,
+        subtype: Protocol.Runtime.ObjectPreviewSubtype.Map,
+        description: 'Map(1)',
+        overflow: false,
+        properties: [],
+        entries: [{
+          key: {
+            type: Protocol.Runtime.ObjectPreviewType.Object,
+            description: 'Object',
+            overflow: false,
+            properties: [],
+          },
+          value: {
+            type: Protocol.Runtime.ObjectPreviewType.Object,
+            description: 'Object',
+            overflow: false,
+            properties: [],
+          },
+        }],
+      };
+
+      const remoteObject = new SDK.RemoteObject.RemoteObjectImpl(
+          runtimeModel,
+          'mock-id' as Protocol.Runtime.RemoteObjectId,
+          'object',
+          'map',
+          undefined,
+          undefined,
+          'Map(1)',
+          mapPreview,
+      );
+
+      const rawMessage =
+          new SDK.ConsoleModel.ConsoleMessage(runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI,
+                                              Protocol.Log.LogEntryLevel.Info, '', {parameters: [remoteObject]});
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      assert.strictEqual(messageElement.textContent, 'Map(1) {{…} => {…}}');
+    });
+
+    it('formats Set correctly', () => {
+      const setPreview: Protocol.Runtime.ObjectPreview = {
+        type: Protocol.Runtime.ObjectPreviewType.Object,
+        subtype: Protocol.Runtime.ObjectPreviewSubtype.Set,
+        description: 'Set(1)',
+        overflow: false,
+        properties: [],
+        entries: [{
+          value: {
+            type: Protocol.Runtime.ObjectPreviewType.Object,
+            description: 'Object',
+            overflow: false,
+            properties: [],
+          },
+        }],
+      };
+
+      const remoteObject = new SDK.RemoteObject.RemoteObjectImpl(
+          runtimeModel,
+          'mock-id' as Protocol.Runtime.RemoteObjectId,
+          'object',
+          'set',
+          undefined,
+          undefined,
+          'Set(1)',
+          setPreview,
+      );
+
+      const rawMessage =
+          new SDK.ConsoleModel.ConsoleMessage(runtimeModel, Common.Console.FrontendMessageSource.ConsoleAPI,
+                                              Protocol.Log.LogEntryLevel.Info, '', {parameters: [remoteObject]});
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      const messageElement = message.toMessageElement();
+
+      assert.strictEqual(messageElement.textContent, 'Set(1) {{…}}');
+    });
+  });
 });
