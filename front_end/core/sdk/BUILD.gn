@@ -145,6 +145,7 @@ ts_library("unittests") {
 
   sources = [
     "CSSMatchedStyles.test.ts",
+    "CSSMetadata.test.ts",
     "CSSModel.test.ts",
     "CSSProperty.test.ts",
     "CSSPropertyParser.test.ts",
