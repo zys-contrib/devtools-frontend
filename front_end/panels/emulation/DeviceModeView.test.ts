@@ -74,12 +74,13 @@ describeWithEnvironment('DeviceModeView', () => {
         assert.isTrue(contentClip?.classList.contains('device-mode-rulers-visible'));
       });
 
-      it('sets correct dimensions on screenArea upon model updates', () => {
+      it('sets correct dimensions on screenArea upon model updates', async () => {
         renderElementIntoDOM(view);
         deviceModeModel.emulate(EmulationModel.DeviceModeModel.Type.Responsive, null, null);
 
         sinon.stub(deviceModeModel, 'screenRect').returns(new EmulationModel.DeviceModeModel.Rect(0, 0, 800, 600));
         deviceModeModel.dispatchEventToListeners(EmulationModel.DeviceModeModel.Events.UPDATED);
+        await view.updateComplete;
 
         const screenArea = view.contentElement.querySelector<HTMLElement>('.device-mode-screen-area');
         assert.instanceOf(screenArea, HTMLElement);
