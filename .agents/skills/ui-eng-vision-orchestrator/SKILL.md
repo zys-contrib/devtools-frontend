@@ -1,7 +1,7 @@
 ---
 name: ui-eng-vision-orchestrator
 description: High-level orchestrator for managing multi-pass migration of Chrome DevTools legacy components to the modern UI engineering vision (UI.Widget & Lit-html).
-allowed-tools: code_search open_urls search_changelists data_analysis import_skill close_skill
+allowed-tools: code_search open_urls search_changelists data_analysis import_skill close_skill invoke_subagent send_message
 ---
 
 # UI Engineering Vision Orchestrator: Meta-Skill Instructions
@@ -62,6 +62,11 @@ principles.
     roughly 300 lines of code. If a step is predicted to be too complex, break
     it down into smaller substeps. The agent must stop and report back after
     each step or substep to allow verification.
+12. **Context Hygiene via Subagents**: To keep the main conversation context
+    clean and focused on high-level orchestration, prefer delegating intense
+    execution tasks (like running tests, debugging compilations, or processing
+    independent classes in parallel) to specialized subagents.
+
 
 --------------------------------------------------------------------------------
 
@@ -105,7 +110,7 @@ principles.
 
 *   **Trigger Condition**: User explicitly says "I accept the plan" or
     equivalent.
-*   **Subskill to Import**: `ui-eng-vision-test-scaffolder`
+*   **Subskill to Import/Delegate**: `ui-eng-vision-test-scaffolder` (Delegate to a subagent to encapsulate verbose test logs)
 *   **Actions**:
     1.  Verify existing test coverage. Propose and add missing **logic tests**
         for interactions and **screenshot tests** for visual validation to avoid
@@ -116,7 +121,7 @@ principles.
 
 *   **Trigger Condition**: Baseline tests green (or respective previous pass
     staged).
-*   **Subskill to Import**: `ui-eng-vision-logic-consolidator`
+*   **Subskill to Import/Delegate**: `ui-eng-vision-logic-consolidator` (Delegate to a subagent to maintain focus)
 *   **Actions**:
     1.  Extract manual elements, constructor DOM configurations, and imperative
         updates into private update helper methods with structured
@@ -125,7 +130,7 @@ principles.
 ### Local Lit-HTML Rendering (Technology Migration)
 
 *   **Trigger Condition**: Previous pass staged.
-*   **Subskill to Import**: `ui-eng-vision-local-lit-renderer`
+*   **Subskill to Import/Delegate**: `ui-eng-vision-local-lit-renderer` (Delegate to a subagent for isolated template generation)
 *   **Actions**:
     1.  Migrate imperative elements to declarative templates (using component
         mapping rules defined inside the subskill) and render them locally
@@ -135,7 +140,7 @@ principles.
 
 *   **Trigger Condition**: Both local template rendering and logic consolidation
     staged.
-*   **Subskill to Import**: `ui-eng-vision-widget-promoter`
+*   **Subskill to Import/Delegate**: `ui-eng-vision-widget-promoter` (Delegate to a subagent for final architectural cleanup)
 *   **Actions**:
     1.  Promote view classes to modern `UI.Widget` classes, hook up
         `performUpdate()` delegates, export the default view layout, and clean

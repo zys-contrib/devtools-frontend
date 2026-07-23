@@ -124,5 +124,4 @@ existing element containers.
 
 13. **Wait for confirmation**:
 
-    *   Wait for an explicit confirmation from the user before proceeding to the
-        next step.
+    *   Wait for an explicit confirmation from the user (or Parent Orchestrator Agent) before proceeding to the next step.
