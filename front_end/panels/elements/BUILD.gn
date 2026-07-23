@@ -180,6 +180,7 @@ devtools_ui_module("unittests") {
     "ClassesPaneWidget.test.ts",
     "ColorSwatchPopoverIcon.test.ts",
     "ComputedStyleWidget.test.ts",
+    "DOMPath.test.ts",
     "DOMTreeWidget.test.ts",
     "ElementStatePaneWidget.test.ts",
     "ElementsPanel.test.ts",
