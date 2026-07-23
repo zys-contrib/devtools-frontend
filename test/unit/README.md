@@ -93,38 +93,6 @@ press F5.
 
 ![Debugging unit tests with VSCode](../../docs/images/debugging-unit-tests-with-vscode.png 'Debugging unit tests with VSCode')
 
-## Dealing with flaky unit tests
-
-To skip a flaky unit test, create a new bug on [crbug.com](https://crbug.com) in the
-`Chromium > Platform > DevTools` component, and add an entry to the `test/TestExpectations` file.
-For example, to skip the `can return bar` test in `test/unit/foo.test.ts`, add:
-
-```
-# Flaking on multiple bots on CQ after recent CL xyz.
-crbug.com/12345678 test/unit/foo.test.ts:Foo:can_return_bar [ Skip ]
-```
-
-If the test is only flaky on specific platforms, you can specify them:
-```
-crbug.com/12345678 [ mac win32 ] test/unit/foo.test.ts:Foo:can_return_bar [ Skip ]
-```
-
-If you need to skip the entire file:
-```
-crbug.com/12345678 test/unit/foo.test.ts [ Skip ]
-```
-
-Note that it is preferable to skip individual tests so that test results list the skipped tests, rather than skipping entire files.
-
-Also, when dealing with flaky tests, it is highly recommended to use `[ Pass Failure ]` instead of `[ Skip ]`. `[ Skip ]` is a last resort, as skipped tests won't run at all and will not report coverage. Using `[ Pass Failure ]` allows the test to run and fail without turning the tree red, but still provides signal and coverage.
-
-For example, to mark a test as flaky:
-
-```
-# Flaking on multiple bots on CQ after recent CL xyz.
-crbug.com/12345678 test/unit/foo.test.ts:Foo:can_return_bar [ Pass Failure ]
-```
-
 ## Screenshot tests
 
 Unit tests also have the ability to store a screenshot of an element and
