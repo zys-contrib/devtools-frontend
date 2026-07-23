@@ -215,12 +215,39 @@ class Tests {
   }
 }
 
+function isApiTestFile(testId: TestId): boolean {
+  return testId.pathPair.sourcePath.endsWith('.test.api.ts') || testId.pathPair.buildPath.endsWith('.test.api.js');
+}
+
+function isUnitTestFile(testId: TestId): boolean {
+  return testId.pathPair.sourcePath.endsWith('.test.ts') && !isApiTestFile(testId);
+}
+
 class MochaFrontendTests extends Tests {
+  override match(path: TestId): boolean {
+    return super.match(path) && !isApiTestFile(path);
+  }
+
   override run(tests: TestId[]) {
     return super.run(
         tests,
         [
           path.join(this.suite.buildPath, '..', 'test', 'unit', 'run-mocha.js'),
+        ],
+    );
+  }
+}
+
+class MochaApiTests extends Tests {
+  override match(path: TestId): boolean {
+    return super.match(path) && !isUnitTestFile(path);
+  }
+
+  override run(tests: TestId[]) {
+    return super.run(
+        tests,
+        [
+          path.join(GEN_DIR, 'test', 'api', 'run-mocha.js'),
         ],
     );
   }
@@ -295,6 +322,10 @@ class ScriptsMochaTests extends Tests {
 }
 
 class KarmaTests extends Tests {
+  override match(path: TestId): boolean {
+    return super.match(path) && !isApiTestFile(path);
+  }
+
   override run(tests: TestId[]) {
     return super.run(tests, [
       path.join(SOURCE_ROOT, 'node_modules', 'karma', 'bin', 'karma'),
@@ -313,6 +344,7 @@ class KarmaTests extends Tests {
 function main() {
   const tests: string[] = typeof options['tests'] === 'string' ? [options['tests']] : options['tests'];
   const testKinds = [
+    new MochaApiTests(path.join(GEN_DIR, 'front_end')),
     new (options['node-unit-tests'] ? MochaFrontendTests : KarmaTests)(
         path.join(GEN_DIR, 'front_end'), path.join(GEN_DIR, 'inspector_overlay'), path.join(GEN_DIR, 'mcp')),
     new MochaTests(path.join(GEN_DIR, 'test/e2e')),
@@ -364,13 +396,15 @@ function main() {
       continue;
     }
 
-    const suite = testKinds.find(kind => kind.match(testId));
-    if (suite === undefined) {
+    const matchingSuites = testKinds.filter(kind => kind.match(testId));
+    if (matchingSuites.length === 0) {
       console.error(`Unknown test suite for '${testId.pathPair.sourcePath}'`);
       continue;
     }
 
-    suites.get(suite)?.push(testId) ?? suites.set(suite, [testId]);
+    for (const suite of matchingSuites) {
+      suites.get(suite)?.push(testId) ?? suites.set(suite, [testId]);
+    }
   }
 
   if (suites.size > 0) {

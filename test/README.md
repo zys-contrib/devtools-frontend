@@ -13,6 +13,7 @@ out the individual guides below:
 
 - [Unit Testing Guide](./unit/README.md)
 - [E2E Testing Guide](./e2e/README.md)
+- [API Testing Guide](./api/README.md)
 - [Performance Testing Guide](./perf/README.md)
 
 You can use

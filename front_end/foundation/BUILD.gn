@@ -38,11 +38,24 @@ devtools_entrypoint("bundle") {
   # IMPORTANT: core/ or models/ must not be added here.
   visibility = [
     "../../mcp/*",
+    "../../test/api/*",
     "../entrypoints/*",
     "../panels/*",
     "../testing/*",
     "../ui/*",
     "./*",
+  ]
+}
+
+devtools_api_test_module("api_tests") {
+  sources = [ "Universe.test.api.ts" ]
+
+  deps = [
+    ":bundle",
+    "../core/common:bundle",
+    "../core/root:bundle",
+    "../generated:protocol",
+    "../testing",
   ]
 }
 

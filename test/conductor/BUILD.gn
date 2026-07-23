@@ -20,6 +20,7 @@ node_ts_library("implementation") {
     "custom-query-handlers.ts",
     "diff-utils.ts",
     "events.ts",
+    "inspected_page.ts",
     "karma-resultsdb-reporter.ts",
     "mocha-interface-helpers.ts",
     "mocha-interface.ts",

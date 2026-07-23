@@ -4,9 +4,11 @@
 import {assert} from 'chai';
 import type * as puppeteer from 'puppeteer-core';
 
+import type {InspectedPage as InspectedPageInterface} from '../../conductor/inspected_page.js';
+
 import {PageWrapper} from './page-wrapper.js';
 
-export class InspectedPage extends PageWrapper {
+export class InspectedPage extends PageWrapper implements InspectedPageInterface {
   constructor(page: puppeteer.Page, readonly serverPort: number) {
     super(page);
     this.serverPort = serverPort;
