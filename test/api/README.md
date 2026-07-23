@@ -4,6 +4,43 @@ This directory hosts the API tests for DevTools. These tests run DevTools SDK an
 
 [TOC]
 
+## Writing API tests
+
+Each test receives a state object containing `{inspectedPage, universe}` as its first parameter:
+
+```ts
+describe('My API Test', () => {
+  it('runs against inspected page', async ({inspectedPage, universe}) => {
+    await inspectedPage.goToHtml('<h1>Hello World</h1>');
+    // Interact with universe models or inspectedPage...
+  });
+});
+```
+
+### Suite Setup (`setup`)
+
+Use the `setup` function inside a `describe` block to customize suite settings before `universe` is created:
+
+- `creationOptions`: Partial `Universe.CreationOptions` passed to `Universe` (e.g. `hostConfig`, `inspectorFrontendHost`, `supportsEmulation`, `overrideAutoStartModels`, `settingsCreationOptions`).
+- `targetUrl`: Initial URL to navigate the inspected page to **FIRST**, before the `Universe` is attached.
+
+```ts
+describe('Suite with custom hostConfig', () => {
+  setup({
+    creationOptions: {
+      hostConfig: {
+        devToolsConsoleInsights: {enabled: true},
+      },
+    },
+    targetUrl: 'https://example.com',
+  });
+
+  it('runs with custom config', async ({universe}) => {
+    // ...
+  });
+});
+```
+
 ## Running API tests
 
 Note that `npm run test -- front_end` runs unit tests as well. To run API tests specifically, specify a glob matching `.test.api.ts` files:

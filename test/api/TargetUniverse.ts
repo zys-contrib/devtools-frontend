@@ -14,12 +14,14 @@ export interface TargetUniverse {
   universe: Foundation.Universe.Universe;
   /** The secondary session created for this page */
   session: puppeteer.CDPSession;
+  cleanup: () => void;
 }
 
 let registeredExtensions = false;
 
 export async function createTargetUniverse(
     session: puppeteer.CDPSession,
+    options?: Partial<Foundation.Universe.CreationOptions>,
     ): Promise<TargetUniverse> {
   // DevTools modules contain top-level await in their ES module graphs.
   // Because Node executes test scripts as CommonJS, top-level static imports
@@ -47,6 +49,19 @@ export async function createTargetUniverse(
     );
   }
 
+  const originalHostConfig = {...RootModule.Runtime.hostConfig};
+  const originalInspectorFrontendHost = Host.InspectorFrontendHost.InspectorFrontendHostInstance;
+
+  for (const key of Object.keys(RootModule.Runtime.hostConfig)) {
+    delete (RootModule.Runtime.hostConfig as Record<string, unknown>)[key];
+  }
+  if (options?.hostConfig) {
+    Object.assign(RootModule.Runtime.hostConfig, options.hostConfig);
+  }
+
+  const hostInstance = options?.inspectorFrontendHost ?? Host.InspectorFrontendHost.InspectorFrontendHostInstance;
+  Host.InspectorFrontendHost.installInspectorFrontendHost(hostInstance);
+
   const settingStorage = new Common.Settings.SettingsStorage({});
   const universe = new Foundation.Universe.Universe({
     settingsCreationOptions: {
@@ -54,11 +69,21 @@ export async function createTargetUniverse(
       globalStorage: settingStorage,
       localStorage: settingStorage,
       settingRegistrations: Common.SettingRegistration.getRegisteredSettings(),
+      ...options?.settingsCreationOptions,
     },
-    hostConfig: {},
-    inspectorFrontendHost: Host.InspectorFrontendHost.InspectorFrontendHostInstance,
-    supportsEmulation: false,
+    hostConfig: options?.hostConfig ?? {},
+    inspectorFrontendHost: hostInstance,
+    supportsEmulation: options?.supportsEmulation ?? false,
+    overrideAutoStartModels: options?.overrideAutoStartModels,
   });
+
+  const cleanup = () => {
+    for (const key of Object.keys(RootModule.Runtime.hostConfig)) {
+      delete (RootModule.Runtime.hostConfig as Record<string, unknown>)[key];
+    }
+    Object.assign(RootModule.Runtime.hostConfig, originalHostConfig);
+    Host.InspectorFrontendHost.installInspectorFrontendHost(originalInspectorFrontendHost);
+  };
 
   const connection = new PuppeteerDevToolsConnection(session as unknown as
                                                      ConstructorParameters<typeof PuppeteerDevToolsConnection>[0]);
@@ -73,5 +98,5 @@ export async function createTargetUniverse(
       undefined,
       connection,
   );
-  return {target, universe, session};
+  return {target, universe, session, cleanup};
 }

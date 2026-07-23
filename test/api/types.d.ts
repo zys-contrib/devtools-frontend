@@ -18,6 +18,10 @@ declare global {
       (title: string, fn: API.TestAsyncCallbackWithState): void;
     }
 
+    export interface HookFunction {
+      (fn: API.SuiteSettings): void;
+    }
+
     export interface Test {
       realDuration?: number;
     }
@@ -30,6 +34,11 @@ declare global {
 
   namespace API {
     export type InspectedPage = SharedInspectedPage;
+
+    export interface SuiteSettings {
+      creationOptions?: Partial<Foundation.Universe.CreationOptions>;
+      targetUrl?: string;
+    }
 
     export interface State {
       inspectedPage: InspectedPage;
