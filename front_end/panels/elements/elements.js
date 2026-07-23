@@ -1548,7 +1548,7 @@ var UIStrings4 = {
    * @example {20} PH4
    * @example {Arial} PH5
    */
-  fontVariationSettingsWarning: "Value for setting \u201C{PH1}\u201D {PH2} is outside the supported range [{PH3}, {PH4}] for font-family \u201C{PH5}\u201D.",
+  fontVariationSettingsWarning: 'Value for setting "{PH1}" {PH2} is outside the supported range [{PH3}, {PH4}] for font-family "{PH5}".',
   /**
    * @description The message shown in the Style pane when the user hovers over a property declaration that has no effect on flex or grid child items.
    * @example {flex} CONTAINER_DISPLAY_NAME
@@ -20192,8 +20192,7 @@ var EventListenersWidget = class _EventListenersWidget extends UI23.Widget.VBox 
     this.showForAncestorsSetting.addChangeListener(this.requestUpdate.bind(this));
     this.dispatchFilterBySetting = Common15.Settings.Settings.instance().createSetting("event-listener-dispatch-filter-type", DispatchFilterBy.All);
     this.dispatchFilterBySetting.addChangeListener(this.requestUpdate.bind(this));
-    this.showFrameworkListenersSetting = Common15.Settings.Settings.instance().createSetting("show-frameowkr-listeners", true);
-    this.showFrameworkListenersSetting.setTitle(i18nString18(UIStrings19.frameworkListeners));
+    this.showFrameworkListenersSetting = Common15.Settings.Settings.instance().moduleSetting("show-frameowkr-listeners");
     this.showFrameworkListenersSetting.addChangeListener(this.requestUpdate.bind(this));
     UI23.Context.Context.instance().addFlavorChangeListener(SDK19.DOMModel.DOMNode, this.requestUpdate.bind(this));
     this.requestUpdate();

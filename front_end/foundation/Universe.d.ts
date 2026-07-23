@@ -33,6 +33,8 @@ export declare class Universe {
     get breakpointManager(): Breakpoints.BreakpointManager.BreakpointManager;
     get cpuThrottlingManager(): SDK.CPUThrottlingManager.CPUThrottlingManager;
     get cruxManager(): CrUXManager.CrUXManager;
+    get cssWorkspaceBinding(): Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding;
+    get debuggerWorkspaceBinding(): Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding;
     get deviceModeModel(): Emulation.DeviceModeModel.DeviceModeModel | null;
     get domDebuggerManager(): SDK.DOMDebuggerModel.DOMDebuggerManager;
     get domModelUndoStack(): SDK.DOMModel.DOMModelUndoStack;
@@ -49,6 +51,7 @@ export declare class Universe {
     get frameManager(): SDK.FrameManager.FrameManager;
     get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader;
     get persistence(): Persistence.Persistence.PersistenceImpl;
+    get presentationConsoleMessageManager(): Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager;
     get projectSettingsModel(): ProjectSettings.ProjectSettingsModel.ProjectSettingsModel;
     get settings(): Common.Settings.Settings;
     get targetManager(): SDK.TargetManager.TargetManager;

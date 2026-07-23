@@ -79,6 +79,7 @@ export declare class TestUniverse implements Foundation.Universe.Universe {
     get networkProjectManager(): Bindings.NetworkProject.NetworkProjectManager;
     get pageResourceLoader(): SDK.PageResourceLoader.PageResourceLoader;
     get persistence(): Persistence.Persistence.PersistenceImpl;
+    get presentationConsoleMessageManager(): Bindings.PresentationConsoleMessageHelper.PresentationConsoleMessageManager;
     get projectSettingsModel(): ProjectSettings.ProjectSettingsModel.ProjectSettingsModel;
     get targetManager(): SDK.TargetManager.TargetManager;
     get userBadges(): Badges.UserBadges;
