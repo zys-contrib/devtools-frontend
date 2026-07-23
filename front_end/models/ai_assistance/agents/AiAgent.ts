@@ -798,19 +798,7 @@ export abstract class AiAgent<T> {
         }
       } catch (err) {
         debugLog('Error calling the AIDA API', err);
-
-        let error = ErrorType.UNKNOWN;
-        if (err instanceof Host.AidaClient.AidaAbortError) {
-          error = ErrorType.ABORT;
-        } else if (err instanceof Host.AidaClient.AidaBlockError) {
-          error = ErrorType.BLOCK;
-        } else if (err instanceof Host.AidaClient.AidaQuotaError ||
-                   (err instanceof Error && err.message.toLowerCase().includes('quota'))) {
-          error = ErrorType.QUOTA;
-        } else if (err instanceof Host.AidaClient.AidaPayloadTooLargeError ||
-                   (err instanceof Error && /payload size exceeds the limit/i.test(err.message))) {
-          error = ErrorType.PAYLOAD_TOO_LARGE;
-        }
+        const error = aidaErrorToErrorType(err);
         yield this.#createErrorResponse(error);
 
         break;
@@ -1149,4 +1137,25 @@ function sanitizeSuggestions(suggestions: string): [string, ...string[]]|undefin
     return undefined;
   }
   return sanitized as [string, ...string[]];
+}
+
+/**
+ * Maps AIDA-specific client error instances to user-facing ErrorType enums.
+ * This handles AIDA API failure modes such as quota exhaustion or blockages.
+ * Other application-level errors (like CROSS_ORIGIN or MAX_STEPS) are handled separately.
+ */
+export function aidaErrorToErrorType(err: unknown): ErrorType {
+  if (err instanceof Host.AidaClient.AidaAbortError) {
+    return ErrorType.ABORT;
+  }
+  if (err instanceof Host.AidaClient.AidaBlockError) {
+    return ErrorType.BLOCK;
+  }
+  if (err instanceof Host.AidaClient.AidaQuotaError) {
+    return ErrorType.QUOTA;
+  }
+  if (err instanceof Host.AidaClient.AidaPayloadTooLargeError) {
+    return ErrorType.PAYLOAD_TOO_LARGE;
+  }
+  return ErrorType.UNKNOWN;
 }

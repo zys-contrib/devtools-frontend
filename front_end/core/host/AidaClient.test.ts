@@ -645,10 +645,7 @@ describe('AidaClient', () => {
       await getAllResults(provider);
       assert.fail('provider.fetch did not throw');
     } catch (err) {
-      assert.strictEqual(
-          (err as Error).message,
-          'Server responded: permission denied',
-      );
+      assert.instanceOf(err, Host.AidaClient.AidaPermissionDeniedError);
     }
   });
 
@@ -666,10 +663,7 @@ describe('AidaClient', () => {
       await getAllResults(provider);
       assert.fail('provider.fetch did not throw');
     } catch (err) {
-      assert.strictEqual(
-          (err as Error).message,
-          'doAidaConversation timed out',
-      );
+      assert.instanceOf(err, Host.AidaClient.AidaTimeoutError);
     }
   });
 
@@ -996,4 +990,93 @@ describe('AidaClient', () => {
       );
     });
   });
+
+  describe('mapError', () => {
+    it('returns the same error if it is already an instance of AidaClientError', () => {
+      const err = new Host.AidaClient.AidaQuotaError('quota exceeded');
+      const mapped = Host.AidaClient.mapError(err);
+      assert.strictEqual(mapped, err);
+    });
+
+    it('maps DispatchHttpRequestError status 429 to AidaQuotaError', () => {
+      const httpError = new Host.DispatchHttpRequestClient.DispatchHttpRequestError(
+          Host.DispatchHttpRequestClient.ErrorType.HTTP_RESPONSE_UNAVAILABLE, {statusCode: 429, error: 'Error'});
+      const mapped = Host.AidaClient.mapError(httpError);
+      assert.instanceOf(mapped, Host.AidaClient.AidaQuotaError);
+    });
+
+    it('maps DispatchHttpRequestError status 403 to AidaPermissionDeniedError', () => {
+      const httpError = new Host.DispatchHttpRequestClient.DispatchHttpRequestError(
+          Host.DispatchHttpRequestClient.ErrorType.HTTP_RESPONSE_UNAVAILABLE, {statusCode: 403, error: 'Error'});
+      const mapped = Host.AidaClient.mapError(httpError);
+      assert.instanceOf(mapped, Host.AidaClient.AidaPermissionDeniedError);
+    });
+
+    it('maps DispatchHttpRequestError timed out to AidaTimeoutError', () => {
+      const httpError = new Host.DispatchHttpRequestClient.DispatchHttpRequestError(
+          Host.DispatchHttpRequestClient.ErrorType.HTTP_RESPONSE_UNAVAILABLE,
+          {statusCode: 504, netErrorName: 'net::ERR_TIMED_OUT', error: 'Error'});
+      const mapped = Host.AidaClient.mapError(httpError);
+      assert.instanceOf(mapped, Host.AidaClient.AidaTimeoutError);
+    });
+
+    it('maps DispatchHttpRequestError abort to AidaAbortError', () => {
+      const httpError =
+          new Host.DispatchHttpRequestClient.DispatchHttpRequestError(Host.DispatchHttpRequestClient.ErrorType.ABORT);
+      const mapped = Host.AidaClient.mapError(httpError);
+      assert.instanceOf(mapped, Host.AidaClient.AidaAbortError);
+    });
+
+    it('maps general JSON errors containing quota to AidaQuotaError', () => {
+      const httpError = new Host.DispatchHttpRequestClient.DispatchHttpRequestError(
+          Host.DispatchHttpRequestClient.ErrorType.HTTP_RESPONSE_UNAVAILABLE,
+          {statusCode: 400, error: 'quota exceeded'});
+      const mapped = Host.AidaClient.mapError(httpError);
+      assert.instanceOf(mapped, Host.AidaClient.AidaQuotaError);
+    });
+
+    it('maps general JSON errors containing payload size to AidaPayloadTooLargeError', () => {
+      const httpError = new Host.DispatchHttpRequestClient.DispatchHttpRequestError(
+          Host.DispatchHttpRequestClient.ErrorType.HTTP_RESPONSE_UNAVAILABLE,
+          {statusCode: 400, error: 'payload size exceeds the limit'});
+      const mapped = Host.AidaClient.mapError(httpError);
+      assert.instanceOf(mapped, Host.AidaClient.AidaPayloadTooLargeError);
+    });
+
+    it('maps other DispatchHttpRequestError status codes to AidaUnknownError', () => {
+      const httpError = new Host.DispatchHttpRequestClient.DispatchHttpRequestError(
+          Host.DispatchHttpRequestClient.ErrorType.HTTP_RESPONSE_UNAVAILABLE, {statusCode: 500, error: 'Error'});
+      const mapped = Host.AidaClient.mapError(httpError);
+      assert.instanceOf(mapped, Host.AidaClient.AidaUnknownError);
+    });
+
+    it('maps string containing quota to AidaQuotaError', () => {
+      const mapped = Host.AidaClient.mapError('RESOURCE_EXHAUSTED', 'quota exceeded');
+      assert.instanceOf(mapped, Host.AidaClient.AidaQuotaError);
+    });
+
+    it('maps string containing payload size to AidaPayloadTooLargeError', () => {
+      const mapped = Host.AidaClient.mapError('payload size exceeds the limit');
+      assert.instanceOf(mapped, Host.AidaClient.AidaPayloadTooLargeError);
+    });
+
+    it('maps generic Error to AidaUnknownError', () => {
+      const genericError = new Error('some other error');
+      const mapped = Host.AidaClient.mapError(genericError);
+      assert.instanceOf(mapped, Host.AidaClient.AidaUnknownError);
+      assert.strictEqual(mapped.message, 'some other error');
+    });
+
+    it('maps DispatchHttpRequestError with status 200 and HTTP_RESPONSE_UNAVAILABLE to AidaInvalidJsonResponseError',
+       () => {
+         const httpError = new Host.DispatchHttpRequestClient.DispatchHttpRequestError(
+             Host.DispatchHttpRequestClient.ErrorType.HTTP_RESPONSE_UNAVAILABLE,
+             {statusCode: 200, response: 'invalid json'});
+         const mapped = Host.AidaClient.mapError(httpError);
+         assert.instanceOf(mapped, Host.AidaClient.AidaInvalidJsonResponseError);
+         assert.strictEqual(mapped.message, 'Server responded with invalid JSON');
+         assert.strictEqual(mapped.cause, httpError);
+       });
+  });
+
 });
