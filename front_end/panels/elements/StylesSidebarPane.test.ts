@@ -105,6 +105,27 @@ describe('StylesSidebarPane', () => {
         stylesSidebarPane.onCSSModelChanged(event);
         sinon.assert.notCalled(requestUpdateSpy);
       });
+
+      it('maintains focus if changes occur while editing', async () => {
+        const stylesSidebarPane =
+            new Elements.StylesSidebarPane.StylesSidebarPane(new ComputedStyle.ComputedStyleModel.ComputedStyleModel());
+
+        // @ts-expect-error
+        sinon.stub(stylesSidebarPane, 'fetchMatchedCascade').resolves(null);
+        // @ts-expect-error
+        sinon.stub(stylesSidebarPane, 'fetchComputedStylesFor').resolves(new Map());
+        // @ts-expect-error
+        sinon.stub(stylesSidebarPane, 'fetchComputedStyleExtraFieldsFor').resolves(null);
+
+        const resetFocusSpy = sinon.spy(stylesSidebarPane, 'resetFocus');
+
+        // Verify that innerRebuildUpdate is not called to reset focus
+        // if an update was already scheduled before editing started.
+        stylesSidebarPane.setEditingStyle(true);
+        await stylesSidebarPane.performUpdate();
+
+        sinon.assert.notCalled(resetFocusSpy);
+      });
     });
 
     describe('createNewRuleInViaInspectorStyleSheet', () => {
