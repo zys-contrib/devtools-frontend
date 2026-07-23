@@ -20,7 +20,7 @@ describeWithEnvironment('MainMenuItem', () => {
     sinon.stub(UI.ShortcutRegistry.ShortcutRegistry, 'instance').returns({
       keyAndModifiersForAction: () => {},
       shortcutTitleForAction: () => {},
-      shortcutsForAction: () => [],
+      shortcutsForAction: () => [{title: () => 'Ctrl+Shift+D'}] as unknown as UI.KeyboardShortcut.KeyboardShortcut[],
     } as unknown as UI.ShortcutRegistry.ShortcutRegistry);
     const tabTaget = createTarget({type: SDK.Target.Type.TAB});
     createTarget({parentTarget: tabTaget, subtype: 'prerender'});
@@ -58,6 +58,30 @@ describeWithEnvironment('MainMenuItem', () => {
     sinon.assert.calledOnce(contextMenuShow);
     assert.notExists(contextMenuShow.thisValues[0].defaultSection().items.find(
         (item: UI.ContextMenu.Item) => item.buildDescriptor().label === 'Focus page'));
+  });
+
+  it('does not focus main menu button when undocking or re-docking', async () => {
+    const dockController = UI.DockController.DockController.instance({forceNew: true, canDock: true});
+    dockController.setDockSide(UI.DockController.DockState.UNDOCKED);
+
+    const mainMenuItem = new Main.MainImpl.MainMenuItem();
+    const item = mainMenuItem.item() as UI.Toolbar.ToolbarMenuButton;
+    const focusSpy = sinon.spy(item.element, 'focus');
+
+    const menu = getMenuForToolbarButton(item);
+    const dockSideItem = menu.headerSection().items.find(
+        (item: UI.ContextMenu.Item) => item.buildDescriptor().jslogContext === 'dock-side',
+    );
+    assert.exists(dockSideItem);
+
+    // Trigger re-docking from UNDOCKED to LEFT.
+    const customElement = dockSideItem.customElement as HTMLElement;
+    const leftButton = customElement.querySelector('devtools-button[aria-label="Dock to left"]') as HTMLElement;
+    assert.exists(leftButton);
+    leftButton.click();
+
+    // Verify focus is not scheduled on AFTER_DOCK_SIDE_CHANGED.
+    sinon.assert.notCalled(focusSpy);
   });
 });
 

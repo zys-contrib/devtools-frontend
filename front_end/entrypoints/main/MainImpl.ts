@@ -856,7 +856,10 @@ export class MainMenuItem implements UI.Toolbar.Provider {
     const button = this.#item.element;
 
     function setDockSide(side: UI.DockController.DockState): void {
-      void dockController.once(UI.DockController.Events.AFTER_DOCK_SIDE_CHANGED).then(() => button.focus());
+      if (dockController.dockSide() !== UI.DockController.DockState.UNDOCKED &&
+          side !== UI.DockController.DockState.UNDOCKED) {
+        void dockController.once(UI.DockController.Events.AFTER_DOCK_SIDE_CHANGED).then(() => button.focus());
+      }
       dockController.setDockSide(side);
       contextMenu.discard();
     }
