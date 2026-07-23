@@ -39,19 +39,29 @@ export class PerformanceTraceFormatter {
       (url: Platform.DevToolsPath.UrlString, line: number,
        column: number) => Promise<SourceMapScopes.FunctionCodeResolver.FunctionCode|null>;
 
-  readonly #cruxManager: CrUXManager.CrUXManager;
+  readonly #cruxManager: CrUXManager.CrUXManager|null;
 
   constructor(
       focus: AgentFocus,
       deviceScope: CrUXManager.DeviceScope|null = null,
-      cruxManager: CrUXManager.CrUXManager = CrUXManager.CrUXManager.instance(),
+      cruxManager?: CrUXManager.CrUXManager,
   ) {
     this.#focus = focus;
     this.#parsedTrace = focus.parsedTrace;
     this.#insightSet = focus.primaryInsightSet;
     this.#eventsSerializer = focus.eventsSerializer;
     this.#deviceScope = deviceScope;
-    this.#cruxManager = cruxManager;
+    if (cruxManager) {
+      this.#cruxManager = cruxManager;
+    } else {
+      // In environments outside DevTools (like the MCP server or some tests),
+      // CrUXManager.instance() can fail due to uninitialized global settings/storage.
+      try {
+        this.#cruxManager = CrUXManager.CrUXManager.instance();
+      } catch {
+        this.#cruxManager = null;
+      }
+    }
   }
 
   serializeEvent(event: Trace.Types.Events.Event): string {
@@ -72,8 +82,14 @@ export class PerformanceTraceFormatter {
       return [];
     }
     try {
-      const cruxScope: CrUXManager.Scope =
-          this.#deviceScope ? {pageScope: 'url', deviceScope: this.#deviceScope} : this.#cruxManager.getSelectedScope();
+      let cruxScope: CrUXManager.Scope;
+      if (this.#deviceScope) {
+        cruxScope = {pageScope: 'url', deviceScope: this.#deviceScope};
+      } else if (this.#cruxManager) {
+        cruxScope = this.#cruxManager.getSelectedScope();
+      } else {
+        return [];
+      }
       const parts: string[] = [];
       const fieldMetrics =
           Trace.Insights.Common.getFieldMetricsForInsightSet(insightSet, this.#parsedTrace.metadata, cruxScope);
