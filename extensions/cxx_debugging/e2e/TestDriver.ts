@@ -45,9 +45,7 @@ function pausedReasonText(reason: string) {
   return;
 }
 
-// These tests became flaky again with the migration.
-// TODO(liviurau): fix in a separate CL.
-describe.skip('[crbug.com/529141058] CXX Debugging Extension Test Suite', function() {
+describe('CXX Debugging Extension Test Suite', function() {
   setup({
     extensions: [CXX_DEBUGGING_EXTENSION_PATH],
   });

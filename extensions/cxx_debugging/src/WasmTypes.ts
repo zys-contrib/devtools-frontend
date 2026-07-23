@@ -23,15 +23,11 @@ export const enum SerializedWasmType {
 }
 /* eslint-enable @typescript-eslint/naming-convention, @typescript-eslint/prefer-enum-initializers */
 
-export function serializeWasmValue(value: WasmValue|ArrayBuffer, buffer: ArrayBufferLike): SerializedWasmType|number {
+export function serializeWasmValue(value: WasmValue|ArrayBuffer, buffer: ArrayBufferLike): SerializedWasmType {
   if (value instanceof ArrayBuffer) {
     const data = new Uint8Array(value);
     new Uint8Array(buffer).set(data);
     return data.byteLength || -1;
-  }
-
-  if (!value) {
-    return -1;
   }
 
   const view = new DataView(buffer);
@@ -66,7 +62,7 @@ export function serializeWasmValue(value: WasmValue|ArrayBuffer, buffer: ArrayBu
       return SerializedWasmType.reftype;
     }
     default:
-      return -1;
+      throw new Error('cannot serialize non-numerical wasm type');
   }
 }
 
