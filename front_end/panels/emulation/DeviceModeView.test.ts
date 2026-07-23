@@ -69,6 +69,7 @@ describeWithEnvironment('DeviceModeView', () => {
         assert.isFalse(contentClip?.classList.contains('device-mode-rulers-visible'));
 
         showRulersSetting.set(true);
+        await view.updateComplete;
 
         assert.isTrue(contentClip?.classList.contains('device-mode-rulers-visible'));
       });

@@ -161,14 +161,14 @@ export class MediaQueryInspector extends UI.Widget.Widget<ShadowRoot> implements
   readonly mediaThrottler: Common.Throttler.Throttler = new Common.Throttler.Throttler(0);
   #getWidthCallback?: () => number;
   #setWidthCallback?: (arg0: number) => void;
-  private scale: number;
+  #scale: number;
   private cssModel?: SDK.CSSModel.CSSModel;
   private cachedQueryModels?: MediaQueryUIModel[];
 
   constructor(element?: HTMLElement, view = DEFAULT_VIEW) {
     super(element, {useShadowDom: 'pure'});
     this.view = view;
-    this.scale = 1;
+    this.#scale = 1;
 
     SDK.TargetManager.TargetManager.instance().observeModels(SDK.CSSModel.CSSModel, this);
     UI.ZoomManager.ZoomManager.instance().addEventListener(
@@ -217,11 +217,15 @@ export class MediaQueryInspector extends UI.Widget.Widget<ShadowRoot> implements
     delete this.cssModel;
   }
 
-  setAxisTransform(scale: number): void {
-    if (Math.abs(this.scale - scale) < 1e-8) {
+  get scale(): number {
+    return this.#scale;
+  }
+
+  set scale(scale: number) {
+    if (Math.abs(this.#scale - scale) < 1e-8) {
       return;
     }
-    this.scale = scale;
+    this.#scale = scale;
     this.requestUpdate();
   }
 
@@ -368,7 +372,7 @@ export class MediaQueryInspector extends UI.Widget.Widget<ShadowRoot> implements
   }
 
   private zoomFactor(): number {
-    return UI.ZoomManager.ZoomManager.instance().zoomFactor() / this.scale;
+    return UI.ZoomManager.ZoomManager.instance().zoomFactor() / this.#scale;
   }
 
   override wasShown(): void {
