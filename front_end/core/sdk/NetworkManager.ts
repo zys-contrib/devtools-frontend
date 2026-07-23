@@ -5,6 +5,7 @@
 import type * as ProtocolProxyApi from '../../generated/protocol-proxy-api.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as Common from '../common/common.js';
+import * as Host from '../host/host.js';
 import * as i18n from '../i18n/i18n.js';
 import * as Platform from '../platform/platform.js';
 import * as Root from '../root/root.js';
@@ -23,6 +24,7 @@ import {
   type NameValue,
   NetworkRequest,
 } from './NetworkRequest.js';
+import {type ExecutionContext, RuntimeModel} from './RuntimeModel.js';
 import {SDKModel} from './SDKModel.js';
 import {Capability, type Target} from './Target.js';
 import {type SDKModelObserver, TargetManager} from './TargetManager.js';
@@ -116,6 +118,22 @@ const i18nLazyString = i18n.i18n.getLazilyComputedLocalizedString.bind(undefined
 
 const requestToManagerMap = new WeakMap<NetworkRequest, NetworkManager>();
 
+/** Resource types eligible for resend with full fidelity. */
+const FULL_FIDELITY_RESEND_TYPES = new Set([
+  Common.ResourceType.resourceTypes.XHR,
+  Common.ResourceType.resourceTypes.Fetch,
+  Common.ResourceType.resourceTypes.Script,
+  Common.ResourceType.resourceTypes.Stylesheet,
+  Common.ResourceType.resourceTypes.Image,
+  Common.ResourceType.resourceTypes.Media,
+  Common.ResourceType.resourceTypes.Font,
+  Common.ResourceType.resourceTypes.Wasm,
+  Common.ResourceType.resourceTypes.Manifest,
+  Common.ResourceType.resourceTypes.TextTrack,
+  Common.ResourceType.resourceTypes.SourceMapScript,
+  Common.ResourceType.resourceTypes.SourceMapStyleSheet,
+]);
+
 const CONNECTION_TYPES = new Map([
   ['2g', Protocol.Network.ConnectionType.Cellular2g],
   ['3g', Protocol.Network.ConnectionType.Cellular3g],
@@ -193,18 +211,101 @@ export class NetworkManager extends SDKModel<EventTypes> {
     return requestToManagerMap.get(request) || null;
   }
 
-  static canReplayRequest(request: NetworkRequest): boolean {
-    return Boolean(requestToManagerMap.get(request)) && Boolean(request.backendRequestId()) && !request.isRedirect() &&
-        request.resourceType() === Common.ResourceType.resourceTypes.XHR;
+  static canResendRequest(request: NetworkRequest): boolean {
+    if (!requestToManagerMap.get(request) || !request.backendRequestId() || request.isRedirect()) {
+      return false;
+    }
+    return FULL_FIDELITY_RESEND_TYPES.has(request.resourceType());
   }
 
   static replayRequest(request: NetworkRequest): void {
+    void NetworkManager.resendRequest(request);
+  }
+
+  static async resendRequest(request: NetworkRequest): Promise<void> {
     const manager = requestToManagerMap.get(request);
     const requestId = request.backendRequestId();
     if (!manager || !requestId || request.isRedirect()) {
       return;
     }
-    void manager.#networkAgent.invoke_replayXHR({requestId});
+
+    Host.userMetrics.resendRequest(Host.UserMetrics.resendRequestType(request.resourceType()));
+
+    // XHR requests use the existing CDP replay mechanism.
+    if (request.resourceType() === Common.ResourceType.resourceTypes.XHR) {
+      void manager.#networkAgent.invoke_replayXHR({requestId});
+      return;
+    }
+
+    // All other eligible types use fetch via Runtime.evaluate.
+    const target = manager.target();
+    const runtimeModel = target.model(RuntimeModel);
+    if (!runtimeModel) {
+      return;
+    }
+
+    // Resolve execution context: prefer the frame's default context.
+    let executionContext: ExecutionContext|null = null;
+    const frameId = request.frameId;
+    if (frameId) {
+      executionContext = runtimeModel.executionContexts().find(ctx => ctx.frameId === frameId && ctx.isDefault) ?? null;
+    }
+    const usesFallbackContext = !executionContext;
+    if (!executionContext) {
+      executionContext = runtimeModel.defaultExecutionContext();
+    }
+    if (!executionContext) {
+      return;
+    }
+
+    if (usesFallbackContext) {
+      runtimeModel.target().targetManager().getConsole().warn(
+          'Resend: original execution context unavailable, using top-level context.');
+    }
+
+    // Build the fetch expression.
+    const method = request.requestMethod;
+    const url = request.url();
+    const headers: Array<[string, string]> = [];
+    for (const {name, value} of request.requestHeaders()) {
+      // Skip HTTP/2+ pseudo-headers (e.g. :authority, :method, :path, :scheme).
+      if (name.startsWith(':')) {
+        continue;
+      }
+      // Skip headers the browser sets automatically for fetch.
+      const lower = name.toLowerCase();
+      if (lower === 'host' || lower === 'connection' || lower === 'content-length' || lower === 'cookie' ||
+          lower === 'origin' || lower === 'referer') {
+        continue;
+      }
+      headers.push([name, value]);
+    }
+
+    const body = await request.requestFormData();
+    const fetchOptions: {method: string, headers: Array<[string, string]>, credentials: string, body?: string} = {
+      method,
+      headers,
+      credentials: 'include',
+    };
+    const isGetOrHead = method === 'GET' || method === 'HEAD';
+    if (body && !isGetOrHead) {
+      fetchOptions.body = body;
+    }
+
+    const expression = `fetch(${JSON.stringify(url)}, ${JSON.stringify(fetchOptions)})`;
+    const response = await target.runtimeAgent().invoke_evaluate({
+      expression,
+      // Use uniqueContextId if available, otherwise fall back to contextId.
+      ...(executionContext.uniqueId ? {uniqueContextId: executionContext.uniqueId} : {contextId: executionContext.id}),
+      silent: false,
+      awaitPromise: true,
+    });
+
+    if (response.getError() || response.exceptionDetails) {
+      const errorText = response.getError() || response.exceptionDetails?.exception?.description ||
+          response.exceptionDetails?.text || 'Unknown error';
+      runtimeModel.target().targetManager().getConsole().error(`Resend failed for ${url}: ${errorText}`);
+    }
   }
 
   static async searchInRequest(request: NetworkRequest, query: string, caseSensitive: boolean, isRegex: boolean):

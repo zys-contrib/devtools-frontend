@@ -13,6 +13,7 @@ import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {createWorkspaceProject} from '../../testing/OverridesHelpers.js';
 import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
+import {setupSettingsHooks} from '../../testing/SettingsHelpers.js';
 import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as Common from '../common/common.js';
 import * as Platform from '../platform/platform.js';
@@ -1353,6 +1354,162 @@ describe('NetworkManager', () => {
       assert.lengthOf(frames, 1);
       assert.strictEqual(frames[0].type, SDK.NetworkRequest.WebSocketFrameType.Error);
       assert.strictEqual(frames[0].text, 'Error during WebSocket handshake: Unexpected response code: 404');
+    });
+  });
+
+  describe('canResendRequest', () => {
+    setupLocaleHooks();
+    setupSettingsHooks();
+    setupRuntimeHooks();
+
+    it('returns false when request has no backendRequestId', () => {
+      const request =
+          SDK.NetworkRequest.NetworkRequest.create('' as Protocol.Network.RequestId, urlString`https://example.test/`,
+                                                   urlString`https://example.test/`, null, null, null);
+      assert.isFalse(SDK.NetworkManager.NetworkManager.canResendRequest(request));
+    });
+
+    it('returns false when request is a redirect', async () => {
+      const universe = new TestUniverse();
+      const connection = new MockCDPConnection();
+      const networkManager = new SDK.NetworkManager.NetworkManager(universe.createTarget({connection}));
+      const requestRedirectedPromise = networkManager.once(SDK.NetworkManager.Events.RequestRedirected);
+      networkManager.dispatcher.requestWillBeSent({
+        requestId: 'redirect-req' as Protocol.Network.RequestId,
+        loaderId: 'loader-1' as Protocol.Network.LoaderId,
+        documentURL: 'https://example.test/',
+        request: {url: 'https://example.test/a', method: 'GET', headers: {}},
+        timestamp: 1,
+        wallTime: 1,
+        initiator: {type: Protocol.Network.InitiatorType.Other},
+        type: Protocol.Network.ResourceType.Fetch,
+      } as Protocol.Network.RequestWillBeSentEvent);
+      // Second requestWillBeSent with redirectResponse makes the original a redirect.
+      networkManager.dispatcher.requestWillBeSent({
+        requestId: 'redirect-req' as Protocol.Network.RequestId,
+        loaderId: 'loader-1' as Protocol.Network.LoaderId,
+        documentURL: 'https://example.test/',
+        request: {url: 'https://example.test/b', method: 'GET', headers: {}},
+        timestamp: 2,
+        wallTime: 2,
+        initiator: {type: Protocol.Network.InitiatorType.Other},
+        type: Protocol.Network.ResourceType.Fetch,
+        redirectHasExtraInfo: false,
+        redirectResponse: {
+          url: 'https://example.test/a',
+          status: 302,
+          statusText: 'Found',
+          headers: {},
+          mimeType: 'text/html',
+          charset: '',
+          connectionReused: false,
+          connectionId: 0,
+          encodedDataLength: 0,
+          securityState: Protocol.Security.SecurityState.Secure,
+        },
+      } as Protocol.Network.RequestWillBeSentEvent);
+      const newRequest = await requestRedirectedPromise;
+      const redirectedRequest = newRequest.redirectSource()!;
+      assert.isTrue(redirectedRequest.isRedirect());
+      assert.isFalse(SDK.NetworkManager.NetworkManager.canResendRequest(redirectedRequest));
+    });
+  });
+
+  describe('resendRequest', () => {
+    setupLocaleHooks();
+    setupSettingsHooks();
+    setupRuntimeHooks();
+
+    it('uses invoke_replayXHR for XHR requests', async () => {
+      const universe = new TestUniverse();
+      const connection = new MockCDPConnection();
+      const networkManager = new SDK.NetworkManager.NetworkManager(universe.createTarget({connection}));
+      const requestStartedPromise = networkManager.once(SDK.NetworkManager.Events.RequestStarted);
+
+      networkManager.dispatcher.requestWillBeSent({
+        requestId: 'xhr-req' as Protocol.Network.RequestId,
+        loaderId: 'loader-1' as Protocol.Network.LoaderId,
+        documentURL: 'https://example.test/',
+        request: {url: 'https://example.test/api', method: 'POST', headers: {}},
+        timestamp: 1,
+        wallTime: 1,
+        initiator: {type: Protocol.Network.InitiatorType.Other},
+        type: Protocol.Network.ResourceType.XHR,
+      } as Protocol.Network.RequestWillBeSentEvent);
+
+      const {request} = await requestStartedPromise;
+
+      let replayedRequestId: string|undefined;
+      connection.setSuccessHandler('Network.replayXHR', params => {
+        replayedRequestId = params.requestId;
+        return {};
+      });
+
+      await SDK.NetworkManager.NetworkManager.resendRequest(request);
+      assert.strictEqual(replayedRequestId, 'xhr-req');
+    });
+
+    it('uses Runtime.evaluate with fetch, filtering forbidden headers', async () => {
+      const universe = new TestUniverse();
+      const connection = new MockCDPConnection();
+      const networkManager = new SDK.NetworkManager.NetworkManager(universe.createTarget({connection}));
+      const requestStartedPromise = networkManager.once(SDK.NetworkManager.Events.RequestStarted);
+
+      networkManager.dispatcher.requestWillBeSent({
+        requestId: 'fetch-req' as Protocol.Network.RequestId,
+        loaderId: 'loader-1' as Protocol.Network.LoaderId,
+        documentURL: 'https://example.test/',
+        request: {
+          url: 'https://example.test/data.json',
+          method: 'GET',
+          headers: {
+            accept: 'application/json',
+            ':authority': 'example.test',
+            ':method': 'GET',
+            host: 'example.test',
+            cookie: 'session=abc',
+          },
+          initialPriority: Protocol.Network.ResourcePriority.Medium,
+          referrerPolicy: Protocol.Network.RequestReferrerPolicy.Origin,
+        },
+        timestamp: 1,
+        wallTime: 1,
+        initiator: {type: Protocol.Network.InitiatorType.Other},
+        type: Protocol.Network.ResourceType.Fetch,
+        redirectHasExtraInfo: false,
+      } as Protocol.Network.RequestWillBeSentEvent);
+
+      const {request} = await requestStartedPromise;
+
+      let evaluatedExpression: string|undefined;
+      connection.setSuccessHandler('Runtime.evaluate', params => {
+        evaluatedExpression = params.expression;
+        return {result: {type: Protocol.Runtime.RemoteObjectType.Object}};
+      });
+
+      // Provide a default execution context for the runtime model.
+      const runtimeModel = networkManager.target().model(SDK.RuntimeModel.RuntimeModel);
+      assert.exists(runtimeModel);
+      runtimeModel!.executionContextCreated({
+        id: 1 as Protocol.Runtime.ExecutionContextId,
+        origin: 'https://example.test',
+        name: 'top',
+        uniqueId: 'ctx-1',
+      });
+
+      await SDK.NetworkManager.NetworkManager.resendRequest(request);
+
+      assert.isDefined(evaluatedExpression);
+      assert.include(evaluatedExpression!, 'fetch(');
+      assert.include(evaluatedExpression!, 'https://example.test/data.json');
+      assert.include(evaluatedExpression!, '"credentials":"include"');
+      // Pseudo-headers and forbidden headers are excluded.
+      assert.notInclude(evaluatedExpression!, ':authority');
+      assert.notInclude(evaluatedExpression!, ':method');
+      assert.notInclude(evaluatedExpression!, '"host"');
+      assert.notInclude(evaluatedExpression!, '"cookie"');
+      // Allowed headers are included.
+      assert.include(evaluatedExpression!, '"accept"');
     });
   });
 });

@@ -3351,6 +3351,7 @@ export const knownContextValues = new Set([
   'request-payload',
   'request-types',
   'required',
+  'resend',
   'reset',
   'reset-children',
   'reset-columns',

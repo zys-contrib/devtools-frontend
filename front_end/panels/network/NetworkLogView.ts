@@ -467,9 +467,9 @@ const UIStrings = {
    */
   blockRequestDomain: 'Block request domain',
   /**
-   * @description Text to replay an XHR request
+   * @description Text to resend a network request
    */
-  replayXhr: 'Replay XHR',
+  resend: 'Resend',
   /**
    * @description Text in Network Log View of the Network panel
    */
@@ -1186,9 +1186,9 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin<EventTypes, 
           return;
         }
 
-        if (SDK.NetworkManager.NetworkManager.canReplayRequest(request)) {
+        if (SDK.NetworkManager.NetworkManager.canResendRequest(request)) {
           SDK.NetworkManager.NetworkManager.replayRequest(request);
-          void VisualLogging.logKeyDown(this.dataGrid.selectedNode.element(), event, 'replay-xhr');
+          void VisualLogging.logKeyDown(this.dataGrid.selectedNode.element(), event, 'resend');
         }
       }
     });
@@ -1975,10 +1975,10 @@ export class NetworkLogView extends Common.ObjectWrapper.eventMixin<EventTypes, 
             {jslogContext: 'throttle-request-domain'});
       }
 
-      if (SDK.NetworkManager.NetworkManager.canReplayRequest(request)) {
-        contextMenu.debugSection().appendItem(
-            i18nString(UIStrings.replayXhr), SDK.NetworkManager.NetworkManager.replayRequest.bind(null, request),
-            {jslogContext: 'replay-xhr'});
+      if (SDK.NetworkManager.NetworkManager.canResendRequest(request)) {
+        contextMenu.debugSection().appendItem(i18nString(UIStrings.resend),
+                                              SDK.NetworkManager.NetworkManager.replayRequest.bind(null, request),
+                                              {jslogContext: 'resend'});
       }
     }
   }

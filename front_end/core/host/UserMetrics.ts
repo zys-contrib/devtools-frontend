@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import * as Common from '../common/common.js';
+
 import {InspectorFrontendHostInstance} from './InspectorFrontendHost.js';
 import {EnumeratedHistogram} from './InspectorFrontendHostAPI.js';
 
@@ -27,6 +29,11 @@ export class UserMetrics {
 
   actionTaken(action: Action): void {
     InspectorFrontendHostInstance.recordEnumeratedHistogram(EnumeratedHistogram.ActionTaken, action, Action.MAX_VALUE);
+  }
+
+  resendRequest(resourceType: ResendRequestType): void {
+    InspectorFrontendHostInstance.recordEnumeratedHistogram(EnumeratedHistogram.ResendRequest, resourceType,
+                                                            ResendRequestType.MAX_VALUE);
   }
 
   keybindSetSettingChanged(keybindSet: string): void {
@@ -253,7 +260,6 @@ export class UserMetrics {
     InspectorFrontendHostInstance.recordPerformanceHistogram(
         'DevTools.Insights.ShortTeaserGenerationTime', timeInMilliseconds);
   }
-
 }
 
 /**
@@ -1181,4 +1187,46 @@ export const enum BuiltInAiAvailability {
   AVAILABLE_NO_GPU = 8,
   DISABLED_NO_GPU = 9,
   MAX_VALUE = 10,
+}
+
+export const enum ResendRequestType {
+  XHR = 0,
+  FETCH = 1,
+  SCRIPT = 2,
+  STYLESHEET = 3,
+  IMAGE = 4,
+  MEDIA = 5,
+  FONT = 6,
+  WASM = 7,
+  MANIFEST = 8,
+  TEXT_TRACK = 9,
+  SOURCE_MAP_SCRIPT = 10,
+  SOURCE_MAP_STYLE_SHEET = 11,
+  DOCUMENT = 12,
+  PREFETCH = 13,
+  PING = 14,
+  OTHER = 15,
+  MAX_VALUE = 16,
+}
+
+const resendRequestTypeMap = new Map<Common.ResourceType.ResourceType, ResendRequestType>([
+  [Common.ResourceType.resourceTypes.XHR, ResendRequestType.XHR],
+  [Common.ResourceType.resourceTypes.Fetch, ResendRequestType.FETCH],
+  [Common.ResourceType.resourceTypes.Script, ResendRequestType.SCRIPT],
+  [Common.ResourceType.resourceTypes.Stylesheet, ResendRequestType.STYLESHEET],
+  [Common.ResourceType.resourceTypes.Image, ResendRequestType.IMAGE],
+  [Common.ResourceType.resourceTypes.Media, ResendRequestType.MEDIA],
+  [Common.ResourceType.resourceTypes.Font, ResendRequestType.FONT],
+  [Common.ResourceType.resourceTypes.Wasm, ResendRequestType.WASM],
+  [Common.ResourceType.resourceTypes.Manifest, ResendRequestType.MANIFEST],
+  [Common.ResourceType.resourceTypes.TextTrack, ResendRequestType.TEXT_TRACK],
+  [Common.ResourceType.resourceTypes.SourceMapScript, ResendRequestType.SOURCE_MAP_SCRIPT],
+  [Common.ResourceType.resourceTypes.SourceMapStyleSheet, ResendRequestType.SOURCE_MAP_STYLE_SHEET],
+  [Common.ResourceType.resourceTypes.Document, ResendRequestType.DOCUMENT],
+  [Common.ResourceType.resourceTypes.Prefetch, ResendRequestType.PREFETCH],
+  [Common.ResourceType.resourceTypes.Ping, ResendRequestType.PING],
+]);
+
+export function resendRequestType(resourceType: Common.ResourceType.ResourceType): ResendRequestType {
+  return resendRequestTypeMap.get(resourceType) ?? ResendRequestType.OTHER;
 }
