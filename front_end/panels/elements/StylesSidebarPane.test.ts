@@ -10,7 +10,9 @@ import * as Host from '../../core/host/host.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as TextUtils from '../../core/text_utils/text_utils.js';
 import * as Protocol from '../../generated/protocol.js';
+import * as Bindings from '../../models/bindings/bindings.js';
 import * as ComputedStyle from '../../models/computed_style/computed_style.js';
+import * as Workspace from '../../models/workspace/workspace.js';
 import {raf, renderElementIntoDOM} from '../../testing/DOMHelpers.js';
 import {
   createTarget,
@@ -458,6 +460,63 @@ describe('StylesSidebarPane', () => {
         assert.isFalse(
             activeSection.element.classList.contains('collapsed'),
             'Section with active properties should not be collapsed');
+      });
+
+      it('does not leak LiveLocations when rebuilding styles multiple times', async () => {
+        const stylesSidebarPane =
+            new Elements.StylesSidebarPane.StylesSidebarPane(new ComputedStyle.ComputedStyleModel.ComputedStyleModel());
+        const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        node.id = 1 as Protocol.DOM.NodeId;
+        const styleSheetId = '0' as Protocol.DOM.StyleSheetId;
+        const origin = Protocol.CSS.StyleSheetOrigin.Regular;
+
+        const matchedPayload = [{
+          rule: {
+            selectorList: {selectors: [{text: 'div'}], text: 'div'},
+            origin,
+            style: {
+              cssProperties: [{name: 'color', value: 'red'}],
+              shorthandEntries: [],
+              styleSheetId,
+              range: {startLine: 0, startColumn: 0, endLine: 0, endColumn: 15},
+            },
+          },
+          matchingSelectors: [0],
+        }];
+
+        const matchedStyles = await getMatchedStyles({
+          connection,
+          cssModel: stylesSidebarPane.cssModel() as SDK.CSSModel.CSSModel,
+          node,
+          matchedPayload,
+        });
+
+        const workspace = Workspace.Workspace.WorkspaceImpl.instance();
+        const targetManager = SDK.TargetManager.TargetManager.instance();
+        const resourceMapping = new Bindings.ResourceMapping.ResourceMapping(targetManager, workspace);
+        Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding.instance({forceNew: true, resourceMapping, targetManager});
+
+        // Initialize the LiveLocation objects for the test.
+        await stylesSidebarPane.rebuildSectionsForMatchedStyleRulesForTest(matchedStyles, new Map(), new Map(), null);
+
+        function countLiveLocations(): number {
+          let locationsCount = 0;
+          const modelInfos = Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding.instance().modelToInfo.values();
+          for (const modelInfo of modelInfos) {
+            locationsCount += modelInfo.locations.valuesArray().length;
+          }
+          return locationsCount;
+        }
+
+        const initialCount = countLiveLocations();
+
+        for (let i = 0; i < 5; i++) {
+          stylesSidebarPane.linkifier.reset();
+          await stylesSidebarPane.rebuildSectionsForMatchedStyleRulesForTest(matchedStyles, new Map(), new Map(), null);
+        }
+
+        const finalCount = countLiveLocations();
+        assert.strictEqual(finalCount, initialCount, 'LiveLocations count is growing');
       });
 
       it('does not collapse non-contributing sections when the setting is disabled', async () => {
