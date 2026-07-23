@@ -348,7 +348,11 @@ export class AidaClient {
     }
 
     if (this.#gcaClient.enabled()) {
-      return await this.#gcaClient.completeCode(request);
+      try {
+        return await this.#gcaClient.completeCode(request);
+      } catch (err) {
+        throw mapError(err);
+      }
     }
     const {promise, resolve} = Promise.withResolvers<AidaCodeCompleteResult>();
     InspectorFrontendHostInstance.aidaCodeComplete(JSON.stringify(request), resolve);
@@ -404,7 +408,11 @@ export class AidaClient {
 
     if (this.#gcaClient.enabled()) {
       // Inline and remove the else clause after migration
-      return await this.#gcaClient.generateCode(request, options);
+      try {
+        return await this.#gcaClient.generateCode(request, options);
+      } catch (err) {
+        throw mapError(err);
+      }
     }
     try {
       const response = await DispatchHttpRequestClient.makeHttpRequest<GenerateCodeResponse>({

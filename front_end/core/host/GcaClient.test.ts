@@ -20,33 +20,43 @@ describe('GcaClient', () => {
     gcaClient = new Host.GcaClient.GcaClient();
   });
 
-  it('returns null for completeCode when request fails', async () => {
+  it('throws for completeCode when request fails', async () => {
     sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'dispatchHttpRequest')
         .callsFake((_request: DispatchHttpRequestRequest, callback: (result: DispatchHttpRequestResult) => void) => {
           callback({statusCode: 500, error: 'Internal Server Error'});
         });
 
-    const result = await gcaClient.completeCode(
-        {client: 'test', prefix: 'test', metadata: {disable_user_content_logging: true, client_version: '1.2.3'}});
-
-    assert.isNull(result);
+    let threw = false;
+    try {
+      await gcaClient.completeCode(
+          {client: 'test', prefix: 'test', metadata: {disable_user_content_logging: true, client_version: '1.2.3'}});
+    } catch (err) {
+      threw = true;
+      assert.instanceOf(err, Error);
+    }
+    assert.isTrue(threw, 'completeCode did not throw');
   });
 
-  it('returns null for generateCode when request fails', async () => {
+  it('throws for generateCode when request fails', async () => {
     sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'dispatchHttpRequest')
         .callsFake((_request: DispatchHttpRequestRequest, callback: (result: DispatchHttpRequestResult) => void) => {
           callback({statusCode: 500, error: 'Internal Server Error'});
         });
 
-    const result = await gcaClient.generateCode({
-      client: 'test',
-      preamble: 'test',
-      current_message: {parts: [{text: 'test'}], role: Host.AidaClient.Role.USER},
-      use_case: Host.AidaClient.UseCase.CODE_GENERATION,
-      metadata: {disable_user_content_logging: true, client_version: '1.2.3'},
-    });
-
-    assert.isNull(result);
+    let threw = false;
+    try {
+      await gcaClient.generateCode({
+        client: 'test',
+        preamble: 'test',
+        current_message: {parts: [{text: 'test'}], role: Host.AidaClient.Role.USER},
+        use_case: Host.AidaClient.UseCase.CODE_GENERATION,
+        metadata: {disable_user_content_logging: true, client_version: '1.2.3'},
+      });
+    } catch (err) {
+      threw = true;
+      assert.instanceOf(err, Error);
+    }
+    assert.isTrue(threw, 'generateCode did not throw');
   });
 
   it('handles successful completeCode', async () => {

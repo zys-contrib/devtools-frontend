@@ -1079,4 +1079,52 @@ describe('AidaClient', () => {
        });
   });
 
+  describe('with GCA client enabled', () => {
+    let provider: Host.AidaClient.AidaClient;
+
+    beforeEach(() => {
+      updateHostConfig({
+        devToolsUseGcaApi: {
+          enabled: true,
+        },
+      });
+      provider = new Host.AidaClient.AidaClient();
+    });
+
+    it('completeCode throws AidaPermissionDeniedError on 403', async () => {
+      sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'dispatchHttpRequest').callsArgWith(1, {
+        statusCode: 403,
+      });
+      let threw = false;
+      try {
+        await provider.completeCode(
+            {client: 'test', prefix: 'test', metadata: {disable_user_content_logging: true, client_version: '1.2.3'}});
+      } catch (err) {
+        threw = true;
+        assert.instanceOf(err, Host.AidaClient.AidaPermissionDeniedError);
+      }
+      assert.isTrue(threw, 'completeCode did not throw');
+    });
+
+    it('generateCode throws AidaQuotaError on 429', async () => {
+      sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'dispatchHttpRequest').callsArgWith(1, {
+        statusCode: 429,
+      });
+      let threw = false;
+      try {
+        await provider.generateCode({
+          client: 'test',
+          preamble: 'test',
+          current_message: {parts: [{text: 'test'}], role: Host.AidaClient.Role.USER},
+          use_case: Host.AidaClient.UseCase.CODE_GENERATION,
+          metadata: {disable_user_content_logging: true, client_version: '1.2.3'},
+        });
+      } catch (err) {
+        threw = true;
+        assert.instanceOf(err, Host.AidaClient.AidaQuotaError);
+      }
+      assert.isTrue(threw, 'generateCode did not throw');
+    });
+  });
+
 });
