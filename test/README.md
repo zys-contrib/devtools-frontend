@@ -34,6 +34,10 @@ npm test \
 The current test status can be seen at the
 [test waterfall](https://ci.chromium.org/p/devtools-frontend/g/main/console).
 
+### Testing guidance
+
+For guidance on choosing the appropriate test suite when writing new tests, see the [Testing Guidance Skill](../.agents/skills/devtools-testing-guidance/SKILL.md).
+
 ### Obtaining code coverage
 
 We can collect code coverage for the source code that is tested: `npm run test -- --coverage`. This is available for
