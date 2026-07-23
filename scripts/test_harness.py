@@ -460,7 +460,144 @@ class DevToolsTestHarness(unittest.TestCase):
         )
         self.assertEqual(results[1].get('status'), 'PASS')
 
+    def test_e2e_expectations(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts [ Failure Pass ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/e2e/errors.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "out/Default/gen/test/harness/run-mocha.js", abs_test_file,
+                "--", f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(len(results), 4)
+            for r in results:
+                self.assertTrue(r.get('expected', False))
+        finally:
+            os.remove(expectations_file)
+
+    def test_e2e_expectations_unexpected_pass(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts [ Failure ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/e2e/errors.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "out/Default/gen/test/harness/run-mocha.js", abs_test_file,
+                "--", f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 1)
+            self.assertEqual(len(results), 4)
+            for r in results:
+                if r.get('status') == 'PASS':
+                    self.assertFalse(r.get('expected', False))
+                else:
+                    self.assertTrue(r.get('expected', False))
+        finally:
+            os.remove(expectations_file)
+
+    def test_e2e_expectations_exact_id(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts:block_1:run_1 [ Failure ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/e2e/errors.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "out/Default/gen/test/harness/run-mocha.js", abs_test_file,
+                "--", f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 1)
+            self.assertEqual(len(results), 4)
+            for r in results:
+                if r.get('testId'
+                         ) == 'test/harness/e2e/errors.test.ts:block_1:run_1':
+                    self.assertFalse(r.get('expected', False))
+                elif r.get(
+                        'testId'
+                ) == 'test/harness/e2e/errors.test.ts:block_2:run_3':
+                    self.assertFalse(r.get('expected', False))
+                else:
+                    self.assertTrue(r.get('expected', False))
+        finally:
+            os.remove(expectations_file)
+
+    def test_e2e_expectations_skip_file(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts [ Skip ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/e2e/errors.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "out/Default/gen/test/harness/run-mocha.js", abs_test_file,
+                "--", f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(len(results), 4)
+            for r in results:
+                self.assertEqual(r.get('status'), 'SKIP')
+        finally:
+            os.remove(expectations_file)
+
+    def test_e2e_expectations_skip_exact_id(self):
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            f.write(
+                "crbug.com/123 [ mac linux win32 ] test/harness/e2e/errors.test.ts:block_1:run_1 [ Skip ]\n"
+            )
+            expectations_file = f.name
+
+        try:
+            abs_test_file = self._resolve_test_file(
+                "test/harness/e2e/errors.test.ts")
+            results, exit_code = self.run_test_with_rdb([
+                "out/Default/gen/test/harness/run-mocha.js", abs_test_file,
+                "--", f"--expectations-file={expectations_file}"
+            ])
+            self.assertEqual(exit_code, 1)
+            self.assertEqual(len(results), 4)
+            for r in results:
+                if r.get('testId'
+                         ) == 'test/harness/e2e/errors.test.ts:block_1:run_1':
+                    self.assertEqual(r.get('status'), 'SKIP')
+                elif r.get(
+                        'testId'
+                ) == 'test/harness/e2e/errors.test.ts:block_2:run_3':
+                    self.assertEqual(r.get('status'), 'FAIL')
+                else:
+                    self.assertEqual(r.get('status'), 'PASS')
+        finally:
+            os.remove(expectations_file)
+
     def test_unit_screenshot_retry(self):
+        import sys
+        if sys.platform != 'linux':
+            return
         abs_test_file = self._resolve_test_file(
             "test/harness/unit/screenshot_retry.test.ts")
         results, exit_code = self.run_test_with_rdb([

@@ -16,7 +16,9 @@ export function duplicateTests(suite: Mocha.Suite, repetitions: number) {
     for (const test of originalTests) {
       suite.tests.push(test);
       for (let i = 1; i < repetitions; i++) {
-        suite.addTest(test.clone());
+        const cloned = test.clone();
+        cloned.pending = test.pending;
+        suite.addTest(cloned);
       }
     }
   }

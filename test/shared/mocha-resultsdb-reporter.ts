@@ -14,6 +14,7 @@ import {
   ScreenshotError,
 } from '../conductor/screenshot-error.js';
 import {TestConfig} from '../conductor/test_config.js';
+import {isExpectedResult} from '../conductor/test_expectations.js';
 
 const {
   EVENT_RUN_END,
@@ -50,6 +51,8 @@ interface HookWithParent {
 class ResultsDbReporter extends Mocha.reporters.Base {
   private suitePrefix?: string;
   private n = 0;
+  private expectedFailuresCount = 0;
+  private unexpectedPassesCount = 0;
   htmlResult: fs.WriteStream|undefined;
 
   localResultsPath() {
@@ -78,13 +81,19 @@ class ResultsDbReporter extends Mocha.reporters.Base {
   }
 
   private onTestPass(test: Mocha.Test) {
+    const {exactTestId} = generateExactTestId(GEN_DIR, test.file!, test.titlePath());
+    const isExpected = isExpectedResult({exactTestId, success: true, skipped: false});
+    if (!isExpected) {
+      this.unexpectedPassesCount++;
+      process.stdout.write(`\n[TestExpectations] Unexpected pass: ${exactTestId}\n`);
+    }
+
     if (!TestConfig.isAiAgent) {
-      process.stdout.write(
-          `[PASS] ${generateExactTestId(GEN_DIR, test.file!, test.titlePath()).exactTestId} ${test.duration}ms\n`);
+      process.stdout.write(`[PASS] ${exactTestId} ${test.duration}ms\n`);
     }
     const testResult = this.buildDefaultTestResultFrom(test);
     testResult.status = 'PASS';
-    testResult.expected = true;
+    testResult.expected = isExpected;
     // @ts-expect-error state exists on non-hosted conductor tests.
     const devToolsPage = test.parent?.state?.devToolsPage;
     if (devToolsPage) {
@@ -105,16 +114,21 @@ class ResultsDbReporter extends Mocha.reporters.Base {
       targetTest = test as Mocha.Test;
     }
 
+    const {exactTestId} = generateExactTestId(GEN_DIR, targetTest.file!, targetTest.titlePath());
+    const isExpected = isExpectedResult({exactTestId, success: false, skipped: false});
+    if (isExpected) {
+      this.expectedFailuresCount++;
+      process.stdout.write(`\n[TestExpectations] Expected failure: ${exactTestId}\n`);
+    }
+
     if (!TestConfig.isAiAgent) {
       this.n++;
-      process.stdout.write(
-          `[FAIL] ${generateExactTestId(GEN_DIR, targetTest.file!, targetTest.titlePath()).exactTestId} ${
-              targetTest.duration}ms\n`);
+      process.stdout.write(`[FAIL] ${exactTestId} ${targetTest.duration}ms\n`);
     }
 
     const testResult = this.buildDefaultTestResultFrom(targetTest);
     testResult.status = 'FAIL';
-    testResult.expected = false;
+    testResult.expected = isExpected;
     if (error instanceof ScreenshotError) {
       testResult.artifacts = error.screenshots;
       testResult.summaryHtml = error.toMiloSummary();
@@ -156,8 +170,9 @@ class ResultsDbReporter extends Mocha.reporters.Base {
       process.stdout.write(`[SKIP] ${generateExactTestId(GEN_DIR, test.file!, test.titlePath()).exactTestId}\n`);
     }
     const testResult = this.buildDefaultTestResultFrom(test);
+    const {exactTestId} = generateExactTestId(GEN_DIR, test.file!, test.titlePath());
     testResult.status = 'SKIP';
-    testResult.expected = true;
+    testResult.expected = isExpectedResult({exactTestId, success: false, skipped: true});
     ResultsDb.sendTestResult(testResult);
   }
 
@@ -178,6 +193,19 @@ class ResultsDbReporter extends Mocha.reporters.Base {
 
   override epilogue() {
     super.epilogue();
+
+    const unexpectedFailures = this.failures.length - this.expectedFailuresCount;
+    if (this.failures.length > 0 && unexpectedFailures === 0) {
+      process.stdout.write('\n[TestExpectations] All failures were expected! Overriding exit code to 0.\n');
+      process.exitCode = 0;
+    }
+
+    if (this.unexpectedPassesCount > 0) {
+      process.stdout.write(
+          `\n[TestExpectations] ${this.unexpectedPassesCount} unexpected passes! Overriding exit code to 1.\n`);
+      process.exitCode = 1;
+    }
+
     const localResults = this.localResultsPath();
     if (this.failures.length > 0 && localResults) {
       console.error(`Results have been written to file://${localResults}`);

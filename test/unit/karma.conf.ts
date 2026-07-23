@@ -403,14 +403,7 @@ module.exports = function(config: any) {
       pathSeparator: path.sep,
       testIds: TestConfig.tests.filter(t => TEST_ID_REGEX.test(t)),
       repetitions: TestConfig.repetitions,
-      skippedTests: getSkippedTests().map(skipped => {
-        const parts = skipped.split(':');
-        const file = parts[0];
-        const caseName = parts.slice(1).join(':');
-        const jsFile = file.replace(/\.ts$/, '.js');
-        const absoluteJsFile = path.join(GEN_DIR, jsFile);
-        return parts.length > 1 ? `${absoluteJsFile}:${caseName}` : absoluteJsFile;
-      }),
+      skippedTests: getSkippedTests(),
     },
 
     plugins: [

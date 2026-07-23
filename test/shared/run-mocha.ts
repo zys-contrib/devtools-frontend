@@ -8,8 +8,9 @@ import {pathToFileURL} from 'node:url';
 
 import {duplicateTests, pruneSuite} from '../../front_end/testing/MochaHelpers.js';
 import {computeBuildTestId} from '../../front_end/testing/TestIdGeneration.js';
-import {TEST_ID_REGEX} from '../conductor/paths';
+import {TEST_ID_REGEX} from '../conductor/paths.js';
 import {TestConfig} from '../conductor/test_config.js';
+import {getSkippedTests} from '../conductor/test_expectations.js';
 
 export async function run(options: Mocha.MochaOptions&{spec?: string[], suiteName?: string}) {
   const mocha = new Mocha(options);
@@ -61,6 +62,7 @@ export async function run(options: Mocha.MochaOptions&{spec?: string[], suiteNam
 
   const testIds = new Set(TestConfig.tests.filter(testId => TEST_ID_REGEX.test(testId)));
   const seenTestIds = new Set<string>();
+  const skippedTests = getSkippedTests();
 
   function shouldIncludeTest(test: Mocha.Test) {
     if (!test.file) {
@@ -71,6 +73,15 @@ export async function run(options: Mocha.MochaOptions&{spec?: string[], suiteNam
       throw new Error(`Duplicate test ${testId}`);
     }
     seenTestIds.add(testId);
+
+    const isSkipped = skippedTests.some((skippedTest: string) => {
+      return testId === skippedTest || testId.startsWith(`${skippedTest}:`);
+    });
+
+    if (isSkipped) {
+      test.pending = true;
+    }
+
     if (testIds.size === 0) {
       return true;
     }
@@ -88,5 +99,7 @@ export async function run(options: Mocha.MochaOptions&{spec?: string[], suiteNam
     mocha.run(resolve);
   });
 
-  process.exitCode = failures > 0 ? 1 : 0;
+  if (process.exitCode === undefined) {
+    process.exitCode = failures > 0 ? 1 : 0;
+  }
 }

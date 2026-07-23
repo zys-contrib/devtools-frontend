@@ -5,7 +5,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import {SOURCE_ROOT, TEST_ID_REGEX} from './paths.js';
+import {GEN_DIR, SOURCE_ROOT, TEST_ID_REGEX} from './paths.js';
 import {platform} from './platform.js';
 import {TestConfig} from './test_config.js';
 
@@ -185,5 +185,13 @@ export function getSkippedTests(): string[] {
         }
         return true;
       })
-      .map(e => e.testName as string);
+      .map(e => e.testName as string)
+      .map(skipped => {
+        const parts = skipped.split(':');
+        const file = parts[0];
+        const caseName = parts.slice(1).join(':');
+        const jsFile = file.replace(/\.ts$/, '.js');
+        const absoluteJsFile = path.isAbsolute(jsFile) ? jsFile : path.join(GEN_DIR, jsFile);
+        return parts.length > 1 ? `${absoluteJsFile}:${caseName}` : absoluteJsFile;
+      });
 }
