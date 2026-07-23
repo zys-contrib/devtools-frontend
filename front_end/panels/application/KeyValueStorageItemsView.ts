@@ -436,6 +436,18 @@ export abstract class KeyValueStorageItemsView extends UI.Widget.VBox {
     }
   }
 
+  protected set jslog(jslog: string|undefined) {
+    if (this.#jslog === jslog) {
+      return;
+    }
+    this.#jslog = jslog;
+    this.performUpdate();
+  }
+
+  protected get jslog(): string|undefined {
+    return this.#jslog;
+  }
+
   set editable(editable: boolean) {
     this.#editable = editable;
     this.performUpdate();

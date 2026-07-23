@@ -1,7 +1,6 @@
 // Copyright 2021 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-/* eslint-disable @devtools/no-imperative-dom-api */
 
 /*
  * Copyright (C) 2008 Nokia Inc.  All rights reserved.
@@ -104,7 +103,7 @@ export class DOMStorageItemsView extends KeyValueStorageItemsView {
     Common.EventTarget.removeEventListeners(this.eventListeners);
     this.domStorage = domStorage;
     const storageKind = domStorage.isLocalStorage ? 'local-storage-data' : 'session-storage-data';
-    this.element.setAttribute('jslog', `${VisualLogging.pane().context(storageKind)}`);
+    this.jslog = `${VisualLogging.pane().context(storageKind)}`;
     if (domStorage.storageKey) {
       this.toolbar?.setStorageKey(domStorage.storageKey);
     }
