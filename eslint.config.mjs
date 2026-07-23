@@ -721,6 +721,13 @@ export default defineConfig([
     },
   },
   {
+    name: 'API test files',
+    files: ['**/*.test.api.ts'],
+    rules: {
+      '@devtools/no-api-test-unit-helpers': 'error',
+    },
+  },
+  {
     name: 'TypeScript test files',
     files: [
       '*.test.ts',
