@@ -3,11 +3,11 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import sinon from 'sinon';
 
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
-import {createFakeSetting, createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
+import {createFakeSetting} from '../../testing/EnvironmentHelpers.js';
+import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {dispatchEvent} from '../../testing/MockConnection.js';
 import {activate, getMainFrame, navigate} from '../../testing/ResourceTreeHelpers.js';
 import {
@@ -16,26 +16,25 @@ import {
   ThirdPartyStubIssue,
 } from '../../testing/StubIssue.js';
 import {TestUniverse} from '../../testing/TestUniverse.js';
-import * as Bindings from '../bindings/bindings.js';
 import * as IssuesManager from '../issues_manager/issues_manager.js';
 
-describeWithEnvironment('IssuesManager', () => {
+describe('IssuesManager', () => {
+  setupLocaleHooks();
+
+  let universe: TestUniverse;
   let target: SDK.Target.Target;
   let model: SDK.IssuesModel.IssuesModel;
 
   beforeEach(() => {
-    const universe = new TestUniverse();
-    sinon.stub(Bindings.DebuggerWorkspaceBinding.DebuggerWorkspaceBinding, 'instance')
-        .returns(universe.debuggerWorkspaceBinding);
-    sinon.stub(Bindings.CSSWorkspaceBinding.CSSWorkspaceBinding, 'instance').returns(universe.cssWorkspaceBinding);
-    target = createTarget();
+    universe = new TestUniverse();
+    target = universe.createTarget();
     const maybeModel = target.model(SDK.IssuesModel.IssuesModel);
     assert.exists(maybeModel);
     model = maybeModel;
   });
 
   it('collects issues from an issues model', () => {
-    const issuesManager = new IssuesManager.IssuesManager.IssuesManager();
+    const issuesManager = universe.issuesManager;
 
     const dispatchedIssues: IssuesManager.Issue.Issue[] = [];
     issuesManager.addEventListener(
@@ -60,7 +59,7 @@ describeWithEnvironment('IssuesManager', () => {
 
   function assertOutOfScopeIssuesAreFiltered():
       {issuesManager: IssuesManager.IssuesManager.IssuesManager, prerenderTarget: SDK.Target.Target} {
-    const issuesManager = new IssuesManager.IssuesManager.IssuesManager();
+    const issuesManager = universe.issuesManager;
 
     const dispatchedIssues: IssuesManager.Issue.Issue[] = [];
     issuesManager.addEventListener(
@@ -68,7 +67,7 @@ describeWithEnvironment('IssuesManager', () => {
 
     model.dispatchEventToListeners(
         SDK.IssuesModel.Events.ISSUE_ADDED, {issuesModel: model, inspectorIssue: mkInspectorCspIssue('url1')});
-    const prerenderTarget = createTarget({subtype: 'prerender'});
+    const prerenderTarget = universe.createTarget({subtype: 'prerender'});
     const prerenderModel = prerenderTarget.model(SDK.IssuesModel.IssuesModel);
     assert.exists(prerenderModel);
     prerenderModel.dispatchEventToListeners(
@@ -84,26 +83,26 @@ describeWithEnvironment('IssuesManager', () => {
   it('updates filtered issues when switching scope', () => {
     const {issuesManager, prerenderTarget} = assertOutOfScopeIssuesAreFiltered();
 
-    SDK.TargetManager.TargetManager.instance().setScopeTarget(prerenderTarget);
+    universe.targetManager.setScopeTarget(prerenderTarget);
     assert.deepEqual(Array.from(issuesManager.issues()).map(getBlockedUrl), ['url2']);
   });
 
   it('keeps issues of prerendered page upon activation', () => {
     const {issuesManager, prerenderTarget} = assertOutOfScopeIssuesAreFiltered();
 
-    SDK.TargetManager.TargetManager.instance().setScopeTarget(prerenderTarget);
+    universe.targetManager.setScopeTarget(prerenderTarget);
     activate(prerenderTarget);
     assert.deepEqual(Array.from(issuesManager.issues()).map(getBlockedUrl), ['url2']);
   });
 
   const updatesOnPrimaryPageChange = (primary: boolean) => () => {
-    const issuesManager = new IssuesManager.IssuesManager.IssuesManager();
+    const issuesManager = universe.issuesManager;
 
     model.dispatchEventToListeners(
         SDK.IssuesModel.Events.ISSUE_ADDED, {issuesModel: model, inspectorIssue: mkInspectorCspIssue('url1')});
     assert.strictEqual(issuesManager.numberOfIssues(), 1);
 
-    navigate(getMainFrame(primary ? target : createTarget({subtype: 'prerender'})));
+    navigate(getMainFrame(primary ? target : universe.createTarget({subtype: 'prerender'})));
     assert.strictEqual(issuesManager.numberOfIssues(), primary ? 0 : 1);
   };
 
@@ -119,7 +118,9 @@ describeWithEnvironment('IssuesManager', () => {
     ];
 
     const showThirdPartyIssuesSetting = createFakeSetting('third party flag', false);
-    const issuesManager = new IssuesManager.IssuesManager.IssuesManager(showThirdPartyIssuesSetting);
+    const issuesManager = new IssuesManager.IssuesManager.IssuesManager(
+        showThirdPartyIssuesSetting, undefined, universe.frameManager, universe.targetManager, universe.workspace,
+        universe.debuggerWorkspaceBinding, universe.cssWorkspaceBinding);
 
     const firedIssueAddedEventCodes: string[] = [];
     issuesManager.addEventListener(
@@ -145,7 +146,7 @@ describeWithEnvironment('IssuesManager', () => {
     const issue2 = new StubIssue('StubIssue1', ['id2'], [], IssuesManager.Issue.IssueKind.IMPROVEMENT);
     const issue3 = new StubIssue('StubIssue1', ['id3'], [], IssuesManager.Issue.IssueKind.BREAKING_CHANGE);
 
-    const issuesManager = new IssuesManager.IssuesManager.IssuesManager();
+    const issuesManager = universe.issuesManager;
 
     issuesManager.addIssue(model, issue1);
     issuesManager.addIssue(model, issue2);
@@ -159,7 +160,7 @@ describeWithEnvironment('IssuesManager', () => {
 
   describe('instance', () => {
     it('throws an Error if its not the first instance created with "ensureFirst" set', () => {
-      IssuesManager.IssuesManager.IssuesManager.instance();
+      universe.issuesManager;
 
       assert.throws(() => IssuesManager.IssuesManager.IssuesManager.instance({forceNew: true, ensureFirst: true}));
       assert.throws(() => IssuesManager.IssuesManager.IssuesManager.instance({forceNew: false, ensureFirst: true}));
@@ -176,8 +177,9 @@ describeWithEnvironment('IssuesManager', () => {
     const hideIssueByCodeSetting =
         createFakeSetting('hide by code', ({} as IssuesManager.IssuesManager.HideIssueMenuSetting));
     const showThirdPartyIssuesSetting = createFakeSetting('third party flag', true);
-    const issuesManager =
-        new IssuesManager.IssuesManager.IssuesManager(showThirdPartyIssuesSetting, hideIssueByCodeSetting);
+    const issuesManager = new IssuesManager.IssuesManager.IssuesManager(
+        showThirdPartyIssuesSetting, hideIssueByCodeSetting, universe.frameManager, universe.targetManager,
+        universe.workspace, universe.debuggerWorkspaceBinding, universe.cssWorkspaceBinding);
 
     const hiddenIssues: string[] = [];
     issuesManager.addEventListener(IssuesManager.IssuesManager.Events.ISSUE_ADDED, event => {
@@ -185,6 +187,7 @@ describeWithEnvironment('IssuesManager', () => {
         hiddenIssues.push(event.data.issue.code());
       }
     });
+
     // This Setting can either have been initialised in a previous Devtools session and retained
     // through to a new session.
     // OR
@@ -212,8 +215,9 @@ describeWithEnvironment('IssuesManager', () => {
     const hideIssueByCodeSetting =
         createFakeSetting('hide by code', ({} as IssuesManager.IssuesManager.HideIssueMenuSetting));
     const showThirdPartyIssuesSetting = createFakeSetting('third party flag', true);
-    const issuesManager =
-        new IssuesManager.IssuesManager.IssuesManager(showThirdPartyIssuesSetting, hideIssueByCodeSetting);
+    const issuesManager = new IssuesManager.IssuesManager.IssuesManager(
+        showThirdPartyIssuesSetting, hideIssueByCodeSetting, universe.frameManager, universe.targetManager,
+        universe.workspace, universe.debuggerWorkspaceBinding, universe.cssWorkspaceBinding);
 
     let hiddenIssues: string[] = [];
     issuesManager.addEventListener(IssuesManager.IssuesManager.Events.FULL_UPDATE_REQUIRED, () => {
@@ -227,6 +231,7 @@ describeWithEnvironment('IssuesManager', () => {
     for (const issue of issues) {
       issuesManager.addIssue(model, issue);
     }
+
     // Setting is updated by clicking on "hide issue".
     hideIssueByCodeSetting.set({
       HiddenStubIssue1: IssuesManager.IssuesManager.IssueStatus.HIDDEN,
@@ -250,8 +255,9 @@ describeWithEnvironment('IssuesManager', () => {
     const hideIssueByCodeSetting =
         createFakeSetting('hide by code', ({} as IssuesManager.IssuesManager.HideIssueMenuSetting));
     const showThirdPartyIssuesSetting = createFakeSetting('third party flag', true);
-    const issuesManager =
-        new IssuesManager.IssuesManager.IssuesManager(showThirdPartyIssuesSetting, hideIssueByCodeSetting);
+    const issuesManager = new IssuesManager.IssuesManager.IssuesManager(
+        showThirdPartyIssuesSetting, hideIssueByCodeSetting, universe.frameManager, universe.targetManager,
+        universe.workspace, universe.debuggerWorkspaceBinding, universe.cssWorkspaceBinding);
     for (const issue of issues) {
       issuesManager.addIssue(model, issue);
     }
@@ -299,8 +305,9 @@ describeWithEnvironment('IssuesManager', () => {
     const hideIssueByCodeSetting =
         createFakeSetting('hide by code', ({} as IssuesManager.IssuesManager.HideIssueMenuSetting));
     const showThirdPartyIssuesSetting = createFakeSetting('third party flag', true);
-    const issuesManager =
-        new IssuesManager.IssuesManager.IssuesManager(showThirdPartyIssuesSetting, hideIssueByCodeSetting);
+    const issuesManager = new IssuesManager.IssuesManager.IssuesManager(
+        showThirdPartyIssuesSetting, hideIssueByCodeSetting, universe.frameManager, universe.targetManager,
+        universe.workspace, universe.debuggerWorkspaceBinding, universe.cssWorkspaceBinding);
     for (const issue of issues) {
       issuesManager.addIssue(model, issue);
     }
@@ -325,16 +332,16 @@ describeWithEnvironment('IssuesManager', () => {
   });
 
   it('send update event on scope change', async () => {
-    const issuesManager = new IssuesManager.IssuesManager.IssuesManager();
+    const issuesManager = universe.issuesManager;
 
     const updateRequired = issuesManager.once(IssuesManager.IssuesManager.Events.FULL_UPDATE_REQUIRED);
-    const anotherTarget = createTarget();
-    SDK.TargetManager.TargetManager.instance().setScopeTarget(anotherTarget);
+    const anotherTarget = universe.createTarget();
+    universe.targetManager.setScopeTarget(anotherTarget);
     await updateRequired;
   });
 
   it('clears BounceTrackingIssue only on user-initiated navigation', () => {
-    const issuesManager = new IssuesManager.IssuesManager.IssuesManager();
+    const issuesManager = universe.issuesManager;
     const issue = {
       code: Protocol.Audits.InspectorIssueCode.BounceTrackingIssue,
       details: {
