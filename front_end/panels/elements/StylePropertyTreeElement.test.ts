@@ -2650,6 +2650,22 @@ describeWithEnvironment('StylePropertyTreeElement', () => {
     });
   });
 
+  describe('Editing value', () => {
+    it('editing property value triggers style update', async () => {
+      const stylePropertyTreeElement = getTreeElement('font-size', '19px');
+      const applyStyleTextStub = sinon.stub(stylePropertyTreeElement, 'applyStyleText').resolves();
+
+      stylePropertyTreeElement.updateTitle();
+      stylePropertyTreeElement.startEditingValue();
+
+      assert.exists(stylePropertyTreeElement.valueElement);
+      stylePropertyTreeElement.valueElement.textContent = '119px';
+      await stylePropertyTreeElement.kickFreeFlowStyleEditForTest();
+
+      sinon.assert.calledOnceWithExactly(applyStyleTextStub, 'font-size: 119px', false);
+    });
+  });
+
   it('re-enables a disabled property when edited', async () => {
     const treeElement = getTreeElement('font-weight', 'bold');
     treeElement.treeOutline = new LegacyUI.TreeOutline.TreeOutline();
