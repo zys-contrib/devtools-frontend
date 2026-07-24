@@ -12,7 +12,7 @@ group("conductor") {
 }
 
 node_ts_library("implementation") {
-  deps = [ "../../front_end/testing" ]
+  deps = [ "../../front_end/testing:test_id_generation" ]
 
   sources = [
     "async-scope.ts",
