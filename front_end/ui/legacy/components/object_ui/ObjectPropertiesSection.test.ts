@@ -288,6 +288,282 @@ describe('ObjectPropertiesSection', () => {
         sinon.assert.calledOnceWithMatch(reveal, sinon.match({object, expression}), false);
       });
     });
+
+    describe('ArrayGrouping', () => {
+      let previousBucketThreshold: number;
+      before(() => {
+        previousBucketThreshold = ObjectUI.ObjectPropertiesSection.ArrayGroupingTreeElement.bucketThreshold;
+        ObjectUI.ObjectPropertiesSection.ArrayGroupingTreeElement.bucketThreshold = 20;
+      });
+
+      after(() => {
+        ObjectUI.ObjectPropertiesSection.ArrayGroupingTreeElement.bucketThreshold = previousBucketThreshold;
+      });
+
+      function createLocalArrayRemoteObject(array: unknown[]|Uint8Array): SDK.RemoteObject.RemoteObject {
+        const remoteObject = SDK.RemoteObject.RemoteObject.fromLocalObject(array);
+        sinon.stub(remoteObject, 'arrayLength').returns(array.length);
+        const isTypedArray = ArrayBuffer.isView(array);
+        if (isTypedArray) {
+          sinon.stub(remoteObject, 'subtype').get(() => 'typedarray');
+        } else {
+          sinon.stub(remoteObject, 'subtype').get(() => 'array');
+        }
+
+        const originalGetOwnProperties = remoteObject.getOwnProperties;
+        sinon.stub(remoteObject, 'getOwnProperties').callsFake(async (generatePreview, nonIndexedPropertiesOnly) => {
+          let properties: SDK.RemoteObject.RemoteObjectProperty[] = [];
+
+          if (isTypedArray && array.length > 1000) {
+            // For large typed arrays, avoid Object.entries which is very slow.
+          } else {
+            const result = await originalGetOwnProperties.call(remoteObject, generatePreview, nonIndexedPropertiesOnly);
+            properties = result.properties ? [...result.properties] : [];
+          }
+
+          if (!properties.some(p => p.name === 'length')) {
+            const lengthObject = SDK.RemoteObject.RemoteObject.fromLocalObject(array.length);
+            properties.push(new SDK.RemoteObject.RemoteObjectProperty('length', lengthObject, false, false, false));
+          }
+          return {properties, internalProperties: null};
+        });
+        return remoteObject;
+      }
+
+      it('formats sparse array with custom grouping threshold', async () => {
+        const array = [];
+        for (let i = 0; i < 42; ++i) {
+          array[i] = i;
+        }
+        array[100] = 100;
+        const object = createLocalArrayRemoteObject(array);
+        const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection(object, 'title');
+        const rootElement = section.objectTreeElement();
+        await rootElement.onpopulate();
+        await raf();
+
+        const children = rootElement.children();
+        const childTexts = children.map(c => c.listItemElement.textContent || '');
+
+        assert.deepEqual(childTexts, [
+          '[0 … 19]',
+          '[20 … 39]',
+          '[40 … 100]',
+          'length: 101',
+        ]);
+
+        const group1 = children[0];
+        await group1.onpopulate();
+        await raf();
+        const group1Children = group1.children().map(c => c.listItemElement.textContent || '');
+        assert.lengthOf(group1Children, 20);
+        assert.strictEqual(group1Children[0], '0: 0');
+        assert.strictEqual(group1Children[19], '19: 19');
+
+        const group3 = children[2];
+        await group3.onpopulate();
+        await raf();
+        const group3Children = group3.children().map(c => c.listItemElement.textContent || '');
+        assert.deepEqual(group3Children, [
+          '40: 40',
+          '41: 41',
+          '100: 100',
+        ]);
+      });
+
+      it('does not group arrays smaller than threshold', async () => {
+        const array = [];
+        for (let i = 0; i < 10; ++i) {
+          array[i] = undefined;
+        }
+        const object = createLocalArrayRemoteObject(array);
+        const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection(object, 'title');
+        const rootElement = section.objectTreeElement();
+        await rootElement.onpopulate();
+        await raf();
+
+        const children = rootElement.children();
+        const childTexts = children.map(c => c.listItemElement.textContent || '');
+
+        assert.deepEqual(childTexts, [
+          '0: undefined',
+          '1: undefined',
+          '2: undefined',
+          '3: undefined',
+          '4: undefined',
+          '5: undefined',
+          '6: undefined',
+          '7: undefined',
+          '8: undefined',
+          '9: undefined',
+          'length: 10',
+        ]);
+      });
+
+      it('does not group sparse arrays if total element count is below threshold', async () => {
+        const array = [];
+        for (let i = 0; i < 10; ++i) {
+          array[i] = i;
+        }
+        array[100] = 100;
+        const object = createLocalArrayRemoteObject(array);
+        const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection(object, 'title');
+        const rootElement = section.objectTreeElement();
+        await rootElement.onpopulate();
+        await raf();
+
+        const children = rootElement.children();
+        const childTexts = children.map(c => c.listItemElement.textContent || '');
+
+        assert.deepEqual(childTexts, [
+          '0: 0',
+          '1: 1',
+          '2: 2',
+          '3: 3',
+          '4: 4',
+          '5: 5',
+          '6: 6',
+          '7: 7',
+          '8: 8',
+          '9: 9',
+          '100: 100',
+          'length: 101',
+        ]);
+      });
+
+      it('formats large dense arrays with multi-level grouping', async () => {
+        const array = [];
+        for (let i = 0; i < 405; ++i) {
+          array[i] = i;
+        }
+        const object = createLocalArrayRemoteObject(array);
+        const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection(object, 'title');
+        const rootElement = section.objectTreeElement();
+        await rootElement.onpopulate();
+        await raf();
+
+        const children = rootElement.children();
+        const childTexts = children.map(c => c.listItemElement.textContent || '');
+
+        assert.deepEqual(childTexts, [
+          '[0 … 399]',
+          '[400 … 404]',
+          'length: 405',
+        ]);
+
+        const group1 = children[0];
+        await group1.onpopulate();
+        await raf();
+        const group1Children = group1.children().map(c => c.listItemElement.textContent || '');
+        assert.lengthOf(group1Children, 20);
+        assert.strictEqual(group1Children[0], '[0 … 19]');
+        assert.strictEqual(group1Children[19], '[380 … 399]');
+
+        const group2 = children[1];
+        await group2.onpopulate();
+        await raf();
+        const group2Children = group2.children().map(c => c.listItemElement.textContent || '');
+        assert.deepEqual(group2Children, [
+          '400: 400',
+          '401: 401',
+          '402: 402',
+          '403: 403',
+          '404: 404',
+        ]);
+      });
+
+      it('formats arrays with non-index properties', async () => {
+        const array = [];
+        for (let i = 0; i < 10; ++i) {
+          array[i] = i;
+        }
+        array[123] = 123;
+        const arrayObj = array as unknown as Record<string, unknown>;
+        arrayObj['-123'] = -123;
+        arrayObj['3.14'] = 3.14;
+        arrayObj['4294967295'] = 4294967295;
+        arrayObj['4294967296'] = 4294967296;
+        arrayObj['Infinity'] = Infinity;
+        arrayObj['-Infinity'] = -Infinity;
+        arrayObj['NaN'] = NaN;
+
+        const object = createLocalArrayRemoteObject(array);
+        const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection(object, 'title');
+        const rootElement = section.objectTreeElement();
+        await rootElement.onpopulate();
+        await raf();
+
+        const children = rootElement.children();
+        const childTexts = children.map(c => c.listItemElement.textContent || '');
+
+        assert.include(childTexts, '0: 0');
+        assert.include(childTexts, '9: 9');
+        assert.include(childTexts, '123: 123');
+        assert.include(childTexts, '-123: -123');
+        assert.include(childTexts, '3.14: 3.14');
+        assert.include(childTexts, '4294967295: 4294967295');
+        assert.include(childTexts, '4294967296: 4294967296');
+        assert.include(childTexts, 'Infinity: Infinity');
+        assert.include(childTexts, '-Infinity: -Infinity');
+        assert.include(childTexts, 'NaN: NaN');
+        assert.include(childTexts, 'length: 124');
+      });
+
+      it('formats very large sparse arrays', async () => {
+        const array: unknown[] = [];
+        const arrayObj = array as unknown as Record<string, unknown>;
+        array[4294967294] = 4294967294;
+        for (let i = 20; i >= 0; i -= 2) {
+          array[i] = i;
+        }
+        for (let i = 2, n = 33; n--; i *= 2) {
+          if (i <= 4294967294) {
+            array[i] = i;
+          } else {
+            arrayObj[String(i)] = i;
+          }
+        }
+        for (let i = 1; i < 20; i += 2) {
+          array[i] = i;
+        }
+
+        const object = createLocalArrayRemoteObject(array);
+        const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection(object, 'title');
+        const rootElement = section.objectTreeElement();
+        await rootElement.onpopulate();
+        await raf();
+
+        const children = rootElement.children();
+        const childTexts = children.map(c => c.listItemElement.textContent || '');
+
+        assert.deepEqual(childTexts, [
+          '[0 … 19]',
+          '[20 … 8388608]',
+          '[16777216 … 4294967294]',
+          '4294967296: 4294967296',
+          '8589934592: 8589934592',
+          'length: 4294967295',
+        ]);
+      });
+
+      it('formats large typed arrays with consecutive range grouping', async () => {
+        const array = new Uint8Array(64160003);
+        const object = createLocalArrayRemoteObject(array);
+        const section = new ObjectUI.ObjectPropertiesSection.ObjectPropertiesSection(object, 'title');
+        const rootElement = section.objectTreeElement();
+        await rootElement.onpopulate();
+        await raf();
+
+        const children = rootElement.children();
+        const childTexts = children.map(c => c.listItemElement.textContent || '');
+
+        assert.deepEqual(childTexts, [
+          '[0 … 63999999]',
+          '[64000000 … 64160002]',
+          'length: 64160003',
+        ]);
+      });
+    });
   });
 });
 
