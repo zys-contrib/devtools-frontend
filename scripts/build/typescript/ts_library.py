@@ -282,6 +282,7 @@ def main():
     tsconfig['files'] = [
         get_relative_path_from_output_directory(x) for x in all_ts_files
     ]
+    tsconfig['checkJs'] = True
 
     if (opts.deps is not None):
         tsconfig['references'] = [{'path': src} for src in opts.deps]

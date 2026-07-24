@@ -364,6 +364,20 @@ def CheckObsoleteScreenshotGoldens(input_api, output_api):
                                 message='Obsolete screenshot images')
 
 
+def CheckTestExpectations(input_api, output_api):
+    script_path = input_api.os_path.join(input_api.PresubmitLocalPath(),
+                                         'scripts', 'test',
+                                         'check_test_expectations.js')
+    expectations_path = input_api.os_path.join(input_api.PresubmitLocalPath(),
+                                               'test', 'TestExpectations')
+    return _CheckWithNodeScript(
+        input_api,
+        output_api,
+        script_path,
+        script_arguments=['--expectations-file', expectations_path],
+        message='Test expectations')
+
+
 _UPDATE_NODE_DEPENDENCIES_FOOTER = 'Update-Node-Dependencies'
 
 def CheckNodeModules(input_api, output_api):

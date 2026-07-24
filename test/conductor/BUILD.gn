@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("../../scripts/build/ninja/copy.gni")
 import("../../scripts/build/typescript/typescript.gni")
 
 group("conductor") {
@@ -32,6 +33,7 @@ node_ts_library("implementation") {
     "sharding.ts",
     "test_config.ts",
     "test_expectations.ts",
+    "test_expectations_parser.js",
     "test_server.ts",
   ]
 }
