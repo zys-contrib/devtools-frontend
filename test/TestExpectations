@@ -20,3 +20,5 @@
 crbug.com/537672763 test/e2e/performance/wasm/performance_profiling.test.ts [ Pass Failure ]
 # Skipped because Shared Storage API is deprecated and stubbed in Blink.
 crbug.com/462465887 test/e2e/application/shared-storage.test.ts [ Skip ]
+
+crbug.com/538426484 [ linux ] test/e2e/elements/adopted-stylesheets.test.ts:the_elements_tab:shows_link_to_imported_stylesheet [ Pass Failure ]
