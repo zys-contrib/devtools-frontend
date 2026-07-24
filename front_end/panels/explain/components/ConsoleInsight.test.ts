@@ -72,7 +72,7 @@ describeWithEnvironment('ConsoleInsight', () => {
   });
 
   it('generates an explanation when the user logs in', async () => {
-    const {view, component, stubAidaCheckAccessPreconditions} = await createConsoleInsightWidget({
+    const {view, component} = await createConsoleInsightWidget({
       aidaAvailability: Host.AidaClient.AidaAccessPreconditions.NO_ACCOUNT_EMAIL,
     });
 
@@ -80,9 +80,8 @@ describeWithEnvironment('ConsoleInsight', () => {
 
     component.wasShown();
 
-    stubAidaCheckAccessPreconditions(Host.AidaClient.AidaAccessPreconditions.AVAILABLE);
     Host.AidaClient.HostConfigTracker.instance().dispatchEventToListeners(
-        Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED);
+        Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED, Host.AidaClient.AidaAccessPreconditions.AVAILABLE);
 
     const nextInput = await view.nextInput;
 

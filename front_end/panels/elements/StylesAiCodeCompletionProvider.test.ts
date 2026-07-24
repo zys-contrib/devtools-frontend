@@ -60,7 +60,6 @@ function createCssModelAndProperty(): {cssModel: SDK.CSSModel.CSSModel, cssPrope
 
 describeWithEnvironment('StylesAiCodeCompletionProvider', () => {
   let clock: sinon.SinonFakeTimers;
-  let checkAccessPreconditionsStub: sinon.SinonStub;
 
   beforeEach(() => {
     clock = sinon.useFakeTimers();
@@ -77,8 +76,8 @@ describeWithEnvironment('StylesAiCodeCompletionProvider', () => {
     });
 
     sinon.stub(Host.AidaClient.HostConfigTracker.instance(), 'pollAidaAvailability').resolves();
-    checkAccessPreconditionsStub = sinon.stub(Host.AidaClient.AidaClient, 'checkAccessPreconditions');
-    checkAccessPreconditionsStub.resolves(Host.AidaClient.AidaAccessPreconditions.AVAILABLE);
+    sinon.stub(Host.AidaClient.HostConfigTracker.instance(), 'aidaAvailability')
+        .get(() => Host.AidaClient.AidaAccessPreconditions.AVAILABLE);
     Common.Settings.Settings.instance().settingForTest('ai-code-completion-enabled').set(true);
   });
 

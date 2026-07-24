@@ -960,7 +960,8 @@ export class AiAssistancePanel extends UI.Panel.Panel {
     const {forceNew} = opts;
     if (!panelInstance || forceNew) {
       const aidaClient = new Host.AidaClient.AidaClient();
-      const aidaAvailability = await Host.AidaClient.AidaClient.checkAccessPreconditions();
+      const aidaAvailability = Host.AidaClient.HostConfigTracker.instance().aidaAvailability ??
+          await Host.AidaClient.AidaClient.checkAccessPreconditions();
       panelInstance = new AiAssistancePanel(defaultView, {aidaClient, aidaAvailability});
     }
 
@@ -1129,7 +1130,6 @@ export class AiAssistancePanel extends UI.Panel.Panel {
     super.wasShown();
     this.#viewOutput.chatView?.restoreScrollPosition();
     this.#viewOutput.chatView?.focusTextInput();
-    void this.#handleAidaAvailabilityChange();
     this.#selectedElement =
         createDOMNodeContext(selectedElementFilter(UI.Context.Context.instance().flavor(SDK.DOMModel.DOMNode)));
     this.#selectedRequest =
@@ -1147,6 +1147,10 @@ export class AiAssistancePanel extends UI.Panel.Panel {
     this.#aiAssistanceEnabledSetting?.addChangeListener(this.requestUpdate, this);
     Host.AidaClient.HostConfigTracker.instance().addEventListener(
         Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED, this.#handleAidaAvailabilityChange);
+    const initialAvailability = Host.AidaClient.HostConfigTracker.instance().aidaAvailability;
+    if (initialAvailability !== undefined) {
+      this.#updateAidaAvailability(initialAvailability);
+    }
     this.#toggleSearchElementAction?.addEventListener(UI.ActionRegistration.Events.TOGGLED, this.requestUpdate, this);
 
     UI.Context.Context.instance().addFlavorChangeListener(SDK.DOMModel.DOMNode, this.#handleDOMNodeFlavorChange);
@@ -1226,13 +1230,17 @@ export class AiAssistancePanel extends UI.Panel.Panel {
     }
   }
 
-  #handleAidaAvailabilityChange = async(): Promise<void> => {
-    const currentAidaAvailability = await Host.AidaClient.AidaClient.checkAccessPreconditions();
-    if (currentAidaAvailability !== this.#aidaAvailability) {
-      this.#aidaAvailability = currentAidaAvailability;
+  #updateAidaAvailability(aidaAvailability: Host.AidaClient.AidaAccessPreconditions): void {
+    if (aidaAvailability !== this.#aidaAvailability) {
+      this.#aidaAvailability = aidaAvailability;
       this.requestUpdate();
     }
-  };
+  }
+
+  #handleAidaAvailabilityChange =
+      (ev: Common.EventTarget.EventTargetEvent<Host.AidaClient.AidaAccessPreconditions>): void => {
+        this.#updateAidaAvailability(ev.data);
+      };
 
   #handleDOMNodeFlavorChange = (ev: Common.EventTarget.EventTargetEvent<SDK.DOMModel.DOMNode>): void => {
     if (this.#selectedElement?.getItem() === ev.data) {

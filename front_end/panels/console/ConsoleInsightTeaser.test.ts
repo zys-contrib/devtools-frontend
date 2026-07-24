@@ -270,9 +270,8 @@ describeWithEnvironment('ConsoleInsightTeaser', () => {
     let input = await view.nextInput;
     assert.isTrue(input.hasTellMeMoreButton);
 
-    checkAccessPreconditionsStub.resolves(Host.AidaClient.AidaAccessPreconditions.NO_INTERNET);
     Host.AidaClient.HostConfigTracker.instance().dispatchEventToListeners(
-        Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED);
+        Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED, Host.AidaClient.AidaAccessPreconditions.NO_INTERNET);
     input = await view.nextInput;
     assert.isFalse(input.hasTellMeMoreButton);
     teaser.detach();

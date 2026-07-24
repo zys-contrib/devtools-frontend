@@ -753,7 +753,8 @@ export type ViewFunction = typeof DEFAULT_VIEW;
 
 export class ConsoleInsight extends UI.Widget.Widget {
   static async create(promptBuilder: PublicPromptBuilder, aidaClient: PublicAidaClient): Promise<Lit.LitTemplate> {
-    const aidaPreconditions = await Host.AidaClient.AidaClient.checkAccessPreconditions();
+    const aidaPreconditions = Host.AidaClient.HostConfigTracker.instance().aidaAvailability ??
+        await Host.AidaClient.AidaClient.checkAccessPreconditions();
     return html`<devtools-widget class="devtools-console-insight" ${
         widget(element => new ConsoleInsight(promptBuilder, aidaClient, aidaPreconditions, element))}>
     </devtools-widget>`;
@@ -780,7 +781,8 @@ export class ConsoleInsight extends UI.Widget.Widget {
 
   #consoleInsightsEnabledSetting: Common.Settings.Setting<boolean>|undefined;
   #aidaPreconditions: Host.AidaClient.AidaAccessPreconditions;
-  #boundOnAidaAvailabilityChange: () => Promise<void>;
+  #boundOnAidaAvailabilityChange:
+      (ev: Common.EventTarget.EventTargetEvent<Host.AidaClient.AidaAccessPreconditions>) => void;
   #marked: Marked.Marked.Marked;
 
   constructor(
@@ -885,7 +887,10 @@ export class ConsoleInsight extends UI.Widget.Widget {
     Host.AidaClient.HostConfigTracker.instance().addEventListener(
         Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED, this.#boundOnAidaAvailabilityChange);
     // If AIDA availability has changed while the component was disconnected, we need to update.
-    void this.#onAidaAvailabilityChange();
+    const initialAvailability = Host.AidaClient.HostConfigTracker.instance().aidaAvailability;
+    if (initialAvailability !== undefined) {
+      this.#updateAidaAvailability(initialAvailability);
+    }
     // The setting might have been turned on/off while the component was disconnected.
     // Update the state, unless the current state is already terminal (`INSIGHT` or `ERROR`).
     if (this.#state.type !== State.INSIGHT && this.#state.type !== State.ERROR) {
@@ -901,13 +906,16 @@ export class ConsoleInsight extends UI.Widget.Widget {
         Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED, this.#boundOnAidaAvailabilityChange);
   }
 
-  async #onAidaAvailabilityChange(): Promise<void> {
-    const currentAidaAvailability = await Host.AidaClient.AidaClient.checkAccessPreconditions();
-    if (currentAidaAvailability !== this.#aidaPreconditions) {
-      this.#aidaPreconditions = currentAidaAvailability;
+  #updateAidaAvailability(aidaAvailability: Host.AidaClient.AidaAccessPreconditions): void {
+    if (aidaAvailability !== this.#aidaPreconditions) {
+      this.#aidaPreconditions = aidaAvailability;
       this.#state = this.#getStateFromAidaAvailability();
       void this.#generateInsightIfNeeded();
     }
+  }
+
+  #onAidaAvailabilityChange(ev: Common.EventTarget.EventTargetEvent<Host.AidaClient.AidaAccessPreconditions>): void {
+    this.#updateAidaAvailability(ev.data);
   }
 
   #onConsoleInsightsSettingChanged(): void {

@@ -206,6 +206,7 @@ describeWithEnvironment('AI Assistance Panel', () => {
 
       Host.AidaClient.HostConfigTracker.instance().dispatchEventToListeners(
           Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED,
+          Host.AidaClient.AidaAccessPreconditions.AVAILABLE,
       );
 
       const nextInput = await view.nextInput;

@@ -438,7 +438,8 @@ export class AISettingsTab extends UI.Widget.VBox {
   #aiAssistanceSetting?: Common.Settings.Setting<boolean>;
   #aiCodeCompletionSetting?: Common.Settings.Setting<boolean>;
   #aidaAvailability = Host.AidaClient.AidaAccessPreconditions.NO_ACCOUNT_EMAIL;
-  #boundOnAidaAvailabilityChange: () => Promise<void>;
+  #boundOnAidaAvailabilityChange:
+      (ev: Common.EventTarget.EventTargetEvent<Host.AidaClient.AidaAccessPreconditions>) => void;
   // Setting to parameters needed to display it in the UI.
   // To display a a setting, it needs to be added to this map.
   #settingToParams = new Map<Common.Settings.Setting<boolean>, AiSettingParams>();
@@ -514,7 +515,10 @@ export class AISettingsTab extends UI.Widget.VBox {
     super.wasShown();
     Host.AidaClient.HostConfigTracker.instance().addEventListener(
         Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED, this.#boundOnAidaAvailabilityChange);
-    void this.#onAidaAvailabilityChange();
+    const initialAvailability = Host.AidaClient.HostConfigTracker.instance().aidaAvailability;
+    if (initialAvailability !== undefined) {
+      this.#updateAidaAvailability(initialAvailability);
+    }
     this.requestUpdate();
   }
 
@@ -657,12 +661,15 @@ export class AISettingsTab extends UI.Widget.VBox {
     }
   }
 
-  async #onAidaAvailabilityChange(): Promise<void> {
-    const currentAidaAvailability = await Host.AidaClient.AidaClient.checkAccessPreconditions();
-    if (currentAidaAvailability !== this.#aidaAvailability) {
-      this.#aidaAvailability = currentAidaAvailability;
+  #updateAidaAvailability(aidaAvailability: Host.AidaClient.AidaAccessPreconditions): void {
+    if (aidaAvailability !== this.#aidaAvailability) {
+      this.#aidaAvailability = aidaAvailability;
       this.requestUpdate();
     }
+  }
+
+  #onAidaAvailabilityChange(ev: Common.EventTarget.EventTargetEvent<Host.AidaClient.AidaAccessPreconditions>): void {
+    this.#updateAidaAvailability(ev.data);
   }
 
   #getAiAssistanceSettingDescription(): Platform.UIString.LocalizedString {

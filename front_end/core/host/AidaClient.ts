@@ -456,6 +456,10 @@ export class HostConfigTracker extends Common.ObjectWrapper.ObjectWrapper<EventT
   #pollTimer?: ReturnType<typeof setTimeout>;
   #aidaAvailability?: AidaAccessPreconditions;
 
+  get aidaAvailability(): AidaAccessPreconditions|undefined {
+    return this.#aidaAvailability;
+  }
+
   static instance({forceNew}: {
     forceNew: boolean,
   } = {forceNew: false}): HostConfigTracker {
@@ -507,9 +511,7 @@ export class HostConfigTracker extends Common.ObjectWrapper.ObjectWrapper<EventT
       const config =
           await new Promise<Root.Runtime.HostConfig>(resolve => InspectorFrontendHostInstance.getHostConfig(resolve));
       Object.assign(Root.Runtime.hostConfig, config);
-      // TODO(crbug.com/442545623): Send `currentAidaAvailability` to the listeners as part of the event so that
-      // `await AidaClient.checkAccessPreconditions()` does not need to be called again in the event handlers.
-      this.dispatchEventToListeners(Events.AIDA_AVAILABILITY_CHANGED);
+      this.dispatchEventToListeners(Events.AIDA_AVAILABILITY_CHANGED, currentAidaAvailability);
     }
   }
 }
@@ -519,7 +521,7 @@ export const enum Events {
 }
 
 export interface EventTypes {
-  [Events.AIDA_AVAILABILITY_CHANGED]: void;
+  [Events.AIDA_AVAILABILITY_CHANGED]: AidaAccessPreconditions;
 }
 
 export function isQuotaError(...inputs: Array<string|undefined>): boolean {

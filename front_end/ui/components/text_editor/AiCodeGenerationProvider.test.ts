@@ -49,7 +49,6 @@ function dispatchCtrlI(editor: TextEditor.TextEditor) {
 
 describeWithEnvironment('AiCodeGenerationProvider', () => {
   let clock: sinon.SinonFakeTimers;
-  let checkAccessPreconditionsStub: sinon.SinonStub;
   let generateCodeStub: sinon.SinonStub;
 
   beforeEach(() => {
@@ -64,12 +63,11 @@ describeWithEnvironment('AiCodeGenerationProvider', () => {
         blockedByGeo: false,
       },
     });
-    checkAccessPreconditionsStub = sinon.stub(Host.AidaClient.AidaClient, 'checkAccessPreconditions');
-    checkAccessPreconditionsStub.resolves(Host.AidaClient.AidaAccessPreconditions.AVAILABLE);
     sinon.stub(Host.AidaClient.HostConfigTracker, 'instance').returns({
       addEventListener: () => {},
       removeEventListener: () => {},
       dispose: () => {},
+      aidaAvailability: Host.AidaClient.AidaAccessPreconditions.AVAILABLE,
     } as unknown as Host.AidaClient.HostConfigTracker);
     Common.Settings.Settings.instance().settingForTest('ai-code-completion-enabled').set(true);
     Common.Settings.Settings.instance().createSetting('ai-code-generation-onboarding-completed', true);

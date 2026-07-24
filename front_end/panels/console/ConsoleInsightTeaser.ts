@@ -409,7 +409,8 @@ export class ConsoleInsightTeaser extends UI.Widget.Widget {
   #isSlow = false;
   #timeoutId: ReturnType<typeof setTimeout>|null = null;
   #aidaAvailability?: Host.AidaClient.AidaAccessPreconditions;
-  #boundOnAidaAvailabilityChange: () => Promise<void>;
+  #boundOnAidaAvailabilityChange:
+      (ev: Common.EventTarget.EventTargetEvent<Host.AidaClient.AidaAccessPreconditions>) => void;
   #boundOnDownloadProgressChange: (event: Common.EventTarget.EventTargetEvent<number>) => void;
   #boundOnSessionCreation: () => void;
   #downloadProgress: number|null = null;
@@ -448,12 +449,15 @@ export class ConsoleInsightTeaser extends UI.Widget.Widget {
     return Common.Settings.Settings.instance().createLocalSetting('console-insights-onboarding-finished', true);
   }
 
-  async #onAidaAvailabilityChange(): Promise<void> {
-    const currentAidaAvailability = await Host.AidaClient.AidaClient.checkAccessPreconditions();
-    if (currentAidaAvailability !== this.#aidaAvailability) {
-      this.#aidaAvailability = currentAidaAvailability;
+  #updateAidaAvailability(aidaAvailability: Host.AidaClient.AidaAccessPreconditions): void {
+    if (aidaAvailability !== this.#aidaAvailability) {
+      this.#aidaAvailability = aidaAvailability;
       this.requestUpdate();
     }
+  }
+
+  #onAidaAvailabilityChange(ev: Common.EventTarget.EventTargetEvent<Host.AidaClient.AidaAccessPreconditions>): void {
+    this.#updateAidaAvailability(ev.data);
   }
 
   #executeConsoleInsightAction(): void {
@@ -731,7 +735,10 @@ export class ConsoleInsightTeaser extends UI.Widget.Widget {
     super.wasShown();
     Host.AidaClient.HostConfigTracker.instance().addEventListener(
         Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED, this.#boundOnAidaAvailabilityChange);
-    void this.#onAidaAvailabilityChange();
+    const initialAvailability = Host.AidaClient.HostConfigTracker.instance().aidaAvailability;
+    if (initialAvailability !== undefined) {
+      this.#updateAidaAvailability(initialAvailability);
+    }
   }
 
   override willHide(): void {

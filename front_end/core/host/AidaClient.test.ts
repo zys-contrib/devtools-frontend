@@ -12,6 +12,8 @@ import {
 } from '../../testing/EnvironmentHelpers.js';
 import {setupLocaleHooks} from '../../testing/LocaleHelpers.js';
 import {setupRuntimeHooks} from '../../testing/RuntimeHelpers.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
+import * as Common from '../common/common.js';
 import * as Platform from '../platform/platform.js';
 
 import * as Host from './host.js';
@@ -809,6 +811,34 @@ describe('AidaClient', () => {
           result,
           Host.AidaClient.AidaAccessPreconditions.AVAILABLE,
       );
+    });
+  });
+
+  describe('HostConfigTracker', () => {
+    it('dispatches AIDA_AVAILABILITY_CHANGED with currentAidaAvailability', async () => {
+      const universe = new TestUniverse();
+      sinon.stub(Platform.HostRuntime.HOST_RUNTIME, 'getOnLine').returns(true);
+      sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'getSyncInformation').callsFake(cb => {
+        cb({accountEmail: 'test@example.com', isSyncActive: true});
+      });
+      sinon.stub(Host.InspectorFrontendHost.InspectorFrontendHostInstance, 'getHostConfig').callsFake(cb => {
+        cb({});
+      });
+
+      const tracker = universe.hostConfigTracker;
+      let descriptor: Common.EventTarget.EventDescriptor<Host.AidaClient.EventTypes>|undefined;
+      const availabilityPromise = new Promise<Host.AidaClient.AidaAccessPreconditions>(resolve => {
+        descriptor = tracker.addEventListener(
+            Host.AidaClient.Events.AIDA_AVAILABILITY_CHANGED,
+            event => resolve(event.data),
+        );
+      });
+
+      const availability = await availabilityPromise;
+      assert.strictEqual(availability, Host.AidaClient.AidaAccessPreconditions.AVAILABLE);
+      if (descriptor) {
+        Common.EventTarget.removeEventListeners([descriptor]);
+      }
     });
   });
 
