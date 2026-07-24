@@ -5,14 +5,29 @@
 import {assert} from 'chai';
 
 import {getPausedMessages, openSourcesPanel, PAUSE_ON_UNCAUGHT_EXCEPTION_SELECTOR} from '../helpers/sources-helpers.js';
+import type {DevToolsPage} from '../shared/frontend-helper.js';
+
+async function setCheckboxState(devToolsPage: DevToolsPage, selector: string, checked: boolean) {
+  const isChecked = await devToolsPage.evaluate(sel => {
+    const el = document.querySelector(sel) as HTMLInputElement & {checked?: boolean};
+    return Boolean(el?.checked || el?.hasAttribute('checked'));
+  }, selector);
+  if (isChecked !== checked) {
+    await devToolsPage.click(selector);
+  }
+}
+
+async function enableTrustedTypeViolations(devToolsPage: DevToolsPage) {
+  await devToolsPage.waitForAria('CSP violation breakpoints');
+  await devToolsPage.click('[aria-label="CSP violation breakpoints"]');
+  await setCheckboxState(devToolsPage, '[title="Trusted Type violations"]', true);
+}
 
 describe('Breakpoints on CSP Violation', () => {
   it('CSP Violations should come up before break on exceptions', async ({devToolsPage, inspectedPage}) => {
     await openSourcesPanel(devToolsPage);
-    await devToolsPage.waitForAria('CSP Violation Breakpoints');
-    await devToolsPage.click('[aria-label="CSP Violation Breakpoints"]');
-    await devToolsPage.click('[title="Trusted Type Violations"]');
-    await devToolsPage.click(PAUSE_ON_UNCAUGHT_EXCEPTION_SELECTOR);
+    await enableTrustedTypeViolations(devToolsPage);
+    await setCheckboxState(devToolsPage, PAUSE_ON_UNCAUGHT_EXCEPTION_SELECTOR, true);
 
     const resource = inspectedPage.goToResource('network/trusted-type-violations-enforced.rawresponse');
 
@@ -33,9 +48,7 @@ describe('Breakpoints on CSP Violation', () => {
 
   it('CSP Violations should show in report-only mode', async ({devToolsPage, inspectedPage}) => {
     await openSourcesPanel(devToolsPage);
-    await devToolsPage.waitForAria('CSP Violation Breakpoints');
-    await devToolsPage.click('[aria-label="CSP Violation Breakpoints"]');
-    await devToolsPage.click('[title="Trusted Type Violations"]');
+    await enableTrustedTypeViolations(devToolsPage);
 
     const resource = inspectedPage.goToResource('network/trusted-type-violations-report-only.rawresponse');
 

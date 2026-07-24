@@ -352,11 +352,11 @@ export async function waitForNewLocation(oldLocation: string, devToolsPage: DevT
 }
 
 export async function setEventListenerBreakpoint(groupName: string, eventName: string, devToolsPage: DevToolsPage) {
-  const eventListenerBreakpointsSection = await devToolsPage.waitForAria('Event Listener Breakpoints');
+  const eventListenerBreakpointsSection = await devToolsPage.waitForAria('Event listener breakpoints');
   const expanded = await eventListenerBreakpointsSection.evaluate(el => el.getAttribute('aria-expanded'));
   if (expanded !== 'true') {
-    await devToolsPage.click('[aria-label="Event Listener Breakpoints"]');
-    await devToolsPage.waitFor('[aria-label="Event Listener Breakpoints"][aria-expanded="true"]');
+    await devToolsPage.click('[aria-label="Event listener breakpoints"]');
+    await devToolsPage.waitFor('[aria-label="Event listener breakpoints"][aria-expanded="true"]');
   }
 
   const eventSelector = `input[type="checkbox"][title="${eventName}"]`;

@@ -53,8 +53,8 @@ const CSS_AUTHORING_HINTS_ICON_SELECTOR = '.hint';
 export const SEARCH_BOX_SELECTOR = '.search-bar';
 const SEARCH_RESULTS_MATCHES = '.search-results-matches';
 export const EMULATE_FOCUSED_PAGE = 'Emulate a focused page';
-const DOM_BREAKPOINTS_SECTION_SELECTOR = '[aria-label="DOM Breakpoints"]';
-const DOM_BREAKPOINTS_LIST_SELECTOR = '[aria-label="DOM Breakpoints list"]';
+const DOM_BREAKPOINTS_SECTION_SELECTOR = '[aria-label="DOM breakpoints"]';
+const DOM_BREAKPOINTS_LIST_SELECTOR = '[aria-label="DOM breakpoints list"]';
 const TOGGLE_COMMON_RENDERING_EMULATIONS_SELECTOR = '[aria-label="Toggle common rendering emulations"]';
 
 export const openLayoutPane = async (devToolsPage: DevToolsPage) => {
@@ -343,11 +343,11 @@ export const waitForElementsStyleSection =
 };
 
 export const waitForElementsDOMBreakpointsSection = async (devToolsPage: DevToolsPage) => {
-  let domBreakpointsPane = await devToolsPage.$('DOM Breakpoints', undefined, 'aria');
+  let domBreakpointsPane = await devToolsPage.$('DOM breakpoints', undefined, 'aria');
   if (!domBreakpointsPane) {
     const elementsPanel = await devToolsPage.waitForAria('Elements panel');
     await devToolsPage.clickMoreTabsButton(elementsPanel);
-    domBreakpointsPane = await devToolsPage.waitForAria('DOM Breakpoints');
+    domBreakpointsPane = await devToolsPage.waitForAria('DOM breakpoints');
   }
   await devToolsPage.click(DOM_BREAKPOINTS_SECTION_SELECTOR);
   await devToolsPage.waitFor(DOM_BREAKPOINTS_LIST_SELECTOR);
