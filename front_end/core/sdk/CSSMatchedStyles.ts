@@ -52,7 +52,7 @@ import {
   CSSStyleRule,
 } from './CSSRule.js';
 import {CSSStyleDeclaration, Type} from './CSSStyleDeclaration.js';
-import type {DOMNode} from './DOMModel.js';
+import {type DOMNode, NodeType} from './DOMModel.js';
 
 function containsStyle(styles: CSSStyleDeclaration[]|Set<CSSStyleDeclaration>, query: CSSStyleDeclaration): boolean {
   if (!query.styleSheetId || !query.range) {
@@ -456,7 +456,7 @@ export class CSSMatchedStyles {
     }
 
     // Inline style takes precedence over regular and inherited rules.
-    if (inlinePayload && this.#node.nodeType() === Node.ELEMENT_NODE) {
+    if (inlinePayload && this.#node.nodeType() === NodeType.ELEMENT_NODE) {
       const style = new CSSStyleDeclaration(this.#cssModel, null, inlinePayload, Type.Inline);
       this.#nodeForStyle.set(style, this.#node);
       nodeStyles.push(style);

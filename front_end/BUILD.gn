@@ -293,7 +293,10 @@ group("foundation_unittests") {
 }
 
 group("api_tests") {
-  deps = [ "foundation:api_tests" ]
+  deps = [
+    "core/sdk:api_tests",
+    "foundation:api_tests",
+  ]
 }
 
 generated_file("api_test_inputs") {

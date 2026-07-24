@@ -240,3 +240,12 @@ devtools_foundation_module("foundation_unittests") {
     "../text_utils:bundle",
   ]
 }
+
+devtools_api_test_module("api_tests") {
+  sources = [ "DOMModel.test.api.ts" ]
+
+  deps = [
+    ":bundle",
+    "../../testing",
+  ]
+}
