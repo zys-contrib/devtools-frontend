@@ -248,7 +248,7 @@ var UIStrings = {
   thereMayBeStoredDataAffectingSingular: "There may be stored data affecting loading performance in this location: {PH1}. Audit this page in an incognito window to stop those resources from affecting your scores.",
   /**
    * @description Text when stored data in multiple locations may affect Lighthouse run.
-   * @example {IndexedDB, WebSQL} PH1
+   * @example {IndexedDB} PH1
    */
   thereMayBeStoredDataAffectingLoadingPlural: "There may be stored data affecting loading performance in these locations: {PH1}. Audit this page in an incognito window to stop those resources from affecting your scores.",
   /**
@@ -267,10 +267,6 @@ var UIStrings = {
    * @description Text in sidebar of the Application panel.
    */
   indexeddb: "IndexedDB",
-  /**
-   * @description Text in sidebar of the Application panel.
-   */
-  webSql: "Web SQL",
   /**
    * @description Text of checkbox to include running the performance audits in Lighthouse.
    */
@@ -799,8 +795,7 @@ var LighthouseController = class extends Common.ObjectWrapper.ObjectWrapper {
 };
 var STORAGE_TYPE_NAMES = /* @__PURE__ */ new Map([
   ["local_storage", i18nLazyString(UIStrings.localStorage)],
-  ["indexeddb", i18nLazyString(UIStrings.indexeddb)],
-  ["websql", i18nLazyString(UIStrings.webSql)]
+  ["indexeddb", i18nLazyString(UIStrings.indexeddb)]
 ]);
 var presets = null;
 function getPresets() {

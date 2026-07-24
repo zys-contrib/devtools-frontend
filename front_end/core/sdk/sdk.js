@@ -31334,18 +31334,6 @@ var UIStrings9 = {
    */
   unknownError: "An unknown error was encountered when trying to send this cookie.",
   /**
-   * @description Tooltip to explain why a cookie was blocked due to Schemeful Same-Site.
-   */
-  schemefulSameSiteStrict: 'This cookie was blocked because it had the "`SameSite=Strict`" attribute but the request was cross-site. This includes top-level navigation requests initiated by other sites. This request is considered cross-site because the URL has a different scheme than the current site.',
-  /**
-   * @description Tooltip to explain why a cookie was blocked due to Schemeful Same-Site.
-   */
-  schemefulSameSiteLax: 'This cookie was blocked because it had the "`SameSite=Lax`" attribute but the request was cross-site and was not initiated by a top-level navigation. This request is considered cross-site because the URL has a different scheme than the current site.',
-  /**
-   * @description Tooltip to explain why a cookie was blocked due to Schemeful Same-Site.
-   */
-  schemefulSameSiteUnspecifiedTreatedAsLax: 'This cookie didn\u2019t specify a "`SameSite`" attribute when it was stored, was defaulted to "`SameSite=Lax`", and was blocked because the request was cross-site and was not initiated by a top-level navigation. This request is considered cross-site because the URL has a different scheme than the current site.',
-  /**
    * @description Tooltip to explain why a cookie was blocked due to exceeding the maximum size.
    */
   nameValuePairExceedsMaxSize: "This cookie was blocked because it was too large. The combined size of the name and value must be less than or equal to 4096 characters.",
@@ -31373,15 +31361,6 @@ var UIStrings9 = {
    * @description Tooltip to explain why a cookie was blocked.
    */
   anUnknownErrorWasEncounteredWhenTrying: "An unknown error was encountered when trying to store this cookie.",
-  /**
-   * @description Tooltip to explain why a cookie was blocked due to Schemeful Same-Site.
-   * @example {SameSite=Strict} PH1
-   */
-  thisSetcookieWasBlockedBecauseItHadTheSamesiteStrictLax: 'This attempt to set a cookie via a "`Set-Cookie`" header was blocked because it had the "{PH1}" attribute but came from a cross-site response which was not the response to a top-level navigation. This response is considered cross-site because the URL has a different scheme than the current site.',
-  /**
-   * @description Tooltip to explain why a cookie was blocked due to Schemeful Same-Site.
-   */
-  thisSetcookieDidntSpecifyASamesite: 'This "`Set-Cookie`" header didn\u2019t specify a "`SameSite`" attribute, was defaulted to "`SameSite=Lax`", and was blocked because it came from a cross-site response which was not the response to a top-level navigation. This response is considered cross-site because the URL has a different scheme than the current site.',
   /**
    * @description Tooltip to explain why an attempt to set a cookie via a `Set-Cookie` HTTP header on a request's response was blocked.
    */
@@ -32746,12 +32725,6 @@ var cookieBlockedReasonToUiString = function(blockedReason) {
       return i18nString9(UIStrings9.notOnPath);
     case "DomainMismatch":
       return i18nString9(UIStrings9.domainMismatch);
-    case "SameSiteStrict":
-      return i18nString9(UIStrings9.sameSiteStrict);
-    case "SameSiteLax":
-      return i18nString9(UIStrings9.sameSiteLax);
-    case "SameSiteUnspecifiedTreatedAsLax":
-      return i18nString9(UIStrings9.sameSiteUnspecifiedTreatedAsLax);
     case "SameSiteNoneInsecure":
       return i18nString9(UIStrings9.sameSiteNoneInsecure);
     case "UserPreferences":
@@ -32759,11 +32732,11 @@ var cookieBlockedReasonToUiString = function(blockedReason) {
     case "UnknownError":
       return i18nString9(UIStrings9.unknownError);
     case "SchemefulSameSiteStrict":
-      return i18nString9(UIStrings9.schemefulSameSiteStrict);
+      return i18nString9(UIStrings9.sameSiteStrict);
     case "SchemefulSameSiteLax":
-      return i18nString9(UIStrings9.schemefulSameSiteLax);
+      return i18nString9(UIStrings9.sameSiteLax);
     case "SchemefulSameSiteUnspecifiedTreatedAsLax":
-      return i18nString9(UIStrings9.schemefulSameSiteUnspecifiedTreatedAsLax);
+      return i18nString9(UIStrings9.sameSiteUnspecifiedTreatedAsLax);
     case "NameValuePairExceedsMaxSize":
       return i18nString9(UIStrings9.nameValuePairExceedsMaxSize);
     case "ThirdPartyPhaseout":
@@ -32775,16 +32748,6 @@ var setCookieBlockedReasonToUiString = function(blockedReason) {
   switch (blockedReason) {
     case "SecureOnly":
       return i18nString9(UIStrings9.blockedReasonSecureOnly);
-    case "SameSiteStrict":
-      return i18nString9(UIStrings9.blockedReasonSameSiteStrictLax, {
-        PH1: "SameSite=Strict"
-      });
-    case "SameSiteLax":
-      return i18nString9(UIStrings9.blockedReasonSameSiteStrictLax, {
-        PH1: "SameSite=Lax"
-      });
-    case "SameSiteUnspecifiedTreatedAsLax":
-      return i18nString9(UIStrings9.blockedReasonSameSiteUnspecifiedTreatedAsLax);
     case "SameSiteNoneInsecure":
       return i18nString9(UIStrings9.blockedReasonSameSiteNoneInsecure);
     case "UserPreferences":
@@ -32802,11 +32765,15 @@ var setCookieBlockedReasonToUiString = function(blockedReason) {
     case "UnknownError":
       return i18nString9(UIStrings9.anUnknownErrorWasEncounteredWhenTrying);
     case "SchemefulSameSiteStrict":
-      return i18nString9(UIStrings9.thisSetcookieWasBlockedBecauseItHadTheSamesiteStrictLax, { PH1: "SameSite=Strict" });
+      return i18nString9(UIStrings9.blockedReasonSameSiteStrictLax, {
+        PH1: "SameSite=Strict"
+      });
     case "SchemefulSameSiteLax":
-      return i18nString9(UIStrings9.thisSetcookieWasBlockedBecauseItHadTheSamesiteStrictLax, { PH1: "SameSite=Lax" });
+      return i18nString9(UIStrings9.blockedReasonSameSiteStrictLax, {
+        PH1: "SameSite=Lax"
+      });
     case "SchemefulSameSiteUnspecifiedTreatedAsLax":
-      return i18nString9(UIStrings9.thisSetcookieDidntSpecifyASamesite);
+      return i18nString9(UIStrings9.blockedReasonSameSiteUnspecifiedTreatedAsLax);
     case "NameValuePairExceedsMaxSize":
       return i18nString9(UIStrings9.thisSetcookieWasBlockedBecauseTheNameValuePairExceedsMaxSize);
     case "DisallowedCharacter":
@@ -32824,9 +32791,6 @@ var cookieBlockedReasonToAttribute = function(blockedReason) {
       return "path";
     case "DomainMismatch":
       return "domain";
-    case "SameSiteStrict":
-    case "SameSiteLax":
-    case "SameSiteUnspecifiedTreatedAsLax":
     case "SameSiteNoneInsecure":
     case "SchemefulSameSiteStrict":
     case "SchemefulSameSiteLax":
@@ -32845,9 +32809,6 @@ var setCookieBlockedReasonToAttribute = function(blockedReason) {
     case "SecureOnly":
     case "OverwriteSecure":
       return "secure";
-    case "SameSiteStrict":
-    case "SameSiteLax":
-    case "SameSiteUnspecifiedTreatedAsLax":
     case "SameSiteNoneInsecure":
     case "SchemefulSameSiteStrict":
     case "SchemefulSameSiteLax":

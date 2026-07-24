@@ -9,6 +9,7 @@ import * as Bindings from '../models/bindings/bindings.js';
 import * as Breakpoints from '../models/breakpoints/breakpoints.js';
 import * as CrUXManager from '../models/crux-manager/crux-manager.js';
 import * as Emulation from '../models/emulation/emulation.js';
+import * as IssuesManager from '../models/issues_manager/issues_manager.js';
 import * as LiveMetrics from '../models/live-metrics/live-metrics.js';
 import * as Persistence from '../models/persistence/persistence.js';
 import * as ProjectSettings from '../models/project_settings/project_settings.js';
@@ -45,6 +46,7 @@ export declare class Universe {
     get hostConfigTracker(): Host.AidaClient.HostConfigTracker;
     get isolatedFileSystemManager(): Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager;
     get isolateManager(): SDK.IsolateManager.IsolateManager;
+    get issuesManager(): IssuesManager.IssuesManager.IssuesManager;
     get networkPersistenceManager(): Persistence.NetworkPersistenceManager.NetworkPersistenceManager;
     get networkProjectManager(): Bindings.NetworkProject.NetworkProjectManager;
     get liveMetrics(): LiveMetrics.LiveMetrics;
