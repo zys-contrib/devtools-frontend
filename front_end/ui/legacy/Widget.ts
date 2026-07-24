@@ -32,13 +32,35 @@
 import '../dom_extension/dom_extension.js';
 
 import * as Platform from '../../core/platform/platform.js';
+import type * as Root from '../../core/root/root.js';
+import type * as Foundation from '../../foundation/foundation.js';
 import * as Geometry from '../../models/geometry/geometry.js';
 import * as Lit from '../../ui/lit/lit.js';
 
 import {appendStyle, deepActiveElement} from './DOMUtilities.js';
 import {cloneCustomElement, createShadowRootWithCoreStyles} from './UIUtils.js';
+import {UniverseRequestEvent} from './UniverseRequestEvent.js';
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+type InjectReturn<T> = T extends {INJECT: infer I} ? I :
+                                                     // eslint-disable-next-line @typescript-eslint/naming-convention
+                                                     T extends {constructor: {INJECT: infer I}} ? I : [];
+
+type MapConstructors<T> = {
+  [K in keyof T]: T[K] extends Root.DevToolsContext.ConstructorT<infer Instance>?
+      Instance :
+      T[K] extends new (...args: any[]) => infer Instance ? Instance : never;
+};
+
+export type WidgetDependencies<T> = MapConstructors<InjectReturn<T>>;
 
 const {html} = Lit;
+
+export function lookupUniverseForElement(element: HTMLElement): Foundation.Universe.Universe|undefined {
+  const event = new UniverseRequestEvent();
+  element.dispatchEvent(event);
+  return event.universe;
+}
 
 // Remember the original DOM mutation methods here, since we
 // will override them below to sanity check the Widget system.
@@ -55,8 +77,9 @@ function assert(condition: unknown, message: string): void {
 
 export type AnyWidget = Widget<HTMLElement|DocumentFragment>;
 
-type WidgetConstructor<WidgetT extends AnyWidget> = new (element: HTMLElement) => WidgetT;
-type WidgetProducer<WidgetT extends AnyWidget> = (element: HTMLElement) => WidgetT;
+type WidgetConstructor<WidgetT extends AnyWidget> = new (element: HTMLElement, ...args: any[]) => WidgetT;
+type WidgetProducer<WidgetT extends AnyWidget> = (element: HTMLElement, universe?: Foundation.Universe.Universe) =>
+    WidgetT;
 type WidgetFactory<WidgetT extends AnyWidget> = WidgetConstructor<WidgetT>|WidgetProducer<WidgetT>;
 type InferWidgetTFromFactory<F> = F extends WidgetFactory<infer WidgetT>? WidgetT : never;
 
@@ -199,8 +222,8 @@ export function registerWidgetConfig<WidgetT extends AnyWidget>(element: HTMLEle
   widgetConfigs.set(element, config);
 }
 
-function instantiateWidget<WidgetT extends AnyWidget>(element: HTMLElement,
-                                                      widgetConfig: WidgetConfig<WidgetT>): WidgetT {
+export function instantiateWidget<WidgetT extends AnyWidget>(element: HTMLElement,
+                                                             widgetConfig: WidgetConfig<WidgetT>): WidgetT {
   if (!widgetConfig.widgetClass) {
     throw new Error('No widgetClass defined');
   }
@@ -208,10 +231,21 @@ function instantiateWidget<WidgetT extends AnyWidget>(element: HTMLElement,
   let newWidget: WidgetT;
   if (Widget.isPrototypeOf(widgetConfig.widgetClass)) {
     const ctor = widgetConfig.widgetClass as WidgetConstructor<WidgetT>;
-    newWidget = new ctor(element);
+    const depsCtors = (ctor as unknown as typeof Widget).INJECT;
+    if (depsCtors && depsCtors.length > 0) {
+      const universe = lookupUniverseForElement(element);
+      if (!universe) {
+        throw new Error(`No Universe found for widget ${ctor.name} requesting dependencies via INJECT.`);
+      }
+      const deps = depsCtors.map(depCtor => universe.get(depCtor));
+      newWidget = new ctor(element, deps);
+    } else {
+      newWidget = new ctor(element);
+    }
   } else {
     const factory = widgetConfig.widgetClass as WidgetProducer<WidgetT>;
-    newWidget = factory(element);
+    const universe = lookupUniverseForElement(element);
+    newWidget = factory(element, universe);
   }
 
   if (widgetConfig.widgetParams) {
@@ -572,6 +606,15 @@ export class Widget<ContentTypeT extends HTMLElement|DocumentFragment = HTMLElem
     }
     widgetMap.set(this.element, this);
   }
+
+  /**
+   * An array of dependency constructors that this widget class expects to receive as an array
+   * in the second positional argument to its constructor during `instantiateWidget`:
+   * `constructor(element: HTMLElement, deps: WidgetDependencies<typeof MyWidget>)`
+   *
+   * Override this static field in sub-classes to specify dependency constructors to be retrieved from `Universe`.
+   */
+  static readonly INJECT: ReadonlyArray<Root.DevToolsContext.ConstructorT<unknown>> = [];
 
   /**
    * Returns the {@link Widget} whose element is the given `node`, or `undefined`

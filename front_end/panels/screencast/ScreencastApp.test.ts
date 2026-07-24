@@ -8,6 +8,7 @@ import sinon from 'sinon';
 import * as SDK from '../../core/sdk/sdk.js';
 import {createTarget, describeWithEnvironment} from '../../testing/EnvironmentHelpers.js';
 import {expectCall} from '../../testing/ExpectStubCall.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 
 import * as Screencast from './screencast.js';
 
@@ -18,7 +19,7 @@ describeWithEnvironment('ScreencastApp', () => {
     screencastApp?.rootView?.detach();
   });
   it('can start casting', async () => {
-    screencastApp = new Screencast.ScreencastApp.ScreencastApp();
+    screencastApp = new Screencast.ScreencastApp.ScreencastApp(new TestUniverse());
     screencastApp.presentUI(document);
     const tabTarget = createTarget({type: SDK.Target.Type.TAB});
     createTarget({parentTarget: tabTarget, subtype: 'prerender'});

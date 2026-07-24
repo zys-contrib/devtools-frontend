@@ -2,12 +2,23 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 import * as SDK from '../core/sdk/sdk.js';
+import type * as Foundation from '../foundation/foundation.js';
 import * as TextEditor from '../ui/components/text_editor/text_editor.js';
 import * as UI from '../ui/legacy/legacy.js';
 
 import {raf, removeChildren, setColorScheme, TEST_CONTAINER_ID} from './DOMHelpers.js';
+import {TestUniverse} from './TestUniverse.js';
 
 const documentBodyElements = new Set<Element>();
+let customTestUniverse: Foundation.Universe.Universe = new TestUniverse();
+
+export function setTestUniverseForWidgets(universe: Foundation.Universe.Universe): void {
+  customTestUniverse = universe;
+}
+
+function resetTestUniverseForWidgets(): void {
+  customTestUniverse = new TestUniverse();
+}
 
 function removeElementOrWidget(node: Node, parent = document.body) {
   const widget = UI.Widget.Widget.get(node);
@@ -44,6 +55,7 @@ function removeAnnouncer() {
  * This is run automatically between tests - you should not be manually calling this yourself.
  **/
 export const cleanTestDOM = (testName = '') => {
+  resetTestUniverseForWidgets();
   const previousContainer = document.getElementById(TEST_CONTAINER_ID);
   if (previousContainer) {
     removeChildren(previousContainer);
@@ -84,6 +96,10 @@ export const setupTestDOM = async () => {
   setColorScheme('light');
   const newContainer = document.createElement('div');
   newContainer.id = TEST_CONTAINER_ID;
+  newContainer.addEventListener(UI.UniverseRequestEvent.UniverseRequestEvent.eventName, (event: Event) => {
+    (event as UI.UniverseRequestEvent.UniverseRequestEvent).universe = customTestUniverse;
+    event.stopPropagation();
+  });
 
   // eslint-disable-next-line @devtools/no-document-body-mutation
   document.body.appendChild(newContainer);

@@ -19,6 +19,7 @@ import * as UI from '../ui/legacy/legacy.js';
 import {checkForPendingActivity} from './TrackAsyncOperations.js';
 
 export const TEST_CONTAINER_ID = '__devtools-test-container-id';
+export {setTestUniverseForWidgets} from './DOMHooks.js';
 
 interface RenderOptions {
   allowMultipleChildren?: boolean;

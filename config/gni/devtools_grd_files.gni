@@ -2673,6 +2673,7 @@ grd_files_unbundled_sources = [
   "front_end/ui/legacy/Treeoutline.js",
   "front_end/ui/legacy/UIUserMetrics.js",
   "front_end/ui/legacy/UIUtils.js",
+  "front_end/ui/legacy/UniverseRequestEvent.js",
   "front_end/ui/legacy/View.js",
   "front_end/ui/legacy/ViewManager.js",
   "front_end/ui/legacy/ViewRegistration.js",

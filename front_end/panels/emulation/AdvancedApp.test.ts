@@ -13,6 +13,7 @@ import {
   describeWithEnvironment,
   initializeGlobalVars,
 } from '../../testing/EnvironmentHelpers.js';
+import {TestUniverse} from '../../testing/TestUniverse.js';
 import * as ThemeSupport from '../../ui/legacy/theme_support/theme_support.js';
 
 import * as Emulation from './emulation.js';
@@ -66,11 +67,12 @@ describeWithEnvironment('AdvancedApp', () => {
   });
 
   afterEach(async () => {
+    Emulation.AdvancedApp.AdvancedApp.removeInstance();
     await deinitializeGlobalVars();
   });
 
   it('updates colors node link on ColorThemeChanged', async () => {
-    const advancedApp = Emulation.AdvancedApp.AdvancedApp.instance();
+    const advancedApp = Emulation.AdvancedApp.AdvancedApp.instance(new TestUniverse());
     assert.exists(advancedApp);
 
     const fetchColorsSpy = sinon.spy(ThemeSupport.ThemeSupport.instance(), 'fetchColorsAndApplyHostTheme');

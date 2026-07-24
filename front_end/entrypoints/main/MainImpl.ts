@@ -522,7 +522,7 @@ export class MainImpl {
 
   async #showAppUI(appProvider: Object): Promise<void> {
     MainImpl.time('Main._showAppUI');
-    const app = (appProvider as UI.AppProvider.AppProvider).createApp();
+    const app = (appProvider as UI.AppProvider.AppProvider).createApp(this.#universe);
     // It is important to kick controller lifetime after apps are instantiated.
     UI.DockController.DockController.instance().initialize();
     ThemeSupport.ThemeSupport.instance().fetchColorsAndApplyHostTheme();
