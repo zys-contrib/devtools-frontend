@@ -137,6 +137,7 @@ export class Universe {
 
     this.fileSystemWorkspaceBinding =
         new Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding(isolatedFileSystemManager, workspace);
+    context.set(Persistence.FileSystemWorkspaceBinding.FileSystemWorkspaceBinding, this.fileSystemWorkspaceBinding);
 
     const ignoreListManager = new Workspace.IgnoreListManager.IgnoreListManager(settings, targetManager);
     context.set(Workspace.IgnoreListManager.IgnoreListManager, ignoreListManager);
@@ -216,6 +217,7 @@ export class Universe {
     context.set(AiAssistance.AiHistoryStorage.AiHistoryStorage, aiHistoryStorage);
 
     this.autofillManager = new AutofillManager.AutofillManager.AutofillManager(targetManager, frameManager);
+    context.set(AutofillManager.AutofillManager.AutofillManager, this.autofillManager);
   }
 
   get automaticFileSystemManager(): Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager {
@@ -346,5 +348,9 @@ export class Universe {
 
   get workspaceDiff(): WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl {
     return this.context.get(WorkspaceDiff.WorkspaceDiff.WorkspaceDiffImpl);
+  }
+
+  get<T>(ctor: Root.DevToolsContext.ConstructorT<T>): T {
+    return this.context.get(ctor);
   }
 }
