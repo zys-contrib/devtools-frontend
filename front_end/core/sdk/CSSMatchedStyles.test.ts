@@ -1399,10 +1399,9 @@ describe('CSSMatchedStyles', () => {
   });
 
   describe('findParentRule', () => {
-    const findNestedCSSSelectorRule = (matchedStyles: SDK.CSSMatchedStyles.CSSMatchedStyles) =>
-        matchedStyles.nodeStyles()
-            .map(s => s.parentRule)
-            .find(r => r instanceof SDK.CSSRule.CSSStyleRule && r.selectors.length === 0) as SDK.CSSRule.CSSStyleRule;
+    const findNestedCSSSelectorRule = (styles: SDK.CSSStyleDeclaration.CSSStyleDeclaration[]) =>
+        styles.map(s => s.parentRule).find(r => r instanceof SDK.CSSRule.CSSStyleRule && r.selectors.length === 0) as
+        SDK.CSSRule.CSSStyleRule;
 
     it('locates direct single-level parent rule in the cascade', async () => {
       // Evaluated HTML element:
@@ -1516,7 +1515,7 @@ describe('CSSMatchedStyles', () => {
         matchedPayload: [parentRule, nestedDeclarationsRule],
       });
 
-      const nestedDeclCSSRule = findNestedCSSSelectorRule(matchedStyles);
+      const nestedDeclCSSRule = findNestedCSSSelectorRule(matchedStyles.nodeStyles());
       assert.exists(nestedDeclCSSRule);
       const parent = matchedStyles.findParentRule(nestedDeclCSSRule, 0);
       assert.exists(parent);
@@ -1552,7 +1551,7 @@ describe('CSSMatchedStyles', () => {
         matchedPayload: [parentPanelRule, mediaNestedDeclarations],
       });
 
-      const mediaDeclCSSRule = findNestedCSSSelectorRule(matchedStyles);
+      const mediaDeclCSSRule = findNestedCSSSelectorRule(matchedStyles.nodeStyles());
       assert.exists(mediaDeclCSSRule);
       const parent = matchedStyles.findParentRule(mediaDeclCSSRule, 0);
       assert.exists(parent);
@@ -1625,17 +1624,143 @@ describe('CSSMatchedStyles', () => {
            matchedPayload: [rootB, cardItemB, nestedDeclB],
          });
 
-         const nestedDeclCSSRuleA = findNestedCSSSelectorRule(matchedStylesA);
+         const nestedDeclCSSRuleA = findNestedCSSSelectorRule(matchedStylesA.nodeStyles());
          assert.exists(nestedDeclCSSRuleA);
          const parentA = matchedStylesA.findParentRule(nestedDeclCSSRuleA, 0);
          assert.exists(parentA);
          assert.deepEqual(parentA?.selectors[0].specificity, {a: 0, b: 1, c: 1});
 
-         const nestedDeclCSSRuleB = findNestedCSSSelectorRule(matchedStylesB);
+         const nestedDeclCSSRuleB = findNestedCSSSelectorRule(matchedStylesB.nodeStyles());
          assert.exists(nestedDeclCSSRuleB);
          const parentB = matchedStylesB.findParentRule(nestedDeclCSSRuleB, 0);
          assert.exists(parentB);
          assert.deepEqual(parentB?.selectors[0].specificity, {a: 0, b: 1, c: 2});
        });
+
+    it('locates parent rules present in inherited styles payload', async () => {
+      // Evaluated HTML element:
+      // <header class="site-header">
+      //   <nav class="nav">
+      //     <a class="link"></a> <!-- Inspected node -->
+      //   </nav>
+      // </header>
+      //
+      // Formatted stylesheet:
+      // .site-header {
+      //   font-family: sans-serif;
+      //   & .link { color: green; }
+      // }
+
+      const parentRule = ruleMatch(
+          {selectors: [{text: '.site-header', specificity: {a: 0, b: 1, c: 0}}], text: '.site-header'},
+          {'font-family': 'sans-serif'},
+      );
+      const childRule = ruleMatch(
+          {selectors: [{text: '& .link', specificity: {a: 0, b: 2, c: 0}}], text: '& .link'},
+          {color: 'green'},
+          {nestingSelectors: ['.site-header']},
+      );
+
+      const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+      node.id = 1 as Protocol.DOM.NodeId;
+      node.parentNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+      node.parentNode.id = 2 as Protocol.DOM.NodeId;
+
+      const matchedStyles = await getMatchedStyles({
+        connection,
+        node,
+        matchedPayload: [childRule],
+        inheritedPayload: [{
+          matchedCSSRules: [parentRule],
+        }],
+      });
+
+      const childCSSRule = matchedStyles.nodeStyles()
+                               .map(s => s.parentRule)
+                               .find(r => r instanceof SDK.CSSRule.CSSStyleRule && r.selectorText() === '& .link') as
+          SDK.CSSRule.CSSStyleRule;
+      assert.exists(childCSSRule);
+      const result = matchedStyles.findParentRule(childCSSRule, 0);
+      assert.exists(result);
+      assert.strictEqual(result?.selectorText(), '.site-header');
+      assert.deepEqual(result?.selectors[0].specificity, {a: 0, b: 1, c: 0});
+    });
+
+    it('locates CSSNestedDeclarations parent rules present in inherited styles payload', async () => {
+      // Evaluated HTML element:
+      // <div class="card-nested-decl">
+      //   <p class="inspected-nested-decl"></p> <!-- Inspected node inheriting from parent -->
+      // </div>
+      //
+      // Formatted stylesheet:
+      // .card-nested-decl {
+      //   font-family: sans-serif;
+      //   & .child { font-size: 14px; }
+      //   color: darkgreen; /* CSSNestedDeclarations block */
+      // }
+
+      const parentRule = ruleMatch(
+          {selectors: [{text: '.card-nested-decl', specificity: {a: 0, b: 1, c: 0}}], text: '.card-nested-decl'},
+          {'font-family': 'sans-serif'},
+      );
+      const nestedDeclRule = ruleMatch(
+          {selectors: [], text: '.card-nested-decl'},
+          {color: 'darkgreen'},
+          {nestingSelectors: ['.card-nested-decl']},
+      );
+
+      const node = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+      node.id = 1 as Protocol.DOM.NodeId;
+      node.parentNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+      node.parentNode.id = 2 as Protocol.DOM.NodeId;
+
+      const matchedStyles = await getMatchedStyles({
+        connection,
+        node,
+        matchedPayload: [],
+        inheritedPayload: [{
+          matchedCSSRules: [parentRule, nestedDeclRule],
+        }],
+      });
+
+      const inheritedNestedDeclCSSRule = findNestedCSSSelectorRule(matchedStyles.inheritedStyles());
+      assert.exists(inheritedNestedDeclCSSRule);
+      const result = matchedStyles.findParentRule(inheritedNestedDeclCSSRule, 0);
+      assert.exists(result);
+      assert.strictEqual(result?.selectorText(), '.card-nested-decl');
+      assert.deepEqual(result?.selectors[0].specificity, {a: 0, b: 1, c: 0});
+    });
+
+    // TODO: This test highlights a CDP limitation. Currently, CSS.getMatchedStylesForNode omits ancestor
+    // CSSStyleRules from inheritedPayload if they lack inheritable properties for the inspected element.
+    // To resolve this, InspectorCSSAgent in Chromium backend should be updated to return all ancestor
+    // nesting rules in the cascade regardless of whether they contain inheritable properties.
+    it('returns null gracefully when CSSNestedDeclarations parent rule is missing from cascade', async () => {
+      // Evaluated HTML element:
+      // <div class="sidebar"></div> <!-- Inspected node -->
+      //
+      // Formatted stylesheet:
+      // .sidebar {
+      //   & .item { color: red; }
+      //   opacity: 0.9; /* CSSNestedDeclarations */
+      // }
+
+      const nestedDecl = ruleMatch(
+          {selectors: [], text: '.sidebar'},
+          {opacity: '0.9'},
+          {nestingSelectors: ['.sidebar']},
+      );
+
+      const matchedStyles = await getMatchedStyles({
+        connection,
+        matchedPayload: [nestedDecl],
+        inheritedPayload: [],
+      });
+
+      const missingDeclCSSRule = findNestedCSSSelectorRule(matchedStyles.nodeStyles());
+      assert.exists(missingDeclCSSRule);
+      const parent = matchedStyles.findParentRule(missingDeclCSSRule, 0);
+      assert.isNull(parent);
+    });
   });
 });

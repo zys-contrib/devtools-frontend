@@ -905,9 +905,6 @@ export class CSSMatchedStyles {
 
     const matchCascade = (cascade: DOMInheritanceCascade): CSSStyleRule|null => {
       for (const style of cascade.styles()) {
-        if (this.isInherited(style)) {
-          continue;
-        }
         const parentRule = style.parentRule;
         if (!(parentRule instanceof CSSStyleRule)) {
           continue;
