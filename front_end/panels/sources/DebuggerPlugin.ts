@@ -2287,15 +2287,26 @@ export function computePopoverHighlightRange(state: CodeMirror.EditorState, mime
   }
 }
 
-function containsSideEffects(doc: CodeMirror.Text, root: CodeMirror.SyntaxNode): boolean {
+export function containsSideEffects(doc: CodeMirror.Text, root: CodeMirror.SyntaxNode): boolean {
   let containsSideEffects = false;
   root.toTree().iterate({
     enter(node: CodeMirror.SyntaxNode): boolean {
       switch (node.name) {
         case 'AssignmentExpression':
-        case 'CallExpression': {
+        case 'CallExpression':
+        case 'NewExpression':
+        case 'TaggedTemplateExpression':
+        case 'DynamicImport': {
           containsSideEffects = true;
           return false;
+        }
+        case 'UnaryExpression': {
+          const text = doc.sliceString(root.from + node.from, root.from + node.to).trim();
+          if (text.startsWith('delete')) {
+            containsSideEffects = true;
+            return false;
+          }
+          break;
         }
         case 'ArithOp': {
           const op = doc.sliceString(root.from + node.from, root.from + node.to);
