@@ -8,6 +8,8 @@ import {SOURCE_ROOT} from '../conductor/paths.js';
 import {loadTests, TestConfig} from '../conductor/test_config.js';
 import {run} from '../shared/run-mocha.js';
 
+import devtoolsTestInterface from './conductor/mocha-interface.js';
+
 void run({
   // This should make mocha crash on uncaught errors.
   // See https://github.com/mochajs/mocha/blob/master/docs/index.md#--allow-uncaught.
@@ -21,7 +23,7 @@ void run({
   retries: TestConfig.retries,
   reporter: path.join(path.dirname(__dirname), 'shared', 'mocha-resultsdb-reporter.js'),
   suiteName: 'e2e',
-  ui: path.join(path.dirname(__dirname), 'e2e', 'conductor', 'mocha-interface.js') as 'bdd',
+  ui: devtoolsTestInterface as unknown as 'bdd',
   slow: 1000,
   ...TestConfig.mochaGrep,
 });

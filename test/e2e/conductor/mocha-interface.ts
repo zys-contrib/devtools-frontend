@@ -13,4 +13,6 @@ const devtoolsTestInterface = createMochaInterface<E2EState, E2E.SuiteSettings>(
   stateProvider: StateProvider.instance,
 });
 
+// Export via module.exports so external CommonJS runners like extensions/cxx_debugging/e2e/runner.py
+// can require() this interface function directly when running Mocha via CLI.
 module.exports = devtoolsTestInterface;

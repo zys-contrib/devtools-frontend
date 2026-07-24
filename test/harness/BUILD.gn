@@ -11,6 +11,7 @@ node_ts_library("harness") {
   deps = [
     ":e2e_fixtures",
     ":unit_fixtures",
+    "../../test/e2e/conductor:implementation",
   ]
   data_deps = [
     ":e2e_test_inputs",

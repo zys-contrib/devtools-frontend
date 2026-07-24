@@ -21,6 +21,7 @@ node_ts_library("tests") {
     "application",
     "assertion",
     "changes",
+    "conductor:implementation",
     "console",
     "coverage",
     "cross_tool_integration",

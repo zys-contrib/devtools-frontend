@@ -6,6 +6,7 @@ import * as path from 'node:path';
 
 import {SOURCE_ROOT} from '../conductor/paths.js';
 import {loadTests, TestConfig} from '../conductor/test_config.js';
+import devtoolsTestInterface from '../e2e/conductor/mocha-interface.js';
 import {run} from '../shared/run-mocha.js';
 TestConfig.isPerfTest = true;
 
@@ -23,7 +24,7 @@ void run({
   retries: TestConfig.retries,
   reporter: path.join(path.dirname(__dirname), 'shared', 'mocha-resultsdb-reporter.js'),
   suiteName: 'perf',
-  ui: path.join(path.dirname(__dirname), 'e2e', 'conductor', 'mocha-interface.js') as 'bdd',
+  ui: devtoolsTestInterface as unknown as 'bdd',
   slow: 1000,
   ...TestConfig.mochaGrep,
 });

@@ -174,12 +174,7 @@ function customIt<TState>(
   return localIt;
 }
 
-const devtoolsTestInterface = createMochaInterface({
+export const devtoolsTestInterface = createMochaInterface({
   description: 'DevTools test interface',
   stateProvider: DefaultPuppeteerStateProvider.instance,
 });
-
-// @ts-expect-error Attach createMochaInterface so CommonJS consumers can import it
-devtoolsTestInterface.createMochaInterface = createMochaInterface;
-
-module.exports = devtoolsTestInterface;

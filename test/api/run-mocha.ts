@@ -8,6 +8,8 @@ import {GEN_DIR, SOURCE_ROOT} from '../conductor/paths.js';
 import {loadTests, TestConfig} from '../conductor/test_config.js';
 import {run} from '../shared/run-mocha.js';
 
+import {devtoolsApiTestInterface} from './mocha-interface.js';
+
 void run({
   allowUncaught: false,
   require: [
@@ -19,7 +21,7 @@ void run({
   reporter: path.join(path.dirname(__dirname), 'shared', 'mocha-resultsdb-reporter.js'),
   retries: TestConfig.retries,
   suiteName: 'api',
-  ui: path.join(GEN_DIR, 'test', 'api', 'mocha-interface.js') as 'bdd',
+  ui: devtoolsApiTestInterface as unknown as 'bdd',
   slow: 1000,
   ...TestConfig.mochaGrep,
 });

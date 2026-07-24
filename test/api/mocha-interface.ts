@@ -6,12 +6,7 @@ import {createMochaInterface} from '../conductor/mocha-interface.js';
 
 import {ApiStateProvider} from './api-state-provider.js';
 
-const devtoolsApiTestInterface = createMochaInterface<API.State, API.SuiteSettings>({
+export const devtoolsApiTestInterface = createMochaInterface<API.State, API.SuiteSettings>({
   description: 'DevTools API test interface',
   stateProvider: ApiStateProvider.instance,
 });
-
-// @ts-expect-error Attach createMochaInterface so CommonJS consumers can import it
-devtoolsApiTestInterface.createMochaInterface = createMochaInterface;
-
-export = devtoolsApiTestInterface;
