@@ -1,6 +1,8 @@
 // Copyright 2025 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+import * as SDK from '../core/sdk/sdk.js';
+import * as TextEditor from '../ui/components/text_editor/text_editor.js';
 import * as UI from '../ui/legacy/legacy.js';
 
 import {raf, removeChildren, setColorScheme, TEST_CONTAINER_ID} from './DOMHelpers.js';
@@ -30,27 +32,11 @@ function removeGlassPanes() {
  * So we need to manually remove it
  */
 function removeTextEditorTooltip() {
-  // Found in front_end/ui/components/text_editor/config.ts
-  for (const tooltip of document.body.querySelectorAll('.editor-tooltip-host')) {
-    removeElementOrWidget(tooltip);
-  }
+  TextEditor.Config.removeTooltipHost();
 }
 
 function removeAnnouncer() {
   UI.ARIAUtils.LiveAnnouncer.removeAnnouncerElements(document.body);
-}
-
-/**
- * If a test calls localEvalCSS, an element is created on demand for this
- * purpose. This element is not removed from the DOM and will leak between tests
- * if not removed.
- */
-function removeCSSEvaluationElement() {
-  // Found in front_end/core/sdk/CSSPropertyParserMatchers.ts
-  const element = document.getElementById('css-evaluation-element');
-  if (element) {
-    document.body.removeChild(element);
-  }
 }
 
 /**
@@ -66,7 +52,7 @@ export const cleanTestDOM = (testName = '') => {
   removeGlassPanes();
   removeTextEditorTooltip();
   removeAnnouncer();
-  removeCSSEvaluationElement();
+  SDK.CSSPropertyParserMatchers.removeCSSEvaluationElement();
   UI.UIUtils.resetElementsBeingEditedForTest();
   // Verify that nothing was left behind
   for (const child of document.body.children) {

@@ -411,6 +411,13 @@ function getTooltipHost(): ShadowRoot {
   return tooltipHost;
 }
 
+export function removeTooltipHost(): void {
+  if (tooltipHost) {
+    tooltipHost.host.remove();
+    tooltipHost = null;
+  }
+}
+
 class CompletionHint extends CM.WidgetType {
   constructor(readonly text: string) {
     super();
