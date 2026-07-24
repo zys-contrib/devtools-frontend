@@ -1767,4 +1767,184 @@ describeWithEnvironment('ConsoleViewMessage', () => {
       assert.strictEqual(messageElement.textContent, 'Set(1) {{…}}');
     });
   });
+
+  describe('ConsoleMessageFormat', () => {
+    let target: SDK.Target.Target;
+    let runtimeModel: SDK.RuntimeModel.RuntimeModel;
+
+    beforeEach(() => {
+      target = createTarget();
+      runtimeModel = target.model(SDK.RuntimeModel.RuntimeModel)!;
+    });
+
+    const createMessageElement = (formatString: string, parameters: SDK.RemoteObject.RemoteObject[]) => {
+      const formatStringObj = SDK.RemoteObject.RemoteObject.fromLocalObject(formatString);
+      const rawMessage = new SDK.ConsoleModel.ConsoleMessage(
+          runtimeModel,
+          Common.Console.FrontendMessageSource.ConsoleAPI,
+          Protocol.Log.LogEntryLevel.Info,
+          formatString,
+          {
+            type: Protocol.Runtime.ConsoleAPICalledEventType.Log,
+            parameters: [formatStringObj, ...parameters],
+          },
+      );
+      const {message} = createConsoleViewMessageWithStubDeps(rawMessage);
+      return message.toMessageElement();
+    };
+
+    it('formats numbers correctly', () => {
+      const element = createMessageElement(
+          'Message format number %i, %d and %f',
+          [
+            SDK.RemoteObject.RemoteObject.fromLocalObject(1),
+            SDK.RemoteObject.RemoteObject.fromLocalObject(2),
+            SDK.RemoteObject.RemoteObject.fromLocalObject(3.5),
+          ],
+      );
+      assert.strictEqual(element.deepTextContent(), 'Message format number 1, 2 and 3.5');
+    });
+
+    it('formats strings correctly', () => {
+      const element = createMessageElement(
+          'Message %s for %s',
+          [
+            SDK.RemoteObject.RemoteObject.fromLocalObject('format'),
+            SDK.RemoteObject.RemoteObject.fromLocalObject('string'),
+          ],
+      );
+      assert.strictEqual(element.deepTextContent(), 'Message format for string');
+    });
+
+    it('formats objects optimally (%o)', () => {
+      const obj = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        className: 'Object',
+        description: 'Object',
+        objectId: '1' as Protocol.Runtime.RemoteObjectId,
+        preview: {
+          type: Protocol.Runtime.ObjectPreviewType.Object,
+          description: 'Object',
+          overflow: false,
+          properties: [
+            {name: 'foo', type: Protocol.Runtime.PropertyPreviewType.String, value: 'bar'},
+          ],
+        },
+      });
+      const element = createMessageElement('Object %o', [obj]);
+      assert.include(element.deepTextContent(), 'Object');
+      assert.include(element.deepTextContent(), 'foo');
+      assert.include(element.deepTextContent(), 'bar');
+    });
+
+    it('formats arrays optimally (%o)', () => {
+      const arr = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        subtype: Protocol.Runtime.RemoteObjectSubtype.Array,
+        className: 'Array',
+        description: 'Array(2)',
+        objectId: '1' as Protocol.Runtime.RemoteObjectId,
+        preview: {
+          type: Protocol.Runtime.ObjectPreviewType.Object,
+          subtype: Protocol.Runtime.ObjectPreviewSubtype.Array,
+          description: 'Array(2)',
+          overflow: false,
+          properties: [
+            {name: '0', type: Protocol.Runtime.PropertyPreviewType.String, value: 'foo'},
+            {name: '1', type: Protocol.Runtime.PropertyPreviewType.String, value: 'bar'},
+          ],
+        },
+      });
+      const element = createMessageElement('Array %o', [arr]);
+      assert.include(element.deepTextContent(), 'Array');
+      assert.include(element.deepTextContent(), 'foo');
+      assert.include(element.deepTextContent(), 'bar');
+    });
+
+    it('formats objects generically (%O)', () => {
+      const obj = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        className: 'Object',
+        description: 'Object',
+        objectId: '1' as Protocol.Runtime.RemoteObjectId,
+      });
+      const element = createMessageElement('Object as object: %O', [obj]);
+      assert.strictEqual(element.deepTextContent(), 'Object as object: Object');
+    });
+
+    it('formats arrays generically (%O)', () => {
+      const arr = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        subtype: Protocol.Runtime.RemoteObjectSubtype.Array,
+        className: 'Array',
+        description: 'Array(2)',
+        objectId: '1' as Protocol.Runtime.RemoteObjectId,
+      });
+      const element = createMessageElement('Array as object: %O', [arr]);
+      assert.strictEqual(element.deepTextContent(), 'Array as object: Array(2)');
+    });
+
+    it('formats floating points as integers (%d %i)', () => {
+      const element = createMessageElement(
+          'Floating as integers: %d %i',
+          [
+            SDK.RemoteObject.RemoteObject.fromLocalObject(42.5),
+            SDK.RemoteObject.RemoteObject.fromLocalObject(42.5),
+          ],
+      );
+      assert.strictEqual(element.deepTextContent(), 'Floating as integers: 42 42');
+    });
+
+    it('formats floating points as is (%f)', () => {
+      const element = createMessageElement(
+          'Floating as is: %f',
+          [
+            SDK.RemoteObject.RemoteObject.fromLocalObject(42.5),
+          ],
+      );
+      assert.strictEqual(element.deepTextContent(), 'Floating as is: 42.5');
+    });
+
+    it('formats non-numbers as numbers (%d %i %f)', () => {
+      const doc = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        subtype: Protocol.Runtime.RemoteObjectSubtype.Node,
+        className: 'HTMLDocument',
+        description: 'document',
+      });
+      const element = createMessageElement(
+          'Non-numbers as numbers: %d %i %f',
+          [
+            doc,
+            SDK.RemoteObject.RemoteObject.fromLocalObject(null),
+            SDK.RemoteObject.RemoteObject.fromLocalObject('document'),
+          ],
+      );
+      assert.strictEqual(element.deepTextContent(), 'Non-numbers as numbers: NaN NaN NaN');
+    });
+
+    it('formats string as is (%s)', () => {
+      const element = createMessageElement(
+          'String as is: %s',
+          [
+            SDK.RemoteObject.RemoteObject.fromLocalObject('string'),
+          ],
+      );
+      assert.strictEqual(element.deepTextContent(), 'String as is: string');
+    });
+
+    it('formats object as string (%s)', () => {
+      const doc = runtimeModel.createRemoteObject({
+        type: Protocol.Runtime.RemoteObjectType.Object,
+        subtype: Protocol.Runtime.RemoteObjectSubtype.Node,
+        className: 'HTMLDocument',
+        description: '[object HTMLDocument]',
+      });
+      const element = createMessageElement(
+          'Object as string: %s',
+          [doc],
+      );
+      assert.strictEqual(element.deepTextContent(), 'Object as string: [object HTMLDocument]');
+    });
+  });
 });
