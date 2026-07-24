@@ -2955,5 +2955,247 @@ color: pink !important;`;
       assert.strictEqual(siblingSection.style().leadingProperties()[0].name, 'background-color');
       assert.strictEqual(siblingSection.style().leadingProperties()[0].value, 'blue');
     });
+
+    describe('Mouse interaction', () => {
+      let stylesSidebarPane: Elements.StylesSidebarPane.StylesSidebarPane;
+      let matchedStyles: SDK.CSSMatchedStyles.CSSMatchedStyles;
+      let cssModel: SDK.CSSModel.CSSModel;
+
+      beforeEach(async () => {
+        (node.frameId as sinon.SinonStub).returns('frame-id' as Protocol.Page.FrameId);
+        (node.nodeType as sinon.SinonStub).returns(Node.ELEMENT_NODE);
+        (node.nodeName as sinon.SinonStub).returns('DIV');
+        (node.simpleSelector as sinon.SinonStub).returns('#inspected');
+        sinon.stub(Components.Linkifier.Linkifier.prototype, 'linkifyCSSLocation')
+            .returns(document.createElement('div'));
+
+        const inlineStyle: Protocol.CSS.CSSStyle = {
+          styleSheetId: '0' as Protocol.DOM.StyleSheetId,
+          cssProperties: [],
+          shorthandEntries: [],
+          range: {startLine: 0, startColumn: 0, endLine: 0, endColumn: 0},
+        };
+
+        const cssText = '\n  color: blue;\n  background-color: red;\n';
+        const matchedPayload: Protocol.CSS.RuleMatch[] = [
+          ruleMatch('#inspected',
+                    [
+                      {
+                        name: 'color',
+                        value: 'blue',
+                        range: {startLine: 1, startColumn: 2, endLine: 1, endColumn: 14},
+                        text: 'color: blue;',
+                      },
+                      {
+                        name: 'background-color',
+                        value: 'red',
+                        range: {startLine: 2, startColumn: 2, endLine: 2, endColumn: 24},
+                        text: 'background-color: red;',
+                      },
+                    ],
+                    {
+                      styleSheetId: '0' as Protocol.DOM.StyleSheetId,
+                      range: {startLine: 0, startColumn: 12, endLine: 3, endColumn: 0},
+                    }),
+        ];
+        matchedPayload[0].rule.style.cssText = cssText;
+
+        const computedStyleModel = new ComputedStyle.ComputedStyleModel.ComputedStyleModel();
+        computedStyleModel.node = node;
+
+        cssModel = computedStyleModel.cssModel() as SDK.CSSModel.CSSModel;
+
+        matchedStyles = await SDK.CSSMatchedStyles.CSSMatchedStyles.create({
+          cssModel,
+          node,
+          inlinePayload: inlineStyle,
+          attributesPayload: null,
+          matchedPayload,
+          pseudoPayload: [],
+          inheritedPayload: [],
+          inheritedPseudoPayload: [],
+          animationsPayload: [],
+          parentLayoutNodeId: undefined as unknown as Protocol.DOM.NodeId,
+          positionTryRules: [],
+          propertyRules: [],
+          functionRules: [],
+          cssPropertyRegistrations: [],
+          atRules: [],
+          activePositionFallbackIndex: -1,
+          animationStylesPayload: [],
+          inheritedAnimatedPayload: [],
+          transitionsStylePayload: null,
+        });
+
+        sinon.stub(cssModel, 'getMatchedStyles').resolves(matchedStyles);
+
+        stylesSidebarPane = new Elements.StylesSidebarPane.StylesSidebarPane(computedStyleModel);
+        renderElementIntoDOM(stylesSidebarPane);
+
+        stylesSidebarPane.forceUpdate();
+
+        await new Promise<void>(resolve => {
+          stylesSidebarPane.addEventListener(Elements.StylesSidebarPane.Events.INITIAL_UPDATE_COMPLETED,
+                                             () => resolve(), {once: true});
+        });
+      });
+
+      afterEach(() => {
+        stylesSidebarPane.detach();
+      });
+
+      it('starts editing value on click', () => {
+        const mySection = stylesSidebarPane.allSections()[1] as Elements.StylePropertiesSection.StylePropertiesSection;
+        assert.exists(mySection);
+
+        const colorTreeElement = mySection.propertiesTreeOutline.rootElement().childAt(0) as
+            Elements.StylePropertyTreeElement.StylePropertyTreeElement;
+        assert.exists(colorTreeElement);
+
+        const valueElement = colorTreeElement.valueElement;
+        assert.exists(valueElement);
+
+        assert.isFalse(stylesSidebarPane.isEditingStyle);
+
+        // Click on the value.
+        valueElement.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0}));
+        valueElement.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+
+        assert.isTrue(stylesSidebarPane.isEditingStyle);
+        assert.isTrue(UI.UIUtils.isBeingEdited(valueElement));
+      });
+
+      it('starts editing name on click', () => {
+        const mySection = stylesSidebarPane.allSections()[1] as Elements.StylePropertiesSection.StylePropertiesSection;
+        assert.exists(mySection);
+
+        const colorTreeElement = mySection.propertiesTreeOutline.rootElement().childAt(0) as
+            Elements.StylePropertyTreeElement.StylePropertyTreeElement;
+        assert.exists(colorTreeElement);
+
+        const nameElement = colorTreeElement.nameElement;
+        assert.exists(nameElement);
+
+        assert.isFalse(stylesSidebarPane.isEditingStyle);
+
+        // Click on the name.
+        nameElement.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0}));
+        nameElement.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+
+        assert.isTrue(stylesSidebarPane.isEditingStyle);
+        assert.isTrue(UI.UIUtils.isBeingEdited(nameElement));
+      });
+
+      it('toggles property enabled state on checkbox click', async () => {
+        const mySection = stylesSidebarPane.allSections()[1] as Elements.StylePropertiesSection.StylePropertiesSection;
+        assert.exists(mySection);
+
+        const colorTreeElement = mySection.propertiesTreeOutline.rootElement().childAt(0) as
+            Elements.StylePropertyTreeElement.StylePropertyTreeElement;
+        assert.exists(colorTreeElement);
+
+        const checkbox = colorTreeElement.listItemElement.querySelector('.enabled-button') as HTMLInputElement;
+        assert.exists(checkbox);
+        assert.isTrue(checkbox.checked);
+
+        // Mock CDP calls for disabling.
+        connection.setSuccessHandler('CSS.getStyleSheetText',
+                                     () => ({text: '#inspected {\n  color: blue;\n  background-color: red;\n}'}));
+        connection.setSuccessHandler('CSS.setStyleTexts', () => {
+          return {
+            styles: [{
+              styleSheetId: '0' as Protocol.DOM.StyleSheetId,
+              cssProperties: [
+                {
+                  name: 'color',
+                  value: 'blue',
+                  disabled: true,
+                  range: {startLine: 1, startColumn: 2, endLine: 1, endColumn: 20},
+                  text: '/* color: blue; */',
+                },
+                {
+                  name: 'background-color',
+                  value: 'red',
+                  range: {startLine: 2, startColumn: 2, endLine: 2, endColumn: 24},
+                  text: 'background-color: red;',
+                },
+              ],
+              shorthandEntries: [],
+              range: {startLine: 0, startColumn: 12, endLine: 3, endColumn: 0},
+            }],
+          };
+        });
+
+        const sendSpy = sinon.spy(connection, 'send');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const toggleSpy = sinon.spy(colorTreeElement as any, 'toggleDisabled');
+
+        checkbox.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+
+        // We need to wait for the async toggleDisabled to complete.
+        await new Promise<void>(resolve => {
+          sinon.stub(colorTreeElement, 'styleTextAppliedForTest').callsFake(() => {
+            resolve();
+          });
+        });
+
+        sinon.assert.calledOnceWithExactly(toggleSpy, true);
+
+        const setStyleTextsCall = sendSpy.getCalls().find(call => call.args[0] === 'CSS.setStyleTexts');
+        assert.exists(setStyleTextsCall);
+        const args = setStyleTextsCall.args[1] as Protocol.CSS.SetStyleTextsRequest;
+        assert.deepEqual(args.edits[0].text, '\n  /* color: blue; */\n  background-color: red;\n');
+      });
+
+      it('cancels editing on clicking empty space when editing', async () => {
+        const mySection = stylesSidebarPane.allSections()[1] as Elements.StylePropertiesSection.StylePropertiesSection;
+        const colorTreeElement = mySection.propertiesTreeOutline.rootElement().childAt(0) as
+            Elements.StylePropertyTreeElement.StylePropertyTreeElement;
+        const valueElement = colorTreeElement.valueElement;
+        assert.exists(valueElement);
+
+        // Start editing.
+        valueElement.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0}));
+        valueElement.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+        assert.isTrue(stylesSidebarPane.isEditingStyle);
+
+        const sectionElement = mySection.element;
+
+        // Simulate a click on the empty space.
+        sectionElement.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0}));
+
+        // Manually trigger blur to simulate a focus change.
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+
+        sectionElement.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+
+        assert.isFalse(stylesSidebarPane.isEditingStyle);
+        assert.strictEqual(mySection.propertiesTreeOutline.rootElement().childCount(), 2);
+      });
+
+      it('creates new property on clicking empty space when not editing', () => {
+        const mySection = stylesSidebarPane.allSections()[1] as Elements.StylePropertiesSection.StylePropertiesSection;
+        const sectionElement = mySection.element;
+
+        assert.isFalse(stylesSidebarPane.isEditingStyle);
+        assert.strictEqual(mySection.propertiesTreeOutline.rootElement().childCount(), 2);
+
+        // Click on the empty space.
+        sectionElement.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0}));
+        sectionElement.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+
+        assert.isTrue(stylesSidebarPane.isEditingStyle);
+        assert.strictEqual(mySection.propertiesTreeOutline.rootElement().childCount(), 3);
+
+        const newProperty = mySection.propertiesTreeOutline.rootElement().childAt(2) as
+            Elements.StylePropertyTreeElement.StylePropertyTreeElement;
+        assert.exists(newProperty);
+        assert.strictEqual(newProperty.name, '');
+        assert.strictEqual(newProperty.value, '');
+        assert.isTrue(UI.UIUtils.isBeingEdited(newProperty.nameElement));
+      });
+    });
   });
 });
