@@ -1486,7 +1486,7 @@ export class DOMModel extends SDKModel<EventTypes> {
   #lastMutationId!: number;
   #pendingDocumentRequestPromise: Promise<DOMDocument|null>|null = null;
   #frameOwnerNode?: DOMNode|null;
-  #loadNodeAttributesTimeout?: number;
+  #loadNodeAttributesTimeout?: ReturnType<typeof setTimeout>;
   #searchId?: string;
   #topLayerThrottler = new Common.Throttler.Throttler(100);
   #topLayerNodes: DOMNode[] = [];

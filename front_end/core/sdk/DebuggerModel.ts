@@ -144,7 +144,7 @@ export class DebuggerModel extends SDKModel<EventTypes> {
   #selectedCallFrame: CallFrame|null = null;
   #debuggerEnabled = false;
   #debuggerId: string|null = null;
-  #skipAllPausesTimeout = 0;
+  #skipAllPausesTimeout?: ReturnType<typeof setTimeout>;
   #beforePausedCallback: ((arg0: DebuggerPausedDetails, stepOver: Location|null) => Promise<boolean>)|null = null;
   #computeAutoStepRangesCallback: ((arg0: StepMode, arg1: CallFrame) => Promise<Array<{
                                      start: Location,
@@ -337,20 +337,20 @@ export class DebuggerModel extends SDKModel<EventTypes> {
   }
 
   private skipAllPauses(skip: boolean): void {
-    if (this.#skipAllPausesTimeout) {
-      clearTimeout(this.#skipAllPausesTimeout);
-      this.#skipAllPausesTimeout = 0;
-    }
+    clearTimeout(this.#skipAllPausesTimeout);
+
     void this.agent.invoke_setSkipAllPauses({skip});
   }
 
   skipAllPausesUntilReloadOrTimeout(timeout: number): void {
-    if (this.#skipAllPausesTimeout) {
-      clearTimeout(this.#skipAllPausesTimeout);
-    }
+    clearTimeout(this.#skipAllPausesTimeout);
+
     void this.agent.invoke_setSkipAllPauses({skip: true});
     // If reload happens before the timeout, the flag will be already unset and the timeout callback won't change anything.
-    this.#skipAllPausesTimeout = window.setTimeout(this.skipAllPauses.bind(this, false), timeout);
+    this.#skipAllPausesTimeout = globalThis.setTimeout(
+        this.skipAllPauses.bind(this, false),
+        timeout,
+    );
   }
 
   private pauseOnExceptionStateChanged(): void {

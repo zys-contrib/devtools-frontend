@@ -209,7 +209,7 @@ export class UISourceCodeDiff extends Common.ObjectWrapper.ObjectWrapper<UISourc
   readonly #networkPersistenceManager: Persistence.NetworkPersistenceManager.NetworkPersistenceManager;
   readonly #settings: Common.Settings.Settings;
   #requestDiffPromise: Promise<DiffResponse|null>|null = null;
-  #pendingChanges: number|null = null;
+  #pendingChanges?: ReturnType<typeof setTimeout>;
   dispose = false;
   constructor(
       uiSourceCode: Workspace.UISourceCode.UISourceCode,
@@ -225,23 +225,22 @@ export class UISourceCodeDiff extends Common.ObjectWrapper.ObjectWrapper<UISourc
   }
 
   #uiSourceCodeChanged(): void {
-    if (this.#pendingChanges) {
       clearTimeout(this.#pendingChanges);
-      this.#pendingChanges = null;
-    }
-    this.#requestDiffPromise = null;
+      this.#pendingChanges = undefined;
 
-    const content = this.#uiSourceCode.content();
-    const delay = (!content || content.length < 65536) ? 0 : 200;
-    this.#pendingChanges = window.setTimeout(emitDiffChanged.bind(this), delay);
+      this.#requestDiffPromise = null;
 
-    function emitDiffChanged(this: UISourceCodeDiff): void {
-      if (this.dispose) {
-        return;
+      const content = this.#uiSourceCode.content();
+      const delay = (!content || content.length < 65536) ? 0 : 200;
+      this.#pendingChanges = globalThis.setTimeout(emitDiffChanged.bind(this), delay);
+
+      function emitDiffChanged(this: UISourceCodeDiff): void {
+        if (this.dispose) {
+          return;
+        }
+        this.dispatchEventToListeners(UISourceCodeDiffEvents.DIFF_CHANGED);
+        this.#pendingChanges = undefined;
       }
-      this.dispatchEventToListeners(UISourceCodeDiffEvents.DIFF_CHANGED);
-      this.#pendingChanges = null;
-    }
   }
 
   requestDiff(): Promise<DiffResponse|null> {

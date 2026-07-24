@@ -1554,7 +1554,7 @@ self.injectedExtensionAPI = function(
   }
 
   let keyboardEventRequestQueue: KeyboardEventInit&Array<{eventType: string}> = [];
-  let forwardTimer: number|null = null;
+  let forwardTimer: ReturnType<typeof setTimeout>|undefined;
   function forwardKeyboardEvent(event: KeyboardEvent): void {
     // Check if the event should be forwarded.
     // This is a workaround for crbug.com/923338.
@@ -1601,12 +1601,12 @@ self.injectedExtensionAPI = function(
     };
     keyboardEventRequestQueue.push(requestPayload);
     if (!forwardTimer) {
-      forwardTimer = window.setTimeout(forwardEventQueue, 0);
+      forwardTimer = globalThis.setTimeout(forwardEventQueue, 0);
     }
   }
 
   function forwardEventQueue(): void {
-    forwardTimer = null;
+    forwardTimer = undefined;
     extensionServer.sendRequest(
         {command: PrivateAPI.Commands.ForwardKeyboardEvent, entries: keyboardEventRequestQueue});
     keyboardEventRequestQueue = [];

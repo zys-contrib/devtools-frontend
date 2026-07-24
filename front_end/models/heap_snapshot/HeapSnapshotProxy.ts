@@ -17,7 +17,7 @@ export class HeapSnapshotWorkerProxy extends Common.ObjectWrapper.ObjectWrapper<
   callbacks = new Map<number, (...args: any[]) => void>();
   readonly previousCallbacks = new Set<number>();
   readonly worker: PlatformApi.HostRuntime.Worker;
-  interval?: number;
+  interval?: ReturnType<typeof setInterval>;
   readonly workerUrl?: string;
 
   constructor(
@@ -129,7 +129,7 @@ export class HeapSnapshotWorkerProxy extends Common.ObjectWrapper.ObjectWrapper<
       return;
     }
     this.checkLongRunningCalls();
-    this.interval = window.setInterval(this.checkLongRunningCalls.bind(this), 300);
+    this.interval = globalThis.setInterval(this.checkLongRunningCalls.bind(this), 300);
   }
 
   checkLongRunningCalls(): void {

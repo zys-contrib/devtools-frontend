@@ -86,7 +86,7 @@ export class OverlayModel extends SDKModel<EventTypes> implements ProtocolProxyA
   overlayAgent: ProtocolProxyApi.OverlayApi;
   readonly #debuggerModel: DebuggerModel|null;
   #inspectModeEnabled = false;
-  #hideHighlightTimeout: number|null = null;
+  #hideHighlightTimeout?: ReturnType<typeof setTimeout>;
   #defaultHighlighter: Highlighter;
   #highlighter: Highlighter;
   #showPaintRectsSetting: Common.Settings.Setting<boolean>;
@@ -331,14 +331,13 @@ export class OverlayModel extends SDKModel<EventTypes> implements ProtocolProxyA
       // overlay, so that it is not cleared by the highlight
       return;
     }
-    if (this.#hideHighlightTimeout) {
       clearTimeout(this.#hideHighlightTimeout);
-      this.#hideHighlightTimeout = null;
-    }
-    const highlightConfig = this.buildHighlightConfig(mode);
-    if (typeof showInfo !== 'undefined') {
-      highlightConfig.showInfo = showInfo;
-    }
+      this.#hideHighlightTimeout = undefined;
+
+      const highlightConfig = this.buildHighlightConfig(mode);
+      if (typeof showInfo !== 'undefined') {
+        highlightConfig.showInfo = showInfo;
+      }
     this.#highlighter.highlightInOverlay(data, highlightConfig);
   }
 
@@ -486,17 +485,19 @@ export class OverlayModel extends SDKModel<EventTypes> implements ProtocolProxyA
   }
 
   private delayedHideHighlight(delay: number): void {
-    if (this.#hideHighlightTimeout === null) {
-      this.#hideHighlightTimeout = window.setTimeout(() => this.highlightInOverlay({clear: true}), delay);
+    if (this.#hideHighlightTimeout === undefined) {
+      this.#hideHighlightTimeout = globalThis.setTimeout(
+          () => this.highlightInOverlay({clear: true}),
+          delay,
+      );
     }
   }
 
   highlightFrame(frameId: Protocol.Page.FrameId): void {
-    if (this.#hideHighlightTimeout) {
       clearTimeout(this.#hideHighlightTimeout);
-      this.#hideHighlightTimeout = null;
-    }
-    this.#highlighter.highlightFrame(frameId);
+      this.#hideHighlightTimeout = undefined;
+
+      this.#highlighter.highlightFrame(frameId);
   }
 
   showHingeForDualScreen(hinge: Hinge|null): void {
