@@ -551,6 +551,9 @@ after
         },
         createViewOutput(), target);
 
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     await assertScreenshot('explain/console_insight_optin.png');
   });
 
@@ -563,6 +566,9 @@ after
         },
         createViewOutput(), target);
 
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     await assertScreenshot('explain/console_insight_reminder.png');
   });
 
@@ -658,6 +664,9 @@ after
     },
                          createViewOutput(), target);
 
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     await assertScreenshot(golden);
   };
 
@@ -785,6 +794,9 @@ after
     },
                          createViewOutput(), target);
 
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     await assertScreenshot('explain/console_insight_references.png');
   });
 });

@@ -261,6 +261,7 @@ describeWithEnvironment('ReportingApiView', () => {
             onReportSelected: () => {},
           },
           undefined, target);
+      (document.activeElement as HTMLElement)?.blur();
       await assertScreenshot('application/report_details.png');
 
       Application.ReportingApiView.DEFAULT_VIEW(
@@ -273,6 +274,7 @@ describeWithEnvironment('ReportingApiView', () => {
             onReportSelected: () => {},
           },
           undefined, target);
+      (document.activeElement as HTMLElement)?.blur();
       await assertScreenshot('application/report_details_updated.png');
     });
   });
