@@ -9,6 +9,7 @@ import type * as Protocol from '../../generated/protocol.js';
 import type * as Trace from '../../models/trace/trace.js';
 import {MockCDPConnection} from '../../testing/MockCDPConnection.js';
 import {mockResourceTree} from '../../testing/ResourceTreeHelpers.js';
+import {setupSettingsHooks} from '../../testing/SettingsHelpers.js';
 import {TestUniverse} from '../../testing/TestUniverse.js';
 
 import * as LiveMetrics from './live-metrics.js';
@@ -17,6 +18,8 @@ import * as Spec from './web-vitals-injected/spec/spec.js';
 type Milli = Trace.Types.Timing.Milli;
 
 describe('LiveMetrics', () => {
+  setupSettingsHooks();
+
   let liveMetrics: LiveMetrics.LiveMetrics;
   let primaryTarget: SDK.Target.Target;
 
@@ -162,6 +165,23 @@ describe('LiveMetrics', () => {
       });
 
       assert.isTrue(statusReceived);
+    });
+
+    it('dispatches status events with navigationType', () => {
+      let statusEvent: LiveMetrics.StatusEvent|null = null;
+      liveMetrics.addEventListener(LiveMetrics.Events.STATUS, event => {
+        statusEvent = event.data;
+      });
+
+      liveMetrics.setStatusForTesting({
+        interactions: new Map(),
+        layoutShifts: [],
+        navigationType: 'soft-navigation',
+      });
+
+      assert.exists(statusEvent);
+      assert.strictEqual((statusEvent as LiveMetrics.StatusEvent).navigationType, 'soft-navigation');
+      assert.strictEqual(liveMetrics.navigationType, 'soft-navigation');
     });
 
     it('clears interactions via clearInteractions', () => {

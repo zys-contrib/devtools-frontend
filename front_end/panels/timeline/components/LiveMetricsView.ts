@@ -17,6 +17,7 @@ import * as SDK from '../../../core/sdk/sdk.js';
 import * as CrUXManager from '../../../models/crux-manager/crux-manager.js';
 import * as EmulationModel from '../../../models/emulation/emulation.js';
 import * as LiveMetrics from '../../../models/live-metrics/live-metrics.js';
+import type * as Spec from '../../../models/live-metrics/web-vitals-injected/spec/spec.js';
 import * as Trace from '../../../models/trace/trace.js';
 import * as Buttons from '../../../ui/components/buttons/buttons.js';
 import type * as Menus from '../../../ui/components/menus/menus.js';
@@ -44,6 +45,10 @@ const DEVICE_OPTION_LIST: DeviceOption[] = ['AUTO', ...CrUXManager.DEVICE_SCOPE_
 const RTT_MINIMUM = 60;
 
 const UIStrings = {
+  /**
+   * @description Label of a badge/pill indicating that the metrics are for a soft navigation.
+   */
+  softNavigationPillText: 'SOFT NAV',
   /**
    * @description Title of a view that shows performance metrics from the local environment and field metrics collected from real users. "field metrics" should be interpreted as "real user metrics".
    */
@@ -317,6 +322,7 @@ export interface ViewInput {
   logExtraInteractionDetails: (interaction: LiveMetrics.Interaction) => void;
   highlightedInteractionId?: string;
   highlightedLayoutShiftClusterIds?: Set<string>;
+  navigationType?: Spec.NavigationType;
 }
 
 export interface ViewOutput {
@@ -1010,7 +1016,10 @@ export const DEFAULT_VIEW: View = (input, output, target) => {
     <div class="container">
       <div class="live-metrics-view">
         <main class="live-metrics">
-          <h2 class="section-title">${liveMetricsTitle}</h2>
+          <div class="section-header">
+            <h2 class="section-title">${liveMetricsTitle}</h2>
+            ${input.navigationType === 'soft-navigation' ? html`<span class="badge">${i18nString(UIStrings.softNavigationPillText)}</span>` : nothing}
+          </div>
           <div class="metric-cards">
             <div id="lcp">
               ${renderLcpCard(input)}
@@ -1098,6 +1107,7 @@ export class LiveMetricsView extends UI.Widget.Widget {
   #lcpValue?: LiveMetrics.LcpValue;
   #clsValue?: LiveMetrics.ClsValue;
   #inpValue?: LiveMetrics.InpValue;
+  #navigationType?: Spec.NavigationType;
   #interactions: LiveMetrics.InteractionMap = new Map();
   #layoutShifts: LiveMetrics.LayoutShift[] = [];
 
@@ -1125,6 +1135,7 @@ export class LiveMetricsView extends UI.Widget.Widget {
     this.#lcpValue = event.data.lcp;
     this.#clsValue = event.data.cls;
     this.#inpValue = event.data.inp;
+    this.#navigationType = event.data.navigationType;
 
     const hasNewLS = this.#layoutShifts.length < event.data.layoutShifts.length;
     this.#layoutShifts = [...event.data.layoutShifts];
@@ -1182,6 +1193,7 @@ export class LiveMetricsView extends UI.Widget.Widget {
     this.#inpValue = liveMetrics.inpValue;
     this.#interactions = liveMetrics.interactions;
     this.#layoutShifts = liveMetrics.layoutShifts;
+    this.#navigationType = liveMetrics.navigationType;
     this.requestUpdate();
   }
 
@@ -1249,6 +1261,7 @@ export class LiveMetricsView extends UI.Widget.Widget {
       logExtraInteractionDetails: this.#logExtraInteractionDetails.bind(this),
       highlightedInteractionId: this.#highlightedInteractionId,
       highlightedLayoutShiftClusterIds: this.#highlightedLayoutShiftClusterIds,
+      navigationType: this.#navigationType,
     };
 
     this.#view(viewInput, this.#viewOutput, this.contentElement);

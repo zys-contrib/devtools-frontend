@@ -4081,6 +4081,7 @@ export const knownContextValues = new Set([
   'timeline-dim-third-parties',
   'timeline-dim-unrelated-events',
   'timeline-disable-js-sampling',
+  'timeline-enable-soft-navigations',
   'timeline-enhanced-traces',
   'timeline-event-summary-widget',
   'timeline-experimental-insights',

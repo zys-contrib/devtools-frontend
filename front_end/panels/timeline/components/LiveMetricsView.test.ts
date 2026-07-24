@@ -15,6 +15,7 @@ import {doubleRaf, raf, renderElementIntoDOM} from '../../../testing/DOMHelpers.
 import {createTarget, describeWithEnvironment, registerActions} from '../../../testing/EnvironmentHelpers.js';
 import {MockCDPConnection} from '../../../testing/MockCDPConnection.js';
 import {mockResourceTree} from '../../../testing/ResourceTreeHelpers.js';
+import * as RenderCoordinator from '../../../ui/components/render_coordinator/render_coordinator.js';
 import * as UI from '../../../ui/legacy/legacy.js';
 
 import * as Components from './components.js';
@@ -96,7 +97,7 @@ function getFieldDataHistoryLink(view: Components.LiveMetricsView.LiveMetricsVie
 
 function getLiveMetricsTitle(view: Components.LiveMetricsView.LiveMetricsView): HTMLElement {
   // There may be multiple, but this should always be the first one.
-  return view.contentElement.querySelector('.live-metrics > .section-title')!;
+  return view.contentElement.querySelector('.live-metrics .section-title')!;
 }
 
 function getInpInteractionLink(view: Components.LiveMetricsView.LiveMetricsView): HTMLElement|null {
@@ -1051,6 +1052,41 @@ describeWithEnvironment('LiveMetricsView', () => {
         assert.strictEqual(envRecs[0].textContent, '49% mobile, 49% desktop');
         assert.match(envRecs[1].textContent!, /Slow 4G/);
       });
+    });
+  });
+
+  describe('soft navigations', () => {
+    it('should show [SOFT NAV] badge if navigationType is soft-navigation', async () => {
+      const view = renderLiveMetrics();
+
+      LiveMetrics.LiveMetrics.instance().setStatusForTesting({
+        interactions: new Map(),
+        layoutShifts: [],
+        navigationType: 'soft-navigation',
+      });
+
+      await view.updateComplete;
+      await RenderCoordinator.done();
+
+      const badge = view.contentElement.querySelector('.live-metrics .badge');
+      assert.exists(badge);
+      assert.strictEqual(badge.textContent, 'SOFT NAV');
+    });
+
+    it('should not show [SOFT NAV] badge if navigationType is not soft-navigation', async () => {
+      const view = renderLiveMetrics();
+
+      LiveMetrics.LiveMetrics.instance().setStatusForTesting({
+        interactions: new Map(),
+        layoutShifts: [],
+        navigationType: 'navigate',
+      });
+
+      await view.updateComplete;
+      await RenderCoordinator.done();
+
+      const badge = view.contentElement.querySelector('.live-metrics .badge');
+      assert.notExists(badge);
     });
   });
 });

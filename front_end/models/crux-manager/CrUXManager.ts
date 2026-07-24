@@ -311,6 +311,10 @@ export class CrUXManager extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
     this.dispatchEventToListeners(Events.FIELD_DATA_CHANGED, this.#pageResult);
   }
 
+  setMainDocumentURL(url: string): void {
+    this.#mainDocumentUrl = url;
+  }
+
   #normalizeUrl(inputUrl: string): URL {
     const normalizedUrl = new URL(inputUrl);
     normalizedUrl.hash = '';

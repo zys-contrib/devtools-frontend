@@ -102,6 +102,7 @@ export const DEFAULT_SETTING_REGISTRATIONS_FOR_TEST: ReadonlyArray<ReturnType<ty
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'annotations-hidden', false),
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-show-all-events', false),
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-debug-mode', false),
+  createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-enable-soft-navigations', true),
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-invalidation-tracking', false),
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-disable-js-sampling', false),
   createSettingValue(Common.Settings.SettingCategory.PERFORMANCE, 'timeline-capture-layers-and-pictures', false),

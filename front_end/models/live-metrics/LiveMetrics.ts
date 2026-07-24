@@ -10,6 +10,7 @@ import * as Root from '../../core/root/root.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import type * as Protocol from '../../generated/protocol.js';
 import * as EmulationModel from '../../models/emulation/emulation.js';
+import * as CrUXManager from '../crux-manager/crux-manager.js';
 
 import * as Spec from './web-vitals-injected/spec/spec.js';
 
@@ -55,6 +56,7 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
   #interactions: InteractionMap = new Map();
   #interactionsByGroupId = new Map<Spec.InteractionEntryGroupId, Interaction[]>();
   #layoutShifts: LayoutShift[] = [];
+  #navigationType?: Spec.NavigationType;
   #lastEmulationChangeTime?: number;
   #mutex = new Common.Mutex.Mutex();
   readonly #targetManager: SDK.TargetManager.TargetManager;
@@ -69,6 +71,9 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
     this.#targetManager.addModelListener(SDK.ResourceTreeModel.ResourceTreeModel,
                                          SDK.ResourceTreeModel.Events.PrimaryPageChanged, this.#onPrimaryPageChanged,
                                          this);
+    Common.Settings.Settings.instance()
+        .moduleSetting('timeline-enable-soft-navigations')
+        .addChangeListener(this.#onSettingChanged, this);
   }
 
   #onPrimaryPageChanged(
@@ -104,6 +109,10 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
     }
 
     return Root.DevToolsContext.globalInstance().get(LiveMetrics);
+  }
+
+  get navigationType(): Spec.NavigationType|undefined {
+    return this.#navigationType;
   }
 
   get lcpValue(): LcpValue|undefined {
@@ -243,6 +252,7 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
       inp: this.#inpValue,
       interactions: this.#interactions,
       layoutShifts: this.#layoutShifts,
+      navigationType: this.#navigationType,
     });
   }
 
@@ -252,6 +262,7 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
     this.#inpValue = status.inp;
     this.#interactions = status.interactions;
     this.#layoutShifts = status.layoutShifts;
+    this.#navigationType = status.navigationType;
     this.#sendStatusUpdate();
   }
 
@@ -399,6 +410,11 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
       }
       case 'reset': {
         this.#clearMetrics();
+        this.#navigationType = webVitalsEvent.navigationType;
+        if (webVitalsEvent.url) {
+          CrUXManager.CrUXManager.instance().setMainDocumentURL(webVitalsEvent.url);
+          void CrUXManager.CrUXManager.instance().refresh();
+        }
         break;
       }
     }
@@ -413,6 +429,7 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
     this.#interactions.clear();
     this.#interactionsByGroupId.clear();
     this.#layoutShifts = [];
+    this.#navigationType = undefined;
   }
 
   #isPrimaryFrameExecutionContext(executionContextId: Protocol.Runtime.ExecutionContextId): boolean {
@@ -509,6 +526,46 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
     this.#target = undefined;
   }
 
+  async #injectScript(): Promise<void> {
+    // Extra check in case the target was removed while we were initializing.
+    // It's possible to be halfway-through enabling when the target is removed
+    // eg try loading 'devtools://devtools/bundled/devtools_app.html?ws=127.0.0.1:99/blah'
+    if (!this.#target) {
+      return;
+    }
+
+    // If DevTools is closed and reopened, the live metrics context from the previous
+    // session will persist. We should ensure any old live metrics contexts are killed
+    // before starting a new one.
+    await this.#killAllLiveMetricContexts();
+
+    // Remove any old instances of the script
+    if (this.#scriptIdentifier) {
+      await this.#target.pageAgent().invoke_removeScriptToEvaluateOnNewDocument({
+        identifier: this.#scriptIdentifier,
+      });
+    }
+
+    const softNavsSettingValue =
+        Common.Settings.Settings.instance().moduleSetting('timeline-enable-soft-navigations').get();
+    const source = `window.devToolsReportSoftNavs = ${softNavsSettingValue};\n` + await InjectedScript.get();
+
+    // Inject the script
+    const {identifier} = await this.#target.pageAgent().invoke_addScriptToEvaluateOnNewDocument({
+      source,
+      worldName: LIVE_METRICS_WORLD_NAME,
+      runImmediately: true,
+    });
+    this.#scriptIdentifier = identifier;
+  }
+
+  async #onSettingChanged(): Promise<void> {
+    if (!this.#target || !this.#enabled) {
+      return;
+    }
+    await this.#injectScript();
+  }
+
   async enable(): Promise<void> {
     if (this.#enabled) {
       return;
@@ -563,25 +620,7 @@ export class LiveMetrics extends Common.ObjectWrapper.ObjectWrapper<EventTypes> 
       executionContextName: LIVE_METRICS_WORLD_NAME,
     });
 
-    // If DevTools is closed and reopened, the live metrics context from the previous
-    // session will persist. We should ensure any old live metrics contexts are killed
-    // before starting a new one.
-    await this.#killAllLiveMetricContexts();
-
-    const source = await InjectedScript.get();
-
-    // Extra check in case the target was removed while we were initializing.
-    // It's possible to be halfway-through enabling when the target is removed
-    // eg try loading 'devtools://devtools/bundled/devtools_app.html?ws=127.0.0.1:99/blah'
-    if (!this.#target) {
-      return;
-    }
-    const {identifier} = await this.#target?.pageAgent().invoke_addScriptToEvaluateOnNewDocument({
-      source,
-      worldName: LIVE_METRICS_WORLD_NAME,
-      runImmediately: true,
-    });
-    this.#scriptIdentifier = identifier;
+    await this.#injectScript();
 
     this.#deviceModeModel?.addEventListener(
         EmulationModel.DeviceModeModel.Events.UPDATED, this.#onEmulationChanged, this);
@@ -687,6 +726,7 @@ export interface StatusEvent {
   inp?: InpValue;
   interactions: InteractionMap;
   layoutShifts: LayoutShift[];
+  navigationType?: Spec.NavigationType;
 }
 
 interface EventTypes {

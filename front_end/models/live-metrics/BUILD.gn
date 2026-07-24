@@ -16,6 +16,8 @@ devtools_module("live-metrics") {
     "../../core/platform:bundle",
     "../../core/sdk:bundle",
     "../../generated",
+    "../../generated:protocol",
+    "../crux-manager:bundle",
     "../emulation:bundle",
     "./web-vitals-injected/spec:bundle",
   ]

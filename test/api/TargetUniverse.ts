@@ -47,6 +47,12 @@ export async function createTargetUniverse(
         RootModule.ExperimentNames.ExperimentName.INSTRUMENTATION_BREAKPOINTS,
         'Instrumentation breakpoints',
     );
+    Common.Settings.registerSettingExtension({
+      category: Common.Settings.SettingCategory.PERFORMANCE,
+      settingName: 'timeline-enable-soft-navigations',
+      settingType: Common.Settings.SettingType.BOOLEAN,
+      defaultValue: true,
+    });
   }
 
   const originalHostConfig = {...RootModule.Runtime.hostConfig};

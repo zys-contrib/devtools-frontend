@@ -69,6 +69,10 @@ const UIStrings = {
   /**
    * @description Title of a setting under the Performance category in Settings
    */
+  enableSoftNavigations: 'Enable soft navigation performance monitoring',
+  /**
+   * @description Title of a setting under the Performance category in Settings
+   */
   timelineDebugMode: 'Timeline debug mode (trace event details, etc.)',
   /**
    * @description Title of a setting under the Performance category in Settings
@@ -397,6 +401,15 @@ Common.Settings.registerSettingExtension({
   settingName: 'timeline-show-all-events',
   settingType: Common.Settings.SettingType.BOOLEAN,
   defaultValue: false,
+});
+
+Common.Settings.registerSettingExtension({
+  category: Common.Settings.SettingCategory.PERFORMANCE,
+  storageType: Common.Settings.SettingStorageType.SYNCED,
+  title: i18nLazyString(UIStrings.enableSoftNavigations),
+  settingName: 'timeline-enable-soft-navigations',
+  settingType: Common.Settings.SettingType.BOOLEAN,
+  defaultValue: true,
 });
 
 // IMPORTANT: if you are updating this, you should also update the setting in
