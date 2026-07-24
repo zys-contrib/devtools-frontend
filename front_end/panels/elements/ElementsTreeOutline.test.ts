@@ -1372,4 +1372,121 @@ describeWithEnvironment('ElementsTreeOutline', () => {
     assert.deepEqual(getChildIds(), []);
     assert.isNull(model.nodeForId(4 as Protocol.DOM.NodeId));
   });
+
+  it('displays author shadow roots and hides user-agent ones by default', async () => {
+    const nodePayload = {
+      nodeId: 2 as Protocol.DOM.NodeId,
+      parentId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 2 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.ELEMENT_NODE,
+      nodeName: 'DIV',
+      localName: 'div',
+      nodeValue: '',
+      childNodeCount: 0,
+      shadowRoots: [
+        {
+          nodeId: 3 as Protocol.DOM.NodeId,
+          parentId: 2 as Protocol.DOM.NodeId,
+          backendNodeId: 3 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.DOCUMENT_FRAGMENT_NODE,
+          nodeName: '#shadow-root',
+          localName: '',
+          nodeValue: '',
+          childNodeCount: 1,
+          shadowRootType: Protocol.DOM.ShadowRootType.Open,
+          children: [{
+            nodeId: 4 as Protocol.DOM.NodeId,
+            parentId: 3 as Protocol.DOM.NodeId,
+            backendNodeId: 4 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.TEXT_NODE,
+            nodeName: '#text',
+            localName: '',
+            nodeValue: '',
+            childNodeCount: 0,
+          }],
+        },
+        {
+          nodeId: 5 as Protocol.DOM.NodeId,
+          parentId: 2 as Protocol.DOM.NodeId,
+          backendNodeId: 5 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.DOCUMENT_FRAGMENT_NODE,
+          nodeName: '#shadow-root',
+          localName: '',
+          nodeValue: '',
+          childNodeCount: 1,
+          shadowRootType: Protocol.DOM.ShadowRootType.Closed,
+          children: [{
+            nodeId: 6 as Protocol.DOM.NodeId,
+            parentId: 5 as Protocol.DOM.NodeId,
+            backendNodeId: 6 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.TEXT_NODE,
+            nodeName: '#text',
+            localName: '',
+            nodeValue: '',
+            childNodeCount: 0,
+          }],
+        },
+        {
+          nodeId: 7 as Protocol.DOM.NodeId,
+          parentId: 2 as Protocol.DOM.NodeId,
+          backendNodeId: 7 as Protocol.DOM.BackendNodeId,
+          nodeType: Node.DOCUMENT_FRAGMENT_NODE,
+          nodeName: '#shadow-root',
+          localName: '',
+          nodeValue: '',
+          childNodeCount: 1,
+          shadowRootType: Protocol.DOM.ShadowRootType.UserAgent,
+          children: [{
+            nodeId: 8 as Protocol.DOM.NodeId,
+            parentId: 7 as Protocol.DOM.NodeId,
+            backendNodeId: 8 as Protocol.DOM.BackendNodeId,
+            nodeType: Node.TEXT_NODE,
+            nodeName: '#text',
+            localName: '',
+            nodeValue: '',
+            childNodeCount: 0,
+          }],
+        },
+      ],
+      children: [],
+      attributes: ['id', 'container'],
+    } as Protocol.DOM.Node;
+
+    const rootNode = SDK.DOMModel.DOMNode.create(model, null, false, {
+      nodeId: 1 as Protocol.DOM.NodeId,
+      backendNodeId: 1 as Protocol.DOM.BackendNodeId,
+      nodeType: Node.DOCUMENT_NODE,
+      nodeName: '#document',
+      localName: '',
+      nodeValue: '',
+      childNodeCount: 1,
+      children: [nodePayload],
+      attributes: [],
+    });
+
+    treeOutline.rootDOMNode = rootNode;
+    const containerNode = rootNode.children()![0];
+    assert.exists(containerNode);
+    const containerTreeElement =
+        treeOutline.findTreeElement(containerNode) as Elements.ElementsTreeElement.ElementsTreeElement;
+    assert.exists(containerTreeElement);
+    await treeOutline.populateTreeElement(containerTreeElement);
+    containerTreeElement.expand();
+
+    const children = [];
+    for (let i = 0; i < containerTreeElement.childCount(); i++) {
+      const child = containerTreeElement.childAt(i);
+      if (child instanceof Elements.ElementsTreeElement.ElementsTreeElement) {
+        children.push(child);
+      }
+    }
+
+    const shadowRoots = children.filter(child => child.node().isShadowRoot());
+
+    assert.lengthOf(shadowRoots, 2);
+    assert.strictEqual(shadowRoots[0].node().id, 3);
+    assert.strictEqual(shadowRoots[0].node().shadowRootType(), Protocol.DOM.ShadowRootType.Open);
+    assert.strictEqual(shadowRoots[1].node().id, 5);
+    assert.strictEqual(shadowRoots[1].node().shadowRootType(), Protocol.DOM.ShadowRootType.Closed);
+  });
 });
