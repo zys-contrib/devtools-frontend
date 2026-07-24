@@ -312,6 +312,142 @@ describe('StylesSidebarPane', () => {
         assert.isFalse(layerBlock.titleElement()?.classList.contains('hidden'));
       });
 
+      it('hides sidebar separators when filtering results', async () => {
+        const stylesSidebarPane =
+            new Elements.StylesSidebarPane.StylesSidebarPane(new ComputedStyle.ComputedStyleModel.ComputedStyleModel());
+        sinon.stub(stylesSidebarPane, 'performUpdate').resolves();
+
+        const firstNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        firstNode.nodeName.returns('div');
+        firstNode.nodeNameInCorrectCase.returns('div');
+        firstNode.id = 101 as Protocol.DOM.NodeId;
+        firstNode.nodeType.returns(Node.ELEMENT_NODE);
+        firstNode.pseudoType.returns(undefined);
+        firstNode.pseudoElements.returns(new Map());
+        firstNode.getAttribute.withArgs('id').returns('first');
+
+        const secondNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        secondNode.nodeName.returns('div');
+        secondNode.nodeNameInCorrectCase.returns('div');
+        secondNode.id = 102 as Protocol.DOM.NodeId;
+        secondNode.nodeType.returns(Node.ELEMENT_NODE);
+        secondNode.pseudoType.returns(undefined);
+        secondNode.pseudoElements.returns(new Map());
+        secondNode.parentNode = firstNode;
+        secondNode.getAttribute.withArgs('id').returns('second');
+
+        const thirdNode = sinon.createStubInstance(SDK.DOMModel.DOMNode);
+        thirdNode.nodeName.returns('div');
+        thirdNode.nodeNameInCorrectCase.returns('div');
+        thirdNode.id = 103 as Protocol.DOM.NodeId;
+        thirdNode.nodeType.returns(Node.ELEMENT_NODE);
+        thirdNode.pseudoType.returns(undefined);
+        thirdNode.pseudoElements.returns(new Map());
+        thirdNode.parentNode = secondNode;
+        thirdNode.getAttribute.withArgs('id').returns('third');
+
+        const matchedPayload = [
+          ruleMatch('#third', {'font-family': 'times', display: 'block'}),
+        ];
+
+        const inheritedPayload: Protocol.CSS.InheritedStyleEntry[] = [
+          {
+            matchedCSSRules: [
+              ruleMatch('#second', {'font-family': 'helvetica'}),
+            ],
+          },
+          {
+            matchedCSSRules: [
+              ruleMatch('#first', {'font-family': 'arial', display: 'block'}),
+            ],
+          },
+        ];
+
+        const pseudoPayload: Protocol.CSS.PseudoElementMatches[] = [
+          {
+            pseudoType: Protocol.DOM.PseudoType.Before,
+            matches: [
+              ruleMatch('#third::before', {content: '"uno-1"'}),
+            ],
+          },
+          {
+            pseudoType: Protocol.DOM.PseudoType.After,
+            matches: [
+              ruleMatch('#third::after', {content: '"dos-2"', display: 'block'}),
+            ],
+          },
+        ];
+
+        const matchedStyles = await getMatchedStyles({
+          connection,
+          cssModel: stylesSidebarPane.cssModel() as SDK.CSSModel.CSSModel,
+          node: thirdNode,
+          matchedPayload,
+          inheritedPayload,
+          pseudoPayload,
+        });
+
+        const sectionBlocks = await stylesSidebarPane.rebuildSectionsForMatchedStyleRulesForTest(
+            matchedStyles, new Map(), new Map(), null);
+
+        // Define the expected blocks and their indices.
+        // Block 0 represents active node styles (#third) and has no title element.
+        // Block 1 represents styles inherited from div#second.
+        // Block 2 represents styles inherited from div#first.
+        // Block 3 represents the pseudo ::before element.
+        // Block 4 represents the pseudo ::after element.
+        assert.lengthOf(sectionBlocks, 5);
+
+        assert.isNull(sectionBlocks[0].titleElement());
+        assert.exists(sectionBlocks[1].titleElement());
+        assert.exists(sectionBlocks[2].titleElement());
+        assert.exists(sectionBlocks[3].titleElement());
+        assert.exists(sectionBlocks[4].titleElement());
+
+        // Define a helper function to assert the visibility of block title elements.
+        const assertBlockVisibility = (expectedVisibilities: boolean[]) => {
+          for (let i = 1; i < sectionBlocks.length; i++) {
+            const titleEl = sectionBlocks[i].titleElement();
+            if (titleEl) {
+              const isHidden = titleEl.classList.contains('hidden');
+              assert.strictEqual(!isHidden, expectedVisibilities[i - 1], `Block ${i} visibility mismatch`);
+            }
+          }
+        };
+
+        // Initially, all blocks should be visible when the filter is null.
+        stylesSidebarPane.setFilter(null);
+        sectionBlocks.forEach(block => block.updateFilter());
+        assertBlockVisibility([true, true, true, true]);
+
+        // Filter by 'font-family'.
+        // The secondNode has 'font-family: helvetica' and should be visible.
+        // The firstNode has 'font-family: arial' and should be visible.
+        // The ::before element has only 'content' and should be hidden.
+        // The ::after element has 'content' and 'display' and should be hidden.
+        stylesSidebarPane.setFilter(/font-family/i);
+        sectionBlocks.forEach(block => block.updateFilter());
+        assertBlockVisibility([true, true, false, false]);
+
+        // Filter by 'content'.
+        // The secondNode should be hidden.
+        // The firstNode should be hidden.
+        // The ::before element has 'content' and should be visible.
+        // The ::after element has 'content' and should be visible.
+        stylesSidebarPane.setFilter(/content/i);
+        sectionBlocks.forEach(block => block.updateFilter());
+        assertBlockVisibility([false, false, true, true]);
+
+        // Filter by 'display'.
+        // The secondNode should be hidden.
+        // The firstNode has 'display' and should be visible.
+        // The ::before element should be hidden.
+        // The ::after element has 'display' and should be visible.
+        stylesSidebarPane.setFilter(/display/i);
+        sectionBlocks.forEach(block => block.updateFilter());
+        assertBlockVisibility([false, true, false, true]);
+      });
+
       it('renders media queries', async () => {
         const stylesSidebarPane =
             new Elements.StylesSidebarPane.StylesSidebarPane(new ComputedStyle.ComputedStyleModel.ComputedStyleModel());
