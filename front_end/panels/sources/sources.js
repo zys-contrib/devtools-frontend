@@ -2444,10 +2444,6 @@ var LOCALIZED_INSTRUMENTATION_NAMES = {
     /* SDK.EventBreakpointsModel.InstrumentationNames.SCRIPT_BLOCKED_BY_CSP */
   ]: i18nLazyString(UIStrings4.scriptBlockedByContentSecurity),
   [
-    "sharedStorageWorkletScriptFirstStatement"
-    /* SDK.EventBreakpointsModel.InstrumentationNames.SHARED_STORAGE_WORKLET_SCRIPT_FIRST_STATEMENT */
-  ]: i18nLazyString(UIStrings4.scriptFirstStatement),
-  [
     "requestAnimationFrame"
     /* SDK.EventBreakpointsModel.InstrumentationNames.REQUEST_ANIMATION_FRAME */
   ]: i18nLazyString(UIStrings4.requestAnimationFrame),
