@@ -626,6 +626,7 @@ panels/timeline/TrackConfigBanner.test.js
 panels/timeline/TrackConfiguration.test.js
 panels/timeline/components/BreadcrumbsUI.test.js
 panels/timeline/components/CPUThrottlingSelector.test.js
+panels/timeline/components/CWVMetrics.test.js
 panels/timeline/components/ExportTraceOptions.test.js
 panels/timeline/components/FieldSettingsDialog.test.js
 panels/timeline/components/IgnoreListSetting.test.js
