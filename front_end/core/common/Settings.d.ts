@@ -195,10 +195,8 @@ export declare class Setting<V> {
     title(): Platform.UIString.LocalizedString;
     setRequiresUserAction(requiresUserAction: boolean): void;
     disabled(): boolean;
-    disabledReasons(): Platform.UIString.LocalizedString[];
     setDisabled(disabled: boolean): void;
     get(): V;
-    getIfNotDisabled(): V | undefined;
     forceGet(): Promise<V>;
     set(value: V): void;
     setSettingType(type: SettingType): void;

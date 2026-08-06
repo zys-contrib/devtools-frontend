@@ -9728,7 +9728,7 @@ var StylesSidebarPane = class _StylesSidebarPane extends Common5.ObjectWrapper.e
       this.#elementsForSyncViewportCheck = [];
       return;
     }
-    const scrollContainer = this.contentElement.parentElement;
+    const scrollContainer = this.element.parentElement;
     if (!scrollContainer) {
       this.#elementsForSyncViewportCheck = [];
       return;
@@ -14252,7 +14252,7 @@ var ElementsTreeElement = class _ElementsTreeElement extends UI14.TreeOutline.Tr
     this.populateExpandRecursively(contextMenu);
     contextMenu.viewSection().appendItem(i18nString12(UIStrings13.collapseChildren), this.collapseChildren.bind(this), { jslogContext: "collapse-children" });
     contextMenu.viewSection().appendItem(i18nString12(UIStrings13.switchToAccessibilityTree), () => ElementsPanel.instance().toggleAccessibilityTree(), { jslogContext: "switch-to-accessibility-tree" });
-    const deviceModeWrapperAction = new Emulation.DeviceModeWrapper.ActionDelegate();
+    const deviceModeWrapperAction = new Emulation.DeviceModeView.ActionDelegate();
     contextMenu.viewSection().appendItem(i18nString12(UIStrings13.captureNodeScreenshot), deviceModeWrapperAction.handleAction.bind(null, UI14.Context.Context.instance(), "emulation.capture-node-screenshot"), { jslogContext: "emulation.capture-node-screenshot" });
     if (this.nodeInternal.frameOwnerFrameId()) {
       contextMenu.viewSection().appendItem(i18nString12(UIStrings13.showFrameDetails), () => {
