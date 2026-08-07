@@ -132,6 +132,9 @@ export class Universe {
     dispose() {
         // TODO(crbug.com/542394587): Track these in a DisposableStack.
         this.context.get(Persistence.IsolatedFileSystemManager.IsolatedFileSystemManager).dispose();
+        this.context.get(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager).dispose();
+        this.context.get(Workspace.FileManager.FileManager).dispose();
+        this.context.get(SDK.TargetManager.TargetManager).dispose();
     }
     get automaticFileSystemManager() {
         return this.context.get(Persistence.AutomaticFileSystemManager.AutomaticFileSystemManager);

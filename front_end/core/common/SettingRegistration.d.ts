@@ -24,8 +24,7 @@ export declare const enum SettingCategory {
     MEMORY = "MEMORY",
     EXTENSIONS = "EXTENSIONS",
     ADORNER = "ADORNER",
-    ACCOUNT = "ACCOUNT",
-    PRIVACY = "PRIVACY"
+    ACCOUNT = "ACCOUNT"
 }
 export declare function getLocalizedSettingsCategory(category: SettingCategory): Platform.UIString.LocalizedString;
 export declare const enum SettingType {

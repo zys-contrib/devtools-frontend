@@ -5298,11 +5298,7 @@ var UIStrings3 = {
    * @description Header for the Account section in the settings UI. The Account
    * section allows users to see their signed-in account and configure which DevTools data is synced via Chrome Sync.
    */
-  account: "Account",
-  /**
-   * @description Title of the Privacy setting category.
-   */
-  privacy: "Privacy"
+  account: "Account"
 };
 var str_3 = i18n5.i18n.registerUIStrings("core/common/SettingRegistration.ts", UIStrings3);
 var i18nString = i18n5.i18n.getLocalizedString.bind(void 0, str_3);
@@ -5384,8 +5380,6 @@ function getLocalizedSettingsCategory(category) {
       return i18n5.i18n.lockedString("");
     case "ACCOUNT":
       return i18nString(UIStrings3.account);
-    case "PRIVACY":
-      return i18nString(UIStrings3.privacy);
   }
 }
 
@@ -6479,10 +6473,7 @@ var Setting = class {
   #type = null;
   #requiresUserAction;
   #value;
-  // TODO(crbug.com/1172300) Type cannot be inferred without changes to consumers. See above.
-  #serializer = JSON;
   #hadUserAction;
-  #disabled;
   #loggedInitialAccess = false;
   #logSettingAccess;
   #console;
@@ -6494,9 +6485,6 @@ var Setting = class {
     storage.register(this.name);
     this.#console = console2;
     this.#logSettingAccess = logSettingAccess;
-  }
-  setSerializer(serializer) {
-    this.#serializer = serializer;
   }
   descriptor() {
     return {
@@ -6521,16 +6509,9 @@ var Setting = class {
   setRequiresUserAction(requiresUserAction) {
     this.#requiresUserAction = requiresUserAction;
   }
-  disabled() {
-    return this.#disabled || false;
-  }
-  setDisabled(disabled) {
-    this.#disabled = disabled;
-    this.eventSupport.dispatchEventToListeners(this.name);
-  }
   #maybeLogAccess(value) {
     try {
-      const valueToLog = typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? value : this.#serializer?.stringify(value);
+      const valueToLog = typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? value : JSON.stringify(value);
       if (valueToLog !== void 0 && this.#logSettingAccess) {
         void this.#logSettingAccess(this.name, valueToLog);
       }
@@ -6555,7 +6536,7 @@ var Setting = class {
     this.#value = this.defaultValue;
     if (this.storage.has(this.name)) {
       try {
-        this.#value = this.#serializer.parse(this.storage.get(this.name));
+        this.#value = JSON.parse(this.storage.get(this.name));
       } catch {
         this.storage.remove(this.name);
       }
@@ -6570,7 +6551,7 @@ var Setting = class {
     this.#value = this.defaultValue;
     if (value) {
       try {
-        this.#value = this.#serializer.parse(value);
+        this.#value = JSON.parse(value);
       } catch {
         this.storage.remove(this.name);
       }
@@ -6586,7 +6567,7 @@ var Setting = class {
     this.#hadUserAction = true;
     this.#value = value;
     try {
-      const settingString = this.#serializer.stringify(value);
+      const settingString = JSON.stringify(value);
       try {
         this.storage.set(this.name, settingString);
       } catch (e) {

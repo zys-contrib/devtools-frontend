@@ -317,10 +317,7 @@ export class Setting {
     #type = null;
     #requiresUserAction;
     #value;
-    // TODO(crbug.com/1172300) Type cannot be inferred without changes to consumers. See above.
-    #serializer = JSON;
     #hadUserAction;
-    #disabled;
     #loggedInitialAccess = false;
     #logSettingAccess;
     #console;
@@ -332,9 +329,6 @@ export class Setting {
         storage.register(this.name);
         this.#console = console;
         this.#logSettingAccess = logSettingAccess;
-    }
-    setSerializer(serializer) {
-        this.#serializer = serializer;
     }
     descriptor() {
         return {
@@ -359,18 +353,11 @@ export class Setting {
     setRequiresUserAction(requiresUserAction) {
         this.#requiresUserAction = requiresUserAction;
     }
-    disabled() {
-        return this.#disabled || false;
-    }
-    setDisabled(disabled) {
-        this.#disabled = disabled;
-        this.eventSupport.dispatchEventToListeners(this.name);
-    }
     #maybeLogAccess(value) {
         try {
             const valueToLog = typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ?
                 value :
-                this.#serializer?.stringify(value);
+                JSON.stringify(value);
             if (valueToLog !== undefined && this.#logSettingAccess) {
                 void this.#logSettingAccess(this.name, valueToLog);
             }
@@ -396,7 +383,7 @@ export class Setting {
         this.#value = this.defaultValue;
         if (this.storage.has(this.name)) {
             try {
-                this.#value = this.#serializer.parse(this.storage.get(this.name));
+                this.#value = JSON.parse(this.storage.get(this.name));
             }
             catch {
                 this.storage.remove(this.name);
@@ -412,7 +399,7 @@ export class Setting {
         this.#value = this.defaultValue;
         if (value) {
             try {
-                this.#value = this.#serializer.parse(value);
+                this.#value = JSON.parse(value);
             }
             catch {
                 this.storage.remove(this.name);
@@ -429,7 +416,7 @@ export class Setting {
         this.#hadUserAction = true;
         this.#value = value;
         try {
-            const settingString = this.#serializer.stringify(value);
+            const settingString = JSON.stringify(value);
             try {
                 this.storage.set(this.name, settingString);
             }

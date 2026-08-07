@@ -72,10 +72,6 @@ const UIStrings = {
      * section allows users to see their signed-in account and configure which DevTools data is synced via Chrome Sync.
      */
     account: 'Account',
-    /**
-     * @description Title of the Privacy setting category.
-     */
-    privacy: 'Privacy',
 };
 const str_ = i18n.i18n.registerUIStrings('core/common/SettingRegistration.ts', UIStrings);
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
@@ -157,8 +153,6 @@ export function getLocalizedSettingsCategory(category) {
             return i18n.i18n.lockedString('');
         case "ACCOUNT" /* SettingCategory.ACCOUNT */:
             return i18nString(UIStrings.account);
-        case "PRIVACY" /* SettingCategory.PRIVACY */:
-            return i18nString(UIStrings.privacy);
     }
 }
 //# sourceMappingURL=SettingRegistration.js.map

@@ -88,6 +88,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
     #availableSize;
     #preferredSize;
     #initialized;
+    #autoFitScaleOnInitialize;
     #appliedDeviceSize;
     #appliedDeviceScaleFactor;
     #appliedUserAgentType;
@@ -97,7 +98,6 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
     #heightSetting;
     #uaSetting;
     #deviceScaleFactorSetting;
-    #deviceOutlineSetting;
     #toolbarControlsEnabledSetting;
     #type;
     #device;
@@ -122,6 +122,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
         this.#availableSize = new Geometry.Size(1, 1);
         this.#preferredSize = new Geometry.Size(1, 1);
         this.#initialized = false;
+        this.#autoFitScaleOnInitialize = false;
         this.#appliedDeviceSize = new Geometry.Size(1, 1);
         this.#appliedDeviceScaleFactor = globalThis.devicePixelRatio;
         this.#appliedUserAgentType = "Desktop" /* UA.DESKTOP */;
@@ -152,8 +153,6 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
         this.#uaSetting.addChangeListener(this.uaSettingChanged, this);
         this.#deviceScaleFactorSetting = this.#settings.createSetting('emulation.device-scale-factor', 0);
         this.#deviceScaleFactorSetting.addChangeListener(this.deviceScaleFactorSettingChanged, this);
-        this.#deviceOutlineSetting = this.#settings.moduleSetting('emulation.show-device-outline');
-        this.#deviceOutlineSetting.addChangeListener(this.deviceOutlineSettingChanged, this);
         this.#toolbarControlsEnabledSetting = this.#settings.createSetting('emulation.toolbar-controls-enabled', true, "Session" /* Common.Settings.SettingStorageType.SESSION */);
         this.#type = Type.None;
         this.#device = null;
@@ -266,10 +265,20 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
     get scaleSettingInternal() {
         return this.#scaleSetting;
     }
+    #updateFitScale() {
+        if (this.#type === Type.Device && this.#device && this.#mode) {
+            const orientation = this.#device.orientationByName(this.#mode.orientation);
+            this.#scaleSetting.set(this.calculateFitScale(orientation.width, orientation.height, this.currentOutline(), this.currentInsets()));
+        }
+    }
     setAvailableSize(availableSize, preferredSize) {
         this.#availableSize = availableSize;
         this.#preferredSize = preferredSize;
         this.#initialized = true;
+        if (this.#autoFitScaleOnInitialize) {
+            this.#autoFitScaleOnInitialize = false;
+            this.#updateFitScale();
+        }
         this.calculateAndEmulate(false);
     }
     emulate(type, device, mode, scale) {
@@ -279,15 +288,22 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
             console.assert(Boolean(device) && Boolean(mode), 'Must pass device and mode for device emulation');
             this.#mode = mode;
             this.#device = device;
-            if (this.#initialized) {
-                const orientation = device.orientationByName(mode.orientation);
-                this.#scaleSetting.set(scale ||
-                    this.calculateFitScale(orientation.width, orientation.height, this.currentOutline(), this.currentInsets()));
+            if (scale !== undefined) {
+                this.#autoFitScaleOnInitialize = false;
+                this.#scaleSetting.set(scale);
+            }
+            else if (this.#initialized) {
+                this.#autoFitScaleOnInitialize = false;
+                this.#updateFitScale();
+            }
+            else {
+                this.#autoFitScaleOnInitialize = true;
             }
         }
         else {
             this.#device = null;
             this.#mode = null;
+            this.#autoFitScaleOnInitialize = false;
         }
         if (type !== Type.None) {
             Host.userMetrics.actionTaken(Host.UserMetrics.Action.DeviceModeEnabled);
@@ -331,10 +347,6 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
     }
     screenImage() {
         return (this.#device && this.#mode) ? this.#device.modeImage(this.#mode) : '';
-    }
-    outlineImage() {
-        return (this.#device && this.#mode && this.#deviceOutlineSetting.get()) ? this.#device.outlineImage(this.#mode) :
-            '';
     }
     canShowDeviceFrame() {
         return Boolean(this.#device && this.#mode && this.#device.outlineImage(this.#mode));
@@ -394,9 +406,6 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
     }
     deviceScaleFactorSetting() {
         return this.#deviceScaleFactorSetting;
-    }
-    deviceOutlineSetting() {
-        return this.#deviceOutlineSetting;
     }
     toolbarControlsEnabledSetting() {
         return this.#toolbarControlsEnabledSetting;
@@ -493,9 +502,6 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
     deviceScaleFactorSettingChanged() {
         this.calculateAndEmulate(false);
     }
-    deviceOutlineSettingChanged() {
-        this.calculateAndEmulate(false);
-    }
     preferredScaledWidth() {
         return Math.floor(this.#preferredSize.width / (this.#scaleSetting.get() || 1));
     }
@@ -503,15 +509,7 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
         return Math.floor(this.#preferredSize.height / (this.#scaleSetting.get() || 1));
     }
     currentOutline() {
-        let outline = new Insets(0, 0, 0, 0);
-        if (this.#type !== Type.Device || !this.#device || !this.#mode) {
-            return outline;
-        }
-        const orientation = this.#device.orientationByName(this.#mode.orientation);
-        if (this.#deviceOutlineSetting.get()) {
-            outline = orientation.outlineInsets || outline;
-        }
-        return outline;
+        return new Insets(0, 0, 0, 0);
     }
     currentInsets() {
         if (this.#type !== Type.Device || !this.#mode) {
@@ -778,9 +776,6 @@ export class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper {
                 throw new Error('Could not get 2d context from canvas.');
             }
             ctx.imageSmoothingEnabled = false;
-            if (this.outlineImage()) {
-                await this.paintImage(ctx, this.outlineImage(), outlineRect.relativeTo(outlineRect));
-            }
             if (this.screenImage()) {
                 await this.paintImage(ctx, this.screenImage(), screenRect.relativeTo(outlineRect));
             }
