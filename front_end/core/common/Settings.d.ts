@@ -80,7 +80,6 @@ export declare class Settings {
     readonly globalStorage: SettingsStorage;
     readonly localStorage: SettingsStorage;
     settingNameSet: Set<string>;
-    orderValuesBySettingCategory: Map<SettingCategory, Set<number>>;
     readonly moduleSettings: Map<string, Setting<unknown>>;
     constructor({ syncedStorage, globalStorage, localStorage, settingRegistrations, logSettingAccess, runSettingsMigration, console, }: SettingsCreationOptions);
     getRegisteredSettings(): SettingRegistration[];

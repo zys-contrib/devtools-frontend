@@ -2,10 +2,11 @@ import * as Common from '../../core/common/common.js';
 import * as SDK from '../../core/sdk/sdk.js';
 import * as Protocol from '../../generated/protocol.js';
 import * as Geometry from '../geometry/geometry.js';
+import * as Workspace from '../workspace/workspace.js';
 import { type EmulatedDevice, type Mode } from './EmulatedDevices.js';
 export declare class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<EventTypes> implements SDK.TargetManager.SDKModelObserver<SDK.EmulationModel.EmulationModel> {
     #private;
-    constructor(targetManager: SDK.TargetManager.TargetManager, settings: Common.Settings.Settings, multitargetNetworkManager: SDK.NetworkManager.MultitargetNetworkManager);
+    constructor(targetManager: SDK.TargetManager.TargetManager, settings: Common.Settings.Settings, multitargetNetworkManager: SDK.NetworkManager.MultitargetNetworkManager, fileManager: Workspace.FileManager.FileManager);
     static instance(opts?: {
         forceNew: boolean;
     }): DeviceModeModel;
@@ -44,9 +45,6 @@ export declare class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<
     device(): EmulatedDevice | null;
     mode(): Mode | null;
     type(): Type;
-    screenImage(): string;
-    canShowDeviceFrame(): boolean;
-    outlineRect(): Rect | null;
     screenRect(): Rect;
     visiblePageRect(): Rect;
     scale(): number;
@@ -78,7 +76,6 @@ export declare class DeviceModeModel extends Common.ObjectWrapper.ObjectWrapper<
     private deviceScaleFactorSettingChanged;
     private preferredScaledWidth;
     private preferredScaledHeight;
-    private currentOutline;
     private currentInsets;
     private currentSafeAreaInsets;
     private applySafeAreaInsets;

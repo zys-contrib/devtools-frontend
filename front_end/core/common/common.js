@@ -4404,7 +4404,11 @@ var ParsedURL = class _ParsedURL {
       return "data:";
     }
     const scheme = this.isBlobURL() ? this.blobInnerScheme : this.scheme;
-    return scheme + "://" + this.domain();
+    const domain = this.domain();
+    if (!scheme && !domain) {
+      return "";
+    }
+    return scheme + "://" + domain;
   }
   urlWithoutScheme() {
     if (this.scheme && this.url.startsWith(this.scheme + "://")) {
@@ -5224,8 +5228,10 @@ __export(SettingRegistration_exports, {
   getLocalizedSettingsCategory: () => getLocalizedSettingsCategory,
   getRegisteredSettings: () => getRegisteredSettings,
   maybeRemoveSettingExtension: () => maybeRemoveSettingExtension,
+  registerCategoryOrder: () => registerCategoryOrder,
   registerSettingExtension: () => registerSettingExtension,
   registerSettingsForTest: () => registerSettingsForTest,
+  removeCategoryOrder: () => removeCategoryOrder,
   resetSettings: () => resetSettings
 });
 import * as i18n5 from "./../i18n/i18n.js";
@@ -5304,11 +5310,31 @@ var str_3 = i18n5.i18n.registerUIStrings("core/common/SettingRegistration.ts", U
 var i18nString = i18n5.i18n.getLocalizedString.bind(void 0, str_3);
 var registeredSettings = [];
 var settingNameSet = /* @__PURE__ */ new Set();
+var orderValuesBySettingCategory = /* @__PURE__ */ new Map();
+function registerCategoryOrder(category, order) {
+  if (category && typeof order === "number") {
+    let orderValues = orderValuesBySettingCategory.get(category);
+    if (!orderValues) {
+      orderValues = /* @__PURE__ */ new Set();
+      orderValuesBySettingCategory.set(category, orderValues);
+    }
+    if (orderValues.has(order)) {
+      throw new Error(`Duplicate order value '${order}' for settings category '${category}'`);
+    }
+    orderValues.add(order);
+  }
+}
+function removeCategoryOrder(category, order) {
+  if (category && typeof order === "number") {
+    orderValuesBySettingCategory.get(category)?.delete(order);
+  }
+}
 function registerSettingExtension(registration) {
   const settingName = registration.settingName;
   if (settingNameSet.has(settingName)) {
     throw new Error(`Duplicate setting name '${settingName}'`);
   }
+  registerCategoryOrder(registration.category, registration.order);
   settingNameSet.add(settingName);
   registeredSettings.push(registration);
 }
@@ -5317,18 +5343,16 @@ function getRegisteredSettings() {
 }
 function registerSettingsForTest(settings, forceReset = false) {
   if (registeredSettings.length === 0 || forceReset) {
-    registeredSettings = settings;
-    settingNameSet.clear();
+    resetSettings();
     for (const setting of settings) {
-      const settingName = setting.settingName;
-      if (settingNameSet.has(settingName)) {
-        throw new Error(`Duplicate setting name '${settingName}'`);
-      }
-      settingNameSet.add(settingName);
+      registerSettingExtension(setting);
     }
   }
 }
 function resetSettings() {
+  for (const setting of registeredSettings) {
+    removeCategoryOrder(setting.category, setting.order);
+  }
   registeredSettings = [];
   settingNameSet.clear();
 }
@@ -5337,7 +5361,8 @@ function maybeRemoveSettingExtension(settingName) {
   if (settingIndex < 0 || !settingNameSet.delete(settingName)) {
     return false;
   }
-  registeredSettings.splice(settingIndex, 1);
+  const [removed] = registeredSettings.splice(settingIndex, 1);
+  removeCategoryOrder(removed.category, removed.order);
   return true;
 }
 function getLocalizedSettingsCategory(category) {
@@ -6171,7 +6196,6 @@ var Settings = class _Settings {
   #settingRegistrations;
   #sessionStorage = new SettingsStorage({});
   settingNameSet = /* @__PURE__ */ new Set();
-  orderValuesBySettingCategory = /* @__PURE__ */ new Map();
   #eventSupport = new ObjectWrapper();
   #registry = /* @__PURE__ */ new Map();
   moduleSettings = /* @__PURE__ */ new Map();
@@ -6232,18 +6256,8 @@ var Settings = class _Settings {
   }
   registerModuleSetting(setting) {
     const settingName = setting.name;
-    const category = setting.category();
-    const order = setting.order();
     if (this.settingNameSet.has(settingName)) {
       throw new Error(`Duplicate Setting name '${settingName}'`);
-    }
-    if (category && order) {
-      const orderValues = this.orderValuesBySettingCategory.get(category) || /* @__PURE__ */ new Set();
-      if (orderValues.has(order)) {
-        throw new Error(`Duplicate order value '${order}' for settings category '${category}'`);
-      }
-      orderValues.add(order);
-      this.orderValuesBySettingCategory.set(category, orderValues);
     }
     this.settingNameSet.add(settingName);
     this.moduleSettings.set(setting.name, setting);

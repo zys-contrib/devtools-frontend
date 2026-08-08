@@ -1,5 +1,7 @@
 import type * as Platform from '../platform/platform.js';
 import type { SettingStorageType } from './Settings.js';
+export declare function registerCategoryOrder(category?: SettingCategory, order?: number): void;
+export declare function removeCategoryOrder(category?: SettingCategory, order?: number): void;
 export declare function registerSettingExtension(registration: SettingRegistration): void;
 export declare function getRegisteredSettings(): SettingRegistration[];
 export declare function registerSettingsForTest(settings: SettingRegistration[], forceReset?: boolean): void;

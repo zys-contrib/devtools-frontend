@@ -77,11 +77,31 @@ const str_ = i18n.i18n.registerUIStrings('core/common/SettingRegistration.ts', U
 const i18nString = i18n.i18n.getLocalizedString.bind(undefined, str_);
 let registeredSettings = [];
 const settingNameSet = new Set();
+const orderValuesBySettingCategory = new Map();
+export function registerCategoryOrder(category, order) {
+    if (category && typeof order === 'number') {
+        let orderValues = orderValuesBySettingCategory.get(category);
+        if (!orderValues) {
+            orderValues = new Set();
+            orderValuesBySettingCategory.set(category, orderValues);
+        }
+        if (orderValues.has(order)) {
+            throw new Error(`Duplicate order value '${order}' for settings category '${category}'`);
+        }
+        orderValues.add(order);
+    }
+}
+export function removeCategoryOrder(category, order) {
+    if (category && typeof order === 'number') {
+        orderValuesBySettingCategory.get(category)?.delete(order);
+    }
+}
 export function registerSettingExtension(registration) {
     const settingName = registration.settingName;
     if (settingNameSet.has(settingName)) {
         throw new Error(`Duplicate setting name '${settingName}'`);
     }
+    registerCategoryOrder(registration.category, registration.order);
     settingNameSet.add(settingName);
     registeredSettings.push(registration);
 }
@@ -90,18 +110,16 @@ export function getRegisteredSettings() {
 }
 export function registerSettingsForTest(settings, forceReset = false) {
     if (registeredSettings.length === 0 || forceReset) {
-        registeredSettings = settings;
-        settingNameSet.clear();
+        resetSettings();
         for (const setting of settings) {
-            const settingName = setting.settingName;
-            if (settingNameSet.has(settingName)) {
-                throw new Error(`Duplicate setting name '${settingName}'`);
-            }
-            settingNameSet.add(settingName);
+            registerSettingExtension(setting);
         }
     }
 }
 export function resetSettings() {
+    for (const setting of registeredSettings) {
+        removeCategoryOrder(setting.category, setting.order);
+    }
     registeredSettings = [];
     settingNameSet.clear();
 }
@@ -110,7 +128,8 @@ export function maybeRemoveSettingExtension(settingName) {
     if (settingIndex < 0 || !settingNameSet.delete(settingName)) {
         return false;
     }
-    registeredSettings.splice(settingIndex, 1);
+    const [removed] = registeredSettings.splice(settingIndex, 1);
+    removeCategoryOrder(removed.category, removed.order);
     return true;
 }
 export function getLocalizedSettingsCategory(category) {
