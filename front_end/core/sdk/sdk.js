@@ -1088,6 +1088,11 @@ var generatedProperties = [
     "runtime_flag_status": "stable"
   },
   {
+    "devtools_keywords": [
+      "none",
+      "move",
+      "no-drag"
+    ],
     "name": "app-region"
   },
   {
@@ -5225,7 +5230,8 @@ var generatedProperties = [
       "inline",
       "both",
       "mandatory",
-      "proximity"
+      "proximity",
+      "pair"
     ],
     "name": "scroll-snap-type"
   },
@@ -6140,6 +6146,10 @@ var generatedProperties = [
     "name": "will-change"
   },
   {
+    "devtools_keywords": [
+      "none",
+      "move"
+    ],
     "inherited": true,
     "keywords": [
       "none",
@@ -6475,6 +6485,13 @@ var generatedPropertyValues = {
   "animation-trigger": {
     "values": [
       "none"
+    ]
+  },
+  "app-region": {
+    "values": [
+      "none",
+      "move",
+      "no-drag"
     ]
   },
   "appearance": {
@@ -8756,7 +8773,8 @@ var generatedPropertyValues = {
       "inline",
       "both",
       "mandatory",
-      "proximity"
+      "proximity",
+      "pair"
     ]
   },
   "scroll-target-group": {
@@ -9270,8 +9288,7 @@ var generatedPropertyValues = {
   "window-drag": {
     "values": [
       "none",
-      "move",
-      "no-drag"
+      "move"
     ]
   },
   "word-break": {
@@ -9809,9 +9826,6 @@ var CSSMetadata = class _CSSMetadata {
       if (Boolean(runtimeFlagStatus) && runtimeFlagStatus !== "stable") {
         continue;
       }
-      if (!CSS.supports(propertyName, "initial")) {
-        continue;
-      }
       this.#values.push(propertyName);
       if (property.inherited) {
         this.#inherited.add(propertyName);
@@ -9849,7 +9863,7 @@ var CSSMetadata = class _CSSMetadata {
     }
     const commonKeywordSet = new Set(CommonKeywords);
     for (const propertyName of this.#longhands.keys()) {
-      if (propertyName === "all" || propertyValueSets.has(propertyName)) {
+      if (propertyName === "all" || propertyName in generatedPropertyValues) {
         continue;
       }
       const longhands = this.#longhands.get(propertyName);
@@ -9857,6 +9871,10 @@ var CSSMetadata = class _CSSMetadata {
         continue;
       }
       const values = new Array();
+      const propertyValueSet = propertyValueSets.get(propertyName);
+      if (propertyValueSet) {
+        values.push(...propertyValueSet);
+      }
       for (const longhand of longhands) {
         const longhandValues = propertyValueSets.get(longhand);
         if (!longhandValues) {
@@ -9875,11 +9893,6 @@ var CSSMetadata = class _CSSMetadata {
           for (const val of aliasForValues) {
             values.add(val);
           }
-        }
-      }
-      for (const commonKeyword of CommonKeywords) {
-        if (!values.has(commonKeyword) && CSS.supports(propertyName, commonKeyword)) {
-          values.add(commonKeyword);
         }
       }
       this.#propertyValues.set(propertyName, [...values]);
@@ -11907,6 +11920,7 @@ __export(DebuggerModel_exports, {
   PauseOnExceptionsState: () => PauseOnExceptionsState,
   Scope: () => Scope,
   WASM_SYMBOLS_PRIORITY: () => WASM_SYMBOLS_PRIORITY,
+  skipAllPausesSettingDescriptor: () => skipAllPausesSettingDescriptor,
   sortAndMergeRanges: () => sortAndMergeRanges
 });
 import * as Common23 from "./../common/common.js";
@@ -13114,34 +13128,20 @@ var VariableNameMatcher = class extends matcherBase(VariableNameMatch) {
     return true;
   }
   matches(node, matching) {
-    if (node.name !== "VariableName" && node.name !== "FeatureName" && node.name !== "KeywordQuery") {
+    if (!node.parent) {
+      return null;
+    }
+    if (node.name !== "FeatureName" && node.name !== "PropertyName" && node.name !== "ProperyName") {
+      return null;
+    }
+    if (node.parent.name !== "StyleFeature" && node.parent.name !== "StyleRange") {
       return null;
     }
     const rawText = matching.ast.text(node);
     if (!rawText.startsWith("--")) {
       return null;
     }
-    let cur = node.parent;
-    let foundStyleCall = null;
-    while (cur) {
-      if (cur.name === "CallExpression") {
-        return null;
-      }
-      if (cur.name === "CallQuery") {
-        const callee = cur.getChild("QueryCallee");
-        if (callee && matching.ast.text(callee) === "style") {
-          foundStyleCall = cur;
-          break;
-        }
-        return null;
-      }
-      cur = cur.parent;
-    }
-    if (!foundStyleCall) {
-      return null;
-    }
-    const text = node.name === "KeywordQuery" ? rawText.split(/\s|[>!=<:]/)[0] : rawText;
-    return new VariableNameMatch(node, text, this.matchedStyles, this.style);
+    return new VariableNameMatch(node, rawText, this.matchedStyles, this.style);
   }
 };
 var AttributeMatch = class extends BaseVariableMatch {
@@ -25499,6 +25499,17 @@ var ResourceTreeModel = class _ResourceTreeModel extends SDKModel {
       }
     }
   }
+  navigatedWithinDocument(frameId, url) {
+    const frame = this.framesInternal.get(frameId);
+    if (!frame) {
+      return;
+    }
+    frame.navigatedWithinDocument(url);
+    if (frame.isMainFrame()) {
+      this.target().setInspectedURL(frame.url);
+    }
+    this.dispatchEventToListeners(Events.FrameNavigatedWithinDocument, frame);
+  }
   frameDetached(frameId, isSwap) {
     if (!this.#cachedResourcesProcessed) {
       return;
@@ -25772,6 +25783,7 @@ var Events;
 (function(Events12) {
   Events12["FrameAdded"] = "FrameAdded";
   Events12["FrameNavigated"] = "FrameNavigated";
+  Events12["FrameNavigatedWithinDocument"] = "FrameNavigatedWithinDocument";
   Events12["FrameDetached"] = "FrameDetached";
   Events12["FrameResized"] = "FrameResized";
   Events12["FrameWillNavigate"] = "FrameWillNavigate";
@@ -25880,6 +25892,9 @@ var ResourceTreeFrame = class {
     if (mainResource && mainResource.loaderId === this.#loaderId) {
       this.addResource(mainResource);
     }
+  }
+  navigatedWithinDocument(url) {
+    this.#url = url;
   }
   resourceTreeModel() {
     return this.#model;
@@ -26169,7 +26184,8 @@ var PageDispatcher = class {
   }
   frameStartedNavigating({}) {
   }
-  navigatedWithinDocument({}) {
+  navigatedWithinDocument({ frameId, url }) {
+    this.#resourceTreeModel.navigatedWithinDocument(frameId, url);
   }
   frameResized() {
     this.#resourceTreeModel.dispatchEventToListeners(Events.FrameResized);
@@ -26664,6 +26680,11 @@ var WASM_SYMBOLS_PRIORITY = [
   "EmbeddedDWARF",
   "SourceMap"
 ];
+var skipAllPausesSettingDescriptor = {
+  name: "skip-all-pauses",
+  type: "boolean",
+  defaultValue: false
+};
 var DebuggerModel = class _DebuggerModel extends SDKModel {
   agent;
   #runtimeModel;
@@ -26676,6 +26697,7 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
   #selectedCallFrame = null;
   #debuggerEnabled = false;
   #debuggerId = null;
+  #skipAllPausesSetting;
   #skipAllPausesTimeout;
   #beforePausedCallback = null;
   #computeAutoStepRangesCallback = null;
@@ -26695,8 +26717,10 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
     this.#runtimeModel = target.model(RuntimeModel);
     this.#sourceMapManager = new SourceMapManager(target, (compiledURL, sourceMappingURL, payload, script) => new SourceMap(compiledURL, sourceMappingURL, payload, target.targetManager().getConsole(), script));
     const settings = this.target().targetManager().settings;
+    this.#skipAllPausesSetting = settings.resolve(skipAllPausesSettingDescriptor);
     settings.resolve(pauseOnExceptionEnabledSettingDescriptor).addChangeListener(this.pauseOnExceptionStateChanged, this);
     settings.resolve(pauseOnCaughtExceptionSettingDescriptor).addChangeListener(this.pauseOnExceptionStateChanged, this);
+    this.#skipAllPausesSetting.addChangeListener(this.skipAllPausesChanged, this);
     settings.moduleSetting("pause-on-uncaught-exception").addChangeListener(this.pauseOnExceptionStateChanged, this);
     settings.moduleSetting("disable-async-stack-traces").addChangeListener(this.asyncStackTracesStateChanged, this);
     settings.moduleSetting("breakpoints-active").addChangeListener(this.breakpointsActiveChanged, this);
@@ -26751,6 +26775,10 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
       return;
     }
     this.#debuggerEnabled = true;
+    let skipAllPausesPromise;
+    if (this.#skipAllPausesSetting.get()) {
+      skipAllPausesPromise = this.agent.invoke_setSkipAllPauses({ skip: true });
+    }
     const isRemoteFrontend = Root7.Runtime.Runtime.queryParam("remoteFrontend") || Root7.Runtime.Runtime.queryParam("ws");
     const maxScriptsCacheSize = isRemoteFrontend ? 1e7 : 1e8;
     const enablePromise = this.agent.invoke_enable({ maxScriptsCacheSize });
@@ -26760,14 +26788,14 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
         instrumentation: "beforeScriptExecution"
       });
     }
+    const settings = this.target().targetManager().settings;
     this.pauseOnExceptionStateChanged();
     void this.asyncStackTracesStateChanged();
-    const settings = this.target().targetManager().settings;
     if (!settings.moduleSetting("breakpoints-active").get()) {
       this.breakpointsActiveChanged();
     }
     this.dispatchEventToListeners(Events4.DebuggerWasEnabled, this);
-    const [enableResult] = await Promise.all([enablePromise, instrumentationPromise]);
+    const [enableResult] = await Promise.all([enablePromise, instrumentationPromise, skipAllPausesPromise]);
     this.registerDebugger(enableResult);
   }
   async syncDebuggerId() {
@@ -26827,10 +26855,21 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
     this.#debuggerId = null;
   }
   skipAllPauses(skip) {
+    if (this.#skipAllPausesSetting.get()) {
+      return;
+    }
+    clearTimeout(this.#skipAllPausesTimeout);
+    void this.agent.invoke_setSkipAllPauses({ skip });
+  }
+  skipAllPausesChanged() {
+    const skip = this.#skipAllPausesSetting.get();
     clearTimeout(this.#skipAllPausesTimeout);
     void this.agent.invoke_setSkipAllPauses({ skip });
   }
   skipAllPausesUntilReloadOrTimeout(timeout) {
+    if (this.#skipAllPausesSetting.get()) {
+      return;
+    }
     clearTimeout(this.#skipAllPausesTimeout);
     void this.agent.invoke_setSkipAllPauses({ skip: true });
     this.#skipAllPausesTimeout = globalThis.setTimeout(this.skipAllPauses.bind(this, false), timeout);
@@ -27257,6 +27296,7 @@ var DebuggerModel = class _DebuggerModel extends SDKModel {
     const settings = this.target().targetManager().settings;
     settings.resolve(pauseOnExceptionEnabledSettingDescriptor).removeChangeListener(this.pauseOnExceptionStateChanged, this);
     settings.resolve(pauseOnCaughtExceptionSettingDescriptor).removeChangeListener(this.pauseOnExceptionStateChanged, this);
+    this.#skipAllPausesSetting.removeChangeListener(this.skipAllPausesChanged, this);
     settings.moduleSetting("disable-async-stack-traces").removeChangeListener(this.asyncStackTracesStateChanged, this);
   }
   async suspendModel() {
