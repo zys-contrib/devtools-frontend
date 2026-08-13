@@ -4,3 +4,11 @@ export declare const cssSourceMapsEnabledSettingDescriptor: Common.Settings.Sett
 export declare const preserveConsoleLogSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
 export declare const pauseOnExceptionEnabledSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
 export declare const pauseOnCaughtExceptionSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
+export declare const pauseOnUncaughtExceptionSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
+export declare const javaScriptDisabledSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
+export declare const disableAsyncStackTracesSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
+export declare const breakpointsActiveSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
+export declare const showMetricsRulersSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
+export declare const apcaSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
+export declare const showGridAreasSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;
+export declare const showGridTrackSizesSettingDescriptor: Common.Settings.SettingDescriptor<boolean>;

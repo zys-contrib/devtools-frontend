@@ -30,4 +30,50 @@ export const pauseOnCaughtExceptionSettingDescriptor = {
     type: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
     defaultValue: false,
 };
+export const pauseOnUncaughtExceptionSettingDescriptor = {
+    name: 'pause-on-uncaught-exception',
+    type: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+    defaultValue: false,
+};
+export const javaScriptDisabledSettingDescriptor = {
+    name: 'java-script-disabled',
+    type: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+    defaultValue: false,
+    storageType: "Session" /* Common.Settings.SettingStorageType.SESSION */,
+};
+export const disableAsyncStackTracesSettingDescriptor = {
+    name: 'disable-async-stack-traces',
+    type: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+    defaultValue: false,
+};
+export const breakpointsActiveSettingDescriptor = {
+    name: 'breakpoints-active',
+    type: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+    defaultValue: true,
+    storageType: "Session" /* Common.Settings.SettingStorageType.SESSION */,
+};
+export const showMetricsRulersSettingDescriptor = {
+    name: 'show-metrics-rulers',
+    type: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+    defaultValue: false,
+    storageType: "Synced" /* Common.Settings.SettingStorageType.SYNCED */,
+};
+export const apcaSettingDescriptor = {
+    name: 'apca',
+    type: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+    defaultValue: false,
+    storageType: "Synced" /* Common.Settings.SettingStorageType.SYNCED */,
+};
+export const showGridAreasSettingDescriptor = {
+    name: 'show-grid-areas',
+    type: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+    defaultValue: false,
+    storageType: "Synced" /* Common.Settings.SettingStorageType.SYNCED */,
+};
+export const showGridTrackSizesSettingDescriptor = {
+    name: 'show-grid-track-sizes',
+    type: "boolean" /* Common.Settings.SettingType.BOOLEAN */,
+    defaultValue: false,
+    storageType: "Synced" /* Common.Settings.SettingStorageType.SYNCED */,
+};
 //# sourceMappingURL=SDKSettings.js.map
